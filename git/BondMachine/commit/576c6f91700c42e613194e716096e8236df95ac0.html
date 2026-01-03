@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Passes selection - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/576c6f91700c42e613194e716096e8236df95ac0.html">576c6f91700c42e613194e716096e8236df95ac0</a>
+<b>parent</b> <a href="../commit/26e4cdef7a4d998240fd8c327a246496f781f34e.html">26e4cdef7a4d998240fd8c327a246496f781f34e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 30 Jun 2023 17:49:37 +0200
+
+Passes selection
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">54</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/basm.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/passes.go</a></td><td> | </td><td class="num">80</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>3 files changed, 120 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;log&quot;
+ 	&quot;os&quot;
+ 	&quot;path/filepath&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/basm&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -34,13 +35,9 @@ var dumpRequirements = flag.String(&quot;dump-requirements&quot;, &quot;&quot;, &quot;Dump the requiremen
+</a> 
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-// TODO var passes = flag.String(&quot;passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to run (default: none)&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-func check(e error) {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	if e != nil {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		panic(e)
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	}
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+var listPasses = flag.Bool(&quot;list-passes&quot;, false, &quot;List the available passes&quot;)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+var actPasses = flag.String(&quot;activate-passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to activate (default: none)&quot;)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+var deactPasses = flag.String(&quot;deactivate-passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to deactivate (default: none)&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h0-2" id="h0-2" class="h">@@ -116,7 +113,46 @@ func main() {
+</a> 
+ 	bi.BasmInstanceInit(bm)
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	mne := basm.GetPassMnemonic()
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	if *actPasses != &quot;&quot; {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		passA := strings.Split(*actPasses, &quot;,&quot;)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+		for _, p := range passA {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			if err := bi.SetActive(p); err != nil {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+				bi.Alert(&quot;Error while activating pass:&quot;, err)
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+				return
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+			}
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		}
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	}
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	if *deactPasses != &quot;&quot; {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		passD := strings.Split(*deactPasses, &quot;,&quot;)
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		for _, p := range passD {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+			if err := bi.UnsetActive(p); err != nil {
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				bi.Alert(&quot;Error while deactivating pass:&quot;, err)
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+				return
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+			}
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+		}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	}
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	if *listPasses || *debug || *verbose {
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+		fmt.Println(&quot;Selected passes:&quot;)
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+		pass := uint64(1)
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+		for i := 1; pass != basm.LAST_PASS; i++ {
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+			fmt.Printf(&quot;  %02d: %s\n&quot;, i, mne[pass])
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+			pass = pass &lt;&lt; 1
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+		}
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+	}
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+	startAssembling := false
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+
+</a> 	for _, asmFile := range flag.Args() {
+<a href="#h0-2-41" id="h0-2-41" class="i">+		startAssembling = true
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+
+</a> 		// Get the file extension
+ 		ext := filepath.Ext(asmFile)
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -144,6 +180,10 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+	if !startAssembling {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		return
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	}
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+
+</a> 	if err := bi.RunAssembler(); err != nil {
+ 		bi.Alert(err)
+ 		return
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -154,7 +154,7 @@ func (bi *BasmInstance) RunAssembler() error {
+</a> 
+ 	passes := getPassFunction()
+ 	for i := 0; i &lt; 64; i++ {
+<a href="#h1-0-3" id="h1-0-3" class="d">-		if activePass(bi.passes, step) {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		if bi.activePass(step) {
+</a> 			if bi.debug {
+ 				fmt.Println(purple(&quot;Phase &quot;+strconv.Itoa(i+1)) + &quot;: &quot; + red(names[step], &quot; started&quot;))
+ 			}
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,5 +1,7 @@
+</a> package basm
+ 
+<a href="#h2-0-2" id="h2-0-2" class="i">+import &quot;errors&quot;
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a> const (
+ 	passTemplateResolver      = uint64(1)
+ 	passDynamicalInstructions = uint64(2)
+<a href="#h2-1" id="h2-1" class="h">@@ -53,17 +55,79 @@ func getPassFunctionName() map[uint64]string {
+</a> 	}
+ }
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-func activePass(passes uint64, active uint64) bool {
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	if (passes &amp; active) == uint64(0) {
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-		return false
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+func IsOptionalPass() map[uint64]bool {
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	return map[uint64]bool{
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+		passTemplateResolver:      false,
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+		passDynamicalInstructions: false,
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+		passLabelTagger:           false,
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+		passDataSections2Bytes:    false,
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+		passMetadataInfer1:        false,
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+		passMetadataInfer2:        false,
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+		passEntryPoints:           false,
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+		passLabelsResolver:        false,
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+		passMatcherResolver:       false,
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+		passFragmentAnalyzer:      false,
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+		passFragmentPruner:        false,
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+		passFragmentComposer:      false,
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+		passRomComposer:           false,
+</a> 	}
+<a href="#h2-1-22" id="h2-1-22" class="d">-	return true
+</a> }
+ 
+<a href="#h2-1-25" id="h2-1-25" class="d">-func setActive(passes uint64, pass uint64) uint64 {
+</a><a href="#h2-1-26" id="h2-1-26" class="d">-	return passes | pass
+</a><a href="#h2-1-27" id="h2-1-27" class="i">+func (bi *BasmInstance) activePass(active uint64) bool {
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+	return (bi.passes &amp; active) != uint64(0)
+</a> }
+ 
+<a href="#h2-1-31" id="h2-1-31" class="d">-func unsetActive(passes uint64, pass uint64) uint64 {
+</a><a href="#h2-1-32" id="h2-1-32" class="d">-	return passes &amp; ^pass
+</a><a href="#h2-1-33" id="h2-1-33" class="i">+func GetPassMnemonic() map[uint64]string {
+</a><a href="#h2-1-34" id="h2-1-34" class="i">+	return map[uint64]string{
+</a><a href="#h2-1-35" id="h2-1-35" class="i">+		passTemplateResolver:      &quot;templateresolver&quot;,
+</a><a href="#h2-1-36" id="h2-1-36" class="i">+		passDynamicalInstructions: &quot;dynamicalinstructions&quot;,
+</a><a href="#h2-1-37" id="h2-1-37" class="i">+		passLabelTagger:           &quot;labeltagger&quot;,
+</a><a href="#h2-1-38" id="h2-1-38" class="i">+		passDataSections2Bytes:    &quot;datasections2bytes&quot;,
+</a><a href="#h2-1-39" id="h2-1-39" class="i">+		passMetadataInfer1:        &quot;metadatainfer1&quot;,
+</a><a href="#h2-1-40" id="h2-1-40" class="i">+		passMetadataInfer2:        &quot;metadatainfer2&quot;,
+</a><a href="#h2-1-41" id="h2-1-41" class="i">+		passEntryPoints:           &quot;entrypoints&quot;,
+</a><a href="#h2-1-42" id="h2-1-42" class="i">+		passLabelsResolver:        &quot;labelresolver&quot;,
+</a><a href="#h2-1-43" id="h2-1-43" class="i">+		passMatcherResolver:       &quot;matcherresolver&quot;,
+</a><a href="#h2-1-44" id="h2-1-44" class="i">+		passFragmentAnalyzer:      &quot;fragmentanalyzer&quot;,
+</a><a href="#h2-1-45" id="h2-1-45" class="i">+		passFragmentPruner:        &quot;fragmentpruner&quot;,
+</a><a href="#h2-1-46" id="h2-1-46" class="i">+		passFragmentComposer:      &quot;fragmentcomposer&quot;,
+</a><a href="#h2-1-47" id="h2-1-47" class="i">+		passRomComposer:           &quot;romcomposer&quot;,
+</a><a href="#h2-1-48" id="h2-1-48" class="i">+	}
+</a><a href="#h2-1-49" id="h2-1-49" class="i">+
+</a><a href="#h2-1-50" id="h2-1-50" class="i">+}
+</a><a href="#h2-1-51" id="h2-1-51" class="i">+
+</a><a href="#h2-1-52" id="h2-1-52" class="i">+func (bi *BasmInstance) SetActive(pass string) error {
+</a><a href="#h2-1-53" id="h2-1-53" class="i">+	for passN, v := range GetPassMnemonic() {
+</a><a href="#h2-1-54" id="h2-1-54" class="i">+		if v == pass {
+</a><a href="#h2-1-55" id="h2-1-55" class="i">+			if ch, ok := IsOptionalPass()[passN]; ok {
+</a><a href="#h2-1-56" id="h2-1-56" class="i">+				if ch {
+</a><a href="#h2-1-57" id="h2-1-57" class="i">+					bi.passes = bi.passes | passN
+</a><a href="#h2-1-58" id="h2-1-58" class="i">+					return nil
+</a><a href="#h2-1-59" id="h2-1-59" class="i">+				} else {
+</a><a href="#h2-1-60" id="h2-1-60" class="i">+					return errors.New(&quot;pass is not optional&quot;)
+</a><a href="#h2-1-61" id="h2-1-61" class="i">+				}
+</a><a href="#h2-1-62" id="h2-1-62" class="i">+			} else {
+</a><a href="#h2-1-63" id="h2-1-63" class="i">+				return errors.New(&quot;pass is not defined&quot;)
+</a><a href="#h2-1-64" id="h2-1-64" class="i">+			}
+</a><a href="#h2-1-65" id="h2-1-65" class="i">+		}
+</a><a href="#h2-1-66" id="h2-1-66" class="i">+	}
+</a><a href="#h2-1-67" id="h2-1-67" class="i">+	return errors.New(&quot;pass not found&quot;)
+</a><a href="#h2-1-68" id="h2-1-68" class="i">+}
+</a><a href="#h2-1-69" id="h2-1-69" class="i">+
+</a><a href="#h2-1-70" id="h2-1-70" class="i">+func (bi *BasmInstance) UnsetActive(pass string) error {
+</a><a href="#h2-1-71" id="h2-1-71" class="i">+	for passN, v := range GetPassMnemonic() {
+</a><a href="#h2-1-72" id="h2-1-72" class="i">+		if v == pass {
+</a><a href="#h2-1-73" id="h2-1-73" class="i">+			if ch, ok := IsOptionalPass()[passN]; ok {
+</a><a href="#h2-1-74" id="h2-1-74" class="i">+				if ch {
+</a><a href="#h2-1-75" id="h2-1-75" class="i">+					bi.passes = bi.passes &amp; ^passN
+</a><a href="#h2-1-76" id="h2-1-76" class="i">+					return nil
+</a><a href="#h2-1-77" id="h2-1-77" class="i">+				} else {
+</a><a href="#h2-1-78" id="h2-1-78" class="i">+					return errors.New(&quot;pass is not optional&quot;)
+</a><a href="#h2-1-79" id="h2-1-79" class="i">+				}
+</a><a href="#h2-1-80" id="h2-1-80" class="i">+			} else {
+</a><a href="#h2-1-81" id="h2-1-81" class="i">+				return errors.New(&quot;pass is not defined&quot;)
+</a><a href="#h2-1-82" id="h2-1-82" class="i">+			}
+</a><a href="#h2-1-83" id="h2-1-83" class="i">+		}
+</a><a href="#h2-1-84" id="h2-1-84" class="i">+	}
+</a><a href="#h2-1-85" id="h2-1-85" class="i">+	return errors.New(&quot;pass not found&quot;)
+</a> }
+</pre>
+</div>
+</body>
+</html>

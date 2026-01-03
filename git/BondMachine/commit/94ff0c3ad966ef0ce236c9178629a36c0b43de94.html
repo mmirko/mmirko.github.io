@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>addf and divf hw optimizations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/94ff0c3ad966ef0ce236c9178629a36c0b43de94.html">94ff0c3ad966ef0ce236c9178629a36c0b43de94</a>
+<b>parent</b> <a href="../commit/eb49ddb86afad643eb08bd9eeb6572f8c6381805.html">eb49ddb86afad643eb08bd9eeb6572f8c6381805</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 31 Mar 2023 11:57:59 +0200
+
+addf and divf hw optimizations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_addf.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_divf.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 42 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a> b/<a href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -69,6 +69,15 @@ func (op Addf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addf&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+				continue
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		}
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h0-1" id="h0-1" class="h">@@ -78,6 +87,15 @@ func (op Addf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		}
+ 
+ 		for j := 0; j &lt; reg_num; j++ {
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				cp := arch.Tag
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addf&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+					continue
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			}
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+
+</a> 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 			result += &quot;							case (adder_&quot; + arch.Tag + &quot;_state)\n&quot;
+ 			result += &quot;							adder_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -548,6 +566,9 @@ func (Op Addf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> 		regSrc := line.Elements[1].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+<a href="#h0-2-3" id="h0-2-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;addf&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addf&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addf&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a> b/<a href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,6 +69,15 @@ func (op Divf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divf&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+				continue
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h1-1" id="h1-1" class="h">@@ -78,6 +87,15 @@ func (op Divf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		}
+ 
+ 		for j := 0; j &lt; reg_num; j++ {
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+				cp := arch.Tag
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divf&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+					continue
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+				}
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a> 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 			result += &quot;							case (divider_&quot; + arch.Tag + &quot;_state)\n&quot;
+ 			result += &quot;							divider_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+<a href="#h1-2" id="h1-2" class="h">@@ -583,6 +601,9 @@ func (Op Divf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> 		regSrc := line.Elements[1].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+<a href="#h1-2-3" id="h1-2-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;divf&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divf&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divf&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maxpool - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4da6f218931fe95b116e7f9ea527965f49cc14d4.html">4da6f218931fe95b116e7f9ea527965f49cc14d4</a>
+<b>parent</b> <a href="../commit/d9aa0a9c7d7922391940f5c8e99ad9dd4a3e9786.html">d9aa0a9c7d7922391940f5c8e99ad9dd4a3e9786</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 23 May 2024 15:00:12 +0200
+
+Maxpool
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/linereader.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmbuilder/bmbuilder.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmbuilder/generator_basm.go</a></td><td> | </td><td class="num">63</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmbuilder/generator_maxpool.go</a></td><td> | </td><td class="num">84</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmbuilder/generators_exec.go</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>5 files changed, 132 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/linereader.go.html">pkg/basm/linereader.go</a> b/<a href="../file/pkg/basm/linereader.go.html">pkg/basm/linereader.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,6 +11,10 @@ func (bi *BasmInstance) ParseAssemblyDefault(filePath string) error {
+</a> 	return bi.ParseAssemblyFile(filePath, basmParser)
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+func (bi *BasmInstance) ParseAssemblyStringDefault(text string) error {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	return bi.ParseAssemblyString(text, basmParser)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a> // ParseAssemblyFile opens the actual assembly file and call a parse function on every line with the underline BasmInstance loaded
+ func (bi *BasmInstance) ParseAssemblyFile(filePath string, parseFunction func(*BasmInstance, string, uint32) error) error {
+ 	inputFile, err := os.Open(filePath)
+<b>diff --git a/<a id="h1" href="../file/pkg/bmbuilder/bmbuilder.go.html">pkg/bmbuilder/bmbuilder.go</a> b/<a href="../file/pkg/bmbuilder/bmbuilder.go.html">pkg/bmbuilder/bmbuilder.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -20,6 +20,7 @@ type BMBuilder struct {
+</a> 	debug         bool
+ 	isWithinBlock string
+ 	isSymbolled   string
+<a href="#h1-0-3" id="h1-0-3" class="i">+	currentBlock  string
+</a> 	passes        uint64
+ 	lineMeta      string
+ 	blocks        map[string]*BMBuilderBlock
+<a href="#h1-1" id="h1-1" class="h">@@ -59,6 +60,7 @@ func (bld *BMBuilder) BMBuilderInit() {
+</a> 	generators[&quot;h&quot;] = HadamardGenerator
+ 	generators[&quot;cx&quot;] = CnotGenerator
+ 	generators[&quot;zero&quot;] = ZeroGenerator
+<a href="#h1-1-3" id="h1-1-3" class="i">+	generators[&quot;maxpool&quot;] = MaxPoolGenerator
+</a> 
+ 	bld.generators = generators
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/bmbuilder/generator_basm.go.html">pkg/bmbuilder/generator_basm.go</a> b/<a href="../file/pkg/bmbuilder/generator_basm.go.html">pkg/bmbuilder/generator_basm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -71,36 +71,47 @@ func BasmGenerator(b *BMBuilder, e *bmline.BasmElement, l *bmline.BasmLine) (*bo
+</a> 
+ 	startAssembling := false
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-	if l.GetMeta(&quot;basmfiles&quot;) == &quot;&quot; {
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-		return nil, fmt.Errorf(&quot;No BASM files to assemble&quot;)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	if l.GetMeta(&quot;basmfiles&quot;) == &quot;&quot; &amp;&amp; l.GetMeta(&quot;basmcode&quot;) == &quot;&quot; {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		return nil, fmt.Errorf(&quot;no BASM code to assemble&quot;)
+</a> 	}
+ 
+<a href="#h2-0-9" id="h2-0-9" class="d">-	basmFiles := strings.Split(l.GetMeta(&quot;basmfiles&quot;), &quot;:&quot;)
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	if l.GetMeta(&quot;basmfiles&quot;) != &quot;&quot; {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		basmFiles := strings.Split(l.GetMeta(&quot;basmfiles&quot;), &quot;:&quot;)
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		for _, asmFile := range basmFiles {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+			startAssembling = true
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+			// Get the file extension
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+			ext := filepath.Ext(asmFile)
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+			switch ext {
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+			case &quot;.basm&quot;:
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+				err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+				if err != nil {
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+					return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+				}
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+			case &quot;.ll&quot;:
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+				err := bi.ParseAssemblyLLVM(asmFile)
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+				if err != nil {
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+					return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+				}
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+			default:
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+				// Default is .basm
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+				err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+				if err != nil {
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+					return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+				}
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			}
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+		}
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	}
+</a> 
+<a href="#h2-0-41" id="h2-0-41" class="d">-	for _, asmFile := range basmFiles {
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+	if l.GetMeta(&quot;basmcode&quot;) != &quot;&quot; {
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+		basmCode := l.GetMeta(&quot;basmcode&quot;)
+</a> 		startAssembling = true
+<a href="#h2-0-45" id="h2-0-45" class="d">-
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-		// Get the file extension
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-		ext := filepath.Ext(asmFile)
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-		switch ext {
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-		case &quot;.basm&quot;:
+</a><a href="#h2-0-52" id="h2-0-52" class="d">-			err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h2-0-53" id="h2-0-53" class="d">-			if err != nil {
+</a><a href="#h2-0-54" id="h2-0-54" class="d">-				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-55" id="h2-0-55" class="d">-			}
+</a><a href="#h2-0-56" id="h2-0-56" class="d">-		case &quot;.ll&quot;:
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-			err := bi.ParseAssemblyLLVM(asmFile)
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-			if err != nil {
+</a><a href="#h2-0-59" id="h2-0-59" class="d">-				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-60" id="h2-0-60" class="d">-			}
+</a><a href="#h2-0-61" id="h2-0-61" class="d">-		default:
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-			// Default is .basm
+</a><a href="#h2-0-63" id="h2-0-63" class="d">-			err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-			if err != nil {
+</a><a href="#h2-0-65" id="h2-0-65" class="d">-				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h2-0-66" id="h2-0-66" class="d">-			}
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+		err := bi.ParseAssemblyStringDefault(basmCode)
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+		if err != nil {
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+			return nil, errors.New(&quot;Error while parsing BASM code&quot; + err.Error())
+</a> 		}
+ 	}
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/bmbuilder/generator_maxpool.go.html">pkg/bmbuilder/generator_maxpool.go</a> b/<a href="../file/pkg/bmbuilder/generator_maxpool.go.html">pkg/bmbuilder/generator_maxpool.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,84 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmbuilder
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+)
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+func MaxPoolGenerator(b *BMBuilder, e *bmline.BasmElement, l *bmline.BasmLine) (*bondmachine.Bondmachine, error) {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	// Pay attention to the following: This code works only if the Generator function is called on a sequential block
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	var mpNum int
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	if len(l.Elements) != 1 {
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+		return nil, errors.New(&quot;MaxPool Generator: Wrong number of elements, it should be 1&quot;)
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	} else {
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+		mpNumS := l.Elements[0].GetValue()
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+		if val, err := strconv.Atoi(mpNumS); err != nil {
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+			return nil, errors.New(&quot;MaxPool Generator: Error converting MaxPool number to int&quot;)
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+		} else {
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+			mpNum = val
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+		}
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	}
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+	cb := b.currentBlock
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+	var prevIN int
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+	if len(b.blocks[cb].blockBMs) == 0 {
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+		return nil, errors.New(&quot;MaxPool Generator: No previous BMs found, it cannot be the first block&quot;)
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+	} else {
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+		prevBM := b.blocks[cb].blockBMs[len(b.blocks[cb].blockBMs)-1]
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+		prevIN = prevBM.Outputs
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	}
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	var cpNum int
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	if prevIN%mpNum != 0 {
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+		return nil, errors.New(&quot;MaxPool Generator: The number of inputs is not divisible by the MaxPool number&quot;)
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	} else {
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+		cpNum = prevIN / mpNum
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	}
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	basmCode := `%section maxpool .romtext iomode:async
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	entry _start    ; Entry point
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+_start:
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+	clr	r1
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+`
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	for i := 0; i &lt; mpNum; i++ {
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+		basmCode += `	mov	r0, i` + strconv.Itoa(i) + `
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	add	r1, r0` + &quot;\n&quot;
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+	}
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+	basmCode += &quot;\t&quot; + `mov	o0, r1
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+	j 	_start
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+%endsection
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+`
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+	for i := 0; i &lt; cpNum; i++ {
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+		basmCode += `%meta cpdef	cpu` + strconv.Itoa(i) + `	romcode: maxpool, ramsize:8` + &quot;\n&quot;
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+	}
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+	for i := 0; i &lt; cpNum; i++ {
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+		for j := 0; j &lt; mpNum; j++ {
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+			basmCode += `%meta ioatt	in` + strconv.Itoa(i) + `p` + strconv.Itoa(j) + `	cp: cpu` + strconv.Itoa(i) + `, index:` + strconv.Itoa(j) + `, type:input` + &quot;\n&quot;
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+			basmCode += `%meta ioatt	in` + strconv.Itoa(i) + `p` + strconv.Itoa(j) + `	cp: bm, index:` + strconv.Itoa(i*mpNum+j) + `, type:input` + &quot;\n&quot;
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+		}
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+		basmCode += `%meta ioatt	out` + strconv.Itoa(i) + `	cp: cpu` + strconv.Itoa(i) + `, index:0, type:output` + &quot;\n&quot;
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+		basmCode += `%meta ioatt	out` + strconv.Itoa(i) + `	cp: bm, index:` + strconv.Itoa(i) + `, type:output` + &quot;\n&quot;
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+	}
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+	basmCode += `%meta bmdef	global  registersize:8` + &quot;\n&quot;
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+	if b.debug {
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+		fmt.Println(green(&quot;\t\t\tMaxPool Generator - Start&quot;))
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+		defer fmt.Println(green(&quot;\t\t\tMaxPool Generator - End&quot;))
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+	}
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+	l.BasmMeta = l.BasmMeta.AddMeta(&quot;basmcode&quot;, basmCode)
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+	return BasmGenerator(b, e, l)
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bmbuilder/generators_exec.go.html">pkg/bmbuilder/generators_exec.go</a> b/<a href="../file/pkg/bmbuilder/generators_exec.go.html">pkg/bmbuilder/generators_exec.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -27,8 +27,10 @@ func generatorsExec(b *BMBuilder) error {
+</a> 			fmt.Println(yellow(&quot;\tGenerating block: &quot; + bName))
+ 		}
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+		b.currentBlock = bName
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a> 		// Allocate the BMs array for the block
+<a href="#h4-0-6" id="h4-0-6" class="d">-		block.blockBMs = make([]*bondmachine.Bondmachine, len(block.blockBody.Lines))
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+		block.blockBMs = make([]*bondmachine.Bondmachine, 0)
+</a> 
+ 		metaData := new(bmline.BasmElement)
+ 		metaData.SetValue(&quot;metadata&quot;)
+<a href="#h4-1" id="h4-1" class="h">@@ -43,7 +45,7 @@ func generatorsExec(b *BMBuilder) error {
+</a> 
+ 		// Loop over the lines
+ 		body := block.blockBody
+<a href="#h4-1-3" id="h4-1-3" class="d">-		for i, line := range body.Lines {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+		for _, line := range body.Lines {
+</a> 			operand := line.Operation.GetValue()
+ 
+ 			if g, ok := b.generators[operand]; !ok {
+<a href="#h4-2" id="h4-2" class="h">@@ -55,7 +57,7 @@ func generatorsExec(b *BMBuilder) error {
+</a> 				if bm, err := g(b, metaData, line); err != nil {
+ 					return err
+ 				} else {
+<a href="#h4-2-3" id="h4-2-3" class="d">-					block.blockBMs[i] = bm
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+					block.blockBMs = append(block.blockBMs, bm)
+</a> 				}
+ 			}
+ 		}
+</pre>
+</div>
+</body>
+</html>

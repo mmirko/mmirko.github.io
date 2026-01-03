@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>basm for stacks - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/31450d961ba4a192ec034791f12035c60a5b6038.html">31450d961ba4a192ec034791f12035c60a5b6038</a>
+<b>parent</b> <a href="../commit/06e04c68410b15ad7eef7b350a2cc1eab009c826.html">06e04c68410b15ad7eef7b350a2cc1eab009c826</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 24 Jan 2023 13:48:50 +0100
+
+basm for stacks
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">42</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_t2r.go</a></td><td> | </td><td class="num">46</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>2 files changed, 54 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -261,29 +261,39 @@ func (Op R2t) HLAssemblerMatch(arch *Arch) []string {
+</a> func (Op R2t) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+ 	switch line.Operation.GetValue() {
+ 	case &quot;r2t&quot;:
+<a href="#h0-0-3" id="h0-0-3" class="d">-		regNeed := line.Elements[0].GetValue()
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		soVal := line.Elements[0].GetValue()
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	case &quot;push&quot;:
+<a href="#h0-0-11" id="h0-0-11" class="d">-		regNeed := line.Elements[0].GetValue()
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		// Count the number of stacks in the architecture
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-		count := 0
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		for _, sos := range strings.Split(arch.Shared_constraints, &quot;,&quot;) {
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-			if strings.HasPrefix(sos, &quot;stack:&quot;) {
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-				count++
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-			}
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-		}
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-		if count != 1 {
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-			return nil, errors.New(&quot;the architecture must have exactly one stack for push to work&quot;)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		soVal := &quot;st0&quot; // Push implicitely uses the first stack
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+			newLine := new(bmline.BasmLine)
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			newOp := new(bmline.BasmElement)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			newOp.SetValue(&quot;r2t&quot;)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+			newLine.Operation = newOp
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+			newArg0 := new(bmline.BasmElement)
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			newArg0.SetValue(regVal)
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			newArgs[0] = newArg0
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			newArg1 := new(bmline.BasmElement)
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+			newArg1.SetValue(soVal)
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;st&quot;)
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			newArgs[1] = newArg1
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			newLine.Elements = newArgs
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+			return newLine, nil
+</a> 		}
+<a href="#h0-0-44" id="h0-0-44" class="d">-		return line, nil
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-		// TODO Verify that
+</a> 	case &quot;mov&quot;:
+ 		regVal := line.Elements[1].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+ 		soVal := line.Elements[0].GetValue()
+<a href="#h0-0-50" id="h0-0-50" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;outputs&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a> 		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+ 			newLine := new(bmline.BasmLine)
+ 			newOp := new(bmline.BasmElement)
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a> b/<a href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -256,29 +256,39 @@ func (Op T2r) HLAssemblerMatch(arch *Arch) []string {
+</a> func (Op T2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+ 	switch line.Operation.GetValue() {
+ 	case &quot;t2r&quot;:
+<a href="#h1-0-3" id="h1-0-3" class="d">-		regNeed := line.Elements[0].GetValue()
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		soVal := line.Elements[1].GetValue()
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	case &quot;pull&quot;:
+<a href="#h1-0-11" id="h1-0-11" class="d">-		regNeed := line.Elements[0].GetValue()
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-		// Count the number of stacks in the architecture
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-		count := 0
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-		for _, sos := range strings.Split(arch.Shared_constraints, &quot;,&quot;) {
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-			if strings.HasPrefix(sos, &quot;stack:&quot;) {
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-				count++
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-			}
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-		}
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-		if count != 1 {
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-			return nil, errors.New(&quot;the architecture must have exactly one stack for push to work&quot;)
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		soVal := &quot;st0&quot; // Pull implicitly uses stack 0
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+			newLine := new(bmline.BasmLine)
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+			newOp := new(bmline.BasmElement)
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+			newOp.SetValue(&quot;t2r&quot;)
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+			newLine.Operation = newOp
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+			newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+			newArg0 := new(bmline.BasmElement)
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+			newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+			newArg0.SetValue(regVal)
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+			newArgs[0] = newArg0
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+			newArg1 := new(bmline.BasmElement)
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+			newArg1.SetValue(soVal)
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;st&quot;)
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+			newArgs[1] = newArg1
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+			newLine.Elements = newArgs
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+			return newLine, nil
+</a> 		}
+<a href="#h1-0-44" id="h1-0-44" class="d">-		return line, nil
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-		// TODO Verify that
+</a> 	case &quot;mov&quot;:
+<a href="#h1-0-47" id="h1-0-47" class="d">-		regVal := line.Elements[1].GetValue()
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+		regVal := line.Elements[0].GetValue()
+</a> 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+<a href="#h1-0-50" id="h1-0-50" class="d">-		soVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;outputs&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+		soVal := line.Elements[1].GetValue()
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a> 		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+ 			newLine := new(bmline.BasmLine)
+ 			newOp := new(bmline.BasmElement)
+</pre>
+</div>
+</body>
+</html>

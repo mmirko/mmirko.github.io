@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minor - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d589a2c96c7e33f860386d9c56472cae1caaec74.html">d589a2c96c7e33f860386d9c56472cae1caaec74</a>
+<b>parent</b> <a href="../commit/4da6f218931fe95b116e7f9ea527965f49cc14d4.html">4da6f218931fe95b116e7f9ea527965f49cc14d4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 26 May 2024 00:05:26 +0200
+
+Minor
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmqsim/files_cppopencl_complex.go</a></td><td> | </td><td class="num">164</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 127 insertions(+), 37 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a> b/<a href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,35 +12,40 @@ const (
+</a> #define TOTIN BATCH_SIZE*BM_INPUT
+ #define TOTOUT BATCH_SIZE*BM_OUTPUT
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-int main() {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+int main(int argc, char *argv[])
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+{
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+        FILE *fp;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+        char *line = NULL;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+        size_t len = 0;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+        ssize_t read;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+        int i = 0;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+        int total = 0;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+        int offset = 0;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+        int threshold = 0;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a>         std::string bmFirmwareFile = &quot;firmware.xclbin&quot;;
+ 
+         // Allocate Memory in Host Memory
+         auto vector_size_bytes_in = sizeof(float) * TOTIN;
+         auto vector_size_bytes_out = sizeof(float) * TOTOUT;
+ 
+<a href="#h0-0-21" id="h0-0-21" class="d">-        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_input(TOTIN);
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_output(TOTOUT);
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-        // Create zero state
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-        for (int i = 0; i &lt; TOTIN ; i++) {
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-                source_input[i] = 0.0;
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-        }
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-        source_input[0] = 1.0;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt;&gt; source_input(TOTIN);
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt;&gt; source_output(TOTOUT);
+</a> 
+<a href="#h0-0-32" id="h0-0-32" class="d">-        // OpenCL context, device, program, kernel 
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+        // OpenCL context, device, program, kernel
+</a>         cl_int err;
+         cl::CommandQueue q;
+         cl::Context context;
+         cl::Program program;
+<a href="#h0-0-38" id="h0-0-38" class="d">-        
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+
+</a>         auto devices = xcl::get_xil_devices();
+ 
+         // load the BM firmware and return the pointer to file buffer.
+         auto fileBuf = xcl::read_binary_file(bmFirmwareFile);
+         cl::Program::Binaries bins{{&quot;{{&quot;}}fileBuf.data(), fileBuf.size(){{&quot;}}&quot;}};
+         bool valid_device = false;
+<a href="#h0-0-46" id="h0-0-46" class="d">-        for (unsigned int i = 0; i &lt; devices.size(); i++) {
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+        for (unsigned int i = 0; i &lt; devices.size(); i++)
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+        {
+</a>                 auto device = devices[i];
+ 
+                 // Creating Context and Command Queue for selected Device
+<a href="#h0-1" id="h0-1" class="h">@@ -49,50 +54,135 @@ int main() {
+</a> 
+                 // std::cout &lt;&lt; &quot;Trying to program device[&quot; &lt;&lt; i &lt;&lt; &quot;]: &quot; &lt;&lt; device.getInfo&lt;CL_DEVICE_NAME&gt;() &lt;&lt; std::endl;
+                 program = cl::Program(context, {device}, bins, nullptr, &amp;err);
+<a href="#h0-1-3" id="h0-1-3" class="d">-                if (err != CL_SUCCESS) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+                if (err != CL_SUCCESS)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+                {
+</a>                         std::cout &lt;&lt; &quot;Failed to program device[&quot; &lt;&lt; i &lt;&lt; &quot;] with xclbin file!\n&quot;;
+<a href="#h0-1-7" id="h0-1-7" class="d">-                } else {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+                }
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+                else
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+                {
+</a>                         std::cout &lt;&lt; &quot;Device[&quot; &lt;&lt; i &lt;&lt; &quot;]: program successful!\n&quot;;
+                         valid_device = true;
+                         break; // we break because we found a valid device
+                 }
+         }
+<a href="#h0-1-16" id="h0-1-16" class="d">-        if (!valid_device) {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+        if (!valid_device)
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+        {
+</a>                 std::cout &lt;&lt; &quot;Failed to program any device found, exit!\n&quot;;
+                 exit(EXIT_FAILURE);
+         }
+ 
+         OCL_CHECK(err, cl::Kernel krnl_bondmachine(program, &quot;krnl_bondmachine_rtl&quot;, &amp;err));
+ 
+<a href="#h0-1-25" id="h0-1-25" class="d">-        // Allocate Buffer in Global Memory
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-        OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-        OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+        if (argc == 3) // argv[1] is the input file, argv[2] is the output file
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+        {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+                fp = fopen(argv[1], &quot;r&quot;);
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+                if (fp == NULL)
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+                        printf(&quot;Input file %s not found\n&quot;, argv[1]), exit(EXIT_FAILURE);
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+                while ((read = getline(&amp;line, &amp;len, fp)) != -1)
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+                        i++;
+</a> 
+<a href="#h0-1-36" id="h0-1-36" class="d">-        // Set the Kernel Arguments
+</a><a href="#h0-1-37" id="h0-1-37" class="d">-        OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+</a><a href="#h0-1-38" id="h0-1-38" class="d">-        OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+                if (i % BM_INPUT != 0)
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+                        printf(&quot;Input file %s has wrong number of elements\n&quot;, argv[1]), exit(EXIT_FAILURE);
+</a> 
+<a href="#h0-1-42" id="h0-1-42" class="d">-        // Copy input data to device global memory
+</a><a href="#h0-1-43" id="h0-1-43" class="d">-        cl::Event write_event;
+</a><a href="#h0-1-44" id="h0-1-44" class="d">-        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+                rewind(fp);
+</a> 
+<a href="#h0-1-47" id="h0-1-47" class="d">-        // Launch the Kernel
+</a><a href="#h0-1-48" id="h0-1-48" class="d">-        std::vector&lt;cl::Event&gt; eventVec;
+</a><a href="#h0-1-49" id="h0-1-49" class="d">-        eventVec.push_back(write_event);
+</a><a href="#h0-1-50" id="h0-1-50" class="d">-        OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+                float *data = (float *)malloc(sizeof(float) * i);
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+                i = 0;
+</a> 
+<a href="#h0-1-54" id="h0-1-54" class="d">-        // wait for all kernels to finish their operations
+</a><a href="#h0-1-55" id="h0-1-55" class="d">-        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-56" id="h0-1-56" class="d">-
+</a><a href="#h0-1-57" id="h0-1-57" class="d">-        // Copy Result from Device Global Memory to Host Local Memory
+</a><a href="#h0-1-58" id="h0-1-58" class="d">-        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+</a><a href="#h0-1-59" id="h0-1-59" class="d">-        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+                while ((read = getline(&amp;line, &amp;len, fp)) != -1)
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+                {
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+                        data[i] = atof(line);
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+                        // printf(&quot;%f\n&quot;, data[i]);
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+                        i++;
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+                }
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+                fclose(fp);
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+                total = i;
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+                fp = fopen(argv[2], &quot;w&quot;);
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+                if (fp == NULL)
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+                        printf(&quot;Output file %s cannot be opened\n&quot;, argv[2]), exit(EXIT_FAILURE);
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+                threshold = BATCH_SIZE;
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+                for (offset = 0; offset &lt; total; offset += TOTIN)
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+                {
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+                        for (int i = 0; i &lt; TOTIN; i++)
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+                                if (i + offset &lt; total)
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+                                        source_input[i] = data[i + offset];
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+                                else
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+                                {
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+                                        if (threshold == BATCH_SIZE)
+</a><a href="#h0-1-82" id="h0-1-82" class="i">+                                                threshold = i / BM_INPUT;
+</a><a href="#h0-1-83" id="h0-1-83" class="i">+                                        source_input[i] = 0;
+</a><a href="#h0-1-84" id="h0-1-84" class="i">+                                }
+</a><a href="#h0-1-85" id="h0-1-85" class="i">+
+</a><a href="#h0-1-86" id="h0-1-86" class="i">+                        // Allocate Buffer in Global Memory
+</a><a href="#h0-1-87" id="h0-1-87" class="i">+                        OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+</a><a href="#h0-1-88" id="h0-1-88" class="i">+                        OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+</a><a href="#h0-1-89" id="h0-1-89" class="i">+
+</a><a href="#h0-1-90" id="h0-1-90" class="i">+                        // Set the Kernel Arguments
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+                        OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+</a><a href="#h0-1-92" id="h0-1-92" class="i">+                        OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+</a><a href="#h0-1-93" id="h0-1-93" class="i">+
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+                        // Copy input data to device global memory
+</a><a href="#h0-1-95" id="h0-1-95" class="i">+                        cl::Event write_event;
+</a><a href="#h0-1-96" id="h0-1-96" class="i">+                        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+</a><a href="#h0-1-97" id="h0-1-97" class="i">+
+</a><a href="#h0-1-98" id="h0-1-98" class="i">+                        // Launch the Kernel
+</a><a href="#h0-1-99" id="h0-1-99" class="i">+                        std::vector&lt;cl::Event&gt; eventVec;
+</a><a href="#h0-1-100" id="h0-1-100" class="i">+                        eventVec.push_back(write_event);
+</a><a href="#h0-1-101" id="h0-1-101" class="i">+                        OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+</a><a href="#h0-1-102" id="h0-1-102" class="i">+
+</a><a href="#h0-1-103" id="h0-1-103" class="i">+                        // wait for all kernels to finish their operations
+</a><a href="#h0-1-104" id="h0-1-104" class="i">+                        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-105" id="h0-1-105" class="i">+
+</a><a href="#h0-1-106" id="h0-1-106" class="i">+                        // Copy Result from Device Global Memory to Host Local Memory
+</a><a href="#h0-1-107" id="h0-1-107" class="i">+                        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+</a><a href="#h0-1-108" id="h0-1-108" class="i">+                        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-109" id="h0-1-109" class="i">+                        for (int i = 0; i &lt; TOTOUT; i++)
+</a><a href="#h0-1-110" id="h0-1-110" class="i">+                                if (i &lt; threshold * BM_OUTPUT)
+</a><a href="#h0-1-111" id="h0-1-111" class="i">+                                        fprintf(fp, &quot;%.12f\n&quot;, source_output[i]);
+</a><a href="#h0-1-112" id="h0-1-112" class="i">+                }
+</a> 
+<a href="#h0-1-114" id="h0-1-114" class="d">-        for (int i = 0; i &lt; BM_OUTPUT; i++) {
+</a><a href="#h0-1-115" id="h0-1-115" class="d">-                std::cout &lt;&lt; &quot; Device result = &quot; &lt;&lt; source_output[i] &lt;&lt; std::endl;
+</a><a href="#h0-1-116" id="h0-1-116" class="i">+                fclose(fp);
+</a>         }
+ 
+<a href="#h0-1-119" id="h0-1-119" class="d">-        return 0; 
+</a><a href="#h0-1-120" id="h0-1-120" class="i">+        else // If a file is not provided, compute the zero state
+</a><a href="#h0-1-121" id="h0-1-121" class="i">+        {
+</a><a href="#h0-1-122" id="h0-1-122" class="i">+                for (int i = 0; i &lt; TOTIN; i++)
+</a><a href="#h0-1-123" id="h0-1-123" class="i">+                        source_input[i] = 0;
+</a><a href="#h0-1-124" id="h0-1-124" class="i">+                source_input[0] = 1.0;
+</a><a href="#h0-1-125" id="h0-1-125" class="i">+
+</a><a href="#h0-1-126" id="h0-1-126" class="i">+                printf(&quot;%f %f %f %f %f %f %f %f \n&quot;, source_input[0], source_input[1], source_input[2], source_input[3], source_input[4], source_input[5], source_input[6], source_input[7]);
+</a><a href="#h0-1-127" id="h0-1-127" class="i">+
+</a><a href="#h0-1-128" id="h0-1-128" class="i">+                // Allocate Buffer in Global Memory
+</a><a href="#h0-1-129" id="h0-1-129" class="i">+                OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+</a><a href="#h0-1-130" id="h0-1-130" class="i">+                OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+</a><a href="#h0-1-131" id="h0-1-131" class="i">+
+</a><a href="#h0-1-132" id="h0-1-132" class="i">+                // Set the Kernel Arguments
+</a><a href="#h0-1-133" id="h0-1-133" class="i">+                OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+</a><a href="#h0-1-134" id="h0-1-134" class="i">+                OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+</a><a href="#h0-1-135" id="h0-1-135" class="i">+
+</a><a href="#h0-1-136" id="h0-1-136" class="i">+                // Copy input data to device global memory
+</a><a href="#h0-1-137" id="h0-1-137" class="i">+                cl::Event write_event;
+</a><a href="#h0-1-138" id="h0-1-138" class="i">+                OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+</a><a href="#h0-1-139" id="h0-1-139" class="i">+
+</a><a href="#h0-1-140" id="h0-1-140" class="i">+                // Launch the Kernel
+</a><a href="#h0-1-141" id="h0-1-141" class="i">+                std::vector&lt;cl::Event&gt; eventVec;
+</a><a href="#h0-1-142" id="h0-1-142" class="i">+                eventVec.push_back(write_event);
+</a><a href="#h0-1-143" id="h0-1-143" class="i">+                OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+</a><a href="#h0-1-144" id="h0-1-144" class="i">+
+</a><a href="#h0-1-145" id="h0-1-145" class="i">+                // wait for all kernels to finish their operations
+</a><a href="#h0-1-146" id="h0-1-146" class="i">+                OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-147" id="h0-1-147" class="i">+
+</a><a href="#h0-1-148" id="h0-1-148" class="i">+                // Copy Result from Device Global Memory to Host Local Memory
+</a><a href="#h0-1-149" id="h0-1-149" class="i">+                OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+</a><a href="#h0-1-150" id="h0-1-150" class="i">+                OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-151" id="h0-1-151" class="i">+
+</a><a href="#h0-1-152" id="h0-1-152" class="i">+	        for (int i = 0; i &lt; BM_OUTPUT; i++) {
+</a><a href="#h0-1-153" id="h0-1-153" class="i">+	                std::cout &lt;&lt; source_output[i] &lt;&lt; std::endl;
+</a><a href="#h0-1-154" id="h0-1-154" class="i">+
+</a><a href="#h0-1-155" id="h0-1-155" class="i">+        }
+</a><a href="#h0-1-156" id="h0-1-156" class="i">+        return 0;
+</a> }
+ `
+ )
+</pre>
+</div>
+</body>
+</html>

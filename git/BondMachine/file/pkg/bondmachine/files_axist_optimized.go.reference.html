@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_axist_optimized.go.reference - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_axist_optimized.go.reference (19162B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> 
+<a href="#l2" class="line" id="l2">      2</a> `timescale 1 ns / 1 ps
+<a href="#l3" class="line" id="l3">      3</a> 
+<a href="#l4" class="line" id="l4">      4</a> module bmstream_v1_0 #
+<a href="#l5" class="line" id="l5">      5</a> (
+<a href="#l6" class="line" id="l6">      6</a> 	parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+<a href="#l7" class="line" id="l7">      7</a> 	parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+<a href="#l8" class="line" id="l8">      8</a> 	parameter integer C_M00_AXIS_START_COUNT	= 32
+<a href="#l9" class="line" id="l9">      9</a> )
+<a href="#l10" class="line" id="l10">     10</a> (
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> 	input wire  s00_axis_aclk,
+<a href="#l13" class="line" id="l13">     13</a> 	input wire  s00_axis_aresetn,
+<a href="#l14" class="line" id="l14">     14</a> 	output wire  s00_axis_tready,
+<a href="#l15" class="line" id="l15">     15</a> 	input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+<a href="#l16" class="line" id="l16">     16</a> 	input wire [(C_S00_AXIS_TDATA_WIDTH/8)-1 : 0] s00_axis_tstrb,
+<a href="#l17" class="line" id="l17">     17</a> 	input wire  s00_axis_tlast,
+<a href="#l18" class="line" id="l18">     18</a> 	input wire  s00_axis_tvalid,
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> 	input wire  m00_axis_aclk,
+<a href="#l21" class="line" id="l21">     21</a> 	input wire  m00_axis_aresetn,
+<a href="#l22" class="line" id="l22">     22</a> 	output wire  m00_axis_tvalid,
+<a href="#l23" class="line" id="l23">     23</a> 	output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+<a href="#l24" class="line" id="l24">     24</a> 	output wire [(C_M00_AXIS_TDATA_WIDTH/8)-1 : 0] m00_axis_tstrb,
+<a href="#l25" class="line" id="l25">     25</a> 	output wire  m00_axis_tlast,
+<a href="#l26" class="line" id="l26">     26</a> 	input wire  m00_axis_tready
+<a href="#l27" class="line" id="l27">     27</a> );
+<a href="#l28" class="line" id="l28">     28</a> 
+<a href="#l29" class="line" id="l29">     29</a>     
+<a href="#l30" class="line" id="l30">     30</a> localparam [31:0] samples = 16; // number of samples that I expect from the client
+<a href="#l31" class="line" id="l31">     31</a> localparam [31:0] fifodepth = 256; // Should be multiple of samples
+<a href="#l32" class="line" id="l32">     32</a> 
+<a href="#l33" class="line" id="l33">     33</a> localparam [31:0] bminputs = 4;  // number of bminputs for each sample
+<a href="#l34" class="line" id="l34">     34</a> localparam [31:0] BATCH_IN_ELEMENTS = samples*bminputs;
+<a href="#l35" class="line" id="l35">     35</a> localparam [31:0] TOT_IN_ELEMENTS  = fifodepth*bminputs;                                     
+<a href="#l36" class="line" id="l36">     36</a> 	
+<a href="#l37" class="line" id="l37">     37</a> localparam [31:0] bmoutputs = 1;
+<a href="#l38" class="line" id="l38">     38</a> localparam [31:0] BATCH_OUT_ELEMENTS = samples*bmoutputs;
+<a href="#l39" class="line" id="l39">     39</a> localparam [31:0] TOT_OUT_ELEMENTS = fifodepth*bmoutputs;
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a> // Receiver object
+<a href="#l42" class="line" id="l42">     42</a> localparam [1:0] IDLE = 1&#39;b0,
+<a href="#l43" class="line" id="l43">     43</a>                  WRITE_FIFO  = 1&#39;b1; 
+<a href="#l44" class="line" id="l44">     44</a> 	                                    
+<a href="#l45" class="line" id="l45">     45</a> wire  	   axis_tready;
+<a href="#l46" class="line" id="l46">     46</a> reg        mst_exec_state;     
+<a href="#l47" class="line" id="l47">     47</a> wire       fifo_wren;
+<a href="#l48" class="line" id="l48">     48</a> reg        fifo_full_flag;
+<a href="#l49" class="line" id="l49">     49</a> reg [31:0] fifo2bm_write_pointer;
+<a href="#l50" class="line" id="l50">     50</a> reg [31:0] fifo2bm_read_pointer;
+<a href="#l51" class="line" id="l51">     51</a> reg [31:0] fifo2bm_batch_pointer;
+<a href="#l52" class="line" id="l52">     52</a> reg [31:0] fifo2bm_count;
+<a href="#l53" class="line" id="l53">     53</a> reg        writes_done;
+<a href="#l54" class="line" id="l54">     54</a> 
+<a href="#l55" class="line" id="l55">     55</a> reg fifo_wren_old;
+<a href="#l56" class="line" id="l56">     56</a> reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] stream_data_fifo [0 : TOT_IN_ELEMENTS-1];
+<a href="#l57" class="line" id="l57">     57</a> 
+<a href="#l58" class="line" id="l58">     58</a> 
+<a href="#l59" class="line" id="l59">     59</a> wire [31:0] i0;
+<a href="#l60" class="line" id="l60">     60</a> wire [31:0] i1;
+<a href="#l61" class="line" id="l61">     61</a> wire [31:0] i2;
+<a href="#l62" class="line" id="l62">     62</a> wire [31:0] i3;
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> wire i0_valid;
+<a href="#l65" class="line" id="l65">     65</a> wire i1_valid;
+<a href="#l66" class="line" id="l66">     66</a> wire i2_valid;
+<a href="#l67" class="line" id="l67">     67</a> wire i3_valid;
+<a href="#l68" class="line" id="l68">     68</a> 
+<a href="#l69" class="line" id="l69">     69</a> wire i0_received;
+<a href="#l70" class="line" id="l70">     70</a> wire i1_received;
+<a href="#l71" class="line" id="l71">     71</a> wire i2_received;
+<a href="#l72" class="line" id="l72">     72</a> wire i3_received;
+<a href="#l73" class="line" id="l73">     73</a> 
+<a href="#l74" class="line" id="l74">     74</a> reg fifo2bm_impulse;
+<a href="#l75" class="line" id="l75">     75</a> wire fifo2bm_ready;
+<a href="#l76" class="line" id="l76">     76</a> reg [31:0] fifo2bm_data; 
+<a href="#l77" class="line" id="l77">     77</a> 	
+<a href="#l78" class="line" id="l78">     78</a> // Sender objects
+<a href="#l79" class="line" id="l79">     79</a> localparam [1:0] IDLE_M = 2&#39;b00,                                              
+<a href="#l80" class="line" id="l80">     80</a>                  SEND_STREAM_M = 2&#39;b01,
+<a href="#l81" class="line" id="l81">     81</a>                  WAIT_M = 2&#39;b10; 
+<a href="#l82" class="line" id="l82">     82</a>                                                           
+<a href="#l83" class="line" id="l83">     83</a> reg [1:0]   mst_exec_state_M;
+<a href="#l84" class="line" id="l84">     84</a> 
+<a href="#l85" class="line" id="l85">     85</a> wire  	axis_tvalid;
+<a href="#l86" class="line" id="l86">     86</a> reg  	axis_tvalid_delay;
+<a href="#l87" class="line" id="l87">     87</a> wire  	axis_tlast;
+<a href="#l88" class="line" id="l88">     88</a> reg  	axis_tlast_delay;
+<a href="#l89" class="line" id="l89">     89</a> reg [C_M00_AXIS_TDATA_WIDTH-1 : 0] 	stream_data_out;
+<a href="#l90" class="line" id="l90">     90</a> wire  	tx_en;
+<a href="#l91" class="line" id="l91">     91</a> reg  	tx_done;
+<a href="#l92" class="line" id="l92">     92</a> 
+<a href="#l93" class="line" id="l93">     93</a> wire [31:0] o0;
+<a href="#l94" class="line" id="l94">     94</a> wire o0_valid;
+<a href="#l95" class="line" id="l95">     95</a> wire o0_received;
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> reg bm2fifo_ack;
+<a href="#l98" class="line" id="l98">     98</a> wire bm2fifo_ready;
+<a href="#l99" class="line" id="l99">     99</a> wire [31:0] bm2fifo_data;
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a> reg [31:0] bm2fifo_write_pointer;
+<a href="#l102" class="line" id="l102">    102</a> reg [31:0] bm2fifo_read_pointer;
+<a href="#l103" class="line" id="l103">    103</a> reg [31:0] bm2fifo_batch_pointer;
+<a href="#l104" class="line" id="l104">    104</a> reg [31:0] bm2fifo_count;
+<a href="#l105" class="line" id="l105">    105</a> 
+<a href="#l106" class="line" id="l106">    106</a> reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] outstream_data_fifo [0 : TOT_OUT_ELEMENTS-1];
+<a href="#l107" class="line" id="l107">    107</a> 
+<a href="#l108" class="line" id="l108">    108</a> integer i,j;
+<a href="#l109" class="line" id="l109">    109</a> 
+<a href="#l110" class="line" id="l110">    110</a> initial begin
+<a href="#l111" class="line" id="l111">    111</a> 	bm2fifo_write_pointer=0;
+<a href="#l112" class="line" id="l112">    112</a> 	bm2fifo_read_pointer=0;
+<a href="#l113" class="line" id="l113">    113</a> 	bm2fifo_batch_pointer=0;
+<a href="#l114" class="line" id="l114">    114</a> 	bm2fifo_count=0;
+<a href="#l115" class="line" id="l115">    115</a> 	bm2fifo_ack=0;
+<a href="#l116" class="line" id="l116">    116</a> 	fifo2bm_data=0;
+<a href="#l117" class="line" id="l117">    117</a> 	fifo2bm_write_pointer=0;
+<a href="#l118" class="line" id="l118">    118</a> 	fifo2bm_read_pointer=0;
+<a href="#l119" class="line" id="l119">    119</a> 	fifo2bm_batch_pointer=0;
+<a href="#l120" class="line" id="l120">    120</a> 	fifo2bm_count=0;
+<a href="#l121" class="line" id="l121">    121</a> 	writes_done=0;
+<a href="#l122" class="line" id="l122">    122</a> 	mst_exec_state=0;
+<a href="#l123" class="line" id="l123">    123</a> 	fifo_wren_old=0;
+<a href="#l124" class="line" id="l124">    124</a> 	fifo2bm_impulse=0;
+<a href="#l125" class="line" id="l125">    125</a> 	fifo2bm_data=0;
+<a href="#l126" class="line" id="l126">    126</a> 	tx_done=0;
+<a href="#l127" class="line" id="l127">    127</a> 	bm2fifo_ack=0;
+<a href="#l128" class="line" id="l128">    128</a> 	for (i=0;i&lt;TOT_OUT_ELEMENTS;i=i+1) begin
+<a href="#l129" class="line" id="l129">    129</a> 		outstream_data_fifo[i]&lt;=0;
+<a href="#l130" class="line" id="l130">    130</a> 	end
+<a href="#l131" class="line" id="l131">    131</a> 	for (j=0;j&lt;TOT_IN_ELEMENTS;j=j+1) begin
+<a href="#l132" class="line" id="l132">    132</a> 		stream_data_fifo[j]&lt;=0;
+<a href="#l133" class="line" id="l133">    133</a> 	end
+<a href="#l134" class="line" id="l134">    134</a> end
+<a href="#l135" class="line" id="l135">    135</a> 
+<a href="#l136" class="line" id="l136">    136</a> /*
+<a href="#l137" class="line" id="l137">    137</a>     NOW START THE AXIS SLAVE SECTION, corresponding to BM Inputs
+<a href="#l138" class="line" id="l138">    138</a> */
+<a href="#l139" class="line" id="l139">    139</a> 
+<a href="#l140" class="line" id="l140">    140</a> assign m00_axis_tvalid	= axis_tvalid_delay;
+<a href="#l141" class="line" id="l141">    141</a> assign m00_axis_tdata[(C_S00_AXIS_TDATA_WIDTH)-1:0] = stream_data_out[(C_S00_AXIS_TDATA_WIDTH)-1:0];
+<a href="#l142" class="line" id="l142">    142</a> assign m00_axis_tlast	= axis_tlast_delay;
+<a href="#l143" class="line" id="l143">    143</a> 
+<a href="#l144" class="line" id="l144">    144</a> 
+<a href="#l145" class="line" id="l145">    145</a> assign s00_axis_tready	= axis_tready;
+<a href="#l146" class="line" id="l146">    146</a> 
+<a href="#l147" class="line" id="l147">    147</a> // FSM for the AXI stream receiver
+<a href="#l148" class="line" id="l148">    148</a> always @(posedge s00_axis_aclk) begin  
+<a href="#l149" class="line" id="l149">    149</a> 	if (!s00_axis_aresetn) begin
+<a href="#l150" class="line" id="l150">    150</a> 		mst_exec_state &lt;= IDLE;
+<a href="#l151" class="line" id="l151">    151</a> 	end  
+<a href="#l152" class="line" id="l152">    152</a> 	else begin
+<a href="#l153" class="line" id="l153">    153</a> 		case (mst_exec_state)
+<a href="#l154" class="line" id="l154">    154</a> 		IDLE: begin
+<a href="#l155" class="line" id="l155">    155</a> 	        	if (s00_axis_tvalid &amp;&amp; (fifo_wren == fifo_wren_old) &amp;&amp; (fifo2bm_count + BATCH_IN_ELEMENTS &lt;= TOT_IN_ELEMENTS)) begin
+<a href="#l156" class="line" id="l156">    156</a> 	        		mst_exec_state &lt;= WRITE_FIFO;
+<a href="#l157" class="line" id="l157">    157</a> 	            	end
+<a href="#l158" class="line" id="l158">    158</a> 	          	else begin
+<a href="#l159" class="line" id="l159">    159</a> 	              		mst_exec_state &lt;= IDLE;
+<a href="#l160" class="line" id="l160">    160</a> 	            	end
+<a href="#l161" class="line" id="l161">    161</a> 		end
+<a href="#l162" class="line" id="l162">    162</a> 		WRITE_FIFO: begin
+<a href="#l163" class="line" id="l163">    163</a> 			if (writes_done || !s00_axis_tvalid) begin
+<a href="#l164" class="line" id="l164">    164</a> 				mst_exec_state &lt;= IDLE;
+<a href="#l165" class="line" id="l165">    165</a> 			end
+<a href="#l166" class="line" id="l166">    166</a> 			else begin
+<a href="#l167" class="line" id="l167">    167</a> 				mst_exec_state &lt;= WRITE_FIFO;
+<a href="#l168" class="line" id="l168">    168</a> 			end
+<a href="#l169" class="line" id="l169">    169</a> 		end
+<a href="#l170" class="line" id="l170">    170</a> 		endcase
+<a href="#l171" class="line" id="l171">    171</a> 	end
+<a href="#l172" class="line" id="l172">    172</a> end
+<a href="#l173" class="line" id="l173">    173</a> 
+<a href="#l174" class="line" id="l174">    174</a> assign axis_tready = (mst_exec_state == WRITE_FIFO);
+<a href="#l175" class="line" id="l175">    175</a> 
+<a href="#l176" class="line" id="l176">    176</a> // AXI receiver to FIFO batch pointer
+<a href="#l177" class="line" id="l177">    177</a> always@(posedge s00_axis_aclk) begin
+<a href="#l178" class="line" id="l178">    178</a> 	if(!s00_axis_aresetn) begin
+<a href="#l179" class="line" id="l179">    179</a> 		fifo2bm_batch_pointer &lt;= 0;
+<a href="#l180" class="line" id="l180">    180</a> 		writes_done &lt;= 1&#39;b0;
+<a href="#l181" class="line" id="l181">    181</a> 	end  
+<a href="#l182" class="line" id="l182">    182</a> 	else begin
+<a href="#l183" class="line" id="l183">    183</a> 		if (!writes_done &amp;&amp; fifo_wren) begin
+<a href="#l184" class="line" id="l184">    184</a> 			fifo2bm_batch_pointer &lt;= fifo2bm_batch_pointer + 1;
+<a href="#l185" class="line" id="l185">    185</a> 			if (fifo2bm_batch_pointer == BATCH_IN_ELEMENTS-1) begin
+<a href="#l186" class="line" id="l186">    186</a> 				writes_done &lt;= 1&#39;b1;
+<a href="#l187" class="line" id="l187">    187</a> 				fifo2bm_batch_pointer &lt;= 1&#39;b0;
+<a href="#l188" class="line" id="l188">    188</a> 			end
+<a href="#l189" class="line" id="l189">    189</a> 			else begin
+<a href="#l190" class="line" id="l190">    190</a> 				writes_done &lt;= 1&#39;b0;
+<a href="#l191" class="line" id="l191">    191</a> 			end
+<a href="#l192" class="line" id="l192">    192</a> 		end
+<a href="#l193" class="line" id="l193">    193</a> 		else begin
+<a href="#l194" class="line" id="l194">    194</a> 			writes_done &lt;= 1&#39;b0;
+<a href="#l195" class="line" id="l195">    195</a> 		end
+<a href="#l196" class="line" id="l196">    196</a> 	end
+<a href="#l197" class="line" id="l197">    197</a> end 
+<a href="#l198" class="line" id="l198">    198</a> 	         
+<a href="#l199" class="line" id="l199">    199</a> assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> // old value of fifo_wren	
+<a href="#l202" class="line" id="l202">    202</a> always @( posedge s00_axis_aclk ) begin
+<a href="#l203" class="line" id="l203">    203</a> 	fifo_wren_old &lt;= fifo_wren;
+<a href="#l204" class="line" id="l204">    204</a> end
+<a href="#l205" class="line" id="l205">    205</a> 	
+<a href="#l206" class="line" id="l206">    206</a> 
+<a href="#l207" class="line" id="l207">    207</a> // The actual FIFO write process
+<a href="#l208" class="line" id="l208">    208</a> always @( posedge s00_axis_aclk ) begin
+<a href="#l209" class="line" id="l209">    209</a> 	if (fifo_wren) begin
+<a href="#l210" class="line" id="l210">    210</a> 		stream_data_fifo[fifo2bm_write_pointer+fifo2bm_batch_pointer] &lt;= s00_axis_tdata[31:0];
+<a href="#l211" class="line" id="l211">    211</a> 	end  
+<a href="#l212" class="line" id="l212">    212</a> end      
+<a href="#l213" class="line" id="l213">    213</a> 
+<a href="#l214" class="line" id="l214">    214</a> // Read,Write pointer update and element count update
+<a href="#l215" class="line" id="l215">    215</a> always @( posedge s00_axis_aclk ) begin
+<a href="#l216" class="line" id="l216">    216</a>         if (!fifo_wren &amp;&amp; fifo_wren_old) begin
+<a href="#l217" class="line" id="l217">    217</a>         	fifo2bm_impulse &lt;= 1&#39;b0;
+<a href="#l218" class="line" id="l218">    218</a> 		fifo2bm_count &lt;= fifo2bm_count + BATCH_IN_ELEMENTS;
+<a href="#l219" class="line" id="l219">    219</a>         	if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS == TOT_IN_ELEMENTS) begin
+<a href="#l220" class="line" id="l220">    220</a>          		fifo2bm_write_pointer &lt;= 0;
+<a href="#l221" class="line" id="l221">    221</a>             	end
+<a href="#l222" class="line" id="l222">    222</a>         	else begin
+<a href="#l223" class="line" id="l223">    223</a> 			fifo2bm_write_pointer &lt;= fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+<a href="#l224" class="line" id="l224">    224</a> 		end
+<a href="#l225" class="line" id="l225">    225</a>         end
+<a href="#l226" class="line" id="l226">    226</a>         else begin
+<a href="#l227" class="line" id="l227">    227</a>         	if (fifo2bm_count &gt; 0) begin
+<a href="#l228" class="line" id="l228">    228</a> 			if (fifo2bm_ready &amp;&amp; !fifo2bm_impulse) begin
+<a href="#l229" class="line" id="l229">    229</a>         			fifo2bm_impulse &lt;= 1&#39;b1;
+<a href="#l230" class="line" id="l230">    230</a>                 		fifo2bm_data &lt;= stream_data_fifo[fifo2bm_read_pointer];
+<a href="#l231" class="line" id="l231">    231</a> 				fifo2bm_count &lt;= fifo2bm_count - 1; 
+<a href="#l232" class="line" id="l232">    232</a>                 		if (fifo2bm_read_pointer+1 == TOT_IN_ELEMENTS) begin
+<a href="#l233" class="line" id="l233">    233</a>                         		fifo2bm_read_pointer &lt;= 0;
+<a href="#l234" class="line" id="l234">    234</a>                     		end
+<a href="#l235" class="line" id="l235">    235</a>                     		else begin
+<a href="#l236" class="line" id="l236">    236</a>                         		fifo2bm_read_pointer &lt;= fifo2bm_read_pointer +1;
+<a href="#l237" class="line" id="l237">    237</a>                     		end
+<a href="#l238" class="line" id="l238">    238</a>                 	end
+<a href="#l239" class="line" id="l239">    239</a>                 	else begin
+<a href="#l240" class="line" id="l240">    240</a>                     		fifo2bm_impulse &lt;= 1&#39;b0;
+<a href="#l241" class="line" id="l241">    241</a>                 	end
+<a href="#l242" class="line" id="l242">    242</a>             	end
+<a href="#l243" class="line" id="l243">    243</a>             	else begin
+<a href="#l244" class="line" id="l244">    244</a>                 	fifo2bm_impulse &lt;= 1&#39;b0;
+<a href="#l245" class="line" id="l245">    245</a>             	end
+<a href="#l246" class="line" id="l246">    246</a>         end
+<a href="#l247" class="line" id="l247">    247</a> end
+<a href="#l248" class="line" id="l248">    248</a>    
+<a href="#l249" class="line" id="l249">    249</a>     
+<a href="#l250" class="line" id="l250">    250</a> bmdeserialize fifo2bm(.clk(m00_axis_aclk),
+<a href="#l251" class="line" id="l251">    251</a> 	.impulse(fifo2bm_impulse),
+<a href="#l252" class="line" id="l252">    252</a> 	.data(fifo2bm_data[31:0]),
+<a href="#l253" class="line" id="l253">    253</a> 	.ready(fifo2bm_ready),
+<a href="#l254" class="line" id="l254">    254</a> 	.reset(!m00_axis_aresetn),
+<a href="#l255" class="line" id="l255">    255</a> 	.i0(i0),
+<a href="#l256" class="line" id="l256">    256</a> 	.i0_valid(i0_valid),
+<a href="#l257" class="line" id="l257">    257</a> 	.i0_recv(i0_received),
+<a href="#l258" class="line" id="l258">    258</a> 	.i1(i1[31:0]),
+<a href="#l259" class="line" id="l259">    259</a> 	.i1_valid(i1_valid),
+<a href="#l260" class="line" id="l260">    260</a> 	.i1_recv(i1_received),
+<a href="#l261" class="line" id="l261">    261</a> 	.i2(i2[31:0]),
+<a href="#l262" class="line" id="l262">    262</a> 	.i2_valid(i2_valid),
+<a href="#l263" class="line" id="l263">    263</a> 	.i2_recv(i2_received),
+<a href="#l264" class="line" id="l264">    264</a> 	.i3(i3[31:0]),
+<a href="#l265" class="line" id="l265">    265</a> 	.i3_valid(i3_valid),
+<a href="#l266" class="line" id="l266">    266</a> 	.i3_recv(i3_received)
+<a href="#l267" class="line" id="l267">    267</a> );
+<a href="#l268" class="line" id="l268">    268</a> 
+<a href="#l269" class="line" id="l269">    269</a> bondmachine bm(.clk(m00_axis_aclk),
+<a href="#l270" class="line" id="l270">    270</a> 	.reset(!m00_axis_aresetn),
+<a href="#l271" class="line" id="l271">    271</a> 	.i0(i0[31:0]),
+<a href="#l272" class="line" id="l272">    272</a> 	.i0_valid(i0_valid),
+<a href="#l273" class="line" id="l273">    273</a> 	.i0_received(i0_received),
+<a href="#l274" class="line" id="l274">    274</a> 	.i1(i1[31:0]),
+<a href="#l275" class="line" id="l275">    275</a> 	.i1_valid(i1_valid),
+<a href="#l276" class="line" id="l276">    276</a> 	.i1_received(i1_received),
+<a href="#l277" class="line" id="l277">    277</a> 	.i2(i2[31:0]),
+<a href="#l278" class="line" id="l278">    278</a> 	.i2_valid(i2_valid),
+<a href="#l279" class="line" id="l279">    279</a> 	.i2_received(i2_received),
+<a href="#l280" class="line" id="l280">    280</a> 	.i3(i3[31:0]),
+<a href="#l281" class="line" id="l281">    281</a> 	.i3_valid(i3_valid),
+<a href="#l282" class="line" id="l282">    282</a> 	.i3_received(i3_received),
+<a href="#l283" class="line" id="l283">    283</a> 	.o0(o0[31:0]),
+<a href="#l284" class="line" id="l284">    284</a> 	.o0_valid(o0_valid),
+<a href="#l285" class="line" id="l285">    285</a> 	.o0_received(o0_received)
+<a href="#l286" class="line" id="l286">    286</a> 	);
+<a href="#l287" class="line" id="l287">    287</a> 
+<a href="#l288" class="line" id="l288">    288</a>     
+<a href="#l289" class="line" id="l289">    289</a> bmserialize bm2fifo(.clk(m00_axis_aclk),
+<a href="#l290" class="line" id="l290">    290</a> 	.ack(bm2fifo_ack),
+<a href="#l291" class="line" id="l291">    291</a> 	.data(bm2fifo_data[31:0]),
+<a href="#l292" class="line" id="l292">    292</a> 	.ready(bm2fifo_ready),
+<a href="#l293" class="line" id="l293">    293</a> 	.reset(!m00_axis_aresetn),
+<a href="#l294" class="line" id="l294">    294</a> 	.o0(o0[31:0]),
+<a href="#l295" class="line" id="l295">    295</a> 	.o0_valid(o0_valid),
+<a href="#l296" class="line" id="l296">    296</a> 	.o0_recv(o0_received)
+<a href="#l297" class="line" id="l297">    297</a> );    
+<a href="#l298" class="line" id="l298">    298</a>       	               
+<a href="#l299" class="line" id="l299">    299</a> /*
+<a href="#l300" class="line" id="l300">    300</a> 	NOW START THE MASTER AXIS SECTION corresponding to BM outputs
+<a href="#l301" class="line" id="l301">    301</a> */
+<a href="#l302" class="line" id="l302">    302</a> 
+<a href="#l303" class="line" id="l303">    303</a> 
+<a href="#l304" class="line" id="l304">    304</a> 	always @(posedge m00_axis_aclk)                                             
+<a href="#l305" class="line" id="l305">    305</a> 	begin                                                                     
+<a href="#l306" class="line" id="l306">    306</a> 	  if (!m00_axis_aresetn)                                                  
+<a href="#l307" class="line" id="l307">    307</a> 	    begin
+<a href="#l308" class="line" id="l308">    308</a> 	           bm2fifo_count &lt;= 0;                                                            
+<a href="#l309" class="line" id="l309">    309</a>                bm2fifo_ack &lt;= 1&#39;b0;
+<a href="#l310" class="line" id="l310">    310</a>                bm2fifo_write_pointer &lt;= 0;
+<a href="#l311" class="line" id="l311">    311</a>                bm2fifo_read_pointer &lt;= 0;
+<a href="#l312" class="line" id="l312">    312</a>                // TODO reset fifo                              
+<a href="#l313" class="line" id="l313">    313</a> 	    end                                                                   
+<a href="#l314" class="line" id="l314">    314</a> 	  else
+<a href="#l315" class="line" id="l315">    315</a> 	   begin
+<a href="#l316" class="line" id="l316">    316</a> 	       if (tx_done) begin
+<a href="#l317" class="line" id="l317">    317</a> 	            bm2fifo_ack &lt;= 1&#39;b0;
+<a href="#l318" class="line" id="l318">    318</a> //	            bm2fifo_count &lt;= bm2fifo_count - BATCH_OUT_ELEMENTS;
+<a href="#l319" class="line" id="l319">    319</a>                 if (bm2fifo_read_pointer+BATCH_OUT_ELEMENTS == TOT_OUT_ELEMENTS) begin
+<a href="#l320" class="line" id="l320">    320</a>                     bm2fifo_read_pointer &lt;= 0;
+<a href="#l321" class="line" id="l321">    321</a>                     bm2fifo_count &lt;= bm2fifo_write_pointer;
+<a href="#l322" class="line" id="l322">    322</a>                 end
+<a href="#l323" class="line" id="l323">    323</a>                 else begin
+<a href="#l324" class="line" id="l324">    324</a>                     bm2fifo_read_pointer &lt;= bm2fifo_read_pointer + BATCH_OUT_ELEMENTS;
+<a href="#l325" class="line" id="l325">    325</a>                     if (bm2fifo_write_pointer &lt; bm2fifo_read_pointer + BATCH_OUT_ELEMENTS) begin
+<a href="#l326" class="line" id="l326">    326</a>                         bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS + bm2fifo_write_pointer;
+<a href="#l327" class="line" id="l327">    327</a>                     end
+<a href="#l328" class="line" id="l328">    328</a>                     else
+<a href="#l329" class="line" id="l329">    329</a>                     begin
+<a href="#l330" class="line" id="l330">    330</a>                         bm2fifo_count &lt;= bm2fifo_write_pointer - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS;
+<a href="#l331" class="line" id="l331">    331</a>                     end
+<a href="#l332" class="line" id="l332">    332</a>                 end
+<a href="#l333" class="line" id="l333">    333</a> 	       end
+<a href="#l334" class="line" id="l334">    334</a> 	       else
+<a href="#l335" class="line" id="l335">    335</a> 	       begin
+<a href="#l336" class="line" id="l336">    336</a> 	           if (bm2fifo_ready &amp;&amp; !bm2fifo_ack) begin
+<a href="#l337" class="line" id="l337">    337</a>     	           outstream_data_fifo[bm2fifo_write_pointer] &lt;= bm2fifo_data[31:0];
+<a href="#l338" class="line" id="l338">    338</a>     	           bm2fifo_ack &lt;= 1&#39;b1;
+<a href="#l339" class="line" id="l339">    339</a> //	               bm2fifo_count &lt;= bm2fifo_count + 1;
+<a href="#l340" class="line" id="l340">    340</a>     	           if (bm2fifo_write_pointer + 1 == TOT_OUT_ELEMENTS) begin
+<a href="#l341" class="line" id="l341">    341</a>     	               bm2fifo_write_pointer &lt;= 0;
+<a href="#l342" class="line" id="l342">    342</a>     	               bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer;
+<a href="#l343" class="line" id="l343">    343</a>     	           end
+<a href="#l344" class="line" id="l344">    344</a>     	           else
+<a href="#l345" class="line" id="l345">    345</a>     	           begin
+<a href="#l346" class="line" id="l346">    346</a>     	               bm2fifo_write_pointer &lt;= bm2fifo_write_pointer + 1;
+<a href="#l347" class="line" id="l347">    347</a>     	               if (bm2fifo_write_pointer + 1 &gt; bm2fifo_read_pointer) begin
+<a href="#l348" class="line" id="l348">    348</a>     	                   bm2fifo_count &lt;= bm2fifo_write_pointer + 1 - bm2fifo_read_pointer;
+<a href="#l349" class="line" id="l349">    349</a>     	               end
+<a href="#l350" class="line" id="l350">    350</a>     	               else
+<a href="#l351" class="line" id="l351">    351</a>     	               begin
+<a href="#l352" class="line" id="l352">    352</a>     	                   bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer + bm2fifo_write_pointer + 1;
+<a href="#l353" class="line" id="l353">    353</a>     	               end
+<a href="#l354" class="line" id="l354">    354</a>     	           end
+<a href="#l355" class="line" id="l355">    355</a>     	       end
+<a href="#l356" class="line" id="l356">    356</a>     	       else
+<a href="#l357" class="line" id="l357">    357</a>     	       begin
+<a href="#l358" class="line" id="l358">    358</a>     	           bm2fifo_ack &lt;= 1&#39;b0;
+<a href="#l359" class="line" id="l359">    359</a>     	       end
+<a href="#l360" class="line" id="l360">    360</a>            end
+<a href="#l361" class="line" id="l361">    361</a> 	   end
+<a href="#l362" class="line" id="l362">    362</a> 	end  
+<a href="#l363" class="line" id="l363">    363</a>                               
+<a href="#l364" class="line" id="l364">    364</a> 
+<a href="#l365" class="line" id="l365">    365</a> 	always @(posedge m00_axis_aclk)                                             
+<a href="#l366" class="line" id="l366">    366</a> 	begin                                                                     
+<a href="#l367" class="line" id="l367">    367</a> 	  if (!m00_axis_aresetn)                                                  
+<a href="#l368" class="line" id="l368">    368</a> 	    begin                                                                 
+<a href="#l369" class="line" id="l369">    369</a> 	      mst_exec_state_M &lt;= IDLE_M;                                                                                                   
+<a href="#l370" class="line" id="l370">    370</a> 	    end                                                                   
+<a href="#l371" class="line" id="l371">    371</a> 	  else                                                                    
+<a href="#l372" class="line" id="l372">    372</a> 	    case (mst_exec_state_M)                                                 
+<a href="#l373" class="line" id="l373">    373</a> 	      IDLE_M: 
+<a href="#l374" class="line" id="l374">    374</a> 	            if (bm2fifo_count &gt;= BATCH_OUT_ELEMENTS)                                                        
+<a href="#l375" class="line" id="l375">    375</a> 	               mst_exec_state_M  &lt;= SEND_STREAM_M;                                                        
+<a href="#l376" class="line" id="l376">    376</a> 	      SEND_STREAM_M:                          
+<a href="#l377" class="line" id="l377">    377</a> 	        if (tx_done)                                                      
+<a href="#l378" class="line" id="l378">    378</a> 	          begin                                                           
+<a href="#l379" class="line" id="l379">    379</a> 	            mst_exec_state_M &lt;= IDLE_M;                                       
+<a href="#l380" class="line" id="l380">    380</a> 	          end                                                             
+<a href="#l381" class="line" id="l381">    381</a> 	        else                                                              
+<a href="#l382" class="line" id="l382">    382</a> 	          begin                                                           
+<a href="#l383" class="line" id="l383">    383</a> 	            mst_exec_state_M &lt;= SEND_STREAM_M;                                
+<a href="#l384" class="line" id="l384">    384</a> 	          end                                                             
+<a href="#l385" class="line" id="l385">    385</a> 	    endcase                                                               
+<a href="#l386" class="line" id="l386">    386</a> 	end
+<a href="#l387" class="line" id="l387">    387</a> 
+<a href="#l388" class="line" id="l388">    388</a> 	assign axis_tvalid = (mst_exec_state_M == SEND_STREAM_M);
+<a href="#l389" class="line" id="l389">    389</a>     assign axis_tlast = (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS-1);
+<a href="#l390" class="line" id="l390">    390</a> 
+<a href="#l391" class="line" id="l391">    391</a>     always @(posedge m00_axis_aclk)                                                                  
+<a href="#l392" class="line" id="l392">    392</a> 	begin        
+<a href="#l393" class="line" id="l393">    393</a> 	if (tx_done) begin
+<a href="#l394" class="line" id="l394">    394</a> 	       axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+<a href="#l395" class="line" id="l395">    395</a> 	      axis_tlast_delay &lt;= 1&#39;b0;         
+<a href="#l396" class="line" id="l396">    396</a> 	end     
+<a href="#l397" class="line" id="l397">    397</a> 	else begin                                                                             
+<a href="#l398" class="line" id="l398">    398</a> 	  if (!m00_axis_aresetn)                                                                         
+<a href="#l399" class="line" id="l399">    399</a> 	    begin                                                                                      
+<a href="#l400" class="line" id="l400">    400</a> 	      axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+<a href="#l401" class="line" id="l401">    401</a> 	      axis_tlast_delay &lt;= 1&#39;b0;                                                                
+<a href="#l402" class="line" id="l402">    402</a> 	    end                                                                                        
+<a href="#l403" class="line" id="l403">    403</a> 	  else                                                                                         
+<a href="#l404" class="line" id="l404">    404</a> 	    begin                                                                                      
+<a href="#l405" class="line" id="l405">    405</a> 	      axis_tvalid_delay &lt;= axis_tvalid;                                                        
+<a href="#l406" class="line" id="l406">    406</a> 	      axis_tlast_delay &lt;= axis_tlast;                                                          
+<a href="#l407" class="line" id="l407">    407</a> 	    end                                                                                        
+<a href="#l408" class="line" id="l408">    408</a> 	end 
+<a href="#l409" class="line" id="l409">    409</a> 	end
+<a href="#l410" class="line" id="l410">    410</a> 
+<a href="#l411" class="line" id="l411">    411</a>     always@(posedge m00_axis_aclk)                                               
+<a href="#l412" class="line" id="l412">    412</a> 	begin                                                        
+<a href="#l413" class="line" id="l413">    413</a>           if(!m00_axis_aresetn) begin                                                                        
+<a href="#l414" class="line" id="l414">    414</a>               bm2fifo_batch_pointer &lt;= 0;                                                         
+<a href="#l415" class="line" id="l415">    415</a>               tx_done &lt;= 1&#39;b0;                                                           
+<a href="#l416" class="line" id="l416">    416</a>           end                                                                          
+<a href="#l417" class="line" id="l417">    417</a>           else begin                                                                                                                                               
+<a href="#l418" class="line" id="l418">    418</a>             if (tx_en &amp;&amp; !tx_done) begin                                                                  
+<a href="#l419" class="line" id="l419">    419</a>                 bm2fifo_batch_pointer &lt;= bm2fifo_batch_pointer + 1;                                    
+<a href="#l420" class="line" id="l420">    420</a>                 if (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS - 1) begin
+<a href="#l421" class="line" id="l421">    421</a>                    tx_done &lt;= 1&#39;b1;
+<a href="#l422" class="line" id="l422">    422</a>                    bm2fifo_batch_pointer &lt;= 0;
+<a href="#l423" class="line" id="l423">    423</a>                 end
+<a href="#l424" class="line" id="l424">    424</a>                 else begin
+<a href="#l425" class="line" id="l425">    425</a>                    tx_done &lt;= 1&#39;b0;
+<a href="#l426" class="line" id="l426">    426</a>                 end
+<a href="#l427" class="line" id="l427">    427</a>              end
+<a href="#l428" class="line" id="l428">    428</a>              else begin
+<a href="#l429" class="line" id="l429">    429</a>                 tx_done &lt;= 1&#39;b0;
+<a href="#l430" class="line" id="l430">    430</a>              end              
+<a href="#l431" class="line" id="l431">    431</a>          end                                                                       
+<a href="#l432" class="line" id="l432">    432</a>     end
+<a href="#l433" class="line" id="l433">    433</a>        
+<a href="#l434" class="line" id="l434">    434</a>     assign tx_en = m00_axis_tready &amp;&amp; axis_tvalid;   
+<a href="#l435" class="line" id="l435">    435</a> 	                                                     
+<a href="#l436" class="line" id="l436">    436</a> 	    always @( posedge m00_axis_aclk )                  
+<a href="#l437" class="line" id="l437">    437</a> 	    begin                                         
+<a href="#l438" class="line" id="l438">    438</a> 	      if(!m00_axis_aresetn)                            
+<a href="#l439" class="line" id="l439">    439</a> 	        begin                                        
+<a href="#l440" class="line" id="l440">    440</a> 	          stream_data_out &lt;= 1;                      
+<a href="#l441" class="line" id="l441">    441</a> 	        end                                          
+<a href="#l442" class="line" id="l442">    442</a> 	      else if (tx_en)
+<a href="#l443" class="line" id="l443">    443</a> 	        begin                           
+<a href="#l444" class="line" id="l444">    444</a>                 stream_data_out[31:0] &lt;= outstream_data_fifo[bm2fifo_read_pointer+bm2fifo_batch_pointer];
+<a href="#l445" class="line" id="l445">    445</a> 	        end                                          
+<a href="#l446" class="line" id="l446">    446</a> 	    end
+<a href="#l447" class="line" id="l447">    447</a> 
+<a href="#l448" class="line" id="l448">    448</a> 	endmodule
+<a href="#l449" class="line" id="l449">    449</a> 	
+<a href="#l450" class="line" id="l450">    450</a> module bmdeserialize(
+<a href="#l451" class="line" id="l451">    451</a> 	   input clk,
+<a href="#l452" class="line" id="l452">    452</a> 	   input reset,
+<a href="#l453" class="line" id="l453">    453</a> 	   input impulse,
+<a href="#l454" class="line" id="l454">    454</a> 	   input [31:0] data,
+<a href="#l455" class="line" id="l455">    455</a> 	   output reg ready,
+<a href="#l456" class="line" id="l456">    456</a> 	   
+<a href="#l457" class="line" id="l457">    457</a> 	   output wire [31:0] i0,
+<a href="#l458" class="line" id="l458">    458</a> 	   output i0_valid,
+<a href="#l459" class="line" id="l459">    459</a> 	   input i0_recv,
+<a href="#l460" class="line" id="l460">    460</a> 	   
+<a href="#l461" class="line" id="l461">    461</a> 	   output wire [31:0] i1,
+<a href="#l462" class="line" id="l462">    462</a> 	   output i1_valid,
+<a href="#l463" class="line" id="l463">    463</a> 	   input i1_recv,
+<a href="#l464" class="line" id="l464">    464</a> 	   
+<a href="#l465" class="line" id="l465">    465</a> 	   output wire [31:0] i2,
+<a href="#l466" class="line" id="l466">    466</a> 	   output i2_valid,
+<a href="#l467" class="line" id="l467">    467</a> 	   input i2_recv,
+<a href="#l468" class="line" id="l468">    468</a> 	   
+<a href="#l469" class="line" id="l469">    469</a> 	   output wire [31:0] i3,
+<a href="#l470" class="line" id="l470">    470</a> 	   output i3_valid,
+<a href="#l471" class="line" id="l471">    471</a> 	   input i3_recv	   	   
+<a href="#l472" class="line" id="l472">    472</a> 	);
+<a href="#l473" class="line" id="l473">    473</a> 	
+<a href="#l474" class="line" id="l474">    474</a> 	reg [2:0] input_index;
+<a href="#l475" class="line" id="l475">    475</a>     reg [0:0] SM;
+<a href="#l476" class="line" id="l476">    476</a>     
+<a href="#l477" class="line" id="l477">    477</a>     reg [31:0] localdata;
+<a href="#l478" class="line" id="l478">    478</a> 
+<a href="#l479" class="line" id="l479">    479</a>     reg [3:0] valids;
+<a href="#l480" class="line" id="l480">    480</a> 
+<a href="#l481" class="line" id="l481">    481</a>     wire [3:0] recvs;
+<a href="#l482" class="line" id="l482">    482</a>     
+<a href="#l483" class="line" id="l483">    483</a>     localparam SMIDLE=1&#39;b0,
+<a href="#l484" class="line" id="l484">    484</a>                 SMBM=1&#39;b1;
+<a href="#l485" class="line" id="l485">    485</a> 	
+<a href="#l486" class="line" id="l486">    486</a> 	always @( posedge clk) begin
+<a href="#l487" class="line" id="l487">    487</a> 	   if (reset) begin
+<a href="#l488" class="line" id="l488">    488</a> 	       ready &lt;= 1&#39;b0;
+<a href="#l489" class="line" id="l489">    489</a> 	       input_index &lt;= 3&#39;b000;
+<a href="#l490" class="line" id="l490">    490</a> 	       SM&lt;=SMIDLE;
+<a href="#l491" class="line" id="l491">    491</a> 	       localdata[31:0] &lt;= 32&#39;b0;
+<a href="#l492" class="line" id="l492">    492</a> 	       valids[3:0] &lt;= 4&#39;b0000;
+<a href="#l493" class="line" id="l493">    493</a> 	   end 
+<a href="#l494" class="line" id="l494">    494</a> 	   else begin
+<a href="#l495" class="line" id="l495">    495</a> 	       case (SM)
+<a href="#l496" class="line" id="l496">    496</a> 	       SMIDLE: begin
+<a href="#l497" class="line" id="l497">    497</a> 	               if (impulse) begin
+<a href="#l498" class="line" id="l498">    498</a> 	                   ready &lt;= 1&#39;b0;
+<a href="#l499" class="line" id="l499">    499</a> 	                   localdata[31:0] &lt;= data[31:0];
+<a href="#l500" class="line" id="l500">    500</a> 	                   SM&lt;=SMBM;
+<a href="#l501" class="line" id="l501">    501</a> 	               end
+<a href="#l502" class="line" id="l502">    502</a> 	               else begin
+<a href="#l503" class="line" id="l503">    503</a> 	                   ready &lt;= 1&#39;b1;
+<a href="#l504" class="line" id="l504">    504</a> 	               end
+<a href="#l505" class="line" id="l505">    505</a> 	           end
+<a href="#l506" class="line" id="l506">    506</a> 	       SMBM: begin
+<a href="#l507" class="line" id="l507">    507</a> 	           if (recvs[input_index] == 1&#39;b0) begin
+<a href="#l508" class="line" id="l508">    508</a> 	               valids[input_index] &lt;= 1&#39;b1;
+<a href="#l509" class="line" id="l509">    509</a> 	               ready &lt;= 1&#39;b0;
+<a href="#l510" class="line" id="l510">    510</a> 	           end
+<a href="#l511" class="line" id="l511">    511</a> 	           else begin
+<a href="#l512" class="line" id="l512">    512</a> 	               valids[input_index] &lt;= 1&#39;b0;
+<a href="#l513" class="line" id="l513">    513</a> 	               if (input_index + 1 == 4&#39;d4) begin
+<a href="#l514" class="line" id="l514">    514</a> 	                   input_index &lt;= 0;
+<a href="#l515" class="line" id="l515">    515</a> 	               end
+<a href="#l516" class="line" id="l516">    516</a> 	               else begin
+<a href="#l517" class="line" id="l517">    517</a> 	                   input_index &lt;= input_index + 1;
+<a href="#l518" class="line" id="l518">    518</a> 	               end
+<a href="#l519" class="line" id="l519">    519</a> 	               SM&lt;=SMIDLE;
+<a href="#l520" class="line" id="l520">    520</a> 	               ready &lt;= 1&#39;b1;
+<a href="#l521" class="line" id="l521">    521</a> 	           end
+<a href="#l522" class="line" id="l522">    522</a> 	       end
+<a href="#l523" class="line" id="l523">    523</a> 	       endcase
+<a href="#l524" class="line" id="l524">    524</a> 	   end
+<a href="#l525" class="line" id="l525">    525</a> 	end
+<a href="#l526" class="line" id="l526">    526</a> 	
+<a href="#l527" class="line" id="l527">    527</a> 	assign i0[31:0] = localdata[31:0];
+<a href="#l528" class="line" id="l528">    528</a> 	assign i1[31:0] = localdata[31:0];
+<a href="#l529" class="line" id="l529">    529</a> 	assign i2[31:0] = localdata[31:0];
+<a href="#l530" class="line" id="l530">    530</a> 	assign i3[31:0] = localdata[31:0];
+<a href="#l531" class="line" id="l531">    531</a> 	
+<a href="#l532" class="line" id="l532">    532</a> 	assign i0_valid=valids[0];
+<a href="#l533" class="line" id="l533">    533</a> 	assign i1_valid=valids[1];
+<a href="#l534" class="line" id="l534">    534</a> 	assign i2_valid=valids[2];
+<a href="#l535" class="line" id="l535">    535</a> 	assign i3_valid=valids[3];
+<a href="#l536" class="line" id="l536">    536</a> 	
+<a href="#l537" class="line" id="l537">    537</a> 	assign recvs[3:0] = {i3_recv, i2_recv, i1_recv, i0_recv};
+<a href="#l538" class="line" id="l538">    538</a> 	
+<a href="#l539" class="line" id="l539">    539</a> 	endmodule
+<a href="#l540" class="line" id="l540">    540</a> 	
+<a href="#l541" class="line" id="l541">    541</a> module bmserialize(
+<a href="#l542" class="line" id="l542">    542</a> 	   input clk,
+<a href="#l543" class="line" id="l543">    543</a> 	   input reset,
+<a href="#l544" class="line" id="l544">    544</a> 	   input ack,
+<a href="#l545" class="line" id="l545">    545</a> 	   output [31:0] data,
+<a href="#l546" class="line" id="l546">    546</a> 	   output reg ready,
+<a href="#l547" class="line" id="l547">    547</a> 	   
+<a href="#l548" class="line" id="l548">    548</a> 	   input [31:0] o0,
+<a href="#l549" class="line" id="l549">    549</a> 	   input o0_valid,
+<a href="#l550" class="line" id="l550">    550</a> 	   output o0_recv   	   
+<a href="#l551" class="line" id="l551">    551</a> 	);
+<a href="#l552" class="line" id="l552">    552</a> 	
+<a href="#l553" class="line" id="l553">    553</a> 	
+<a href="#l554" class="line" id="l554">    554</a> 	reg [1:0] output_index;
+<a href="#l555" class="line" id="l555">    555</a>     reg [1:0] SM;
+<a href="#l556" class="line" id="l556">    556</a>     
+<a href="#l557" class="line" id="l557">    557</a>     reg [31:0] localdata;
+<a href="#l558" class="line" id="l558">    558</a> 
+<a href="#l559" class="line" id="l559">    559</a>     wire [1:0] valids;
+<a href="#l560" class="line" id="l560">    560</a> 
+<a href="#l561" class="line" id="l561">    561</a>     reg [1:0] recvs;
+<a href="#l562" class="line" id="l562">    562</a>     
+<a href="#l563" class="line" id="l563">    563</a>     wire [31:0]outputs;
+<a href="#l564" class="line" id="l564">    564</a>     
+<a href="#l565" class="line" id="l565">    565</a>     localparam SMIDLE=2&#39;b00,
+<a href="#l566" class="line" id="l566">    566</a>                 SMRES=2&#39;b01,
+<a href="#l567" class="line" id="l567">    567</a>                 SMBM=2&#39;b10;
+<a href="#l568" class="line" id="l568">    568</a> 	
+<a href="#l569" class="line" id="l569">    569</a> 	always @( posedge clk) begin
+<a href="#l570" class="line" id="l570">    570</a> 	   if (reset) begin
+<a href="#l571" class="line" id="l571">    571</a> 	       ready &lt;= 1&#39;b0;
+<a href="#l572" class="line" id="l572">    572</a> 	       output_index &lt;= 2&#39;b00;
+<a href="#l573" class="line" id="l573">    573</a> 	       SM&lt;=SMIDLE;
+<a href="#l574" class="line" id="l574">    574</a> 	       recvs[1:0] &lt;= 2&#39;b00;
+<a href="#l575" class="line" id="l575">    575</a> 	   end 
+<a href="#l576" class="line" id="l576">    576</a> 	   else begin
+<a href="#l577" class="line" id="l577">    577</a> 	       case (SM)
+<a href="#l578" class="line" id="l578">    578</a> 	       SMIDLE: begin
+<a href="#l579" class="line" id="l579">    579</a> 	               if (valids[output_index]) begin
+<a href="#l580" class="line" id="l580">    580</a> 	                   ready &lt;= 1&#39;b1;
+<a href="#l581" class="line" id="l581">    581</a> 	                   localdata[31:0] &lt;= outputs[31:0];
+<a href="#l582" class="line" id="l582">    582</a> 	                   SM&lt;=SMRES;
+<a href="#l583" class="line" id="l583">    583</a> 	               end
+<a href="#l584" class="line" id="l584">    584</a> 	               else begin
+<a href="#l585" class="line" id="l585">    585</a> 	                   ready &lt;= 1&#39;b0;
+<a href="#l586" class="line" id="l586">    586</a> 	               end
+<a href="#l587" class="line" id="l587">    587</a> 	           end
+<a href="#l588" class="line" id="l588">    588</a> 	       SMRES: begin
+<a href="#l589" class="line" id="l589">    589</a> 	           if (ack) begin
+<a href="#l590" class="line" id="l590">    590</a> 	               ready &lt;= 1&#39;b0;
+<a href="#l591" class="line" id="l591">    591</a> 	               SM&lt;=SMBM;
+<a href="#l592" class="line" id="l592">    592</a> 	           end   
+<a href="#l593" class="line" id="l593">    593</a> 	       end
+<a href="#l594" class="line" id="l594">    594</a> 	       SMBM: begin
+<a href="#l595" class="line" id="l595">    595</a> 	           if (!valids[output_index]) begin
+<a href="#l596" class="line" id="l596">    596</a> 	               if (output_index + 1 == 2&#39;d1) begin
+<a href="#l597" class="line" id="l597">    597</a> 	                   output_index &lt;= 0;
+<a href="#l598" class="line" id="l598">    598</a> 	               end
+<a href="#l599" class="line" id="l599">    599</a> 	               else begin
+<a href="#l600" class="line" id="l600">    600</a> 	                   output_index &lt;= output_index + 1;
+<a href="#l601" class="line" id="l601">    601</a> 	               end
+<a href="#l602" class="line" id="l602">    602</a> 	               recvs[output_index] &lt;= 1&#39;b0;
+<a href="#l603" class="line" id="l603">    603</a> 	               SM&lt;=SMIDLE;           
+<a href="#l604" class="line" id="l604">    604</a> 	           end
+<a href="#l605" class="line" id="l605">    605</a> 	           else
+<a href="#l606" class="line" id="l606">    606</a> 	           begin
+<a href="#l607" class="line" id="l607">    607</a> 	               recvs[output_index] &lt;= 1&#39;b1;
+<a href="#l608" class="line" id="l608">    608</a> 	           end
+<a href="#l609" class="line" id="l609">    609</a> 	       end
+<a href="#l610" class="line" id="l610">    610</a> 	       endcase
+<a href="#l611" class="line" id="l611">    611</a> 	   end
+<a href="#l612" class="line" id="l612">    612</a> 	end
+<a href="#l613" class="line" id="l613">    613</a> 	
+<a href="#l614" class="line" id="l614">    614</a> 	assign data[31:0] = localdata[31:0];
+<a href="#l615" class="line" id="l615">    615</a> 	assign outputs={o0[31:0]};
+<a href="#l616" class="line" id="l616">    616</a> 	assign o0_recv=recvs[0];
+<a href="#l617" class="line" id="l617">    617</a> 
+<a href="#l618" class="line" id="l618">    618</a> 	assign valids[0] = o0_valid;	
+<a href="#l619" class="line" id="l619">    619</a> 	
+<a href="#l620" class="line" id="l620">    620</a> endmodule 
+<a href="#l621" class="line" id="l621">    621</a> 	
+</pre>
+</div>
+</body>
+</html>

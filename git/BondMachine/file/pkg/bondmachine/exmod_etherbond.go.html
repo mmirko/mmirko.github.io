@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>exmod_etherbond.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> exmod_etherbond.go (51007B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/etherbond&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	//&quot;fmt&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;strconv&quot;
+<a href="#l7" class="line" id="l7">      7</a> )
+<a href="#l8" class="line" id="l8">      8</a> 
+<a href="#l9" class="line" id="l9">      9</a> type Etherbond_extra struct {
+<a href="#l10" class="line" id="l10">     10</a> 	Config  *etherbond.Config
+<a href="#l11" class="line" id="l11">     11</a> 	Cluster *etherbond.Cluster
+<a href="#l12" class="line" id="l12">     12</a> 	Macs    *etherbond.Macs
+<a href="#l13" class="line" id="l13">     13</a> 	PeerID  uint32
+<a href="#l14" class="line" id="l14">     14</a> 	Maps    *IOmap
+<a href="#l15" class="line" id="l15">     15</a> 	Flavor  string
+<a href="#l16" class="line" id="l16">     16</a> 	Mac     string
+<a href="#l17" class="line" id="l17">     17</a> }
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a> func (sl *Etherbond_extra) Get_Name() string {
+<a href="#l20" class="line" id="l20">     20</a> 	return &quot;etherbond&quot;
+<a href="#l21" class="line" id="l21">     21</a> }
+<a href="#l22" class="line" id="l22">     22</a> 
+<a href="#l23" class="line" id="l23">     23</a> func (sl *Etherbond_extra) Get_Params() *ExtraParams {
+<a href="#l24" class="line" id="l24">     24</a> 	result := new(ExtraParams)
+<a href="#l25" class="line" id="l25">     25</a> 	result.Params = make(map[string]string)
+<a href="#l26" class="line" id="l26">     26</a> 	result.Params[&quot;peer_id&quot;] = strconv.Itoa(int(sl.PeerID))
+<a href="#l27" class="line" id="l27">     27</a> 	result.Params[&quot;cluster_id&quot;] = strconv.Itoa(int(sl.Cluster.ClusterId))
+<a href="#l28" class="line" id="l28">     28</a> 	result.Params[&quot;mac&quot;] = sl.Mac
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> 	var mypeer etherbond.Peer
+<a href="#l31" class="line" id="l31">     31</a> 
+<a href="#l32" class="line" id="l32">     32</a> 	for _, peer := range sl.Cluster.Peers {
+<a href="#l33" class="line" id="l33">     33</a> 		if peer.PeerId == sl.PeerID {
+<a href="#l34" class="line" id="l34">     34</a> 			mypeer = peer
+<a href="#l35" class="line" id="l35">     35</a> 		}
+<a href="#l36" class="line" id="l36">     36</a> 
+<a href="#l37" class="line" id="l37">     37</a> 		if sl.Macs != nil {
+<a href="#l38" class="line" id="l38">     38</a> 			peerstr := strconv.Itoa(int(peer.PeerId))
+<a href="#l39" class="line" id="l39">     39</a> 			if mac, ok := sl.Macs.Assoc[&quot;peer_&quot;+peerstr]; ok {
+<a href="#l40" class="line" id="l40">     40</a> 				if mac == &quot;auto&quot; {
+<a href="#l41" class="line" id="l41">     41</a> 					result.Params[&quot;peer_&quot;+peerstr+&quot;_mac&quot;] = &quot;auto&quot;
+<a href="#l42" class="line" id="l42">     42</a> 				} else if mac == &quot;adv&quot; {
+<a href="#l43" class="line" id="l43">     43</a> 					result.Params[&quot;peer_&quot;+peerstr+&quot;_mac&quot;] = &quot;auto&quot;
+<a href="#l44" class="line" id="l44">     44</a> 				} else {
+<a href="#l45" class="line" id="l45">     45</a> 					result.Params[&quot;peer_&quot;+peerstr+&quot;_mac&quot;] = mac
+<a href="#l46" class="line" id="l46">     46</a> 				}
+<a href="#l47" class="line" id="l47">     47</a> 			} else {
+<a href="#l48" class="line" id="l48">     48</a> 				result.Params[&quot;peer_&quot;+peerstr+&quot;_mac&quot;] = &quot;auto&quot;
+<a href="#l49" class="line" id="l49">     49</a> 			}
+<a href="#l50" class="line" id="l50">     50</a> 		}
+<a href="#l51" class="line" id="l51">     51</a> 
+<a href="#l52" class="line" id="l52">     52</a> 	}
+<a href="#l53" class="line" id="l53">     53</a> 
+<a href="#l54" class="line" id="l54">     54</a> 	result.Params[&quot;input_ids&quot;] = &quot;&quot;
+<a href="#l55" class="line" id="l55">     55</a> 	result.Params[&quot;inputs&quot;] = &quot;&quot;
+<a href="#l56" class="line" id="l56">     56</a> 
+<a href="#l57" class="line" id="l57">     57</a> 	for _, inp := range mypeer.Inputs {
+<a href="#l58" class="line" id="l58">     58</a> 		for iname, ival := range sl.Maps.Assoc {
+<a href="#l59" class="line" id="l59">     59</a> 			if iname[0] == &#39;i&#39; &amp;&amp; ival == strconv.Itoa(int(inp)) {
+<a href="#l60" class="line" id="l60">     60</a> 				result.Params[&quot;input_ids&quot;] += &quot;,&quot; + ival
+<a href="#l61" class="line" id="l61">     61</a> 				result.Params[&quot;inputs&quot;] += &quot;,&quot; + iname
+<a href="#l62" class="line" id="l62">     62</a> 			}
+<a href="#l63" class="line" id="l63">     63</a> 		}
+<a href="#l64" class="line" id="l64">     64</a> 	}
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 	if result.Params[&quot;input_ids&quot;] != &quot;&quot; {
+<a href="#l67" class="line" id="l67">     67</a> 		result.Params[&quot;input_ids&quot;] = result.Params[&quot;input_ids&quot;][1:len(result.Params[&quot;input_ids&quot;])]
+<a href="#l68" class="line" id="l68">     68</a> 		result.Params[&quot;inputs&quot;] = result.Params[&quot;inputs&quot;][1:len(result.Params[&quot;inputs&quot;])]
+<a href="#l69" class="line" id="l69">     69</a> 	}
+<a href="#l70" class="line" id="l70">     70</a> 
+<a href="#l71" class="line" id="l71">     71</a> 	result.Params[&quot;output_ids&quot;] = &quot;&quot;
+<a href="#l72" class="line" id="l72">     72</a> 	result.Params[&quot;outputs&quot;] = &quot;&quot;
+<a href="#l73" class="line" id="l73">     73</a> 	// Comma separated and - separated list of peer ids
+<a href="#l74" class="line" id="l74">     74</a> 	result.Params[&quot;destinations&quot;] = &quot;&quot;
+<a href="#l75" class="line" id="l75">     75</a> 
+<a href="#l76" class="line" id="l76">     76</a> 	for _, outp := range mypeer.Outputs {
+<a href="#l77" class="line" id="l77">     77</a> 		for oname, oval := range sl.Maps.Assoc {
+<a href="#l78" class="line" id="l78">     78</a> 			if oname[0] == &#39;o&#39; &amp;&amp; oval == strconv.Itoa(int(outp)) {
+<a href="#l79" class="line" id="l79">     79</a> 				result.Params[&quot;output_ids&quot;] += &quot;,&quot; + oval
+<a href="#l80" class="line" id="l80">     80</a> 				result.Params[&quot;outputs&quot;] += &quot;,&quot; + oname
+<a href="#l81" class="line" id="l81">     81</a> 
+<a href="#l82" class="line" id="l82">     82</a> 				resdest := &quot;&quot;
+<a href="#l83" class="line" id="l83">     83</a> 				for _, ipeer := range sl.Cluster.Peers {
+<a href="#l84" class="line" id="l84">     84</a> 					for _, iin := range ipeer.Inputs {
+<a href="#l85" class="line" id="l85">     85</a> 						//fmt.Println(ipeer.PeerId, iin, oval, strconv.Itoa(int(iin)))
+<a href="#l86" class="line" id="l86">     86</a> 						if strconv.Itoa(int(iin)) == oval {
+<a href="#l87" class="line" id="l87">     87</a> 							resdest += &quot;-&quot; + strconv.Itoa(int(ipeer.PeerId))
+<a href="#l88" class="line" id="l88">     88</a> 						}
+<a href="#l89" class="line" id="l89">     89</a> 					}
+<a href="#l90" class="line" id="l90">     90</a> 				}
+<a href="#l91" class="line" id="l91">     91</a> 				//fmt.Println(&quot;resdest&quot;, resdest)
+<a href="#l92" class="line" id="l92">     92</a> 				if resdest != &quot;&quot; {
+<a href="#l93" class="line" id="l93">     93</a> 					result.Params[&quot;destinations&quot;] += &quot;,&quot; + resdest[1:len(resdest)]
+<a href="#l94" class="line" id="l94">     94</a> 				}
+<a href="#l95" class="line" id="l95">     95</a> 
+<a href="#l96" class="line" id="l96">     96</a> 			}
+<a href="#l97" class="line" id="l97">     97</a> 		}
+<a href="#l98" class="line" id="l98">     98</a> 	}
+<a href="#l99" class="line" id="l99">     99</a> 
+<a href="#l100" class="line" id="l100">    100</a> 	if result.Params[&quot;output_ids&quot;] != &quot;&quot; {
+<a href="#l101" class="line" id="l101">    101</a> 		result.Params[&quot;output_ids&quot;] = result.Params[&quot;output_ids&quot;][1:len(result.Params[&quot;output_ids&quot;])]
+<a href="#l102" class="line" id="l102">    102</a> 		result.Params[&quot;outputs&quot;] = result.Params[&quot;outputs&quot;][1:len(result.Params[&quot;outputs&quot;])]
+<a href="#l103" class="line" id="l103">    103</a> 		result.Params[&quot;destinations&quot;] = result.Params[&quot;destinations&quot;][1:len(result.Params[&quot;destinations&quot;])]
+<a href="#l104" class="line" id="l104">    104</a> 	}
+<a href="#l105" class="line" id="l105">    105</a> 
+<a href="#l106" class="line" id="l106">    106</a> 	return result
+<a href="#l107" class="line" id="l107">    107</a> }
+<a href="#l108" class="line" id="l108">    108</a> 
+<a href="#l109" class="line" id="l109">    109</a> func (sl *Etherbond_extra) Import(inp string) error {
+<a href="#l110" class="line" id="l110">    110</a> 	return nil
+<a href="#l111" class="line" id="l111">    111</a> }
+<a href="#l112" class="line" id="l112">    112</a> 
+<a href="#l113" class="line" id="l113">    113</a> func (sl *Etherbond_extra) Export() string {
+<a href="#l114" class="line" id="l114">    114</a> 	return &quot;&quot;
+<a href="#l115" class="line" id="l115">    115</a> }
+<a href="#l116" class="line" id="l116">    116</a> 
+<a href="#l117" class="line" id="l117">    117</a> func (sl *Etherbond_extra) Check(bmach *Bondmachine) error {
+<a href="#l118" class="line" id="l118">    118</a> 	return nil
+<a href="#l119" class="line" id="l119">    119</a> }
+<a href="#l120" class="line" id="l120">    120</a> 
+<a href="#l121" class="line" id="l121">    121</a> func (sl *Etherbond_extra) Verilog_headers() string {
+<a href="#l122" class="line" id="l122">    122</a> 	result := &quot;\n&quot;
+<a href="#l123" class="line" id="l123">    123</a> 	result += &quot;  parameter [7:0] MYMAC_1 = 8&#39;h&quot; + sl.Mac[0:2] + &quot;;\n&quot;
+<a href="#l124" class="line" id="l124">    124</a> 	result += &quot;  parameter [7:0] MYMAC_2 = 8&#39;h&quot; + sl.Mac[2:4] + &quot;;\n&quot;
+<a href="#l125" class="line" id="l125">    125</a> 	result += &quot;  parameter [7:0] MYMAC_3 = 8&#39;h&quot; + sl.Mac[4:6] + &quot;;\n&quot;
+<a href="#l126" class="line" id="l126">    126</a> 	result += &quot;  parameter [7:0] MYMAC_4 = 8&#39;h&quot; + sl.Mac[6:8] + &quot;;\n&quot;
+<a href="#l127" class="line" id="l127">    127</a> 	result += &quot;  parameter [7:0] MYMAC_5 = 8&#39;h&quot; + sl.Mac[8:10] + &quot;;\n&quot;
+<a href="#l128" class="line" id="l128">    128</a> 	result += &quot;  parameter [7:0] MYMAC_6 = 8&#39;h&quot; + sl.Mac[10:12] + &quot;;\n&quot;
+<a href="#l129" class="line" id="l129">    129</a> 
+<a href="#l130" class="line" id="l130">    130</a> 	result += &quot;\n&quot;
+<a href="#l131" class="line" id="l131">    131</a> 
+<a href="#l132" class="line" id="l132">    132</a> 	result += &quot;  //Definition of the address for the SPI register\n&quot;
+<a href="#l133" class="line" id="l133">    133</a> 	result += &quot;  parameter [4:0] A_ERDPTL   = 5&#39;h00; parameter [4:0] A_EHT0    = 5&#39;h00; parameter [4:0] A_MACON1    = 5&#39;h00; parameter [4:0] A_MAADR5   = 5&#39;h00; \n&quot;
+<a href="#l134" class="line" id="l134">    134</a> 	result += &quot;  parameter [4:0] A_ERDPTH   = 5&#39;h01; parameter [4:0] A_EHT1    = 5&#39;h01;                                      parameter [4:0] A_MAADR6   = 5&#39;h01; \n&quot;
+<a href="#l135" class="line" id="l135">    135</a> 	result += &quot;  parameter [4:0] A_EWRPTL   = 5&#39;h02; parameter [4:0] A_EHT2    = 5&#39;h02; parameter [4:0] A_MACON3    = 5&#39;h02; parameter [4:0] A_MAADR3   = 5&#39;h02; \n&quot;
+<a href="#l136" class="line" id="l136">    136</a> 	result += &quot;  parameter [4:0] A_EWRPTH   = 5&#39;h03; parameter [4:0] A_EHT3    = 5&#39;h03; parameter [4:0] A_MACON4    = 5&#39;h03; parameter [4:0] A_MAADR4   = 5&#39;h03; \n&quot;
+<a href="#l137" class="line" id="l137">    137</a> 	result += &quot;  parameter [4:0] A_ETXSTL   = 5&#39;h04; parameter [4:0] A_EHT4    = 5&#39;h04; parameter [4:0] A_MABBIPG   = 5&#39;h04; parameter [4:0] A_MAADR1   = 5&#39;h04; \n&quot;
+<a href="#l138" class="line" id="l138">    138</a> 	result += &quot;  parameter [4:0] A_ETXSTH   = 5&#39;h05; parameter [4:0] A_EHT5    = 5&#39;h05;		 			 parameter [4:0] A_MAADR2   = 5&#39;h05; \n&quot;
+<a href="#l139" class="line" id="l139">    139</a> 	result += &quot;  parameter [4:0] A_ETXNDL   = 5&#39;h06; parameter [4:0] A_EHT6    = 5&#39;h06; parameter [4:0] A_MAIPGL    = 5&#39;h06; parameter [4:0] A_EBSTSD   = 5&#39;h06; \n&quot;
+<a href="#l140" class="line" id="l140">    140</a> 	result += &quot;  parameter [4:0] A_ETXNDH   = 5&#39;h07; parameter [4:0] A_EHT7    = 5&#39;h07; parameter [4:0] A_MAIPGH    = 5&#39;h07; parameter [4:0] A_EBSTCON  = 5&#39;h07; \n&quot;
+<a href="#l141" class="line" id="l141">    141</a> 	result += &quot;  parameter [4:0] A_ERXSTL   = 5&#39;h08; parameter [4:0] A_EPMM0   = 5&#39;h08; parameter [4:0] A_MACLCON1  = 5&#39;h08; parameter [4:0] A_EBSTCSL  = 5&#39;h08; \n&quot;
+<a href="#l142" class="line" id="l142">    142</a> 	result += &quot;  parameter [4:0] A_ERXSTH   = 5&#39;h09; parameter [4:0] A_EPMM1   = 5&#39;h09; parameter [4:0] A_MACLCON2  = 5&#39;h09; parameter [4:0] A_EBSTCSH  = 5&#39;h09; \n&quot;
+<a href="#l143" class="line" id="l143">    143</a> 	result += &quot;  parameter [4:0] A_ERXNDL   = 5&#39;h0A; parameter [4:0] A_EPMM2   = 5&#39;h0A; parameter [4:0] A_MAMXFLL   = 5&#39;h0A; parameter [4:0] A_MISTAT   = 5&#39;h0A; \n&quot;
+<a href="#l144" class="line" id="l144">    144</a> 	result += &quot;  parameter [4:0] A_ERXNDH   = 5&#39;h0B; parameter [4:0] A_EPMM3   = 5&#39;h0B; parameter [4:0] A_MAMXFLH   = 5&#39;h0B; \n&quot;
+<a href="#l145" class="line" id="l145">    145</a> 	result += &quot;  parameter [4:0] A_ERXRDPTL = 5&#39;h0C; parameter [4:0] A_EPMM4   = 5&#39;h0C; \n&quot;
+<a href="#l146" class="line" id="l146">    146</a> 	result += &quot;  parameter [4:0] A_ERXRDPTH = 5&#39;h0D; parameter [4:0] A_EPMM5   = 5&#39;h0D; \n&quot;
+<a href="#l147" class="line" id="l147">    147</a> 	result += &quot;  parameter [4:0] A_ERXWRPTL = 5&#39;h0E; parameter [4:0] A_EPMM6   = 5&#39;h0E; \n&quot;
+<a href="#l148" class="line" id="l148">    148</a> 	result += &quot;  parameter [4:0] A_ERXWRPTH = 5&#39;h0F; parameter [4:0] A_EPMM7   = 5&#39;h0F; \n&quot;
+<a href="#l149" class="line" id="l149">    149</a> 	result += &quot;  parameter [4:0] A_EDMASTL  = 5&#39;h10; parameter [4:0] A_EPMCSL  = 5&#39;h10; \n&quot;
+<a href="#l150" class="line" id="l150">    150</a> 	result += &quot;  parameter [4:0] A_EDMASTH  = 5&#39;h11; parameter [4:0] A_EPMCSH  = 5&#39;h11; \n&quot;
+<a href="#l151" class="line" id="l151">    151</a> 	result += &quot;  parameter [4:0] A_EDMANDL  = 5&#39;h12; parameter [4:0] A_MICMD     = 5&#39;h12;  parameter [4:0] A_EREVID  = 5&#39;h12;    \n&quot;
+<a href="#l152" class="line" id="l152">    152</a> 	result += &quot;  parameter [4:0] A_EDMANDH  = 5&#39;h13; \n&quot;
+<a href="#l153" class="line" id="l153">    153</a> 	result += &quot;  parameter [4:0] A_EDMADSTL = 5&#39;h14; parameter [4:0] A_EPMOL   = 5&#39;h14; parameter [4:0] A_MIREGADR  = 5&#39;h14;\n&quot;
+<a href="#l154" class="line" id="l154">    154</a> 	result += &quot;  parameter [4:0] A_EDMADSTH = 5&#39;h15; parameter [4:0] A_EPMOH   = 5&#39;h15; parameter [4:0] A_ECOCON  = 5&#39;h15;\n&quot;
+<a href="#l155" class="line" id="l155">    155</a> 	result += &quot;  parameter [4:0] A_EDMACSL  = 5&#39;h16; parameter [4:0] A_MIWRL   = 5&#39;h16; \n&quot;
+<a href="#l156" class="line" id="l156">    156</a> 	result += &quot;  parameter [4:0] A_EDMACSH  = 5&#39;h17; parameter [4:0] A_MIWRH   = 5&#39;h17; parameter [4:0] A_EFLOCON = 5&#39;h17;\n&quot;
+<a href="#l157" class="line" id="l157">    157</a> 	result += &quot;  parameter [4:0] A_ERXFCON  = 5&#39;h18; parameter [4:0] A_MIRDL    = 5&#39;h18;  parameter [4:0] A_EPAUSL  = 5&#39;h18; \n&quot;
+<a href="#l158" class="line" id="l158">    158</a> 	result += &quot;  parameter [4:0] A_EPKTCNT  = 5&#39;h19; parameter [4:0] A_MIRDH    = 5&#39;h19;  parameter [4:0] A_EPAUSH  = 5&#39;h19; \n&quot;
+<a href="#l159" class="line" id="l159">    159</a> 	result += &quot;  \n&quot;
+<a href="#l160" class="line" id="l160">    160</a> 	result += &quot;  parameter [4:0] A_EIE      = 5&#39;h1B; //parameter [4:0] A_EIE     = 5&#39;h1B; /parameter [4:0] A_EIE     = 5&#39;h1B;  parameter [4:0] A_EIE   = 5&#39;h1B; \n&quot;
+<a href="#l161" class="line" id="l161">    161</a> 	result += &quot;  parameter [4:0] A_EIR      = 5&#39;h1C; //parameter [4:0] A_EIR     = 5&#39;h1C; parameter [4:0] A_EIR     = 5&#39;h1C;  parameter [4:0] A_EIR   = 5&#39;h1C; \n&quot;
+<a href="#l162" class="line" id="l162">    162</a> 	result += &quot;  parameter [4:0] A_ESTAT    = 5&#39;h1D; //parameter [4:0] A_ESTAT   = 5&#39;h1D; parameter [4:0] A_ESTAT   = 5&#39;h1D;  parameter [4:0] A_ESTAT = 5&#39;h1D; \n&quot;
+<a href="#l163" class="line" id="l163">    163</a> 	result += &quot;  parameter [4:0] A_ECON2    = 5&#39;h1E; //parameter [4:0] A_ECON2   = 5&#39;h1E; parameter [4:0] A_ECON2   = 5&#39;h1E;  parameter [4:0] A_ECON2 = 5&#39;h1E; \n&quot;
+<a href="#l164" class="line" id="l164">    164</a> 	result += &quot;  parameter [4:0] A_ECON1    = 5&#39;h1F; //parameter [4:0] A_ECON1   = 5&#39;h1F; parameter [4:0] A_ECON1   = 5&#39;h1F;  parameter [4:0] A_ECON1 = 5&#39;h1F; \n&quot;
+<a href="#l165" class="line" id="l165">    165</a> 	result += &quot;\n&quot;
+<a href="#l166" class="line" id="l166">    166</a> 	result += &quot;\n&quot;
+<a href="#l167" class="line" id="l167">    167</a> 	result += &quot;  parameter [4:0] A_PHCON1	 = 5&#39;h00;\n&quot;
+<a href="#l168" class="line" id="l168">    168</a> 	result += &quot;  parameter [4:0] A_PHSTAT1	 = 5&#39;h01;\n&quot;
+<a href="#l169" class="line" id="l169">    169</a> 	result += &quot;  parameter [4:0] A_PHHID1	 = 5&#39;h02;\n&quot;
+<a href="#l170" class="line" id="l170">    170</a> 	result += &quot;  parameter [4:0] A_PHHID2	 = 5&#39;h03;\n&quot;
+<a href="#l171" class="line" id="l171">    171</a> 	result += &quot;  parameter [4:0] A_PHCON2	 = 5&#39;h10;\n&quot;
+<a href="#l172" class="line" id="l172">    172</a> 	result += &quot;  parameter [4:0] A_PHSTAT2	 = 5&#39;h11;\n&quot;
+<a href="#l173" class="line" id="l173">    173</a> 	result += &quot;  parameter [4:0] A_PHIE	 = 5&#39;h12;\n&quot;
+<a href="#l174" class="line" id="l174">    174</a> 	result += &quot;  parameter [4:0] A_PHIR	 = 5&#39;h13;\n&quot;
+<a href="#l175" class="line" id="l175">    175</a> 	result += &quot;  parameter [4:0] A_PHLCON	 = 5&#39;h14;\n&quot;
+<a href="#l176" class="line" id="l176">    176</a> 	result += &quot;  \n&quot;
+<a href="#l177" class="line" id="l177">    177</a> 	result += &quot;  //Define the command\n&quot;
+<a href="#l178" class="line" id="l178">    178</a> 	result += &quot;  parameter [2:0] RCR = 3&#39;b000;\n&quot;
+<a href="#l179" class="line" id="l179">    179</a> 	result += &quot;  parameter [2:0] RBM = 3&#39;b001;\n&quot;
+<a href="#l180" class="line" id="l180">    180</a> 	result += &quot;  parameter [2:0] WCR = 3&#39;b010;\n&quot;
+<a href="#l181" class="line" id="l181">    181</a> 	result += &quot;  parameter [2:0] WBM = 3&#39;b011;\n&quot;
+<a href="#l182" class="line" id="l182">    182</a> 	result += &quot;  parameter [2:0] BFS = 3&#39;b100;\n&quot;
+<a href="#l183" class="line" id="l183">    183</a> 	result += &quot;  parameter [2:0] BFC = 3&#39;b101;\n&quot;
+<a href="#l184" class="line" id="l184">    184</a> 	result += &quot;  parameter [2:0] SRC = 3&#39;b111;\n&quot;
+<a href="#l185" class="line" id="l185">    185</a> 	result += &quot;    \n&quot;
+<a href="#l186" class="line" id="l186">    186</a> 	result += &quot;  //LENGTH FRAME ETHENET\n&quot;
+<a href="#l187" class="line" id="l187">    187</a> 	result += &quot;  parameter [9:0] ETHERNET_LENGTH = 10&#39;d&quot; + strconv.Itoa(256+24+int(sl.Config.Rsize)) + &quot;;\n&quot;
+<a href="#l188" class="line" id="l188">    188</a> 	return result
+<a href="#l189" class="line" id="l189">    189</a> }
+<a href="#l190" class="line" id="l190">    190</a> func (sl *Etherbond_extra) StaticVerilog() string {
+<a href="#l191" class="line" id="l191">    191</a> 
+<a href="#l192" class="line" id="l192">    192</a> 	result := &quot;\n&quot;
+<a href="#l193" class="line" id="l193">    193</a> 	result += &quot;`timescale 1ns / 1ps\n&quot;
+<a href="#l194" class="line" id="l194">    194</a> 	result += &quot;//////////////////////////////////////////////////////////////////////////////////\n&quot;
+<a href="#l195" class="line" id="l195">    195</a> 	result += &quot;// Company: \n&quot;
+<a href="#l196" class="line" id="l196">    196</a> 	result += &quot;// Engineer: \n&quot;
+<a href="#l197" class="line" id="l197">    197</a> 	result += &quot;// \n&quot;
+<a href="#l198" class="line" id="l198">    198</a> 	result += &quot;// Create Date: 03.08.2016 13:40:57\n&quot;
+<a href="#l199" class="line" id="l199">    199</a> 	result += &quot;// Design Name: \n&quot;
+<a href="#l200" class="line" id="l200">    200</a> 	result += &quot;// Module Name: TopModuleSPI\n&quot;
+<a href="#l201" class="line" id="l201">    201</a> 	result += &quot;// Project Name: \n&quot;
+<a href="#l202" class="line" id="l202">    202</a> 	result += &quot;// Target Devices: \n&quot;
+<a href="#l203" class="line" id="l203">    203</a> 	result += &quot;// Tool Versions: \n&quot;
+<a href="#l204" class="line" id="l204">    204</a> 	result += &quot;// Description: \n&quot;
+<a href="#l205" class="line" id="l205">    205</a> 	result += &quot;// \n&quot;
+<a href="#l206" class="line" id="l206">    206</a> 	result += &quot;// Dependencies: \n&quot;
+<a href="#l207" class="line" id="l207">    207</a> 	result += &quot;// \n&quot;
+<a href="#l208" class="line" id="l208">    208</a> 	result += &quot;// Revision:\n&quot;
+<a href="#l209" class="line" id="l209">    209</a> 	result += &quot;// Revision 0.01 - File Created\n&quot;
+<a href="#l210" class="line" id="l210">    210</a> 	result += &quot;// Additional Comments:\n&quot;
+<a href="#l211" class="line" id="l211">    211</a> 	result += &quot;// \n&quot;
+<a href="#l212" class="line" id="l212">    212</a> 	result += &quot;//////////////////////////////////////////////////////////////////////////////////\n&quot;
+<a href="#l213" class="line" id="l213">    213</a> 	result += &quot;\n&quot;
+<a href="#l214" class="line" id="l214">    214</a> 	result += &quot;module TopModuleSPI(\n&quot;
+<a href="#l215" class="line" id="l215">    215</a> 	result += &quot;    input CLOCK,\n&quot;
+<a href="#l216" class="line" id="l216">    216</a> 	result += &quot;    output SCK,\n&quot;
+<a href="#l217" class="line" id="l217">    217</a> 	result += &quot;    output MOSI,\n&quot;
+<a href="#l218" class="line" id="l218">    218</a> 	result += &quot;    output CS_n,\n&quot;
+<a href="#l219" class="line" id="l219">    219</a> 	result += &quot;    input MISO,\n&quot;
+<a href="#l220" class="line" id="l220">    220</a> 	result += &quot;    //control signal\n&quot;
+<a href="#l221" class="line" id="l221">    221</a> 	result += &quot;    input reset_n,\n&quot;
+<a href="#l222" class="line" id="l222">    222</a> 	result += &quot;    input start_conf,\n&quot;
+<a href="#l223" class="line" id="l223">    223</a> 	result += &quot;    output end_conf,\n&quot;
+<a href="#l224" class="line" id="l224">    224</a> 	result += &quot;    input [ETHERNET_LENGTH-1:0] EthTx, \n&quot;
+<a href="#l225" class="line" id="l225">    225</a> 	result += &quot;    input start_write,\n&quot;
+<a href="#l226" class="line" id="l226">    226</a> 	result += &quot;    output done_write,\n&quot;
+<a href="#l227" class="line" id="l227">    227</a> 	result += &quot;    input start_rx,\n&quot;
+<a href="#l228" class="line" id="l228">    228</a> 	result += &quot;    output done_rx,\n&quot;
+<a href="#l229" class="line" id="l229">    229</a> 	result += &quot;    output reg [ETHERNET_LENGTH-1:0] EthRx\n&quot;
+<a href="#l230" class="line" id="l230">    230</a> 	result += &quot;    );\n&quot;
+<a href="#l231" class="line" id="l231">    231</a> 	result += &quot;        \n&quot;
+<a href="#l232" class="line" id="l232">    232</a> 	result += &quot;  //Input command\n&quot;
+<a href="#l233" class="line" id="l233">    233</a> 	result += &quot;  reg [7:0] input_cmd;  \n&quot;
+<a href="#l234" class="line" id="l234">    234</a> 	result += &quot;    \n&quot;
+<a href="#l235" class="line" id="l235">    235</a> 	result += &quot;  //Instruction register    \n&quot;
+<a href="#l236" class="line" id="l236">    236</a> 	result += &quot;  reg [17:0] instruction_reg [0:121];\n&quot;
+<a href="#l237" class="line" id="l237">    237</a> 	result += &quot;  \n&quot;
+<a href="#l238" class="line" id="l238">    238</a> 	result += &quot;  //Instruction write\n&quot;
+<a href="#l239" class="line" id="l239">    239</a> 	result += &quot;  reg [17:0] instruction_write [0:12];\n&quot;
+<a href="#l240" class="line" id="l240">    240</a> 	result += &quot;\n&quot;
+<a href="#l241" class="line" id="l241">    241</a> 	result += &quot;  //Instruction rx\n&quot;
+<a href="#l242" class="line" id="l242">    242</a> 	result += &quot;  reg [17:0] instruction_rx [0:25];\n&quot;
+<a href="#l243" class="line" id="l243">    243</a> 	result += &quot;    \n&quot;
+<a href="#l244" class="line" id="l244">    244</a> 	result += &quot;  //control reg \n&quot;
+<a href="#l245" class="line" id="l245">    245</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) reg [31:0] control_reg [0:3][0:31]; \n&quot;
+<a href="#l246" class="line" id="l246">    246</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) wire mistat_busy = control_reg[3][10][0];\n&quot;
+<a href="#l247" class="line" id="l247">    247</a> 	result += &quot;    \n&quot;
+<a href="#l248" class="line" id="l248">    248</a> 	result += &quot;  initial begin\n&quot;
+<a href="#l249" class="line" id="l249">    249</a> 	result += &quot;    //soft reset\n&quot;
+<a href="#l250" class="line" id="l250">    250</a> 	result += &quot;    instruction_reg[0]   = {SRC, 5&#39;b11111,      2&#39;b00, 8&#39;h00};              \n&quot;
+<a href="#l251" class="line" id="l251">    251</a> 	result += &quot;    \n&quot;
+<a href="#l252" class="line" id="l252">    252</a> 	result += &quot;    //Clear ECON1 spi_write_op(priv, ENC28J60_WRITE_CTRL_REG, ECON1, 0x00);\n&quot;
+<a href="#l253" class="line" id="l253">    253</a> 	result += &quot;    instruction_reg[1]   = {WCR, A_ECON1,      2&#39;b00, 8&#39;h00};        \n&quot;
+<a href="#l254" class="line" id="l254">    254</a> 	result += &quot;    \n&quot;
+<a href="#l255" class="line" id="l255">    255</a> 	result += &quot;    //Set ECON2 nolock_regb_write(priv, ECON2, ECON2_AUTOINC | ECON2_VRPS);        \n&quot;
+<a href="#l256" class="line" id="l256">    256</a> 	result += &quot;    instruction_reg[2]   = {WCR, A_ECON2,      2&#39;b00, 8&#39;h80};        \n&quot;
+<a href="#l257" class="line" id="l257">    257</a> 	result += &quot;    \n&quot;
+<a href="#l258" class="line" id="l258">    258</a> 	result += &quot;    //Check    \n&quot;
+<a href="#l259" class="line" id="l259">    259</a> 	result += &quot;    instruction_reg[3]   = {BFS, A_ECON1,    2&#39;b00, 8&#39;h03};    //Set bank 3\n&quot;
+<a href="#l260" class="line" id="l260">    260</a> 	result += &quot;    instruction_reg[4]   = {RCR, A_EREVID,   2&#39;b11, 8&#39;h00};   \n&quot;
+<a href="#l261" class="line" id="l261">    261</a> 	result += &quot;    \n&quot;
+<a href="#l262" class="line" id="l262">    262</a> 	result += &quot;    //rxfifo initialization\n&quot;
+<a href="#l263" class="line" id="l263">    263</a> 	result += &quot;    instruction_reg[5]   = {BFC, A_ECON1,    2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l264" class="line" id="l264">    264</a> 	result += &quot;    instruction_reg[6]   = {WCR, A_ERXSTL,   2&#39;b00, 8&#39;h00};   //nolock_regw_write(priv, ERXSTL, start);\n&quot;
+<a href="#l265" class="line" id="l265">    265</a> 	result += &quot;    instruction_reg[7]   = {WCR, A_ERXSTH,   2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l266" class="line" id="l266">    266</a> 	result += &quot;    instruction_reg[8]   = {WCR, A_ERXRDPTL, 2&#39;b00, 8&#39;hFF};   //nolock_regw_write(priv, ERXRDPTL, erxrdpt);\n&quot;
+<a href="#l267" class="line" id="l267">    267</a> 	result += &quot;    instruction_reg[9]   = {WCR, A_ERXRDPTH, 2&#39;b00, 8&#39;h19}; \n&quot;
+<a href="#l268" class="line" id="l268">    268</a> 	result += &quot;    instruction_reg[10]  = {WCR, A_ERXNDL,   2&#39;b00, 8&#39;hFF};  //nolock_regw_write(priv, ERXNDL, end);\n&quot;
+<a href="#l269" class="line" id="l269">    269</a> 	result += &quot;    instruction_reg[11]  = {WCR, A_ERXNDH,   2&#39;b00, 8&#39;h19};\n&quot;
+<a href="#l270" class="line" id="l270">    270</a> 	result += &quot;    \n&quot;
+<a href="#l271" class="line" id="l271">    271</a> 	result += &quot;    //in configurazione tx_fifo\n&quot;
+<a href="#l272" class="line" id="l272">    272</a> 	result += &quot;    instruction_reg[12]  = {WCR, A_ETXSTL,   2&#39;b00, 8&#39;h00};  //nolock_regw_write(priv, ETXSTL, start);\n&quot;
+<a href="#l273" class="line" id="l273">    273</a> 	result += &quot;    instruction_reg[13]  = {WCR, A_ETXSTH,   2&#39;b00, 8&#39;h1A};\n&quot;
+<a href="#l274" class="line" id="l274">    274</a> 	result += &quot;    instruction_reg[14]  = {WCR, A_ETXNDL,   2&#39;b00, 8&#39;hFF};  //nolock_regw_write(priv, ETXNDL, end);\n&quot;
+<a href="#l275" class="line" id="l275">    275</a> 	result += &quot;    instruction_reg[15]  = {WCR, A_ETXNDH,   2&#39;b00, 8&#39;h1F};\n&quot;
+<a href="#l276" class="line" id="l276">    276</a> 	result += &quot;    \n&quot;
+<a href="#l277" class="line" id="l277">    277</a> 	result += &quot;    //Set ERXFCON locked_regb_write(priv, ERXFCON, ERXFCON_UCEN | ERXFCON_CRCEN | ERXFCON_BCEN);\n&quot;
+<a href="#l278" class="line" id="l278">    278</a> 	result += &quot;    instruction_reg[16]  = {BFS, A_ECON1,      2&#39;b00, 8&#39;h01};        //Set bank 2\n&quot;
+<a href="#l279" class="line" id="l279">    279</a> 	result += &quot;    instruction_reg[17]  = {WCR, A_ERXFCON,  2&#39;b01, 8&#39;h61};        \n&quot;
+<a href="#l280" class="line" id="l280">    280</a> 	result += &quot;    \n&quot;
+<a href="#l281" class="line" id="l281">    281</a> 	result += &quot;    instruction_reg[18]  = {BFC, A_ECON1,      2&#39;b00, 8&#39;h03};        //Set bank 2\n&quot;
+<a href="#l282" class="line" id="l282">    282</a> 	result += &quot;    instruction_reg[19]  = {BFS, A_ECON1,      2&#39;b00, 8&#39;h02};        //Set bank 2\n&quot;
+<a href="#l283" class="line" id="l283">    283</a> 	result += &quot;    instruction_reg[20]  = {WCR, A_MACON1,      2&#39;b10, 8&#39;h0D};        //locked_regb_write(priv, MACON1, MACON1_MARXEN | MACON1_TXPAUS | MACON1_RXPAUS);\n&quot;
+<a href="#l284" class="line" id="l284">    284</a> 	result += &quot;    instruction_reg[21]  = {WCR, A_MACON3,      2&#39;b10, 8&#39;h33};        //locked_regb_write(priv, MACON3, MACON3_PADCFG0 | MACON3_TXCRCEN | MACON3_FRMLNEN | MACON3_FULDPX);\n&quot;
+<a href="#l285" class="line" id="l285">    285</a> 	result += &quot;    instruction_reg[22]  = {WCR, A_MAIPGL,      2&#39;b10, 8&#39;h12};        //locked_regb_write(priv, MAIPGL, 0x12);\n&quot;
+<a href="#l286" class="line" id="l286">    286</a> 	result += &quot;    instruction_reg[23]  = {WCR, A_MABBIPG,  2&#39;b10, 8&#39;h15};        //locked_regb_write(priv, MABBIPG, 0x15);\n&quot;
+<a href="#l287" class="line" id="l287">    287</a> 	result += &quot;    instruction_reg[24]  = {WCR, A_MAMXFLL,  2&#39;b10, 8&#39;hEE};        //locked_regw_write(priv, MAMXFLL, MAX_FRAMELEN);\n&quot;
+<a href="#l288" class="line" id="l288">    288</a> 	result += &quot;    instruction_reg[25]  = {WCR, A_MAMXFLH,  2&#39;b10, 8&#39;h05};        //LENGTH OF ETH FRAME (1518) \n&quot;
+<a href="#l289" class="line" id="l289">    289</a> 	result += &quot;\n&quot;
+<a href="#l290" class="line" id="l290">    290</a> 	result += &quot;      \n&quot;
+<a href="#l291" class="line" id="l291">    291</a> 	result += &quot;    //configure LEDs\n&quot;
+<a href="#l292" class="line" id="l292">    292</a> 	result += &quot;    instruction_reg[26]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, 5&#39;b10100};//A_PHLCON};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l293" class="line" id="l293">    293</a> 	result += &quot;    instruction_reg[27]  = {WCR, A_MIWRL,    2&#39;b10, 8&#39;h74}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l294" class="line" id="l294">    294</a> 	result += &quot;    instruction_reg[28]  = {WCR, A_MIWRH,    2&#39;b10, 8&#39;h34};      \n&quot;
+<a href="#l295" class="line" id="l295">    295</a> 	result += &quot;    instruction_reg[29]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3    \n&quot;
+<a href="#l296" class="line" id="l296">    296</a> 	result += &quot;    instruction_reg[30]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0)\n&quot;
+<a href="#l297" class="line" id="l297">    297</a> 	result += &quot;        \n&quot;
+<a href="#l298" class="line" id="l298">    298</a> 	result += &quot;    instruction_reg[31]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l299" class="line" id="l299">    299</a> 	result += &quot;    instruction_reg[32]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l300" class="line" id="l300">    300</a> 	result += &quot;    instruction_reg[33]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, 5&#39;b00000};// A_PHCON1};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l301" class="line" id="l301">    301</a> 	result += &quot;    instruction_reg[34]  = {WCR, A_MIWRL,    2&#39;b10, 8&#39;h00}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l302" class="line" id="l302">    302</a> 	result += &quot;    instruction_reg[35]  = {WCR, A_MIWRH,    2&#39;b10, 8&#39;h01};      \n&quot;
+<a href="#l303" class="line" id="l303">    303</a> 	result += &quot;    instruction_reg[36]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3    \n&quot;
+<a href="#l304" class="line" id="l304">    304</a> 	result += &quot;    instruction_reg[37]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0) \n&quot;
+<a href="#l305" class="line" id="l305">    305</a> 	result += &quot;\n&quot;
+<a href="#l306" class="line" id="l306">    306</a> 	result += &quot;    instruction_reg[38]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l307" class="line" id="l307">    307</a> 	result += &quot;    instruction_reg[39]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l308" class="line" id="l308">    308</a> 	result += &quot;    instruction_reg[40]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, 5&#39;b10000};//A_PHCON2};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l309" class="line" id="l309">    309</a> 	result += &quot;    instruction_reg[41]  = {WCR, A_MIWRL,    2&#39;b10, 8&#39;h00}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l310" class="line" id="l310">    310</a> 	result += &quot;    instruction_reg[42]  = {WCR, A_MIWRH,    2&#39;b10, 8&#39;h00};      \n&quot;
+<a href="#l311" class="line" id="l311">    311</a> 	result += &quot;    instruction_reg[43]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3    \n&quot;
+<a href="#l312" class="line" id="l312">    312</a> 	result += &quot;    instruction_reg[44]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0) \n&quot;
+<a href="#l313" class="line" id="l313">    313</a> 	result += &quot;    \n&quot;
+<a href="#l314" class="line" id="l314">    314</a> 	result += &quot;    \n&quot;
+<a href="#l315" class="line" id="l315">    315</a> 	result += &quot;    //\n&quot;
+<a href="#l316" class="line" id="l316">    316</a> 	result += &quot;    instruction_reg[45]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l317" class="line" id="l317">    317</a> 	result += &quot;    instruction_reg[46]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l318" class="line" id="l318">    318</a> 	result += &quot;    instruction_reg[47]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0,  5&#39;b10010};//A_PHIE};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l319" class="line" id="l319">    319</a> 	result += &quot;    instruction_reg[48]  = {WCR, A_MIWRL,      2&#39;b10, 8&#39;h12}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l320" class="line" id="l320">    320</a> 	result += &quot;    instruction_reg[49]  = {RCR, A_MIWRL,    2&#39;b10, 8&#39;h00};\n&quot;
+<a href="#l321" class="line" id="l321">    321</a> 	result += &quot;    instruction_reg[50]  = {WCR, A_MIWRH,      2&#39;b10, 8&#39;h00};      \n&quot;
+<a href="#l322" class="line" id="l322">    322</a> 	result += &quot;    instruction_reg[51]  = {RCR, A_MIWRH,    2&#39;b10, 8&#39;h00};   \n&quot;
+<a href="#l323" class="line" id="l323">    323</a> 	result += &quot;    instruction_reg[52]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h03};        //Set bank 3    \n&quot;
+<a href="#l324" class="line" id="l324">    324</a> 	result += &quot;    instruction_reg[53]  = {RCR, A_MISTAT,      2&#39;b11, 8&#39;h00};  //    poll_ready(priv, MISTAT, MISTAT_BUSY, 0) ? 0 : 1;  ?????LEGGO IL BIT 0 NEL CASO ? 0 POSSO ANDARE AVANTI ALTRIMENTI ASPETTO?????\n&quot;
+<a href="#l325" class="line" id="l325">    325</a> 	result += &quot;          \n&quot;
+<a href="#l326" class="line" id="l326">    326</a> 	result += &quot;    //configurare per la scrittura del dato\n&quot;
+<a href="#l327" class="line" id="l327">    327</a> 	result += &quot;    //nolock_regw_write(priv, EWRPTL, EWRPTH, 16&#39;h1A00);\n&quot;
+<a href="#l328" class="line" id="l328">    328</a> 	result += &quot;    \n&quot;
+<a href="#l329" class="line" id="l329">    329</a> 	result += &quot;    //enable interrupt\n&quot;
+<a href="#l330" class="line" id="l330">    330</a> 	result += &quot;    instruction_reg[54]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l331" class="line" id="l331">    331</a> 	result += &quot;    instruction_reg[55]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l332" class="line" id="l332">    332</a> 	result += &quot;    instruction_reg[56]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, 5&#39;b10010};//A_PHIE};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l333" class="line" id="l333">    333</a> 	result += &quot;    instruction_reg[57]  = {WCR, A_MIWRL,    2&#39;b10, 8&#39;h12}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l334" class="line" id="l334">    334</a> 	result += &quot;    instruction_reg[58]  = {WCR, A_MIWRH,    2&#39;b10, 8&#39;h00};      \n&quot;
+<a href="#l335" class="line" id="l335">    335</a> 	result += &quot;    instruction_reg[59]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3    \n&quot;
+<a href="#l336" class="line" id="l336">    336</a> 	result += &quot;    instruction_reg[60]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0)\n&quot;
+<a href="#l337" class="line" id="l337">    337</a> 	result += &quot;\n&quot;
+<a href="#l338" class="line" id="l338">    338</a> 	result += &quot;    instruction_reg[61]  = {BFC, A_ECON1,      2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l339" class="line" id="l339">    339</a> 	result += &quot;    instruction_reg[62]  = {BFC, A_EIR,      2&#39;b00, 8&#39;h7B};        //nolock_reg_bfclr(priv, EIR, EIR_DMAIF | EIR_LINKIF | EIR_TXIF | EIR_TXERIF | EIR_RXERIF | EIR_PKTIF);\n&quot;
+<a href="#l340" class="line" id="l340">    340</a> 	result += &quot;    instruction_reg[63]  = {WCR, A_EIE,      2&#39;b00, 8&#39;h00};        //nolock_regb_write(priv, EIE, EIE_INTIE | EIE_PKTIE | EIE_LINKIE | EIE_TXIE | EIE_TXERIE | EIE_RXERIE);\n&quot;
+<a href="#l341" class="line" id="l341">    341</a> 	result += &quot;    instruction_reg[64]  = {RCR, A_EIE,      2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l342" class="line" id="l342">    342</a> 	result += &quot;    instruction_reg[65]  = {BFS, A_ECON1,      2&#39;b00, 8&#39;h00};        //nolock_reg_bfset(priv, ECON1, ECON1_RXEN);\n&quot;
+<a href="#l343" class="line" id="l343">    343</a> 	result += &quot;    \n&quot;
+<a href="#l344" class="line" id="l344">    344</a> 	result += &quot;    //read PHY\n&quot;
+<a href="#l345" class="line" id="l345">    345</a> 	result += &quot;    instruction_reg[66]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l346" class="line" id="l346">    346</a> 	result += &quot;    instruction_reg[67]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l347" class="line" id="l347">    347</a> 	result += &quot;    instruction_reg[68]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, 5&#39;b10001};//A_PHSTAT2};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l348" class="line" id="l348">    348</a> 	result += &quot;    instruction_reg[69]  = {WCR, A_MICMD,    2&#39;b10, 8&#39;h01}; \n&quot;
+<a href="#l349" class="line" id="l349">    349</a> 	result += &quot;    instruction_reg[70]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3   \n&quot;
+<a href="#l350" class="line" id="l350">    350</a> 	result += &quot;    instruction_reg[71]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0)\n&quot;
+<a href="#l351" class="line" id="l351">    351</a> 	result += &quot;    instruction_reg[72]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l352" class="line" id="l352">    352</a> 	result += &quot;    instruction_reg[73]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l353" class="line" id="l353">    353</a> 	result += &quot;    instruction_reg[74]  = {WCR, A_MICMD,    2&#39;b10, 8&#39;h00}; \n&quot;
+<a href="#l354" class="line" id="l354">    354</a> 	result += &quot;    instruction_reg[75]  = {RCR, A_MIRDL,    2&#39;b10, 8&#39;h12}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l355" class="line" id="l355">    355</a> 	result += &quot;    instruction_reg[76]  = {RCR, A_MIRDH,    2&#39;b10, 8&#39;h00};      \n&quot;
+<a href="#l356" class="line" id="l356">    356</a> 	result += &quot;   \n&quot;
+<a href="#l357" class="line" id="l357">    357</a> 	result += &quot;    \n&quot;
+<a href="#l358" class="line" id="l358">    358</a> 	result += &quot;    //dump regisri\n&quot;
+<a href="#l359" class="line" id="l359">    359</a> 	result += &quot;    //instruction_reg[75]   = {RCR, A_ECON2,     2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l360" class="line" id="l360">    360</a> 	result += &quot;    //instruction_reg[76]   = {RCR, A_ESTAT,     2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l361" class="line" id="l361">    361</a> 	result += &quot;    instruction_reg[77]   = {RCR, A_EIR,       2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l362" class="line" id="l362">    362</a> 	result += &quot;    instruction_reg[78]   = {RCR, A_EIE,       2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l363" class="line" id="l363">    363</a> 	result += &quot;    instruction_reg[79]   = {RCR, A_ERXSTL,    2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l364" class="line" id="l364">    364</a> 	result += &quot;    instruction_reg[80]   = {RCR, A_ERXSTH,    2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l365" class="line" id="l365">    365</a> 	result += &quot;    instruction_reg[81]   = {RCR, A_ERXNDL,    2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l366" class="line" id="l366">    366</a> 	result += &quot;    instruction_reg[82]   = {RCR, A_ERXNDH,    2&#39;b00, 8&#39;h00}; \n&quot;
+<a href="#l367" class="line" id="l367">    367</a> 	result += &quot;    instruction_reg[83]   = {RCR, A_ERXWRPTL,  2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l368" class="line" id="l368">    368</a> 	result += &quot;    instruction_reg[84]   = {RCR, A_ERXWRPTH,  2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l369" class="line" id="l369">    369</a> 	result += &quot;    instruction_reg[85]   = {RCR, A_ERXRDPTL,  2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l370" class="line" id="l370">    370</a> 	result += &quot;    instruction_reg[86]   = {RCR, A_ERXRDPTH,  2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l371" class="line" id="l371">    371</a> 	result += &quot;    instruction_reg[87]   = {RCR, A_ETXSTL,    2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l372" class="line" id="l372">    372</a> 	result += &quot;    instruction_reg[88]   = {RCR, A_ETXSTH,    2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l373" class="line" id="l373">    373</a> 	result += &quot;    instruction_reg[89]   = {RCR, A_ETXNDL,    2&#39;b00, 8&#39;h00};  \n&quot;
+<a href="#l374" class="line" id="l374">    374</a> 	result += &quot;    instruction_reg[90]   = {RCR, A_ETXNDH,    2&#39;b00, 8&#39;h00}; \n&quot;
+<a href="#l375" class="line" id="l375">    375</a> 	result += &quot;\n&quot;
+<a href="#l376" class="line" id="l376">    376</a> 	result += &quot;    instruction_reg[91]  = {BFC, A_ECON1,       2&#39;b01, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l377" class="line" id="l377">    377</a> 	result += &quot;    instruction_reg[92]  = {BFS, A_ECON1,       2&#39;b01, 8&#39;h01};          //Set bank 1\n&quot;
+<a href="#l378" class="line" id="l378">    378</a> 	result += &quot;    instruction_reg[93]   = {RCR, A_ERXFCON,   2&#39;b01, 8&#39;h00}; \n&quot;
+<a href="#l379" class="line" id="l379">    379</a> 	result += &quot;\n&quot;
+<a href="#l380" class="line" id="l380">    380</a> 	result += &quot;    instruction_reg[94]  = {BFC, A_ECON1,       2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l381" class="line" id="l381">    381</a> 	result += &quot;    instruction_reg[95]  = {BFS, A_ECON1,       2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l382" class="line" id="l382">    382</a> 	result += &quot;    instruction_reg[96]   = {RCR, A_MACON1,    2&#39;b10, 8&#39;h00};  \n&quot;
+<a href="#l383" class="line" id="l383">    383</a> 	result += &quot;    instruction_reg[97]   = {RCR, A_MACON3,    2&#39;b10, 8&#39;h00};  \n&quot;
+<a href="#l384" class="line" id="l384">    384</a> 	result += &quot;    instruction_reg[98]   = {RCR, A_MACON4,    2&#39;b10, 8&#39;h00}; \n&quot;
+<a href="#l385" class="line" id="l385">    385</a> 	result += &quot;    instruction_reg[99]   = {RCR, A_MAMXFLL,   2&#39;b10, 8&#39;h00};\n&quot;
+<a href="#l386" class="line" id="l386">    386</a> 	result += &quot;    instruction_reg[100]   = {RCR, A_MAMXFLH,   2&#39;b10, 8&#39;h00};      \n&quot;
+<a href="#l387" class="line" id="l387">    387</a> 	result += &quot;    instruction_reg[101]   = {RCR, A_MACLCON1,  2&#39;b10, 8&#39;h00};  \n&quot;
+<a href="#l388" class="line" id="l388">    388</a> 	result += &quot;    //instruction_reg[102]   = {RCR, A_MACLCON2,  2&#39;b10, 8&#39;h00}; \n&quot;
+<a href="#l389" class="line" id="l389">    389</a> 	result += &quot;\n&quot;
+<a href="#l390" class="line" id="l390">    390</a> 	result += &quot;    instruction_reg[102]  = {WCR, A_MAADR1,      2&#39;b11, MYMAC_6};\n&quot;
+<a href="#l391" class="line" id="l391">    391</a> 	result += &quot;    instruction_reg[103]  = {WCR, A_MAADR2,      2&#39;b11, MYMAC_5};\n&quot;
+<a href="#l392" class="line" id="l392">    392</a> 	result += &quot;    instruction_reg[104]  = {WCR, A_MAADR3,      2&#39;b11, MYMAC_4};\n&quot;
+<a href="#l393" class="line" id="l393">    393</a> 	result += &quot;    instruction_reg[105]  = {WCR, A_MAADR4,      2&#39;b11, MYMAC_3};\n&quot;
+<a href="#l394" class="line" id="l394">    394</a> 	result += &quot;    instruction_reg[106]  = {WCR, A_MAADR5,      2&#39;b11, MYMAC_2};\n&quot;
+<a href="#l395" class="line" id="l395">    395</a> 	result += &quot;    instruction_reg[107]  = {WCR, A_MAADR6,      2&#39;b11, MYMAC_1};\n&quot;
+<a href="#l396" class="line" id="l396">    396</a> 	result += &quot;\n&quot;
+<a href="#l397" class="line" id="l397">    397</a> 	result += &quot;    instruction_reg[108]  = {BFS, A_ECON1,      2&#39;b00, 8&#39;h04};  //nolock_reg_bfset(priv, ECON1, ECON1_RXEN);\n&quot;
+<a href="#l398" class="line" id="l398">    398</a> 	result += &quot;    instruction_reg[109]   = {WCR, A_EPMOL,      2&#39;b01, 8&#39;h0C};\n&quot;
+<a href="#l399" class="line" id="l399">    399</a> 	result += &quot;    instruction_reg[110]   = {WCR, A_EPMOH,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l400" class="line" id="l400">    400</a> 	result += &quot;    instruction_reg[111]   = {WCR, A_EPMM0,      2&#39;b01, 8&#39;h0C};\n&quot;
+<a href="#l401" class="line" id="l401">    401</a> 	result += &quot;    instruction_reg[112]   = {WCR, A_EPMM1,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l402" class="line" id="l402">    402</a> 	result += &quot;    instruction_reg[113]   = {WCR, A_EPMM2,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l403" class="line" id="l403">    403</a> 	result += &quot;    instruction_reg[114]   = {WCR, A_EPMM3,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l404" class="line" id="l404">    404</a> 	result += &quot;    instruction_reg[115]  = {WCR, A_EPMM4,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l405" class="line" id="l405">    405</a> 	result += &quot;    instruction_reg[116]  = {WCR, A_EPMM5,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l406" class="line" id="l406">    406</a> 	result += &quot;    instruction_reg[117]  = {WCR, A_EPMM6,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l407" class="line" id="l407">    407</a> 	result += &quot;    instruction_reg[118]  = {WCR, A_EPMM7,      2&#39;b01, 8&#39;h00};\n&quot;
+<a href="#l408" class="line" id="l408">    408</a> 	result += &quot;    instruction_reg[119]  = {WCR, A_EPMCSL,     2&#39;b01, 8&#39;h77};\n&quot;
+<a href="#l409" class="line" id="l409">    409</a> 	result += &quot;    instruction_reg[120]  = {WCR, A_EPMCSH,     2&#39;b01, 8&#39;h77};\n&quot;
+<a href="#l410" class="line" id="l410">    410</a> 	result += &quot;    instruction_reg[121]  = {RCR, A_ECON1,      2&#39;b00, 8&#39;h04}; //nolock_reg_bfset(priv, ECON1, ECON1_RXEN);\n&quot;
+<a href="#l411" class="line" id="l411">    411</a> 	result += &quot;\n&quot;
+<a href="#l412" class="line" id="l412">    412</a> 	result += &quot;    \n&quot;
+<a href="#l413" class="line" id="l413">    413</a> 	result += &quot;    end\n&quot;
+<a href="#l414" class="line" id="l414">    414</a> 	result += &quot;    //$readmemh(\&quot;file\&quot;, name)\n&quot;
+<a href="#l415" class="line" id="l415">    415</a> 	result += &quot;          \n&quot;
+<a href="#l416" class="line" id="l416">    416</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) wire [ETHERNET_LENGTH-1:0] rdata_spi;\n&quot;
+<a href="#l417" class="line" id="l417">    417</a> 	result += &quot;  \n&quot;
+<a href="#l418" class="line" id="l418">    418</a> 	result += &quot;  //different start signal to spi module  \n&quot;
+<a href="#l419" class="line" id="l419">    419</a> 	result += &quot;  wire start_spi;\n&quot;
+<a href="#l420" class="line" id="l420">    420</a> 	result += &quot;  \n&quot;
+<a href="#l421" class="line" id="l421">    421</a> 	result += &quot;  reg start_pulse, start_pulse_write, start_pulse_rx;\n&quot;
+<a href="#l422" class="line" id="l422">    422</a> 	result += &quot;  reg [4:0] delay;\n&quot;
+<a href="#l423" class="line" id="l423">    423</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) reg [6:0] count_reg_write;\n&quot;
+<a href="#l424" class="line" id="l424">    424</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) reg [6:0] count_reg_spi;\n&quot;
+<a href="#l425" class="line" id="l425">    425</a> 	result += &quot;  (* keep=\&quot;true\&quot; *) reg [6:0] count_reg_rx;\n&quot;
+<a href="#l426" class="line" id="l426">    426</a> 	result += &quot;    \n&quot;
+<a href="#l427" class="line" id="l427">    427</a> 	result += &quot;	always@(posedge CLOCK)\n&quot;
+<a href="#l428" class="line" id="l428">    428</a> 	result += &quot;	begin\n&quot;
+<a href="#l429" class="line" id="l429">    429</a> 	result += &quot;		if(reset_n==0 | CS_n == 0)  \n&quot;
+<a href="#l430" class="line" id="l430">    430</a> 	result += &quot;		  delay &lt;= &#39;b0;\n&quot;
+<a href="#l431" class="line" id="l431">    431</a> 	result += &quot;		else if(CS_n &amp; (start_conf | start_write | start_rx))  \n&quot;
+<a href="#l432" class="line" id="l432">    432</a> 	result += &quot;		  delay &lt;= delay + 1&#39;b1;\n&quot;
+<a href="#l433" class="line" id="l433">    433</a> 	result += &quot;	end\n&quot;
+<a href="#l434" class="line" id="l434">    434</a> 	result += &quot;	\n&quot;
+<a href="#l435" class="line" id="l435">    435</a> 	result += &quot;	reg stop_counter;\n&quot;
+<a href="#l436" class="line" id="l436">    436</a> 	result += &quot;	always@(posedge CLOCK)\n&quot;
+<a href="#l437" class="line" id="l437">    437</a> 	result += &quot;  begin\n&quot;
+<a href="#l438" class="line" id="l438">    438</a> 	result += &quot;    if(reset_n==0)  \n&quot;
+<a href="#l439" class="line" id="l439">    439</a> 	result += &quot;      stop_counter &lt;= &#39;b0;\n&quot;
+<a href="#l440" class="line" id="l440">    440</a> 	result += &quot;    else if(count_reg_spi==7&#39;b1111001 &amp; done_spi)  \n&quot;
+<a href="#l441" class="line" id="l441">    441</a> 	result += &quot;      stop_counter &lt;= 1&#39;b1;\n&quot;
+<a href="#l442" class="line" id="l442">    442</a> 	result += &quot;  end	\n&quot;
+<a href="#l443" class="line" id="l443">    443</a> 	result += &quot;	    	\n&quot;
+<a href="#l444" class="line" id="l444">    444</a> 	result += &quot;	always@(posedge CLOCK or negedge reset_n) \n&quot;
+<a href="#l445" class="line" id="l445">    445</a> 	result += &quot;	begin\n&quot;
+<a href="#l446" class="line" id="l446">    446</a> 	result += &quot;		if(reset_n==0) begin  \n&quot;
+<a href="#l447" class="line" id="l447">    447</a> 	result += &quot;		  count_reg_spi &lt;= 7&#39;b1111111;\n&quot;
+<a href="#l448" class="line" id="l448">    448</a> 	result += &quot;		  start_pulse &lt;= 1&#39;b0; \n&quot;
+<a href="#l449" class="line" id="l449">    449</a> 	result += &quot;		end\n&quot;
+<a href="#l450" class="line" id="l450">    450</a> 	result += &quot;		else if(CS_n==0) begin\n&quot;
+<a href="#l451" class="line" id="l451">    451</a> 	result += &quot;		  start_pulse &lt;= 1&#39;b0;        \n&quot;
+<a href="#l452" class="line" id="l452">    452</a> 	result += &quot;		end\n&quot;
+<a href="#l453" class="line" id="l453">    453</a> 	result += &quot;		else if(delay == 5&#39;b11111 &amp; !stop_counter) begin\n&quot;
+<a href="#l454" class="line" id="l454">    454</a> 	result += &quot;		  if(instruction_reg[count_reg_spi][14:8] == {A_MISTAT, 2&#39;b11}) begin\n&quot;
+<a href="#l455" class="line" id="l455">    455</a> 	result += &quot;		    if(mistat_busy==1&#39;b0) begin\n&quot;
+<a href="#l456" class="line" id="l456">    456</a> 	result += &quot;		      start_pulse &lt;= 1&#39;b1;\n&quot;
+<a href="#l457" class="line" id="l457">    457</a> 	result += &quot;          count_reg_spi &lt;= count_reg_spi + 1&#39;b1;\n&quot;
+<a href="#l458" class="line" id="l458">    458</a> 	result += &quot;        end  \n&quot;
+<a href="#l459" class="line" id="l459">    459</a> 	result += &quot;		  end\n&quot;
+<a href="#l460" class="line" id="l460">    460</a> 	result += &quot;		  else begin\n&quot;
+<a href="#l461" class="line" id="l461">    461</a> 	result += &quot;		    start_pulse &lt;= 1&#39;b1;\n&quot;
+<a href="#l462" class="line" id="l462">    462</a> 	result += &quot;		    count_reg_spi &lt;= count_reg_spi + 1&#39;b1;\n&quot;
+<a href="#l463" class="line" id="l463">    463</a> 	result += &quot;		  end\n&quot;
+<a href="#l464" class="line" id="l464">    464</a> 	result += &quot;		end \n&quot;
+<a href="#l465" class="line" id="l465">    465</a> 	result += &quot;	end\n&quot;
+<a href="#l466" class="line" id="l466">    466</a> 	result += &quot;  \n&quot;
+<a href="#l467" class="line" id="l467">    467</a> 	result += &quot;  wire [7:0] cmd2spi;\n&quot;
+<a href="#l468" class="line" id="l468">    468</a> 	result += &quot;  assign cmd2spi = (stop_counter==1&#39;b0) ? instruction_reg[count_reg_spi][17:10] : ((start_write==1&#39;b1) ? instruction_write[count_reg_write][17:10] : ((start_rx==1&#39;b1) ? instruction_rx[count_reg_rx][17:10] : &#39;b0)); \n&quot;
+<a href="#l469" class="line" id="l469">    469</a> 	result += &quot;  \n&quot;
+<a href="#l470" class="line" id="l470">    470</a> 	result += &quot;  wire [7:0] spi_data_in; //cambiare con dimensione massima\n&quot;
+<a href="#l471" class="line" id="l471">    471</a> 	result += &quot;  assign spi_data_in = (stop_counter==1&#39;b0) ? instruction_reg[count_reg_spi][7:0] : ((start_write==1&#39;b1) ? instruction_write[count_reg_write][7:0] : ((start_rx==1&#39;b1) ? instruction_rx[count_reg_rx][7:0] : &#39;b0)); \n&quot;
+<a href="#l472" class="line" id="l472">    472</a> 	result += &quot;  \n&quot;
+<a href="#l473" class="line" id="l473">    473</a> 	result += &quot;  assign start_spi = (start_conf==1&#39;b1) ? start_pulse : ((start_write==1&#39;b1) ? start_pulse_write : ((start_rx==1&#39;b1) ? start_pulse_rx : &#39;b0)); \n&quot;
+<a href="#l474" class="line" id="l474">    474</a> 	result += &quot; \n&quot;
+<a href="#l475" class="line" id="l475">    475</a> 	result += &quot;	spi_master spi_master_inst\n&quot;
+<a href="#l476" class="line" id="l476">    476</a> 	result += &quot;	(   \n&quot;
+<a href="#l477" class="line" id="l477">    477</a> 	result += &quot;     .rstb(reset_n) \n&quot;
+<a href="#l478" class="line" id="l478">    478</a> 	result += &quot;      ,.clk(CLOCK)\n&quot;
+<a href="#l479" class="line" id="l479">    479</a> 	result += &quot;      ,.cmd(cmd2spi)\n&quot;
+<a href="#l480" class="line" id="l480">    480</a> 	result += &quot;      ,.start(start_spi) \n&quot;
+<a href="#l481" class="line" id="l481">    481</a> 	result += &quot;      ,.tdat(spi_data_in)\n&quot;
+<a href="#l482" class="line" id="l482">    482</a> 	result += &quot;      ,.wdata(EthTx)\n&quot;
+<a href="#l483" class="line" id="l483">    483</a> 	result += &quot;      ,.cdiv(2&#39;b11)\n&quot;
+<a href="#l484" class="line" id="l484">    484</a> 	result += &quot;      ,.din(MISO)\n&quot;
+<a href="#l485" class="line" id="l485">    485</a> 	result += &quot;      ,.ss(CS_n)\n&quot;
+<a href="#l486" class="line" id="l486">    486</a> 	result += &quot;      ,.sck(SCK)\n&quot;
+<a href="#l487" class="line" id="l487">    487</a> 	result += &quot;      ,.dout(MOSI)\n&quot;
+<a href="#l488" class="line" id="l488">    488</a> 	result += &quot;      ,.done(done_spi)\n&quot;
+<a href="#l489" class="line" id="l489">    489</a> 	result += &quot;      ,.rdata(rdata_spi)\n&quot;
+<a href="#l490" class="line" id="l490">    490</a> 	result += &quot;      //numero of shift\n&quot;
+<a href="#l491" class="line" id="l491">    491</a> 	result += &quot;      ,.n_shift_RBM(instruction_rx[count_reg_rx][9:0])\n&quot;
+<a href="#l492" class="line" id="l492">    492</a> 	result += &quot;	);\n&quot;
+<a href="#l493" class="line" id="l493">    493</a> 	result += &quot;\n&quot;
+<a href="#l494" class="line" id="l494">    494</a> 	result += &quot;	\n&quot;
+<a href="#l495" class="line" id="l495">    495</a> 	result += &quot;	//LO POSSO METTERE CON IL CLOCK SFRUTTANDO IL DONE\n&quot;
+<a href="#l496" class="line" id="l496">    496</a> 	result += &quot;	integer i,j;\n&quot;
+<a href="#l497" class="line" id="l497">    497</a> 	result += &quot;	always@(posedge CLOCK) begin\n&quot;
+<a href="#l498" class="line" id="l498">    498</a> 	result += &quot;	 if(reset_n==0) begin\n&quot;
+<a href="#l499" class="line" id="l499">    499</a> 	result += &quot;	   for (i = 0; i &lt; 4; i = i +1) begin\n&quot;
+<a href="#l500" class="line" id="l500">    500</a> 	result += &quot;	     for (j = 0; j &lt; 32; j = j +1) begin\n&quot;
+<a href="#l501" class="line" id="l501">    501</a> 	result += &quot;	       control_reg[i][j] &lt;= &#39;b0; \n&quot;
+<a href="#l502" class="line" id="l502">    502</a> 	result += &quot;	     end\n&quot;
+<a href="#l503" class="line" id="l503">    503</a> 	result += &quot;	   end\n&quot;
+<a href="#l504" class="line" id="l504">    504</a> 	result += &quot;	 end  \n&quot;
+<a href="#l505" class="line" id="l505">    505</a> 	result += &quot;		if(done_spi) begin\n&quot;
+<a href="#l506" class="line" id="l506">    506</a> 	result += &quot;		  if(instruction_reg[count_reg_spi][17:15]==RCR)\n&quot;
+<a href="#l507" class="line" id="l507">    507</a> 	result += &quot;		     for (i = 0; i &lt; 4; i = i +1) begin\n&quot;
+<a href="#l508" class="line" id="l508">    508</a> 	result += &quot;            for (j = 0; j &lt; 32; j = j +1) begin  \n&quot;
+<a href="#l509" class="line" id="l509">    509</a> 	result += &quot;              if(i==instruction_reg[count_reg_spi][9:8] &amp; j==instruction_reg[count_reg_spi][14:10])\n&quot;
+<a href="#l510" class="line" id="l510">    510</a> 	result += &quot;                  control_reg[i][j] &lt;= rdata_spi[31:0]; \n&quot;
+<a href="#l511" class="line" id="l511">    511</a> 	result += &quot;            end\n&quot;
+<a href="#l512" class="line" id="l512">    512</a> 	result += &quot;         end      \n&quot;
+<a href="#l513" class="line" id="l513">    513</a> 	result += &quot;		  end\n&quot;
+<a href="#l514" class="line" id="l514">    514</a> 	result += &quot;	 end\n&quot;
+<a href="#l515" class="line" id="l515">    515</a> 	result += &quot;	\n&quot;
+<a href="#l516" class="line" id="l516">    516</a> 	result += &quot;	//assign the bit for controlling the PHY status\n&quot;
+<a href="#l517" class="line" id="l517">    517</a> 	result += &quot;	\n&quot;
+<a href="#l518" class="line" id="l518">    518</a> 	result += &quot;	\n&quot;
+<a href="#l519" class="line" id="l519">    519</a> 	result += &quot;	//assign end of configuration\n&quot;
+<a href="#l520" class="line" id="l520">    520</a> 	result += &quot;	assign end_conf = stop_counter;\n&quot;
+<a href="#l521" class="line" id="l521">    521</a> 	result += &quot;  \n&quot;
+<a href="#l522" class="line" id="l522">    522</a> 	result += &quot;  wire stop_write_internal = (count_reg_write==7&#39;b0001011) ? 1&#39;b1 : 1&#39;b0;\n&quot;
+<a href="#l523" class="line" id="l523">    523</a> 	result += &quot;  wire stop_write = start_write &amp; done_spi &amp; stop_write_internal; \n&quot;
+<a href="#l524" class="line" id="l524">    524</a> 	result += &quot;  assign done_write = stop_write;\n&quot;
+<a href="#l525" class="line" id="l525">    525</a> 	result += &quot;\n&quot;
+<a href="#l526" class="line" id="l526">    526</a> 	result += &quot;  always@(posedge CLOCK) \n&quot;
+<a href="#l527" class="line" id="l527">    527</a> 	result += &quot;	begin\n&quot;
+<a href="#l528" class="line" id="l528">    528</a> 	result += &quot;		if(reset_n==0 | stop_write) begin  \n&quot;
+<a href="#l529" class="line" id="l529">    529</a> 	result += &quot;		  count_reg_write &lt;= 7&#39;b1111111;\n&quot;
+<a href="#l530" class="line" id="l530">    530</a> 	result += &quot;		  start_pulse_write &lt;= 1&#39;b0; \n&quot;
+<a href="#l531" class="line" id="l531">    531</a> 	result += &quot;		end\n&quot;
+<a href="#l532" class="line" id="l532">    532</a> 	result += &quot;		else if(CS_n==0) begin\n&quot;
+<a href="#l533" class="line" id="l533">    533</a> 	result += &quot;		  start_pulse_write &lt;= 1&#39;b0;        \n&quot;
+<a href="#l534" class="line" id="l534">    534</a> 	result += &quot;		end\n&quot;
+<a href="#l535" class="line" id="l535">    535</a> 	result += &quot;		else if(delay == 5&#39;b11111 &amp; start_write) begin\n&quot;
+<a href="#l536" class="line" id="l536">    536</a> 	result += &quot;		  start_pulse_write &lt;= 1&#39;b1;\n&quot;
+<a href="#l537" class="line" id="l537">    537</a> 	result += &quot;      count_reg_write &lt;= count_reg_write + 1&#39;b1;\n&quot;
+<a href="#l538" class="line" id="l538">    538</a> 	result += &quot;    end  \n&quot;
+<a href="#l539" class="line" id="l539">    539</a> 	result += &quot;	end\n&quot;
+<a href="#l540" class="line" id="l540">    540</a> 	result += &quot;	\n&quot;
+<a href="#l541" class="line" id="l541">    541</a> 	result += &quot;	\n&quot;
+<a href="#l542" class="line" id="l542">    542</a> 	result += &quot;  initial begin	\n&quot;
+<a href="#l543" class="line" id="l543">    543</a> 	result += &quot;	  \n&quot;
+<a href="#l544" class="line" id="l544">    544</a> 	result += &quot;	instruction_write[0]  = {BFC, A_ECON1, 	  2&#39;b00, 8&#39;h03};  //Set bank 0	\n&quot;
+<a href="#l545" class="line" id="l545">    545</a> 	result += &quot;	instruction_write[1]  = {RCR, A_ECON1, 	  2&#39;b00, 8&#39;h00};  //Set bank 0	\n&quot;
+<a href="#l546" class="line" id="l546">    546</a> 	result += &quot;	  \n&quot;
+<a href="#l547" class="line" id="l547">    547</a> 	result += &quot;	instruction_write[2]  = {WCR, A_EWRPTL,   2&#39;b00, 8&#39;h00};  //nolock_regw_write(priv, ETXSTL, start);\n&quot;
+<a href="#l548" class="line" id="l548">    548</a> 	result += &quot;    instruction_write[3]  = {WCR, A_EWRPTH,   2&#39;b00, 8&#39;h1A};\n&quot;
+<a href="#l549" class="line" id="l549">    549</a> 	result += &quot;	instruction_write[4]  = {RCR, A_EWRPTL,   2&#39;b00, 8&#39;h00};  //Read\n&quot;
+<a href="#l550" class="line" id="l550">    550</a> 	result += &quot;	instruction_write[5]  = {RCR, A_EWRPTH,   2&#39;b00, 8&#39;h00};  //Read	\n&quot;
+<a href="#l551" class="line" id="l551">    551</a> 	result += &quot;    //mettere la lunghezza\n&quot;
+<a href="#l552" class="line" id="l552">    552</a> 	result += &quot;	  //1 byte per packet : 00\n&quot;
+<a href="#l553" class="line" id="l553">    553</a> 	result += &quot;    //5 byte per DA : FF-FF-FF-FF-FF\n&quot;
+<a href="#l554" class="line" id="l554">    554</a> 	result += &quot;    //5 byte per SA : 01-02-03-04-05\n&quot;
+<a href="#l555" class="line" id="l555">    555</a> 	result += &quot;    //2 byte Type   : 8888\n&quot;
+<a href="#l556" class="line" id="l556">    556</a> 	result += &quot;    //2 byte Data   : ABCD\n&quot;
+<a href="#l557" class="line" id="l557">    557</a> 	result += &quot;    //1 byte Data	: ethBM\n&quot;
+<a href="#l558" class="line" id="l558">    558</a> 	result += &quot;    //length 16 =&gt; 1A10\n&quot;
+<a href="#l559" class="line" id="l559">    559</a> 	result += &quot;    instruction_write[6]  = {WCR, A_ETXNDL,   2&#39;b00, 8&#39;h45};  //nolock_regw_write(priv, ETXNDL, end);\n&quot;
+<a href="#l560" class="line" id="l560">    560</a> 	result += &quot;    instruction_write[7]  = {WCR, A_ETXNDH,   2&#39;b00, 8&#39;h1A};\n&quot;
+<a href="#l561" class="line" id="l561">    561</a> 	result += &quot;   \n&quot;
+<a href="#l562" class="line" id="l562">    562</a> 	result += &quot;    // write per-packet control byte \n&quot;
+<a href="#l563" class="line" id="l563">    563</a> 	result += &quot;    instruction_write[8]  = {WBM, 5&#39;b11010,   2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l564" class="line" id="l564">    564</a> 	result += &quot;	instruction_write[9]  = {RCR, A_EWRPTL,   2&#39;b00, 8&#39;h00};  //Read\n&quot;
+<a href="#l565" class="line" id="l565">    565</a> 	result += &quot;	instruction_write[10]  = {RCR, A_EWRPTH,   2&#39;b00, 8&#39;h00};  //Read	\n&quot;
+<a href="#l566" class="line" id="l566">    566</a> 	result += &quot;	\n&quot;
+<a href="#l567" class="line" id="l567">    567</a> 	result += &quot;    /*4. Clear EIR.TXIF, set EIE.TXIE and set EIE.INTIE to enable an interrupt when done (if desired).*/\n&quot;
+<a href="#l568" class="line" id="l568">    568</a> 	result += &quot;    //instruction_write[11]  = {BFC, A_EIR,   2&#39;b00, 8&#39;h08}; \n&quot;
+<a href="#l569" class="line" id="l569">    569</a> 	result += &quot;  \n&quot;
+<a href="#l570" class="line" id="l570">    570</a> 	result += &quot;    /*5. Start the transmission process by setting  ECON1.TXRTS.*/\n&quot;
+<a href="#l571" class="line" id="l571">    571</a> 	result += &quot;    instruction_write[11]  = {BFS, A_ECON1, 2&#39;b00, 8&#39;h08};\n&quot;
+<a href="#l572" class="line" id="l572">    572</a> 	result += &quot;  end\n&quot;
+<a href="#l573" class="line" id="l573">    573</a> 	result += &quot;  \n&quot;
+<a href="#l574" class="line" id="l574">    574</a> 	result += &quot;    (* keep=\&quot;true\&quot; *) reg [7:0] rx_pck;\n&quot;
+<a href="#l575" class="line" id="l575">    575</a> 	result += &quot;    //(* keep=\&quot;true\&quot; *) reg [15:0] debeth;\n&quot;
+<a href="#l576" class="line" id="l576">    576</a> 	result += &quot;    (* keep=\&quot;true\&quot; *) reg [15:0] pointer; // new_pointer;\n&quot;
+<a href="#l577" class="line" id="l577">    577</a> 	result += &quot;    always@(posedge CLOCK)\n&quot;
+<a href="#l578" class="line" id="l578">    578</a> 	result += &quot;    begin\n&quot;
+<a href="#l579" class="line" id="l579">    579</a> 	result += &quot;      if(reset_n==0) begin\n&quot;
+<a href="#l580" class="line" id="l580">    580</a> 	result += &quot;          rx_pck &lt;= &#39;b0;\n&quot;
+<a href="#l581" class="line" id="l581">    581</a> 	result += &quot;      end\n&quot;
+<a href="#l582" class="line" id="l582">    582</a> 	result += &quot;      else  if(count_reg_rx==7&#39;b0001101 &amp; done_spi==1&#39;b1) begin\n&quot;
+<a href="#l583" class="line" id="l583">    583</a> 	result += &quot;           rx_pck &lt;= rdata_spi[7:0];\n&quot;
+<a href="#l584" class="line" id="l584">    584</a> 	result += &quot;        end\n&quot;
+<a href="#l585" class="line" id="l585">    585</a> 	result += &quot;    end\n&quot;
+<a href="#l586" class="line" id="l586">    586</a> 	result += &quot;  \n&quot;
+<a href="#l587" class="line" id="l587">    587</a> 	result += &quot;  wire stop_rx_internal = (count_reg_rx==7&#39;b0010001 &amp; rx_pck==&#39;b0) ? 1&#39;b1 : (count_reg_rx==7&#39;b0011011) ? 1&#39;b1 : 1&#39;b0;\n&quot;
+<a href="#l588" class="line" id="l588">    588</a> 	result += &quot;  wire stop_rx = start_rx &amp; done_spi &amp; stop_rx_internal; \n&quot;
+<a href="#l589" class="line" id="l589">    589</a> 	result += &quot;  assign done_rx = stop_rx;\n&quot;
+<a href="#l590" class="line" id="l590">    590</a> 	result += &quot;\n&quot;
+<a href="#l591" class="line" id="l591">    591</a> 
+<a href="#l592" class="line" id="l592">    592</a> 	result += &quot; always@(posedge CLOCK)\n&quot;
+<a href="#l593" class="line" id="l593">    593</a> 	result += &quot;  begin\n&quot;
+<a href="#l594" class="line" id="l594">    594</a> 	result += &quot;    if(reset_n==0 | stop_rx) begin\n&quot;
+<a href="#l595" class="line" id="l595">    595</a> 	result += &quot;      count_reg_rx &lt;= 7&#39;b1111111;\n&quot;
+<a href="#l596" class="line" id="l596">    596</a> 	result += &quot;      start_pulse_rx &lt;= 1&#39;b0;\n&quot;
+<a href="#l597" class="line" id="l597">    597</a> 	result += &quot;    end\n&quot;
+<a href="#l598" class="line" id="l598">    598</a> 	result += &quot;    else if(CS_n==0) begin\n&quot;
+<a href="#l599" class="line" id="l599">    599</a> 	result += &quot;      start_pulse_rx &lt;= 1&#39;b0;\n&quot;
+<a href="#l600" class="line" id="l600">    600</a> 	result += &quot;    end\n&quot;
+<a href="#l601" class="line" id="l601">    601</a> 	result += &quot;    else if(delay == 5&#39;b11111 &amp; start_rx) begin\n&quot;
+<a href="#l602" class="line" id="l602">    602</a> 	result += &quot;      start_pulse_rx &lt;= 1&#39;b1;\n&quot;
+<a href="#l603" class="line" id="l603">    603</a> 	result += &quot;      count_reg_rx &lt;= count_reg_rx + 1&#39;b1;\n&quot;
+<a href="#l604" class="line" id="l604">    604</a> 	result += &quot;    end\n&quot;
+<a href="#l605" class="line" id="l605">    605</a> 	result += &quot;  end\n&quot;
+<a href="#l606" class="line" id="l606">    606</a> 	result += &quot;\n&quot;
+<a href="#l607" class="line" id="l607">    607</a> 	result += &quot;   assign instruction_rx[0]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l608" class="line" id="l608">    608</a> 	result += &quot;   assign    instruction_rx[1]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l609" class="line" id="l609">    609</a> 	result += &quot;   assign instruction_rx[2]  = {WCR, A_MIREGADR, 2&#39;b10, 3&#39;b0, A_PHSTAT1};   //nolock_regb_write(priv, MIREGADR, address);\n&quot;
+<a href="#l610" class="line" id="l610">    610</a> 	result += &quot;   assign instruction_rx[3]  = {WCR, A_MICMD,    2&#39;b10, 8&#39;h01};\n&quot;
+<a href="#l611" class="line" id="l611">    611</a> 	result += &quot;   assign instruction_rx[4]  = {BFS, A_ECON1,    2&#39;b10, 8&#39;h03};    //Set bank 3   \n&quot;
+<a href="#l612" class="line" id="l612">    612</a> 	result += &quot;   assign instruction_rx[5]  = {RCR, A_MISTAT,   2&#39;b11, 8&#39;h00};   //poll_ready(priv, MISTAT, MISTAT_BUSY, 0)\n&quot;
+<a href="#l613" class="line" id="l613">    613</a> 	result += &quot;   assign instruction_rx[6]  = {BFC, A_ECON1,      2&#39;b10, 8&#39;h03};          //Set bank 2\n&quot;
+<a href="#l614" class="line" id="l614">    614</a> 	result += &quot;   assign instruction_rx[7]  = {BFS, A_ECON1,      2&#39;b10, 8&#39;h02};          //Set bank 2\n&quot;
+<a href="#l615" class="line" id="l615">    615</a> 	result += &quot;   assign instruction_rx[8]  = {WCR, A_MICMD,    2&#39;b10, 8&#39;h00};\n&quot;
+<a href="#l616" class="line" id="l616">    616</a> 	result += &quot;   assign  instruction_rx[9]  = {RCR, A_MIRDL,    2&#39;b10, 8&#39;h00}; // nolock_regw_write(priv, MIWRL, data);\n&quot;
+<a href="#l617" class="line" id="l617">    617</a> 	result += &quot;   assign instruction_rx[10]  = {RCR, A_MIRDH,    2&#39;b10, 8&#39;h00};\n&quot;
+<a href="#l618" class="line" id="l618">    618</a> 	result += &quot;\n&quot;
+<a href="#l619" class="line" id="l619">    619</a> 	result += &quot;   //check the flag for the interrupt\n&quot;
+<a href="#l620" class="line" id="l620">    620</a> 	result += &quot; //  instruction_rx[1]  = {RCR, A_EIR,         2&#39;b00, 8&#39;h00};        //Set bank 0\n&quot;
+<a href="#l621" class="line" id="l621">    621</a> 	result += &quot;\n&quot;
+<a href="#l622" class="line" id="l622">    622</a> 	result += &quot;\n&quot;
+<a href="#l623" class="line" id="l623">    623</a> 	result += &quot;      assign instruction_rx[11]  = {BFC, A_ECON1,     2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l624" class="line" id="l624">    624</a> 	result += &quot;      assign instruction_rx[12]  = {BFS, A_ECON1,     2&#39;b00, 8&#39;h01};        //Set bank 2\n&quot;
+<a href="#l625" class="line" id="l625">    625</a> 	result += &quot;\n&quot;
+<a href="#l626" class="line" id="l626">    626</a> 	result += &quot;   //read the packet counter\n&quot;
+<a href="#l627" class="line" id="l627">    627</a> 	result += &quot;     assign  instruction_rx[13]  = {RCR, A_EPKTCNT,   2&#39;b00, 8&#39;h00};\n&quot;
+<a href="#l628" class="line" id="l628">    628</a> 	result += &quot;\n&quot;
+<a href="#l629" class="line" id="l629">    629</a> 	result += &quot;       assign instruction_rx[14]  = {BFC, A_ECON1,     2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l630" class="line" id="l630">    630</a> 	result += &quot;\n&quot;
+<a href="#l631" class="line" id="l631">    631</a> 	result += &quot;   assign instruction_rx[15]  = {WCR, A_ERDPTL,    2&#39;b00, pointer[7:0]};\n&quot;
+<a href="#l632" class="line" id="l632">    632</a> 	result += &quot;   assign instruction_rx[16]  = {WCR, A_ERDPTH,    2&#39;b00, pointer[15:8]};\n&quot;
+<a href="#l633" class="line" id="l633">    633</a> 	result += &quot;\n&quot;
+<a href="#l634" class="line" id="l634">    634</a> 	result += &quot;         assign instruction_rx[17]  = {BFC, A_ECON1,     2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l635" class="line" id="l635">    635</a> 	result += &quot;\n&quot;
+<a href="#l636" class="line" id="l636">    636</a> 	result += &quot;   assign instruction_rx[18]  = {RBM, 5&#39;b11010,    10&#39;h038};\n&quot;
+<a href="#l637" class="line" id="l637">    637</a> 	result += &quot;\n&quot;
+<a href="#l638" class="line" id="l638">    638</a> 	result += &quot;\n&quot;
+<a href="#l639" class="line" id="l639">    639</a> 	result += &quot;         assign instruction_rx[19]  = {BFS, A_ECON1,     2&#39;b00, 8&#39;h01};        //Set bank 0\n&quot;
+<a href="#l640" class="line" id="l640">    640</a> 	result += &quot;\n&quot;
+<a href="#l641" class="line" id="l641">    641</a> 	result += &quot;   //assign instruction_rx[20]  = {WCR, A_ERDPTL,    2&#39;b00, new_pointer[7:0]};\n&quot;
+<a href="#l642" class="line" id="l642">    642</a> 	result += &quot;   //   assign instruction_rx[21]  = {WCR, A_ERDPTH,    2&#39;b00, new_pointer[15:8]};\n&quot;
+<a href="#l643" class="line" id="l643">    643</a> 	result += &quot;\n&quot;
+<a href="#l644" class="line" id="l644">    644</a> 	result += &quot;   assign instruction_rx[20]  = {RBM, 5&#39;b11010,    10&#39;h120};\n&quot;
+<a href="#l645" class="line" id="l645">    645</a> 	result += &quot;\n&quot;
+<a href="#l646" class="line" id="l646">    646</a> 	result += &quot;         assign instruction_rx[21]  = {BFC, A_ECON1,     2&#39;b00, 8&#39;h03};        //Set bank 0\n&quot;
+<a href="#l647" class="line" id="l647">    647</a> 	result += &quot;\n&quot;
+<a href="#l648" class="line" id="l648">    648</a> 	result += &quot;     assign instruction_rx[22]  = {WCR, A_ERXRDPTL,  2&#39;b00, pointer[7:0]};\n&quot;
+<a href="#l649" class="line" id="l649">    649</a> 	result += &quot;     assign instruction_rx[23]  = {WCR, A_ERXRDPTH,  2&#39;b00, pointer[15:8]};\n&quot;
+<a href="#l650" class="line" id="l650">    650</a> 	result += &quot;\n&quot;
+<a href="#l651" class="line" id="l651">    651</a> 	result += &quot;\n&quot;
+<a href="#l652" class="line" id="l652">    652</a> 	result += &quot;\n&quot;
+<a href="#l653" class="line" id="l653">    653</a> 	result += &quot;  assign  instruction_rx[24]  = {BFS, A_ECON2,     2&#39;b00, 8&#39;h40};\n&quot;
+<a href="#l654" class="line" id="l654">    654</a> 	result += &quot;\n&quot;
+<a href="#l655" class="line" id="l655">    655</a> 	result += &quot;         assign instruction_rx[25]  = {BFS, A_ECON1,     2&#39;b00, 8&#39;h01};        //Set bank 2\n&quot;
+<a href="#l656" class="line" id="l656">    656</a> 	result += &quot;   //assign instruction_rx[23]  = {RCR, A_EPKTCNT,   2&#39;b01, 8&#39;h00}; \n&quot;
+<a href="#l657" class="line" id="l657">    657</a> 	result += &quot;\n&quot;
+<a href="#l658" class="line" id="l658">    658</a> 	result += &quot;  (* keep = \&quot;true\&quot; *) reg rx_ok;\n&quot;
+<a href="#l659" class="line" id="l659">    659</a> 	result += &quot;  (* keep = \&quot;true\&quot; *) reg [15:0] length_rx;\n&quot;
+<a href="#l660" class="line" id="l660">    660</a> 	result += &quot; //assign rx frame\n&quot;
+<a href="#l661" class="line" id="l661">    661</a> 	result += &quot;  always@(posedge CLOCK)\n&quot;
+<a href="#l662" class="line" id="l662">    662</a> 	result += &quot;  begin\n&quot;
+<a href="#l663" class="line" id="l663">    663</a> 	result += &quot;    if(reset_n==0) begin\n&quot;
+<a href="#l664" class="line" id="l664">    664</a> 	result += &quot;       // debeth &lt;= &#39;b0;\n&quot;
+<a href="#l665" class="line" id="l665">    665</a> 	result += &quot;        pointer &lt;= &#39;b0;\n&quot;
+<a href="#l666" class="line" id="l666">    666</a> 	result += &quot;        rx_ok &lt;= &#39;b0;\n&quot;
+<a href="#l667" class="line" id="l667">    667</a> 	result += &quot;        length_rx &lt;= &#39;b0;\n&quot;
+<a href="#l668" class="line" id="l668">    668</a> 	result += &quot;  //      new_pointer &lt;= &#39;b0; \n&quot;
+<a href="#l669" class="line" id="l669">    669</a> 	result += &quot;    end\n&quot;
+<a href="#l670" class="line" id="l670">    670</a> 	result += &quot;    else  if(count_reg_rx==7&#39;b0010010 &amp; done_spi) begin\n&quot;
+<a href="#l671" class="line" id="l671">    671</a> 	result += &quot;     //    debeth &lt;= rdata_spi[119:104];\n&quot;
+<a href="#l672" class="line" id="l672">    672</a> 	result += &quot;         pointer &lt;= {rdata_spi[39:32], rdata_spi[47:40]};\n&quot;
+<a href="#l673" class="line" id="l673">    673</a> 	result += &quot;//         new_pointer &lt;= pointer + 6;\n&quot;
+<a href="#l674" class="line" id="l674">    674</a> 	result += &quot;         rx_ok &lt;= rdata_spi[15];\n&quot;
+<a href="#l675" class="line" id="l675">    675</a> 	result += &quot;         length_rx &lt;= rdata_spi[31:16];\n&quot;
+<a href="#l676" class="line" id="l676">    676</a> 	result += &quot;      end\n&quot;
+<a href="#l677" class="line" id="l677">    677</a> 	result += &quot;  end\n&quot;
+<a href="#l678" class="line" id="l678">    678</a> 	result += &quot;\n&quot;
+<a href="#l679" class="line" id="l679">    679</a> 	result += &quot;  always@(posedge CLOCK)\n&quot;
+<a href="#l680" class="line" id="l680">    680</a> 	result += &quot;    begin\n&quot;
+<a href="#l681" class="line" id="l681">    681</a> 	result += &quot;      if(reset_n==1&#39;b0) begin\n&quot;
+<a href="#l682" class="line" id="l682">    682</a> 	result += &quot;          EthRx &lt;= &#39;b0;\n&quot;
+<a href="#l683" class="line" id="l683">    683</a> 	result += &quot;      end\n&quot;
+<a href="#l684" class="line" id="l684">    684</a> 	result += &quot;      else  if(count_reg_rx==7&#39;b0010100 &amp; done_spi) begin\n&quot;
+<a href="#l685" class="line" id="l685">    685</a> 	result += &quot;           EthRx &lt;= rdata_spi;\n&quot;
+<a href="#l686" class="line" id="l686">    686</a> 	result += &quot;        end\n&quot;
+<a href="#l687" class="line" id="l687">    687</a> 	result += &quot;    end\n&quot;
+<a href="#l688" class="line" id="l688">    688</a> 
+<a href="#l689" class="line" id="l689">    689</a> 	result += &quot;endmodule\n&quot;
+<a href="#l690" class="line" id="l690">    690</a> 	result += &quot;////////////////////////////////////////////////////////////////////////////////\n&quot;
+<a href="#l691" class="line" id="l691">    691</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l692" class="line" id="l692">    692</a> 	result += &quot;//// Project Name: SPI (Verilog)                                            ////\n&quot;
+<a href="#l693" class="line" id="l693">    693</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l694" class="line" id="l694">    694</a> 	result += &quot;//// Module Name: spi_master                                                ////\n&quot;
+<a href="#l695" class="line" id="l695">    695</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l696" class="line" id="l696">    696</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l697" class="line" id="l697">    697</a> 	result += &quot;////  This file is part of the Ethernet IP core project                     ////\n&quot;
+<a href="#l698" class="line" id="l698">    698</a> 	result += &quot;////  http://opencores.com/project,spi_verilog_master_slave                 ////\n&quot;
+<a href="#l699" class="line" id="l699">    699</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l700" class="line" id="l700">    700</a> 	result += &quot;////  Author(s):                                                            ////\n&quot;
+<a href="#l701" class="line" id="l701">    701</a> 	result += &quot;////      Santhosh G (santhg@opencores.org)                                 ////\n&quot;
+<a href="#l702" class="line" id="l702">    702</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l703" class="line" id="l703">    703</a> 	result += &quot;////  Refer to Readme.txt for more information                              ////\n&quot;
+<a href="#l704" class="line" id="l704">    704</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l705" class="line" id="l705">    705</a> 	result += &quot;////////////////////////////////////////////////////////////////////////////////\n&quot;
+<a href="#l706" class="line" id="l706">    706</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l707" class="line" id="l707">    707</a> 	result += &quot;//// Copyright (C) 2014, 2015 Authors                                       ////\n&quot;
+<a href="#l708" class="line" id="l708">    708</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l709" class="line" id="l709">    709</a> 	result += &quot;//// This source file may be used and distributed without                   ////\n&quot;
+<a href="#l710" class="line" id="l710">    710</a> 	result += &quot;//// restriction provided that this copyright statement is not              ////\n&quot;
+<a href="#l711" class="line" id="l711">    711</a> 	result += &quot;//// removed from the file and that any derivative work contains            ////\n&quot;
+<a href="#l712" class="line" id="l712">    712</a> 	result += &quot;//// the original copyright notice and the associated disclaimer.           ////\n&quot;
+<a href="#l713" class="line" id="l713">    713</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l714" class="line" id="l714">    714</a> 	result += &quot;//// This source file is free software; you can redistribute it             ////\n&quot;
+<a href="#l715" class="line" id="l715">    715</a> 	result += &quot;//// and/or modify it under the terms of the GNU Lesser General             ////\n&quot;
+<a href="#l716" class="line" id="l716">    716</a> 	result += &quot;//// Public License as published by the Free Software Foundation;           ////\n&quot;
+<a href="#l717" class="line" id="l717">    717</a> 	result += &quot;//// either version 2.1 of the License, or (at your option) any             ////\n&quot;
+<a href="#l718" class="line" id="l718">    718</a> 	result += &quot;//// later version.                                                         ////\n&quot;
+<a href="#l719" class="line" id="l719">    719</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l720" class="line" id="l720">    720</a> 	result += &quot;//// This source is distributed in the hope that it will be                 ////\n&quot;
+<a href="#l721" class="line" id="l721">    721</a> 	result += &quot;//// useful, but WITHOUT ANY WARRANTY; without even the implied             ////\n&quot;
+<a href="#l722" class="line" id="l722">    722</a> 	result += &quot;//// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR                ////\n&quot;
+<a href="#l723" class="line" id="l723">    723</a> 	result += &quot;//// PURPOSE.  See the GNU Lesser General Public License for more           ////\n&quot;
+<a href="#l724" class="line" id="l724">    724</a> 	result += &quot;//// details.                                                               ////\n&quot;
+<a href="#l725" class="line" id="l725">    725</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l726" class="line" id="l726">    726</a> 	result += &quot;//// You should have received a copy of the GNU Lesser General              ////\n&quot;
+<a href="#l727" class="line" id="l727">    727</a> 	result += &quot;//// Public License along with this source; if not, download it             ////\n&quot;
+<a href="#l728" class="line" id="l728">    728</a> 	result += &quot;//// from http://www.opencores.org/lgpl.shtml                               ////\n&quot;
+<a href="#l729" class="line" id="l729">    729</a> 	result += &quot;////                                                                        ////\n&quot;
+<a href="#l730" class="line" id="l730">    730</a> 	result += &quot;////////////////////////////////////////////////////////////////////////////////\n&quot;
+<a href="#l731" class="line" id="l731">    731</a> 	result += &quot;/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n&quot;
+<a href="#l732" class="line" id="l732">    732</a> 	result += &quot;  SPI MODE 3\n&quot;
+<a href="#l733" class="line" id="l733">    733</a> 	result += &quot;		CHANGE DATA @ NEGEDGE\n&quot;
+<a href="#l734" class="line" id="l734">    734</a> 	result += &quot;		read data @posedge\n&quot;
+<a href="#l735" class="line" id="l735">    735</a> 	result += &quot;\n&quot;
+<a href="#l736" class="line" id="l736">    736</a> 	result += &quot; RSTB-active low asyn reset, CLK-clock, T_RB=0-rx  1-TX, mlb=0-LSB 1st 1-msb 1st\n&quot;
+<a href="#l737" class="line" id="l737">    737</a> 	result += &quot; START=1- starts data transmission cdiv 0=clk/4 1=/8   2=/16  3=/32\n&quot;
+<a href="#l738" class="line" id="l738">    738</a> 	result += &quot;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/\n&quot;
+<a href="#l739" class="line" id="l739">    739</a> 	result += &quot;module spi_master(rstb,clk,n_shift_RBM,start,tdat,cdiv,cmd,din, wdata, ss,sck,dout,done,rdata);\n&quot;
+<a href="#l740" class="line" id="l740">    740</a> 	result += &quot;\n&quot;
+<a href="#l741" class="line" id="l741">    741</a> 	result += &quot;  input rstb,clk,start;\n&quot;
+<a href="#l742" class="line" id="l742">    742</a> 	result += &quot;  input [7:0] cmd;\n&quot;
+<a href="#l743" class="line" id="l743">    743</a> 	result += &quot;  input [7:0] tdat;  //transmit data\n&quot;
+<a href="#l744" class="line" id="l744">    744</a> 	result += &quot;  input [1:0] cdiv;  //clock divider\n&quot;
+<a href="#l745" class="line" id="l745">    745</a> 	result += &quot;	input din;\n&quot;
+<a href="#l746" class="line" id="l746">    746</a> 	result += &quot;	\n&quot;
+<a href="#l747" class="line" id="l747">    747</a> 	result += &quot;	input [9:0] n_shift_RBM;\n&quot;
+<a href="#l748" class="line" id="l748">    748</a> 	result += &quot;	\n&quot;
+<a href="#l749" class="line" id="l749">    749</a> 	result += &quot;	input [ETHERNET_LENGTH-1:0] wdata;\n&quot;
+<a href="#l750" class="line" id="l750">    750</a> 	result += &quot;	\n&quot;
+<a href="#l751" class="line" id="l751">    751</a> 	result += &quot;	output reg ss; \n&quot;
+<a href="#l752" class="line" id="l752">    752</a> 	result += &quot;	output reg sck; \n&quot;
+<a href="#l753" class="line" id="l753">    753</a> 	result += &quot;	output wire dout; \n&quot;
+<a href="#l754" class="line" id="l754">    754</a> 	result += &quot;  output reg done;\n&quot;
+<a href="#l755" class="line" id="l755">    755</a> 	result += &quot;	output reg [ETHERNET_LENGTH-1:0] rdata; //cambiare con lunghezza massima frame eth\n&quot;
+<a href="#l756" class="line" id="l756">    756</a> 	result += &quot;  \n&quot;
+<a href="#l757" class="line" id="l757">    757</a> 	result += &quot;  //FSM state definition\n&quot;
+<a href="#l758" class="line" id="l758">    758</a> 	result += &quot;  parameter idle        = 3&#39;b000;\n&quot;
+<a href="#l759" class="line" id="l759">    759</a> 	result += &quot;  parameter start_con   = 3&#39;b001;		\n&quot;
+<a href="#l760" class="line" id="l760">    760</a> 	result += &quot;  parameter send_op     = 3&#39;b010;\n&quot;
+<a href="#l761" class="line" id="l761">    761</a> 	result += &quot;  parameter read        = 3&#39;b011; \n&quot;
+<a href="#l762" class="line" id="l762">    762</a> 	result += &quot;  parameter write       = 3&#39;b100;\n&quot;
+<a href="#l763" class="line" id="l763">    763</a> 	result += &quot;  parameter stop_con    = 3&#39;b101;  \n&quot;
+<a href="#l764" class="line" id="l764">    764</a> 	result += &quot;  parameter finish      = 3&#39;b110;\n&quot;
+<a href="#l765" class="line" id="l765">    765</a> 	result += &quot; \n&quot;
+<a href="#l766" class="line" id="l766">    766</a> 	result += &quot;  //Regs and wires declaration\n&quot;
+<a href="#l767" class="line" id="l767">    767</a> 	result += &quot;  reg [2:0] cur,nxt;\n&quot;
+<a href="#l768" class="line" id="l768">    768</a> 	result += &quot;	reg [ETHERNET_LENGTH-1+8:0] treg;\n&quot;
+<a href="#l769" class="line" id="l769">    769</a> 	result += &quot;	reg [ETHERNET_LENGTH-1:0] rreg;\n&quot;
+<a href="#l770" class="line" id="l770">    770</a> 	result += &quot;	reg [4:0] mid,cnt;\n&quot;
+<a href="#l771" class="line" id="l771">    771</a> 	result += &quot;	reg shift,clr;\n&quot;
+<a href="#l772" class="line" id="l772">    772</a> 	result += &quot;	reg [9:0] n_shift, nbit;\n&quot;
+<a href="#l773" class="line" id="l773">    773</a> 	result += &quot;\n&quot;
+<a href="#l774" class="line" id="l774">    774</a> 	result += &quot;  //clock divider\n&quot;
+<a href="#l775" class="line" id="l775">    775</a> 	result += &quot;  always@(cdiv)\n&quot;
+<a href="#l776" class="line" id="l776">    776</a> 	result += &quot;  begin\n&quot;
+<a href="#l777" class="line" id="l777">    777</a> 	result += &quot;    case (cdiv)\n&quot;
+<a href="#l778" class="line" id="l778">    778</a> 	result += &quot;        2&#39;b00: mid=2;\n&quot;
+<a href="#l779" class="line" id="l779">    779</a> 	result += &quot;        2&#39;b01: mid=4;\n&quot;
+<a href="#l780" class="line" id="l780">    780</a> 	result += &quot;        2&#39;b10: mid=8;\n&quot;
+<a href="#l781" class="line" id="l781">    781</a> 	result += &quot;        2&#39;b11: mid=16;\n&quot;
+<a href="#l782" class="line" id="l782">    782</a> 	result += &quot;    endcase\n&quot;
+<a href="#l783" class="line" id="l783">    783</a> 	result += &quot;  end\n&quot;
+<a href="#l784" class="line" id="l784">    784</a> 	result += &quot; \n&quot;
+<a href="#l785" class="line" id="l785">    785</a> 	result += &quot;  \n&quot;
+<a href="#l786" class="line" id="l786">    786</a> 	result += &quot;   always@(negedge clk or negedge rstb) \n&quot;
+<a href="#l787" class="line" id="l787">    787</a> 	result += &quot;   begin\n&quot;
+<a href="#l788" class="line" id="l788">    788</a> 	result += &quot;     if(rstb == 0) \n&quot;
+<a href="#l789" class="line" id="l789">    789</a> 	result += &quot;       n_shift &lt;= 10&#39;h010;\n&quot;
+<a href="#l790" class="line" id="l790">    790</a> 	result += &quot;     else if(cmd[7:5]==RCR)\n&quot;
+<a href="#l791" class="line" id="l791">    791</a> 	result += &quot;       n_shift &lt;= 10&#39;b0000011000;\n&quot;
+<a href="#l792" class="line" id="l792">    792</a> 	result += &quot;     else if(cmd[7:5]==WCR | cmd[7:5]==BFS | cmd[7:5]==BFC)\n&quot;
+<a href="#l793" class="line" id="l793">    793</a> 	result += &quot;       n_shift &lt;= 10&#39;b0000010000;       \n&quot;
+<a href="#l794" class="line" id="l794">    794</a> 	result += &quot;     else if(cmd[7:5]==RBM)\n&quot;
+<a href="#l795" class="line" id="l795">    795</a> 	result += &quot;       n_shift &lt;= n_shift_RBM;\n&quot;
+<a href="#l796" class="line" id="l796">    796</a> 	result += &quot;     else if(cmd[7:5]==WBM)\n&quot;
+<a href="#l797" class="line" id="l797">    797</a> 	result += &quot;       n_shift &lt;= 10&#39;h230;\n&quot;
+<a href="#l798" class="line" id="l798">    798</a> 	result += &quot;   end\n&quot;
+<a href="#l799" class="line" id="l799">    799</a> 	result += &quot;\n&quot;
+<a href="#l800" class="line" id="l800">    800</a> 	result += &quot;  //state transistion\n&quot;
+<a href="#l801" class="line" id="l801">    801</a> 	result += &quot;  always@(negedge clk or negedge rstb) \n&quot;
+<a href="#l802" class="line" id="l802">    802</a> 	result += &quot;  begin\n&quot;
+<a href="#l803" class="line" id="l803">    803</a> 	result += &quot;    if(rstb == 0) \n&quot;
+<a href="#l804" class="line" id="l804">    804</a> 	result += &quot;      cur &lt;= finish;\n&quot;
+<a href="#l805" class="line" id="l805">    805</a> 	result += &quot;    else \n&quot;
+<a href="#l806" class="line" id="l806">    806</a> 	result += &quot;      cur &lt;= nxt;\n&quot;
+<a href="#l807" class="line" id="l807">    807</a> 	result += &quot;  end\n&quot;
+<a href="#l808" class="line" id="l808">    808</a> 	result += &quot;\n&quot;
+<a href="#l809" class="line" id="l809">    809</a> 	result += &quot;   \n&quot;
+<a href="#l810" class="line" id="l810">    810</a> 	result += &quot;  //FSM state\n&quot;
+<a href="#l811" class="line" id="l811">    811</a> 	result += &quot;  always @(start or cur or nbit or rreg or cmd or n_shift or sck) \n&quot;
+<a href="#l812" class="line" id="l812">    812</a> 	result += &quot;  begin\n&quot;
+<a href="#l813" class="line" id="l813">    813</a> 	result += &quot;    nxt &lt;= cur;\n&quot;
+<a href="#l814" class="line" id="l814">    814</a> 	result += &quot;    case(cur)\n&quot;
+<a href="#l815" class="line" id="l815">    815</a> 	result += &quot;      idle:begin\n&quot;
+<a href="#l816" class="line" id="l816">    816</a> 	result += &quot;        if(start)\n&quot;
+<a href="#l817" class="line" id="l817">    817</a> 	result += &quot;          nxt &lt;= start_con;	 \n&quot;
+<a href="#l818" class="line" id="l818">    818</a> 	result += &quot;        end //idle\n&quot;
+<a href="#l819" class="line" id="l819">    819</a> 	result += &quot;      start_con: begin\n&quot;
+<a href="#l820" class="line" id="l820">    820</a> 	result += &quot;        nxt &lt;= send_op;\n&quot;
+<a href="#l821" class="line" id="l821">    821</a> 	result += &quot;      end \n&quot;
+<a href="#l822" class="line" id="l822">    822</a> 	result += &quot;      send_op:begin\n&quot;
+<a href="#l823" class="line" id="l823">    823</a> 	result += &quot;        if(nbit==8) begin\n&quot;
+<a href="#l824" class="line" id="l824">    824</a> 	result += &quot;          if(cmd[7:5]==RCR) \n&quot;
+<a href="#l825" class="line" id="l825">    825</a> 	result += &quot;            nxt &lt;= read; //controllo per write o read\n&quot;
+<a href="#l826" class="line" id="l826">    826</a> 	result += &quot;          else if(cmd[7:5]==WCR) \n&quot;
+<a href="#l827" class="line" id="l827">    827</a> 	result += &quot;            nxt &lt;= write; //controllo per write o read\n&quot;
+<a href="#l828" class="line" id="l828">    828</a> 	result += &quot;          else if(cmd[7:5]==BFS) \n&quot;
+<a href="#l829" class="line" id="l829">    829</a> 	result += &quot;            nxt &lt;= write; //controllo per write o read\n&quot;
+<a href="#l830" class="line" id="l830">    830</a> 	result += &quot;          else if(cmd[7:5]==BFC) \n&quot;
+<a href="#l831" class="line" id="l831">    831</a> 	result += &quot;            nxt &lt;= write; //controllo per write o read\n&quot;
+<a href="#l832" class="line" id="l832">    832</a> 	result += &quot;          else if(cmd[7:5]==RBM) \n&quot;
+<a href="#l833" class="line" id="l833">    833</a> 	result += &quot;            nxt &lt;= read; //controllo per write o read\n&quot;
+<a href="#l834" class="line" id="l834">    834</a> 	result += &quot;          else if(cmd[7:5]==WBM) \n&quot;
+<a href="#l835" class="line" id="l835">    835</a> 	result += &quot;            nxt &lt;= write; //controllo per write o read \n&quot;
+<a href="#l836" class="line" id="l836">    836</a> 	result += &quot;          else if(cmd[7:5]==SRC) \n&quot;
+<a href="#l837" class="line" id="l837">    837</a> 	result += &quot;            nxt &lt;= stop_con; //controllo per write o read                               \n&quot;
+<a href="#l838" class="line" id="l838">    838</a> 	result += &quot;        end\n&quot;
+<a href="#l839" class="line" id="l839">    839</a> 	result += &quot;      end//send_op\n&quot;
+<a href="#l840" class="line" id="l840">    840</a> 	result += &quot;      read:begin\n&quot;
+<a href="#l841" class="line" id="l841">    841</a> 	result += &quot;        if(nbit==n_shift)\n&quot;
+<a href="#l842" class="line" id="l842">    842</a> 	result += &quot;          nxt &lt;= stop_con; //controllo per write o read\n&quot;
+<a href="#l843" class="line" id="l843">    843</a> 	result += &quot;      end//read\n&quot;
+<a href="#l844" class="line" id="l844">    844</a> 	result += &quot;      write:begin\n&quot;
+<a href="#l845" class="line" id="l845">    845</a> 	result += &quot;        if(nbit==n_shift)  \n&quot;
+<a href="#l846" class="line" id="l846">    846</a> 	result += &quot;          nxt &lt;= stop_con; //controllo per write o read\n&quot;
+<a href="#l847" class="line" id="l847">    847</a> 	result += &quot;      end//read\n&quot;
+<a href="#l848" class="line" id="l848">    848</a> 	result += &quot;      stop_con:begin\n&quot;
+<a href="#l849" class="line" id="l849">    849</a> 	result += &quot;        if(sck==1&#39;b0)  \n&quot;
+<a href="#l850" class="line" id="l850">    850</a> 	result += &quot;          nxt &lt;= finish;\n&quot;
+<a href="#l851" class="line" id="l851">    851</a> 	result += &quot;      end\n&quot;
+<a href="#l852" class="line" id="l852">    852</a> 	result += &quot;      finish:begin\n&quot;
+<a href="#l853" class="line" id="l853">    853</a> 	result += &quot;        nxt &lt;= idle;\n&quot;
+<a href="#l854" class="line" id="l854">    854</a> 	result += &quot;      end\n&quot;
+<a href="#l855" class="line" id="l855">    855</a> 	result += &quot;      default: nxt&lt;=finish;\n&quot;
+<a href="#l856" class="line" id="l856">    856</a> 	result += &quot;    endcase\n&quot;
+<a href="#l857" class="line" id="l857">    857</a> 	result += &quot;  end//always\n&quot;
+<a href="#l858" class="line" id="l858">    858</a> 	result += &quot;\n&quot;
+<a href="#l859" class="line" id="l859">    859</a> 	result += &quot;  //FSM state i/o\n&quot;
+<a href="#l860" class="line" id="l860">    860</a> 	result += &quot;  always @(negedge clk) \n&quot;
+<a href="#l861" class="line" id="l861">    861</a> 	result += &quot;  begin\n&quot;
+<a href="#l862" class="line" id="l862">    862</a> 	result += &quot;    case(cur)\n&quot;
+<a href="#l863" class="line" id="l863">    863</a> 	result += &quot;      idle:begin\n&quot;
+<a href="#l864" class="line" id="l864">    864</a> 	result += &quot;        ss &lt;= 1&#39;b1;\n&quot;
+<a href="#l865" class="line" id="l865">    865</a> 	result += &quot;        shift &lt;= 1&#39;b0;\n&quot;
+<a href="#l866" class="line" id="l866">    866</a> 	result += &quot;        done &lt;= 1&#39;b0;\n&quot;
+<a href="#l867" class="line" id="l867">    867</a> 	result += &quot;        clr &lt;= 1&#39;b0;\n&quot;
+<a href="#l868" class="line" id="l868">    868</a> 	result += &quot;      end //idle\n&quot;
+<a href="#l869" class="line" id="l869">    869</a> 	result += &quot;      start_con: begin\n&quot;
+<a href="#l870" class="line" id="l870">    870</a> 	result += &quot;        shift &lt;= 1&#39;b1;\n&quot;
+<a href="#l871" class="line" id="l871">    871</a> 	result += &quot;      end\n&quot;
+<a href="#l872" class="line" id="l872">    872</a> 	result += &quot;      send_op:begin                \n&quot;
+<a href="#l873" class="line" id="l873">    873</a> 	result += &quot;        ss &lt;= 1&#39;b0;\n&quot;
+<a href="#l874" class="line" id="l874">    874</a> 	result += &quot;        shift &lt;= 1&#39;b1;\n&quot;
+<a href="#l875" class="line" id="l875">    875</a> 	result += &quot;        done &lt;= 1&#39;b0;\n&quot;
+<a href="#l876" class="line" id="l876">    876</a> 	result += &quot;        clr &lt;= 1&#39;b0;               \n&quot;
+<a href="#l877" class="line" id="l877">    877</a> 	result += &quot;      end//send_op\n&quot;
+<a href="#l878" class="line" id="l878">    878</a> 	result += &quot;      read:begin\n&quot;
+<a href="#l879" class="line" id="l879">    879</a> 	result += &quot;        shift &lt;= 1&#39;b1; \n&quot;
+<a href="#l880" class="line" id="l880">    880</a> 	result += &quot;        ss &lt;= 1&#39;b0;\n&quot;
+<a href="#l881" class="line" id="l881">    881</a> 	result += &quot;        done &lt;= 1&#39;b0;\n&quot;
+<a href="#l882" class="line" id="l882">    882</a> 	result += &quot;        clr &lt;= 1&#39;b0;                 \n&quot;
+<a href="#l883" class="line" id="l883">    883</a> 	result += &quot;      end//read\n&quot;
+<a href="#l884" class="line" id="l884">    884</a> 	result += &quot;      write:begin\n&quot;
+<a href="#l885" class="line" id="l885">    885</a> 	result += &quot;        shift &lt;= 1&#39;b1; \n&quot;
+<a href="#l886" class="line" id="l886">    886</a> 	result += &quot;        ss &lt;= 1&#39;b0;\n&quot;
+<a href="#l887" class="line" id="l887">    887</a> 	result += &quot;        done &lt;= 1&#39;b0;\n&quot;
+<a href="#l888" class="line" id="l888">    888</a> 	result += &quot;        clr &lt;= 1&#39;b0;                   \n&quot;
+<a href="#l889" class="line" id="l889">    889</a> 	result += &quot;      end//write\n&quot;
+<a href="#l890" class="line" id="l890">    890</a> 	result += &quot;      stop_con:begin\n&quot;
+<a href="#l891" class="line" id="l891">    891</a> 	result += &quot;        shift &lt;= 1&#39;b1;\n&quot;
+<a href="#l892" class="line" id="l892">    892</a> 	result += &quot;        ss &lt;= 1&#39;b0;\n&quot;
+<a href="#l893" class="line" id="l893">    893</a> 	result += &quot;        clr &lt;= 1&#39;b0;\n&quot;
+<a href="#l894" class="line" id="l894">    894</a> 	result += &quot;        rdata &lt;= rreg;\n&quot;
+<a href="#l895" class="line" id="l895">    895</a> 	result += &quot;        done &lt;= 1&#39;b1;\n&quot;
+<a href="#l896" class="line" id="l896">    896</a> 	result += &quot;      end\n&quot;
+<a href="#l897" class="line" id="l897">    897</a> 	result += &quot;      finish:begin\n&quot;
+<a href="#l898" class="line" id="l898">    898</a> 	result += &quot;        shift &lt;= 1&#39;b0;\n&quot;
+<a href="#l899" class="line" id="l899">    899</a> 	result += &quot;        ss &lt;= 1&#39;b1;\n&quot;
+<a href="#l900" class="line" id="l900">    900</a> 	result += &quot;        done &lt;= 1&#39;b0;\n&quot;
+<a href="#l901" class="line" id="l901">    901</a> 	result += &quot;        clr &lt;= 1&#39;b1;\n&quot;
+<a href="#l902" class="line" id="l902">    902</a> 	result += &quot;      end\n&quot;
+<a href="#l903" class="line" id="l903">    903</a> 	result += &quot;      default: begin\n&quot;
+<a href="#l904" class="line" id="l904">    904</a> 	result += &quot;         shift &lt;= 1&#39;b0;\n&quot;
+<a href="#l905" class="line" id="l905">    905</a> 	result += &quot;         ss &lt;= 1&#39;b1;\n&quot;
+<a href="#l906" class="line" id="l906">    906</a> 	result += &quot;         done &lt;= 1&#39;b0;\n&quot;
+<a href="#l907" class="line" id="l907">    907</a> 	result += &quot;         clr &lt;= 1&#39;b0;\n&quot;
+<a href="#l908" class="line" id="l908">    908</a> 	result += &quot;      end\n&quot;
+<a href="#l909" class="line" id="l909">    909</a> 	result += &quot;    endcase\n&quot;
+<a href="#l910" class="line" id="l910">    910</a> 	result += &quot;  end//always\n&quot;
+<a href="#l911" class="line" id="l911">    911</a> 	result += &quot;\n&quot;
+<a href="#l912" class="line" id="l912">    912</a> 	result += &quot;  //setup falling edge (shift dout) sample rising edge (read din)\n&quot;
+<a href="#l913" class="line" id="l913">    913</a> 	result += &quot;  always@(negedge clk or posedge clr) \n&quot;
+<a href="#l914" class="line" id="l914">    914</a> 	result += &quot;  begin\n&quot;
+<a href="#l915" class="line" id="l915">    915</a> 	result += &quot;    if(clr) begin \n&quot;
+<a href="#l916" class="line" id="l916">    916</a> 	result += &quot;      cnt&lt;=0; \n&quot;
+<a href="#l917" class="line" id="l917">    917</a> 	result += &quot;      sck&lt;=0; \n&quot;
+<a href="#l918" class="line" id="l918">    918</a> 	result += &quot;    end\n&quot;
+<a href="#l919" class="line" id="l919">    919</a> 	result += &quot;    else begin\n&quot;
+<a href="#l920" class="line" id="l920">    920</a> 	result += &quot;      if(shift) begin\n&quot;
+<a href="#l921" class="line" id="l921">    921</a> 	result += &quot;		    cnt&lt;=cnt+1; \n&quot;
+<a href="#l922" class="line" id="l922">    922</a> 	result += &quot;	      if(cnt==mid) begin\n&quot;
+<a href="#l923" class="line" id="l923">    923</a> 	result += &quot;	  	    sck&lt;=~sck;\n&quot;
+<a href="#l924" class="line" id="l924">    924</a> 	result += &quot;		      cnt&lt;=0;\n&quot;
+<a href="#l925" class="line" id="l925">    925</a> 	result += &quot;		    end //mid\n&quot;
+<a href="#l926" class="line" id="l926">    926</a> 	result += &quot;	   end //shift\n&quot;
+<a href="#l927" class="line" id="l927">    927</a> 	result += &quot;    end //rst\n&quot;
+<a href="#l928" class="line" id="l928">    928</a> 	result += &quot;  end //always\n&quot;
+<a href="#l929" class="line" id="l929">    929</a> 	result += &quot;\n&quot;
+<a href="#l930" class="line" id="l930">    930</a> 	result += &quot;\n&quot;
+<a href="#l931" class="line" id="l931">    931</a> 	result += &quot;  always@(posedge sck or posedge clr ) \n&quot;
+<a href="#l932" class="line" id="l932">    932</a> 	result += &quot;  begin \n&quot;
+<a href="#l933" class="line" id="l933">    933</a> 	result += &quot;      if(clr==1)  \n&quot;
+<a href="#l934" class="line" id="l934">    934</a> 	result += &quot;      begin\n&quot;
+<a href="#l935" class="line" id="l935">    935</a> 	result += &quot;          nbit &lt;= &#39;b0;  \n&quot;
+<a href="#l936" class="line" id="l936">    936</a> 	result += &quot;          rreg &lt;= &#39;b0;  \n&quot;
+<a href="#l937" class="line" id="l937">    937</a> 	result += &quot;      end\n&quot;
+<a href="#l938" class="line" id="l938">    938</a> 	result += &quot;      else \n&quot;
+<a href="#l939" class="line" id="l939">    939</a> 	result += &quot;      begin\n&quot;
+<a href="#l940" class="line" id="l940">    940</a> 	result += &quot;        if(cur==read) begin \n&quot;
+<a href="#l941" class="line" id="l941">    941</a> 	result += &quot;          rreg &lt;= {rreg[ETHERNET_LENGTH-2:0],din};\n&quot;
+<a href="#l942" class="line" id="l942">    942</a> 	result += &quot;        end\n&quot;
+<a href="#l943" class="line" id="l943">    943</a> 	result += &quot;        nbit &lt;= nbit + 1&#39;b1;\n&quot;
+<a href="#l944" class="line" id="l944">    944</a> 	result += &quot;      end //rst\n&quot;
+<a href="#l945" class="line" id="l945">    945</a> 	result += &quot;  end //always\n&quot;
+<a href="#l946" class="line" id="l946">    946</a> 	result += &quot;\n&quot;
+<a href="#l947" class="line" id="l947">    947</a> 	result += &quot;  wire [ETHERNET_LENGTH-1-8:0] zero = &#39;b0;\n&quot;
+<a href="#l948" class="line" id="l948">    948</a> 	result += &quot;  wire [ETHERNET_LENGTH-1+8:0] treg_i = (cmd[7:5]==WBM) ? {cmd, wdata} : {zero, cmd, tdat};\n&quot;
+<a href="#l949" class="line" id="l949">    949</a> 	result += &quot;  \n&quot;
+<a href="#l950" class="line" id="l950">    950</a> 	result += &quot;  always@(negedge sck or posedge start) \n&quot;
+<a href="#l951" class="line" id="l951">    951</a> 	result += &quot;  begin\n&quot;
+<a href="#l952" class="line" id="l952">    952</a> 	result += &quot;    if(start) \n&quot;
+<a href="#l953" class="line" id="l953">    953</a> 	result += &quot;      treg &lt;= treg_i; \n&quot;
+<a href="#l954" class="line" id="l954">    954</a> 	result += &quot;    else\n&quot;
+<a href="#l955" class="line" id="l955">    955</a> 	result += &quot;		  treg &lt;= {treg[ETHERNET_LENGTH+8-2:0],1&#39;b1}; \n&quot;
+<a href="#l956" class="line" id="l956">    956</a> 	result += &quot;  end //always\n&quot;
+<a href="#l957" class="line" id="l957">    957</a> 	result += &quot;\n&quot;
+<a href="#l958" class="line" id="l958">    958</a> 	result += &quot;  assign dout = (cmd[7:5]==WBM) ? treg[ETHERNET_LENGTH+8-1] : treg[15]; \n&quot;
+<a href="#l959" class="line" id="l959">    959</a> 	result += &quot;\n&quot;
+<a href="#l960" class="line" id="l960">    960</a> 	result += &quot;endmodule\n&quot;
+<a href="#l961" class="line" id="l961">    961</a> 	return result
+<a href="#l962" class="line" id="l962">    962</a> }
+<a href="#l963" class="line" id="l963">    963</a> 
+<a href="#l964" class="line" id="l964">    964</a> func (sl *Etherbond_extra) ExtraFiles() ([]string, []string) {
+<a href="#l965" class="line" id="l965">    965</a> 	return []string{}, []string{}
+<a href="#l966" class="line" id="l966">    966</a> }
+</pre>
+</div>
+</body>
+</html>

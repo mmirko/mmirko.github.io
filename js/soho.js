@@ -1,5 +1,14 @@
 $(document).ready(function(){
 
+  $(".bluesky-share-button").click(function (e) {
+    e.preventDefault();
+    var self = $(this);
+    var url = encodeURIComponent(self.data("url"));
+    var text = encodeURIComponent(self.data("text"));
+
+    window.open(`https://bsky.app/intent/compose?text=${text}${url}`, "_blank").focus();
+  });
+
   $(".twitter-share-button").click(function (e) {
     e.preventDefault();
     var self = $(this);

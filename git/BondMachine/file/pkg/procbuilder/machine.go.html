@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>machine.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> machine.go (9634B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package procbuilder
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;math/rand&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;time&quot;
+<a href="#l6" class="line" id="l6">      6</a> )
+<a href="#l7" class="line" id="l7">      7</a> 
+<a href="#l8" class="line" id="l8">      8</a> // The machine is an architecture provided with and execution code and an intial state
+<a href="#l9" class="line" id="l9">      9</a> type Machine struct {
+<a href="#l10" class="line" id="l10">     10</a> 	Arch
+<a href="#l11" class="line" id="l11">     11</a> 	Program
+<a href="#l12" class="line" id="l12">     12</a> 	Data
+<a href="#l13" class="line" id="l13">     13</a> }
+<a href="#l14" class="line" id="l14">     14</a> 
+<a href="#l15" class="line" id="l15">     15</a> type Machine_json struct {
+<a href="#l16" class="line" id="l16">     16</a> 	Modes              []string
+<a href="#l17" class="line" id="l17">     17</a> 	Rsize              uint8
+<a href="#l18" class="line" id="l18">     18</a> 	WordSize           uint8
+<a href="#l19" class="line" id="l19">     19</a> 	R                  uint8 // Number of n-bit registers
+<a href="#l20" class="line" id="l20">     20</a> 	N                  uint8 // Number of n-bit inputs
+<a href="#l21" class="line" id="l21">     21</a> 	M                  uint8 // Number of n-bit outputs
+<a href="#l22" class="line" id="l22">     22</a> 	L                  uint8 // Number of n-bit memory banks internal to the processor 2^
+<a href="#l23" class="line" id="l23">     23</a> 	O                  uint8 // Number of ROM cells 2^
+<a href="#l24" class="line" id="l24">     24</a> 	Shared_constraints string
+<a href="#l25" class="line" id="l25">     25</a> 	Op                 []string
+<a href="#l26" class="line" id="l26">     26</a> 	Slocs              []string
+<a href="#l27" class="line" id="l27">     27</a> 	Vars               []string
+<a href="#l28" class="line" id="l28">     28</a> 	Threaded           int
+<a href="#l29" class="line" id="l29">     29</a> }
+<a href="#l30" class="line" id="l30">     30</a> 
+<a href="#l31" class="line" id="l31">     31</a> var Allopcodes []Opcode
+<a href="#l32" class="line" id="l32">     32</a> var Allshared []Sharedel
+<a href="#l33" class="line" id="l33">     33</a> var AllDynamicalInstructions []DynamicInstruction
+<a href="#l34" class="line" id="l34">     34</a> 
+<a href="#l35" class="line" id="l35">     35</a> func init() {
+<a href="#l36" class="line" id="l36">     36</a> 	// fmt.Println(&quot;procbuilder init&quot;)
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> 	rand.Seed(int64(time.Now().Unix()))
+<a href="#l39" class="line" id="l39">     39</a> 
+<a href="#l40" class="line" id="l40">     40</a> 	// Keep in mind the lists og opcodes has to be kept ordered by name
+<a href="#l41" class="line" id="l41">     41</a> 	Allopcodes = make([]Opcode, 0)
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a> 	Allopcodes = append(Allopcodes, Adc{})
+<a href="#l44" class="line" id="l44">     44</a> 	Allopcodes = append(Allopcodes, Add{})
+<a href="#l45" class="line" id="l45">     45</a> 	Allopcodes = append(Allopcodes, Addf{})
+<a href="#l46" class="line" id="l46">     46</a> 	Allopcodes = append(Allopcodes, Addf16{})
+<a href="#l47" class="line" id="l47">     47</a> 	Allopcodes = append(Allopcodes, Addi{})
+<a href="#l48" class="line" id="l48">     48</a> 	Allopcodes = append(Allopcodes, Addp{pipeline: new(bool)})
+<a href="#l49" class="line" id="l49">     49</a> 	Allopcodes = append(Allopcodes, And{})
+<a href="#l50" class="line" id="l50">     50</a> 	Allopcodes = append(Allopcodes, Chc{})
+<a href="#l51" class="line" id="l51">     51</a> 	Allopcodes = append(Allopcodes, Chw{})
+<a href="#l52" class="line" id="l52">     52</a> 	Allopcodes = append(Allopcodes, Cil{})
+<a href="#l53" class="line" id="l53">     53</a> 	Allopcodes = append(Allopcodes, Cilc{})
+<a href="#l54" class="line" id="l54">     54</a> 	Allopcodes = append(Allopcodes, Cir{})
+<a href="#l55" class="line" id="l55">     55</a> 	Allopcodes = append(Allopcodes, Cirn{})
+<a href="#l56" class="line" id="l56">     56</a> 	Allopcodes = append(Allopcodes, Clc{})
+<a href="#l57" class="line" id="l57">     57</a> 	Allopcodes = append(Allopcodes, Clr{})
+<a href="#l58" class="line" id="l58">     58</a> 	Allopcodes = append(Allopcodes, Cmpr{})
+<a href="#l59" class="line" id="l59">     59</a> 	Allopcodes = append(Allopcodes, Cmprlt{})
+<a href="#l60" class="line" id="l60">     60</a> 	Allopcodes = append(Allopcodes, Cpy{})
+<a href="#l61" class="line" id="l61">     61</a> 	Allopcodes = append(Allopcodes, Cset{})
+<a href="#l62" class="line" id="l62">     62</a> 	Allopcodes = append(Allopcodes, Dec{})
+<a href="#l63" class="line" id="l63">     63</a> 	Allopcodes = append(Allopcodes, Div{})
+<a href="#l64" class="line" id="l64">     64</a> 	Allopcodes = append(Allopcodes, Divf{})
+<a href="#l65" class="line" id="l65">     65</a> 	Allopcodes = append(Allopcodes, Divf16{})
+<a href="#l66" class="line" id="l66">     66</a> 	Allopcodes = append(Allopcodes, Divp{pipeline: new(bool)})
+<a href="#l67" class="line" id="l67">     67</a> 	Allopcodes = append(Allopcodes, Dpc{})
+<a href="#l68" class="line" id="l68">     68</a> 	Allopcodes = append(Allopcodes, Expf{})
+<a href="#l69" class="line" id="l69">     69</a> 	Allopcodes = append(Allopcodes, Hit{})
+<a href="#l70" class="line" id="l70">     70</a> 	Allopcodes = append(Allopcodes, Hlt{})
+<a href="#l71" class="line" id="l71">     71</a> 	Allopcodes = append(Allopcodes, I2r{})
+<a href="#l72" class="line" id="l72">     72</a> 	Allopcodes = append(Allopcodes, I2rw{})
+<a href="#l73" class="line" id="l73">     73</a> 	Allopcodes = append(Allopcodes, Incc{})
+<a href="#l74" class="line" id="l74">     74</a> 	Allopcodes = append(Allopcodes, Inc{})
+<a href="#l75" class="line" id="l75">     75</a> 	Allopcodes = append(Allopcodes, J{})
+<a href="#l76" class="line" id="l76">     76</a> 	Allopcodes = append(Allopcodes, Ja{})
+<a href="#l77" class="line" id="l77">     77</a> 	Allopcodes = append(Allopcodes, Jc{})
+<a href="#l78" class="line" id="l78">     78</a> 	Allopcodes = append(Allopcodes, Jcmpa{})
+<a href="#l79" class="line" id="l79">     79</a> 	Allopcodes = append(Allopcodes, Jcmpl{})
+<a href="#l80" class="line" id="l80">     80</a> 	Allopcodes = append(Allopcodes, Jcmpo{})
+<a href="#l81" class="line" id="l81">     81</a> 	Allopcodes = append(Allopcodes, Jcmpria{})
+<a href="#l82" class="line" id="l82">     82</a> 	Allopcodes = append(Allopcodes, Jcmprio{})
+<a href="#l83" class="line" id="l83">     83</a> 	Allopcodes = append(Allopcodes, Je{})
+<a href="#l84" class="line" id="l84">     84</a> 	Allopcodes = append(Allopcodes, Jri{})
+<a href="#l85" class="line" id="l85">     85</a> 	Allopcodes = append(Allopcodes, Jria{})
+<a href="#l86" class="line" id="l86">     86</a> 	Allopcodes = append(Allopcodes, Jrio{})
+<a href="#l87" class="line" id="l87">     87</a> 	Allopcodes = append(Allopcodes, Jgt0f{})
+<a href="#l88" class="line" id="l88">     88</a> 	Allopcodes = append(Allopcodes, Jo{})
+<a href="#l89" class="line" id="l89">     89</a> 	// TODO: planned Allopcodes = append(Allopcodes, Jlt{})
+<a href="#l90" class="line" id="l90">     90</a> 	// TODO: planned Allopcodes = append(Allopcodes, Jlte{})
+<a href="#l91" class="line" id="l91">     91</a> 	// TODO: planned Allopcodes = append(Allopcodes, Jr{})
+<a href="#l92" class="line" id="l92">     92</a> 	Allopcodes = append(Allopcodes, Jz{})
+<a href="#l93" class="line" id="l93">     93</a> 	Allopcodes = append(Allopcodes, K2r{})
+<a href="#l94" class="line" id="l94">     94</a> 	Allopcodes = append(Allopcodes, Lfsr82r{})
+<a href="#l95" class="line" id="l95">     95</a> 	// TODO: planned Allopcodes = append(Allopcodes, Lfsr162r{})
+<a href="#l96" class="line" id="l96">     96</a> 	Allopcodes = append(Allopcodes, M2r{})
+<a href="#l97" class="line" id="l97">     97</a> 	Allopcodes = append(Allopcodes, M2rri{})
+<a href="#l98" class="line" id="l98">     98</a> 	Allopcodes = append(Allopcodes, Mod{})
+<a href="#l99" class="line" id="l99">     99</a> 	Allopcodes = append(Allopcodes, Mulc{})
+<a href="#l100" class="line" id="l100">    100</a> 	Allopcodes = append(Allopcodes, Mult{})
+<a href="#l101" class="line" id="l101">    101</a> 	Allopcodes = append(Allopcodes, Multf{})
+<a href="#l102" class="line" id="l102">    102</a> 	Allopcodes = append(Allopcodes, Multf16{})
+<a href="#l103" class="line" id="l103">    103</a> 	Allopcodes = append(Allopcodes, Multp{pipeline: new(bool)})
+<a href="#l104" class="line" id="l104">    104</a> 	Allopcodes = append(Allopcodes, Nand{})
+<a href="#l105" class="line" id="l105">    105</a> 	Allopcodes = append(Allopcodes, Nop{})
+<a href="#l106" class="line" id="l106">    106</a> 	Allopcodes = append(Allopcodes, Nor{})
+<a href="#l107" class="line" id="l107">    107</a> 	Allopcodes = append(Allopcodes, Not{})
+<a href="#l108" class="line" id="l108">    108</a> 	Allopcodes = append(Allopcodes, Or{})
+<a href="#l109" class="line" id="l109">    109</a> 	Allopcodes = append(Allopcodes, Q2r{})
+<a href="#l110" class="line" id="l110">    110</a> 	Allopcodes = append(Allopcodes, R2m{})
+<a href="#l111" class="line" id="l111">    111</a> 	Allopcodes = append(Allopcodes, R2mri{})
+<a href="#l112" class="line" id="l112">    112</a> 	Allopcodes = append(Allopcodes, R2o{})
+<a href="#l113" class="line" id="l113">    113</a> 	Allopcodes = append(Allopcodes, R2owa{})
+<a href="#l114" class="line" id="l114">    114</a> 	Allopcodes = append(Allopcodes, R2owaa{})
+<a href="#l115" class="line" id="l115">    115</a> 	Allopcodes = append(Allopcodes, R2q{})
+<a href="#l116" class="line" id="l116">    116</a> 	Allopcodes = append(Allopcodes, R2s{})
+<a href="#l117" class="line" id="l117">    117</a> 	Allopcodes = append(Allopcodes, R2v{})
+<a href="#l118" class="line" id="l118">    118</a> 	Allopcodes = append(Allopcodes, R2vri{})
+<a href="#l119" class="line" id="l119">    119</a> 	Allopcodes = append(Allopcodes, R2t{})
+<a href="#l120" class="line" id="l120">    120</a> 	Allopcodes = append(Allopcodes, R2u{})
+<a href="#l121" class="line" id="l121">    121</a> 	Allopcodes = append(Allopcodes, Ro2r{})
+<a href="#l122" class="line" id="l122">    122</a> 	Allopcodes = append(Allopcodes, Ro2rri{})
+<a href="#l123" class="line" id="l123">    123</a> 	Allopcodes = append(Allopcodes, Rsc{})
+<a href="#l124" class="line" id="l124">    124</a> 	Allopcodes = append(Allopcodes, Rset{})
+<a href="#l125" class="line" id="l125">    125</a> 	Allopcodes = append(Allopcodes, Sic{})
+<a href="#l126" class="line" id="l126">    126</a> 	Allopcodes = append(Allopcodes, S2r{})
+<a href="#l127" class="line" id="l127">    127</a> 	Allopcodes = append(Allopcodes, Saj{})
+<a href="#l128" class="line" id="l128">    128</a> 	Allopcodes = append(Allopcodes, Sbc{})
+<a href="#l129" class="line" id="l129">    129</a> 	Allopcodes = append(Allopcodes, Sub{})
+<a href="#l130" class="line" id="l130">    130</a> 	Allopcodes = append(Allopcodes, T2r{})
+<a href="#l131" class="line" id="l131">    131</a> 	Allopcodes = append(Allopcodes, Tsp{})
+<a href="#l132" class="line" id="l132">    132</a> 	Allopcodes = append(Allopcodes, U2r{})
+<a href="#l133" class="line" id="l133">    133</a> 	Allopcodes = append(Allopcodes, Wrd{})
+<a href="#l134" class="line" id="l134">    134</a> 	Allopcodes = append(Allopcodes, Wwr{})
+<a href="#l135" class="line" id="l135">    135</a> 	Allopcodes = append(Allopcodes, Xnor{})
+<a href="#l136" class="line" id="l136">    136</a> 	Allopcodes = append(Allopcodes, Xor{})
+<a href="#l137" class="line" id="l137">    137</a> 
+<a href="#l138" class="line" id="l138">    138</a> 	AllDynamicalInstructions = make([]DynamicInstruction, 0)
+<a href="#l139" class="line" id="l139">    139</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynFloPoCo{})
+<a href="#l140" class="line" id="l140">    140</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynLinearQuantizer{Ranges: nil})
+<a href="#l141" class="line" id="l141">    141</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynRsets{})
+<a href="#l142" class="line" id="l142">    142</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynCall{})
+<a href="#l143" class="line" id="l143">    143</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynStack{})
+<a href="#l144" class="line" id="l144">    144</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynFixedPoint{})
+<a href="#l145" class="line" id="l145">    145</a> 
+<a href="#l146" class="line" id="l146">    146</a> 	Allshared = make([]Sharedel, 0)
+<a href="#l147" class="line" id="l147">    147</a> 	Allshared = append(Allshared, Sharedmem{})
+<a href="#l148" class="line" id="l148">    148</a> 	Allshared = append(Allshared, Channel{})
+<a href="#l149" class="line" id="l149">    149</a> 	Allshared = append(Allshared, Barrier{})
+<a href="#l150" class="line" id="l150">    150</a> 	Allshared = append(Allshared, Lfsr8{})
+<a href="#l151" class="line" id="l151">    151</a> 	Allshared = append(Allshared, Queue{})
+<a href="#l152" class="line" id="l152">    152</a> 	Allshared = append(Allshared, Stack{})
+<a href="#l153" class="line" id="l153">    153</a> 	Allshared = append(Allshared, Uart{})
+<a href="#l154" class="line" id="l154">    154</a> 	Allshared = append(Allshared, Kbd{})
+<a href="#l155" class="line" id="l155">    155</a> 	Allshared = append(Allshared, Vtextmem{})
+<a href="#l156" class="line" id="l156">    156</a> }
+<a href="#l157" class="line" id="l157">    157</a> 
+<a href="#l158" class="line" id="l158">    158</a> func (mach *Machine) String() string {
+<a href="#l159" class="line" id="l159">    159</a> 	result := &quot;&quot;
+<a href="#l160" class="line" id="l160">    160</a> 	result += mach.Arch.String()
+<a href="#l161" class="line" id="l161">    161</a> 	result += mach.Program.String()
+<a href="#l162" class="line" id="l162">    162</a> 	return result
+<a href="#l163" class="line" id="l163">    163</a> }
+<a href="#l164" class="line" id="l164">    164</a> 
+<a href="#l165" class="line" id="l165">    165</a> func (mach *Machine) Descr() string {
+<a href="#l166" class="line" id="l166">    166</a> 	result := &quot;&quot;
+<a href="#l167" class="line" id="l167">    167</a> 	result += mach.Arch.String()
+<a href="#l168" class="line" id="l168">    168</a> 	return result
+<a href="#l169" class="line" id="l169">    169</a> }
+<a href="#l170" class="line" id="l170">    170</a> 
+<a href="#l171" class="line" id="l171">    171</a> func (mach *Machine) Jsoner() *Machine_json {
+<a href="#l172" class="line" id="l172">    172</a> 	result := new(Machine_json)
+<a href="#l173" class="line" id="l173">    173</a> 	result.Modes = make([]string, len(mach.Modes))
+<a href="#l174" class="line" id="l174">    174</a> 	for i, val := range mach.Modes {
+<a href="#l175" class="line" id="l175">    175</a> 		result.Modes[i] = val
+<a href="#l176" class="line" id="l176">    176</a> 	}
+<a href="#l177" class="line" id="l177">    177</a> 	result.Rsize = mach.Rsize
+<a href="#l178" class="line" id="l178">    178</a> 	result.R = mach.R
+<a href="#l179" class="line" id="l179">    179</a> 	result.N = mach.N
+<a href="#l180" class="line" id="l180">    180</a> 	result.M = mach.M
+<a href="#l181" class="line" id="l181">    181</a> 	result.L = mach.L
+<a href="#l182" class="line" id="l182">    182</a> 	result.O = mach.O
+<a href="#l183" class="line" id="l183">    183</a> 	result.WordSize = mach.WordSize
+<a href="#l184" class="line" id="l184">    184</a> 	result.Shared_constraints = mach.Shared_constraints
+<a href="#l185" class="line" id="l185">    185</a> 	result.Slocs = make([]string, len(mach.Slocs))
+<a href="#l186" class="line" id="l186">    186</a> 	result.Vars = make([]string, len(mach.Vars))
+<a href="#l187" class="line" id="l187">    187</a> 	for i, val := range mach.Slocs {
+<a href="#l188" class="line" id="l188">    188</a> 		result.Slocs[i] = val
+<a href="#l189" class="line" id="l189">    189</a> 	}
+<a href="#l190" class="line" id="l190">    190</a> 	for i, val := range mach.Vars {
+<a href="#l191" class="line" id="l191">    191</a> 		result.Vars[i] = val
+<a href="#l192" class="line" id="l192">    192</a> 	}
+<a href="#l193" class="line" id="l193">    193</a> 	result.Op = make([]string, len(mach.Op))
+<a href="#l194" class="line" id="l194">    194</a> 	for i, val := range mach.Op {
+<a href="#l195" class="line" id="l195">    195</a> 		result.Op[i] = val.Op_get_name()
+<a href="#l196" class="line" id="l196">    196</a> 	}
+<a href="#l197" class="line" id="l197">    197</a> 	result.Threaded = mach.Threaded
+<a href="#l198" class="line" id="l198">    198</a> 	return result
+<a href="#l199" class="line" id="l199">    199</a> }
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> func (machj *Machine_json) Dejsoner() *Machine {
+<a href="#l202" class="line" id="l202">    202</a> 	result := new(Machine)
+<a href="#l203" class="line" id="l203">    203</a> 	result.Modes = make([]string, len(machj.Modes))
+<a href="#l204" class="line" id="l204">    204</a> 	for i, val := range machj.Modes {
+<a href="#l205" class="line" id="l205">    205</a> 		result.Modes[i] = val
+<a href="#l206" class="line" id="l206">    206</a> 	}
+<a href="#l207" class="line" id="l207">    207</a> 	result.Rsize = machj.Rsize
+<a href="#l208" class="line" id="l208">    208</a> 	result.R = machj.R
+<a href="#l209" class="line" id="l209">    209</a> 	result.N = machj.N
+<a href="#l210" class="line" id="l210">    210</a> 	result.M = machj.M
+<a href="#l211" class="line" id="l211">    211</a> 	result.L = machj.L
+<a href="#l212" class="line" id="l212">    212</a> 	result.O = machj.O
+<a href="#l213" class="line" id="l213">    213</a> 	result.WordSize = machj.WordSize
+<a href="#l214" class="line" id="l214">    214</a> 	result.Shared_constraints = machj.Shared_constraints
+<a href="#l215" class="line" id="l215">    215</a> 	result.Slocs = make([]string, len(machj.Slocs))
+<a href="#l216" class="line" id="l216">    216</a> 	result.Vars = make([]string, len(machj.Vars))
+<a href="#l217" class="line" id="l217">    217</a> 	for i, val := range machj.Slocs {
+<a href="#l218" class="line" id="l218">    218</a> 		result.Slocs[i] = val
+<a href="#l219" class="line" id="l219">    219</a> 	}
+<a href="#l220" class="line" id="l220">    220</a> 	for i, val := range machj.Vars {
+<a href="#l221" class="line" id="l221">    221</a> 		result.Vars[i] = val
+<a href="#l222" class="line" id="l222">    222</a> 	}
+<a href="#l223" class="line" id="l223">    223</a> 	result.Op = make([]Opcode, len(machj.Op))
+<a href="#l224" class="line" id="l224">    224</a> 	for i, opname := range machj.Op {
+<a href="#l225" class="line" id="l225">    225</a> 
+<a href="#l226" class="line" id="l226">    226</a> 		EventuallyCreateInstruction(opname)
+<a href="#l227" class="line" id="l227">    227</a> 
+<a href="#l228" class="line" id="l228">    228</a> 		for _, op := range Allopcodes {
+<a href="#l229" class="line" id="l229">    229</a> 			if op.Op_get_name() == opname {
+<a href="#l230" class="line" id="l230">    230</a> 				result.Op[i] = op
+<a href="#l231" class="line" id="l231">    231</a> 			}
+<a href="#l232" class="line" id="l232">    232</a> 		}
+<a href="#l233" class="line" id="l233">    233</a> 	}
+<a href="#l234" class="line" id="l234">    234</a> 	result.Threaded = machj.Threaded
+<a href="#l235" class="line" id="l235">    235</a> 	return result
+<a href="#l236" class="line" id="l236">    236</a> }
+<a href="#l237" class="line" id="l237">    237</a> 
+<a href="#l238" class="line" id="l238">    238</a> func (mach *Machine) ConstraintCheck() (string, bool) {
+<a href="#l239" class="line" id="l239">    239</a> 	result := &quot;&quot;
+<a href="#l240" class="line" id="l240">    240</a> 	shared := make([]string, 0)
+<a href="#l241" class="line" id="l241">    241</a> 	required := make([]string, 0)
+<a href="#l242" class="line" id="l242">    242</a> 	forbidden := make([]string, 0)
+<a href="#l243" class="line" id="l243">    243</a> 
+<a href="#l244" class="line" id="l244">    244</a> 	for _, op := range mach.Op {
+<a href="#l245" class="line" id="l245">    245</a> 		if present, modes := op.Required_modes(); present {
+<a href="#l246" class="line" id="l246">    246</a> 			for _, mode := range modes {
+<a href="#l247" class="line" id="l247">    247</a> 				checkpres := false
+<a href="#l248" class="line" id="l248">    248</a> 				for _, curr := range required {
+<a href="#l249" class="line" id="l249">    249</a> 					if curr == mode {
+<a href="#l250" class="line" id="l250">    250</a> 						checkpres = true
+<a href="#l251" class="line" id="l251">    251</a> 						break
+<a href="#l252" class="line" id="l252">    252</a> 					}
+<a href="#l253" class="line" id="l253">    253</a> 				}
+<a href="#l254" class="line" id="l254">    254</a> 				if !checkpres {
+<a href="#l255" class="line" id="l255">    255</a> 					required = append(required, mode)
+<a href="#l256" class="line" id="l256">    256</a> 					result += &quot;Added required mode: &quot; + mode + &quot;\n&quot;
+<a href="#l257" class="line" id="l257">    257</a> 				}
+<a href="#l258" class="line" id="l258">    258</a> 			}
+<a href="#l259" class="line" id="l259">    259</a> 		}
+<a href="#l260" class="line" id="l260">    260</a> 		if present, modes := op.Forbidden_modes(); present {
+<a href="#l261" class="line" id="l261">    261</a> 			for _, mode := range modes {
+<a href="#l262" class="line" id="l262">    262</a> 				checkpres := false
+<a href="#l263" class="line" id="l263">    263</a> 				for _, curr := range forbidden {
+<a href="#l264" class="line" id="l264">    264</a> 					if curr == mode {
+<a href="#l265" class="line" id="l265">    265</a> 						checkpres = true
+<a href="#l266" class="line" id="l266">    266</a> 						break
+<a href="#l267" class="line" id="l267">    267</a> 					}
+<a href="#l268" class="line" id="l268">    268</a> 				}
+<a href="#l269" class="line" id="l269">    269</a> 				if !checkpres {
+<a href="#l270" class="line" id="l270">    270</a> 					forbidden = append(forbidden, mode)
+<a href="#l271" class="line" id="l271">    271</a> 					result += &quot;Added forbidden mode: &quot; + mode + &quot;\n&quot;
+<a href="#l272" class="line" id="l272">    272</a> 
+<a href="#l273" class="line" id="l273">    273</a> 				}
+<a href="#l274" class="line" id="l274">    274</a> 			}
+<a href="#l275" class="line" id="l275">    275</a> 
+<a href="#l276" class="line" id="l276">    276</a> 		}
+<a href="#l277" class="line" id="l277">    277</a> 		if present, sos := op.Required_shared(); present {
+<a href="#l278" class="line" id="l278">    278</a> 			for _, so := range sos {
+<a href="#l279" class="line" id="l279">    279</a> 				checkpres := false
+<a href="#l280" class="line" id="l280">    280</a> 				for _, curr := range shared {
+<a href="#l281" class="line" id="l281">    281</a> 					if curr == so {
+<a href="#l282" class="line" id="l282">    282</a> 						checkpres = true
+<a href="#l283" class="line" id="l283">    283</a> 						break
+<a href="#l284" class="line" id="l284">    284</a> 					}
+<a href="#l285" class="line" id="l285">    285</a> 				}
+<a href="#l286" class="line" id="l286">    286</a> 				if !checkpres {
+<a href="#l287" class="line" id="l287">    287</a> 					shared = append(shared, so)
+<a href="#l288" class="line" id="l288">    288</a> 					result += &quot;Added required shared object: &quot; + so + &quot;\n&quot;
+<a href="#l289" class="line" id="l289">    289</a> 
+<a href="#l290" class="line" id="l290">    290</a> 				}
+<a href="#l291" class="line" id="l291">    291</a> 			}
+<a href="#l292" class="line" id="l292">    292</a> 
+<a href="#l293" class="line" id="l293">    293</a> 		}
+<a href="#l294" class="line" id="l294">    294</a> 	}
+<a href="#l295" class="line" id="l295">    295</a> 
+<a href="#l296" class="line" id="l296">    296</a> 	// Checking required modes constraints
+<a href="#l297" class="line" id="l297">    297</a> 	// TODO Finish
+<a href="#l298" class="line" id="l298">    298</a> 	for _, mode := range required {
+<a href="#l299" class="line" id="l299">    299</a> 		switch mode {
+<a href="#l300" class="line" id="l300">    300</a> 		case &quot;ha&quot;:
+<a href="#l301" class="line" id="l301">    301</a> 		case &quot;vn&quot;:
+<a href="#l302" class="line" id="l302">    302</a> 		case &quot;hy&quot;:
+<a href="#l303" class="line" id="l303">    303</a> 		case &quot;ramabs&quot;:
+<a href="#l304" class="line" id="l304">    304</a> 		case &quot;romabs&quot;:
+<a href="#l305" class="line" id="l305">    305</a> 		case &quot;ramind&quot;:
+<a href="#l306" class="line" id="l306">    306</a> 			if mach.Rsize != mach.L {
+<a href="#l307" class="line" id="l307">    307</a> 				return &quot;Register size nd RAM depth mismatch&quot;, false
+<a href="#l308" class="line" id="l308">    308</a> 			}
+<a href="#l309" class="line" id="l309">    309</a> 		case &quot;romind&quot;:
+<a href="#l310" class="line" id="l310">    310</a> 			if mach.Rsize != mach.O {
+<a href="#l311" class="line" id="l311">    311</a> 				return &quot;Register size nd ROM depth mismatch&quot;, false
+<a href="#l312" class="line" id="l312">    312</a> 			}
+<a href="#l313" class="line" id="l313">    313</a> 		}
+<a href="#l314" class="line" id="l314">    314</a> 	}
+<a href="#l315" class="line" id="l315">    315</a> 
+<a href="#l316" class="line" id="l316">    316</a> 	// Checking conflicting modes
+<a href="#l317" class="line" id="l317">    317</a> 	for _, mode := range forbidden {
+<a href="#l318" class="line" id="l318">    318</a> 		for _, req := range required {
+<a href="#l319" class="line" id="l319">    319</a> 			if mode == req {
+<a href="#l320" class="line" id="l320">    320</a> 				return &quot;&quot;, false
+<a href="#l321" class="line" id="l321">    321</a> 			}
+<a href="#l322" class="line" id="l322">    322</a> 		}
+<a href="#l323" class="line" id="l323">    323</a> 	}
+<a href="#l324" class="line" id="l324">    324</a> 
+<a href="#l325" class="line" id="l325">    325</a> 	// TODO Finish shared checks
+<a href="#l326" class="line" id="l326">    326</a> 
+<a href="#l327" class="line" id="l327">    327</a> 	return result, true
+<a href="#l328" class="line" id="l328">    328</a> }
+</pre>
+</div>
+</body>
+</html>

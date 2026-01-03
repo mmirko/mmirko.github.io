@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Icefun leds - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/fc91b046d535b3006eab34829278a1668f21a45f.html">fc91b046d535b3006eab34829278a1668f21a45f</a>
+<b>parent</b> <a href="../commit/4e4bbe010e6c3c7440614c6671ee363f28728f43.html">4e4bbe010e6c3c7440614c6671ee363f28728f43</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 31 May 2024 08:28:12 +0200
+
+Icefun leds
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">pkg/bondmachine/exmod_icefun_leds.go</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 47 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/exmod_icefun_leds.go.html">pkg/bondmachine/exmod_icefun_leds.go</a> b/<a href="../file/pkg/bondmachine/exmod_icefun_leds.go.html">pkg/bondmachine/exmod_icefun_leds.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,47 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package bondmachine
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;errors&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+type IceFunLeds struct {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	MappedOutput string
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+func (sl *IceFunLeds) Get_Name() string {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	return &quot;icefun_leds&quot;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+func (sl *IceFunLeds) Get_Params() *ExtraParams {
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	result := new(ExtraParams)
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	result.Params = map[string]string{&quot;mapped_output&quot;: sl.MappedOutput}
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	return result
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+func (sl *IceFunLeds) Import(inp string) error {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	if err := json.Unmarshal([]byte(inp), sl); err != nil {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		return errors.New(&quot;unmarshalling failed&quot;)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	return nil
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+func (sl *IceFunLeds) Export() string {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	b, _ := json.Marshal(sl)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	return string(b)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+}
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+func (sl *IceFunLeds) Check(bmach *Bondmachine) error {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	return nil
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+}
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+func (sl *IceFunLeds) Verilog_headers() string {
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	return &quot;&quot;
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+}
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+func (sl *IceFunLeds) StaticVerilog() string {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	return &quot;&quot;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+}
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+func (sl *IceFunLeds) ExtraFiles() ([]string, []string) {
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	return []string{}, []string{}
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

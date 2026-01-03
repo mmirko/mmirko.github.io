@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Merge branch &#39;main&#39; of github.com:BondMachineHQ/BondMachine - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a9e94f91fbeb33c0a4dd68406f08d63f59a5840e.html">a9e94f91fbeb33c0a4dd68406f08d63f59a5840e</a>
+<b>parent</b> <a href="../commit/db7bb9da7ba7d7e939d7fe4d573eec0ab9a6e950.html">db7bb9da7ba7d7e939d7fe4d573eec0ab9a6e950</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  2 May 2023 16:06:11 +0200
+
+Merge branch &#39;main&#39; of github.com:BondMachineHQ/BondMachine
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_axist_basic.go</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/files_axist_pynq_example.go</a></td><td> | </td><td class="num">452</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 282 insertions(+), 217 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a> b/<a href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -35,7 +35,9 @@ const (
+</a>     localparam bminputs = {{ .InputNum }};  // number of bminputs for each sample (or bminputs)
+     localparam bmoutputs = {{ .OutputNum }}; // number of output for the classification
+ 	localparam NUMBER_OF_INPUTS  = samples*bminputs;                                     
+<a href="#h0-0-3" id="h0-0-3" class="d">-    localparam NUMBER_OF_OUTPUTS = samples*bmoutputs;  
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    localparam NUMBER_OF_OUTPUTS = samples*bmoutputs;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	localparam precision = {{ $.Rsize }}; // precision bit
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	localparam maxfifoloop = (C_S00_AXIS_TDATA_WIDTH / precision) - 1;
+</a>     
+ 	// Machine state for the slave stream part
+ 	parameter [1:0] IDLE = 1&#39;b0,
+<a href="#h0-1" id="h0-1" class="h">@@ -81,7 +83,7 @@ const (
+</a> 	    endcase
+ 	end
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (write_pointer &lt;= NUMBER_OF_INPUTS-1));
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1));
+</a> 
+ 	always@(posedge s00_axis_aclk)
+ 	begin
+<a href="#h0-2" id="h0-2" class="h">@@ -97,14 +99,14 @@ const (
+</a> 	      writes_done &lt;= 1&#39;b0;
+ 	    end  
+ 	  else
+<a href="#h0-2-3" id="h0-2-3" class="d">-	    if (write_pointer &lt;= NUMBER_OF_INPUTS-1)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	    if (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)
+</a> 	      begin
+ 	        if (fifo_wren)
+ 	          begin
+ 	            write_pointer &lt;= write_pointer + 1;
+ 	            writes_done &lt;= 1&#39;b0;
+ 	          end
+<a href="#h0-2-11" id="h0-2-11" class="d">-	          if ((write_pointer == NUMBER_OF_INPUTS-1)|| s00_axis_tlast)
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	          if ((write_pointer == (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)|| s00_axis_tlast)
+</a> 	            begin
+ 	              writes_done &lt;= 1&#39;b1;
+ 	            end
+<a href="#h0-3" id="h0-3" class="h">@@ -115,13 +117,27 @@ const (
+</a> 
+ 	assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+	reg  [{{ .CountersBits }}:0] maxfifoloopcounter = 0;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	reg  [(precision)-1:0] stream_data_fifo [0 : NUMBER_OF_INPUTS-1];
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+
+</a> 	reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] stream_data_fifo [0 : NUMBER_OF_INPUTS-1];
+     always @( posedge s00_axis_aclk )
+     begin
+<a href="#h0-3-9" id="h0-3-9" class="i">+		if (tx_done) begin
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	       maxfifoloopcounter &lt;= 0;
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	  end
+</a>       if (fifo_wren)
+         begin
+<a href="#h0-3-14" id="h0-3-14" class="d">-          stream_data_fifo[write_pointer] &lt;= s00_axis_tdata;
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-        end  
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+          if (precision == 32) begin
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+            stream_data_fifo[write_pointer+maxfifoloopcounter] &lt;= s00_axis_tdata;
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+            maxfifoloopcounter &lt;= maxfifoloopcounter + 0;
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+          end
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+          else if (precision == 16) begin
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+              stream_data_fifo[write_pointer+maxfifoloopcounter+0] &lt;= s00_axis_tdata[15:0];
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+              stream_data_fifo[write_pointer+maxfifoloopcounter+1] &lt;= s00_axis_tdata[31:16];
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+              maxfifoloopcounter &lt;= maxfifoloopcounter + 1;
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+          end
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+        end   
+</a>      end      
+ 
+     /*
+<a href="#h0-4" id="h0-4" class="h">@@ -201,7 +217,7 @@ const (
+</a> 	end
+ 
+ 	assign axis_tvalid = ((mst_exec_state_M == SEND_STREAM_M) &amp;&amp; (writes_done) &amp;&amp; (bm_done));
+<a href="#h0-4-3" id="h0-4-3" class="d">-    assign axis_tlast = (stream_output_counter == NUMBER_OF_OUTPUTS - 1);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+    assign axis_tlast = (stream_output_counter == (NUMBER_OF_OUTPUTS/(maxfifoloop+1)) - 1);
+</a> 
+     always @(posedge m00_axis_aclk)                                                                  
+ 	begin        
+<a href="#h0-5" id="h0-5" class="h">@@ -422,9 +438,12 @@ const (
+</a> 
+     assign tx_en = m00_axis_tready &amp;&amp; axis_tvalid;   
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+	reg [{{ .CountersBits }}:0] maxfifoloopcounteroutput = 0;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+
+</a>     always @( posedge m00_axis_aclk )                  
+     begin        
+        if (tx_done) begin
+<a href="#h0-5-8" id="h0-5-8" class="i">+		maxfifoloopcounteroutput &lt;= 0;
+</a>         stream_output_counter &lt;= 0;
+         tx_done &lt;= 1&#39;b0;
+        end
+<a href="#h0-6" id="h0-6" class="h">@@ -435,10 +454,18 @@ const (
+</a>         end                                          
+       else if (tx_en)
+         begin
+<a href="#h0-6-3" id="h0-6-3" class="d">-          if (stream_output_counter &lt;= NUMBER_OF_OUTPUTS - 1) begin
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-              stream_data_out &lt;= output_stream_data_fifo[stream_output_counter];
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+           if (stream_output_counter &lt;= (NUMBER_OF_OUTPUTS/(maxfifoloop+1)) - 1) begin
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+              if (precision == 32) begin
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+                    stream_data_out &lt;= output_stream_data_fifo[stream_output_counter+maxfifoloopcounteroutput];
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+              end
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+              else if (precision == 16) begin
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+                    //stream_data_out &lt;= output_stream_data_fifo[stream_output_counter+maxfifoloopcounteroutput];
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+                    stream_data_out[15:0] &lt;= output_stream_data_fifo[stream_output_counter+maxfifoloopcounteroutput+0];
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+                    stream_data_out[31:16] &lt;= output_stream_data_fifo[stream_output_counter+maxfifoloopcounteroutput+1];
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+                    maxfifoloopcounteroutput &lt;= maxfifoloopcounteroutput + 1;
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+              end
+</a>               stream_output_counter &lt;= stream_output_counter + 1;
+<a href="#h0-6-16" id="h0-6-16" class="d">-              if (stream_output_counter == NUMBER_OF_OUTPUTS - 1) begin
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+              if (stream_output_counter == (NUMBER_OF_OUTPUTS/(maxfifoloop+1)) - 1) begin
+</a>                     tx_done &lt;= 1&#39;b1;
+               end
+           end
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_axist_pynq_example.go.html">pkg/bondmachine/files_axist_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_axist_pynq_example.go.html">pkg/bondmachine/files_axist_pynq_example.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,214 +2,252 @@ package bondmachine
+</a> 
+ const (
+ 	axistPynqExample = `
+<a href="#h1-0-3" id="h1-0-3" class="d">-{
+</a><a href="#h1-0-4" id="h1-0-4" class="d">- &quot;cells&quot;: [
+</a>   {
+<a href="#h1-0-6" id="h1-0-6" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-    &quot;from pynq import Overlay\n&quot;,
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-    &quot;from pynq import MMIO\n&quot;,
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-    &quot;import os\n&quot;,
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-    &quot;import numpy as np\n&quot;,
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-    &quot;import time\n&quot;,
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-    &quot;import sys\n&quot;,
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-    &quot;import csv\n&quot;,
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-    &quot;from datetime import datetime\n&quot;,
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-    &quot;import statistics\n&quot;,
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-    &quot;\n&quot;,
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-    &quot;np.set_printoptions(threshold=sys.maxsize)&quot;
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-   ]
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-  },
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-  {
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-   &quot;execution_count&quot;: null,   
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-    &quot;overlay = Overlay(os.getcwd()+\&quot;/firmware.bit\&quot;)&quot;
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-   ]
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-  },
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-  {
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-39" id="h1-0-39" class="d">-    &quot;from pynq import DefaultHierarchy, DefaultIP, allocate\n&quot;,
+</a><a href="#h1-0-40" id="h1-0-40" class="d">-    &quot;sendchannel = overlay.axi_dma_0.sendchannel\n&quot;,
+</a><a href="#h1-0-41" id="h1-0-41" class="d">-    &quot;recvchannel = overlay.axi_dma_0.recvchannel&quot;
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-   ]
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-  },
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-  {
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-    &quot;X_test = np.load(&#39;banknote-authentication_X_test.npy&#39;)\n&quot;,
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-    &quot;Y_test = np.load(&#39;banknote-authentication_y_test.npy&#39;)&quot;
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-   ]
+</a><a href="#h1-0-53" id="h1-0-53" class="d">-  },
+</a><a href="#h1-0-54" id="h1-0-54" class="d">-  {
+</a><a href="#h1-0-55" id="h1-0-55" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-56" id="h1-0-56" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-58" id="h1-0-58" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-59" id="h1-0-59" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-60" id="h1-0-60" class="d">-    &quot;# COSTANTS\n&quot;,
+</a><a href="#h1-0-61" id="h1-0-61" class="d">-    &quot;SAMPLES = len(X_test)\n&quot;,
+</a><a href="#h1-0-62" id="h1-0-62" class="d">-    &quot; \n&quot;,
+</a><a href="#h1-0-63" id="h1-0-63" class="d">-    &quot;BATCH_SIZE = 16  # SIZE OF THE BATCH TO SEND\n&quot;,
+</a><a href="#h1-0-64" id="h1-0-64" class="d">-    &quot;BM_INPUTS  = 4   # N. OF INPUTS OF THE BONDMACHINE MODULE \n&quot;,
+</a><a href="#h1-0-65" id="h1-0-65" class="d">-    &quot;BM_OUTPUTS = 3   # N. OF OUTPUTS OF THE BONDMACHINE MODULE\n&quot;,
+</a><a href="#h1-0-66" id="h1-0-66" class="d">-    &quot;\n&quot;,
+</a><a href="#h1-0-67" id="h1-0-67" class="d">-    &quot;INPUT_SHAPE  = (BATCH_SIZE, BM_INPUTS)\n&quot;,
+</a><a href="#h1-0-68" id="h1-0-68" class="d">-    &quot;OUTPUT_SHAPE = (BATCH_SIZE, BM_OUTPUTS)&quot;
+</a><a href="#h1-0-69" id="h1-0-69" class="d">-   ]
+</a><a href="#h1-0-70" id="h1-0-70" class="d">-  },
+</a><a href="#h1-0-71" id="h1-0-71" class="d">-  {
+</a><a href="#h1-0-72" id="h1-0-72" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-73" id="h1-0-73" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-74" id="h1-0-74" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-77" id="h1-0-77" class="d">-    &quot;n_batches = 0\n&quot;,
+</a><a href="#h1-0-78" id="h1-0-78" class="d">-    &quot;fill = False\n&quot;,
+</a><a href="#h1-0-79" id="h1-0-79" class="d">-    &quot;if (SAMPLES/BATCH_SIZE % 2 != 0):\n&quot;,
+</a><a href="#h1-0-80" id="h1-0-80" class="d">-    &quot;    n_batches = int(SAMPLES/BATCH_SIZE) + 1\n&quot;,
+</a><a href="#h1-0-81" id="h1-0-81" class="d">-    &quot;    fill = True\n&quot;,
+</a><a href="#h1-0-82" id="h1-0-82" class="d">-    &quot;else:\n&quot;,
+</a><a href="#h1-0-83" id="h1-0-83" class="d">-    &quot;    n_batches = int(SAMPLES/BATCH_SIZE)&quot;
+</a><a href="#h1-0-84" id="h1-0-84" class="d">-   ]
+</a><a href="#h1-0-85" id="h1-0-85" class="d">-  },
+</a><a href="#h1-0-86" id="h1-0-86" class="d">-  {
+</a><a href="#h1-0-87" id="h1-0-87" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-88" id="h1-0-88" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-89" id="h1-0-89" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-90" id="h1-0-90" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-91" id="h1-0-91" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-92" id="h1-0-92" class="d">-    &quot;def random_pad(vec, pad_width, *_, **__):\n&quot;,
+</a><a href="#h1-0-93" id="h1-0-93" class="d">-    &quot;    vec[:pad_width[0]] = np.random.uniform(0, 1, size=pad_width[0])\n&quot;,
+</a><a href="#h1-0-94" id="h1-0-94" class="d">-    &quot;    vec[vec.size-pad_width[1]:] = np.random.uniform(0,1, size=pad_width[1])&quot;
+</a><a href="#h1-0-95" id="h1-0-95" class="d">-   ]
+</a><a href="#h1-0-96" id="h1-0-96" class="d">-  },
+</a><a href="#h1-0-97" id="h1-0-97" class="d">-  {
+</a><a href="#h1-0-98" id="h1-0-98" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-99" id="h1-0-99" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-100" id="h1-0-100" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-101" id="h1-0-101" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-102" id="h1-0-102" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-103" id="h1-0-103" class="d">-    &quot;batches = []\n&quot;,
+</a><a href="#h1-0-104" id="h1-0-104" class="d">-    &quot;last_batch_size = 0\n&quot;,
+</a><a href="#h1-0-105" id="h1-0-105" class="d">-    &quot;for i in range(0, n_batches):\n&quot;,
+</a><a href="#h1-0-106" id="h1-0-106" class="d">-    &quot;    new_batch = X_test[i*BATCH_SIZE:(i+1)*BATCH_SIZE]\n&quot;,
+</a><a href="#h1-0-107" id="h1-0-107" class="d">-    &quot;    if (len(new_batch) &lt; BATCH_SIZE):\n&quot;,
+</a><a href="#h1-0-108" id="h1-0-108" class="d">-    &quot;        last_batch_size = len(new_batch)\n&quot;,
+</a><a href="#h1-0-109" id="h1-0-109" class="d">-    &quot;        new_batch = np.pad(new_batch,  [(0, BATCH_SIZE-len(new_batch)), (0,0)], mode=random_pad)\n&quot;,
+</a><a href="#h1-0-110" id="h1-0-110" class="d">-    &quot;    batches.append(new_batch)&quot;
+</a><a href="#h1-0-111" id="h1-0-111" class="d">-   ]
+</a><a href="#h1-0-112" id="h1-0-112" class="d">-  },
+</a><a href="#h1-0-113" id="h1-0-113" class="d">-  {
+</a><a href="#h1-0-114" id="h1-0-114" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-115" id="h1-0-115" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-116" id="h1-0-116" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-117" id="h1-0-117" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-118" id="h1-0-118" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-119" id="h1-0-119" class="d">-    &quot;outputs = []\n&quot;,
+</a><a href="#h1-0-120" id="h1-0-120" class="d">-    &quot;inference_times = []\n&quot;,
+</a><a href="#h1-0-121" id="h1-0-121" class="d">-    &quot;for i in range(0, len(batches)):\n&quot;,
+</a><a href="#h1-0-122" id="h1-0-122" class="d">-    &quot;    input_buffer = allocate(shape=INPUT_SHAPE, dtype=np.float32)\n&quot;,
+</a><a href="#h1-0-123" id="h1-0-123" class="d">-    &quot;    output_buffer = allocate(shape=OUTPUT_SHAPE, dtype=np.uint32)\n&quot;,
+</a><a href="#h1-0-124" id="h1-0-124" class="d">-    &quot;    input_buffer[:]=batches[i]\n&quot;,
+</a><a href="#h1-0-125" id="h1-0-125" class="d">-    &quot;    start_time = datetime.now()\n&quot;,
+</a><a href="#h1-0-126" id="h1-0-126" class="d">-    &quot;    sendchannel.transfer(input_buffer)\n&quot;,
+</a><a href="#h1-0-127" id="h1-0-127" class="d">-    &quot;    recvchannel.transfer(output_buffer)\n&quot;,
+</a><a href="#h1-0-128" id="h1-0-128" class="d">-    &quot;    sendchannel.wait()\n&quot;,
+</a><a href="#h1-0-129" id="h1-0-129" class="d">-    &quot;    recvchannel.wait()\n&quot;,
+</a><a href="#h1-0-130" id="h1-0-130" class="d">-    &quot;    end_time = datetime.now()\n&quot;,
+</a><a href="#h1-0-131" id="h1-0-131" class="d">-    &quot;    diff_in_ms = (end_time - start_time).total_seconds() * 1000\n&quot;,
+</a><a href="#h1-0-132" id="h1-0-132" class="d">-    &quot;    inference_times.append(diff_in_ms)\n&quot;,
+</a><a href="#h1-0-133" id="h1-0-133" class="d">-    &quot;    if fill == True and i == len(batches) - 1:\n&quot;,
+</a><a href="#h1-0-134" id="h1-0-134" class="d">-    &quot;        outputs.append(output_buffer[0:last_batch_size])\n&quot;,
+</a><a href="#h1-0-135" id="h1-0-135" class="d">-    &quot;    else:\n&quot;,
+</a><a href="#h1-0-136" id="h1-0-136" class="d">-    &quot;        outputs.append(output_buffer)&quot;
+</a><a href="#h1-0-137" id="h1-0-137" class="d">-   ]
+</a><a href="#h1-0-138" id="h1-0-138" class="d">-  },
+</a><a href="#h1-0-139" id="h1-0-139" class="d">-  {
+</a><a href="#h1-0-140" id="h1-0-140" class="d">-   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-141" id="h1-0-141" class="d">-   &quot;execution_count&quot;: null,
+</a><a href="#h1-0-142" id="h1-0-142" class="d">-   &quot;metadata&quot;: {},
+</a><a href="#h1-0-143" id="h1-0-143" class="d">-   &quot;outputs&quot;: [],
+</a><a href="#h1-0-144" id="h1-0-144" class="d">-   &quot;source&quot;: [
+</a><a href="#h1-0-145" id="h1-0-145" class="d">-    &quot;ms_median = statistics.median(inference_times)\n&quot;,
+</a><a href="#h1-0-146" id="h1-0-146" class="d">-    &quot;print(\&quot;median:            \&quot;, ms_median, \&quot; ms\&quot;)\n&quot;,
+</a><a href="#h1-0-147" id="h1-0-147" class="d">-    &quot;print(\&quot;median time for a sample: \&quot;, statistics.median(inference_times)/BATCH_SIZE, \&quot; ms\&quot;)&quot;
+</a><a href="#h1-0-148" id="h1-0-148" class="d">-   ]
+</a><a href="#h1-0-149" id="h1-0-149" class="d">-  },
+</a><a href="#h1-0-150" id="h1-0-150" class="d">-  {
+</a><a href="#h1-0-151" id="h1-0-151" class="d">-    &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-152" id="h1-0-152" class="d">-    &quot;execution_count&quot;: 923,
+</a><a href="#h1-0-153" id="h1-0-153" class="d">-    &quot;metadata&quot;: {},
+</a><a href="#h1-0-154" id="h1-0-154" class="d">-    &quot;outputs&quot;: [],
+</a><a href="#h1-0-155" id="h1-0-155" class="d">-    &quot;source&quot;: [
+</a><a href="#h1-0-156" id="h1-0-156" class="d">-     &quot;import struct\n&quot;,
+</a><a href="#h1-0-157" id="h1-0-157" class="d">-     &quot;results_to_dump = []\n&quot;,
+</a><a href="#h1-0-158" id="h1-0-158" class="d">-     &quot;\n&quot;,
+</a><a href="#h1-0-159" id="h1-0-159" class="d">-     &quot;for outcome in outputs:\n&quot;,
+</a><a href="#h1-0-160" id="h1-0-160" class="d">-     &quot;    for out in outcome:\n&quot;,
+</a><a href="#h1-0-161" id="h1-0-161" class="d">-     &quot;        \n&quot;,
+</a><a href="#h1-0-162" id="h1-0-162" class="d">-     &quot;        bin_str = bin(out[0])[2:].zfill(32)\n&quot;,
+</a><a href="#h1-0-163" id="h1-0-163" class="d">-     &quot;        byte_str = int(bin_str, 2).to_bytes(4, byteorder=&#39;big&#39;)\n&quot;,
+</a><a href="#h1-0-164" id="h1-0-164" class="d">-     &quot;        prob_0_float_value = struct.unpack(&#39;&gt;f&#39;, byte_str)[0]\n&quot;,
+</a><a href="#h1-0-165" id="h1-0-165" class="d">-     &quot;        \n&quot;,
+</a><a href="#h1-0-166" id="h1-0-166" class="d">-     &quot;        bin_str = bin(out[1])[2:].zfill(32)\n&quot;,
+</a><a href="#h1-0-167" id="h1-0-167" class="d">-     &quot;        byte_str = int(bin_str, 2).to_bytes(4, byteorder=&#39;big&#39;)\n&quot;,
+</a><a href="#h1-0-168" id="h1-0-168" class="d">-     &quot;        prob_1_float_value = struct.unpack(&#39;&gt;f&#39;, byte_str)[0]\n&quot;,
+</a><a href="#h1-0-169" id="h1-0-169" class="d">-     &quot;        \n&quot;,
+</a><a href="#h1-0-170" id="h1-0-170" class="d">-     &quot;        classification = np.argmax([prob_0_float_value, prob_1_float_value])\n&quot;,
+</a><a href="#h1-0-171" id="h1-0-171" class="d">-     &quot;        results_to_dump.append([prob_0_float_value, prob_1_float_value, classification, out[2]])&quot;
+</a><a href="#h1-0-172" id="h1-0-172" class="d">-    ]
+</a><a href="#h1-0-173" id="h1-0-173" class="d">-   },
+</a><a href="#h1-0-174" id="h1-0-174" class="d">-   {
+</a><a href="#h1-0-175" id="h1-0-175" class="d">-    &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-176" id="h1-0-176" class="d">-    &quot;execution_count&quot;: 924,
+</a><a href="#h1-0-177" id="h1-0-177" class="d">-    &quot;metadata&quot;: {},
+</a><a href="#h1-0-178" id="h1-0-178" class="d">-    &quot;outputs&quot;: [],
+</a><a href="#h1-0-179" id="h1-0-179" class="d">-    &quot;source&quot;: [
+</a><a href="#h1-0-180" id="h1-0-180" class="d">-     &quot;import csv\n&quot;,
+</a><a href="#h1-0-181" id="h1-0-181" class="d">-     &quot;fields = [&#39;probability_0&#39;, &#39;probability_1&#39;, &#39;classification&#39;, &#39;clock_cycles&#39;] \n&quot;,
+</a><a href="#h1-0-182" id="h1-0-182" class="d">-     &quot;\n&quot;,
+</a><a href="#h1-0-183" id="h1-0-183" class="d">-     &quot;with open(\&quot;predictions.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a><a href="#h1-0-184" id="h1-0-184" class="d">-     &quot;    write = csv.writer(f)\n&quot;,
+</a><a href="#h1-0-185" id="h1-0-185" class="d">-     &quot;    write.writerow(fields)\n&quot;,
+</a><a href="#h1-0-186" id="h1-0-186" class="d">-     &quot;    write.writerows(results_to_dump)&quot;
+</a><a href="#h1-0-187" id="h1-0-187" class="d">-    ]
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+    &quot;cells&quot;: [
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+     {
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+       &quot;from pynq import Overlay\n&quot;,
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+       &quot;from pynq import MMIO\n&quot;,
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+       &quot;import os\n&quot;,
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+       &quot;import numpy as np\n&quot;,
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+       &quot;import time\n&quot;,
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+       &quot;import sys\n&quot;,
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+       &quot;import csv\n&quot;,
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+       &quot;from datetime import datetime\n&quot;,
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+       &quot;import statistics\n&quot;,
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+       &quot;np.set_printoptions(threshold=sys.maxsize)&quot;
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+      ]
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+     },
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+     {
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+       &quot;overlay = Overlay(os.getcwd()+\&quot;/firmware.bit\&quot;)&quot;
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+      ]
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+     },
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+     {
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-221" id="h1-0-221" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-222" id="h1-0-222" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-223" id="h1-0-223" class="i">+       &quot;from pynq import DefaultHierarchy, DefaultIP, allocate\n&quot;,
+</a><a href="#h1-0-224" id="h1-0-224" class="i">+       &quot;sendchannel = overlay.axi_dma_0.sendchannel\n&quot;,
+</a><a href="#h1-0-225" id="h1-0-225" class="i">+       &quot;recvchannel = overlay.axi_dma_0.recvchannel&quot;
+</a><a href="#h1-0-226" id="h1-0-226" class="i">+      ]
+</a><a href="#h1-0-227" id="h1-0-227" class="i">+     },
+</a><a href="#h1-0-228" id="h1-0-228" class="i">+     {
+</a><a href="#h1-0-229" id="h1-0-229" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-230" id="h1-0-230" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-231" id="h1-0-231" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-232" id="h1-0-232" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-233" id="h1-0-233" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-234" id="h1-0-234" class="i">+       &quot;X_test = np.load(&#39;banknote-authentication_X_test.npy&#39;)\n&quot;,
+</a><a href="#h1-0-235" id="h1-0-235" class="i">+       &quot;Y_test = np.load(&#39;banknote-authentication_y_test.npy&#39;)&quot;
+</a><a href="#h1-0-236" id="h1-0-236" class="i">+      ]
+</a><a href="#h1-0-237" id="h1-0-237" class="i">+     },
+</a><a href="#h1-0-238" id="h1-0-238" class="i">+     {
+</a><a href="#h1-0-239" id="h1-0-239" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-240" id="h1-0-240" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-241" id="h1-0-241" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-242" id="h1-0-242" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-243" id="h1-0-243" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-244" id="h1-0-244" class="i">+       &quot;# COSTANTS\n&quot;,
+</a><a href="#h1-0-245" id="h1-0-245" class="i">+       &quot;SAMPLES = len(X_test)\n&quot;,
+</a><a href="#h1-0-246" id="h1-0-246" class="i">+       &quot; \n&quot;,
+</a><a href="#h1-0-247" id="h1-0-247" class="i">+       &quot;BATCH_SIZE = 16  # SIZE OF THE BATCH TO SEND\n&quot;,
+</a><a href="#h1-0-248" id="h1-0-248" class="i">+       &quot;BM_INPUTS  = 4   # N. OF INPUTS OF THE BONDMACHINE MODULE \n&quot;,
+</a><a href="#h1-0-249" id="h1-0-249" class="i">+       &quot;BM_OUTPUTS = 3   # N. OF OUTPUTS OF THE BONDMACHINE MODULE\n&quot;,
+</a><a href="#h1-0-250" id="h1-0-250" class="i">+       &quot;PRECISION  = 16\n&quot;,
+</a><a href="#h1-0-251" id="h1-0-251" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-252" id="h1-0-252" class="i">+       &quot;INPUT_SHAPE  = (BATCH_SIZE, BM_INPUTS)\n&quot;,
+</a><a href="#h1-0-253" id="h1-0-253" class="i">+       &quot;OUTPUT_SHAPE = (BATCH_SIZE, BM_OUTPUTS)&quot;
+</a><a href="#h1-0-254" id="h1-0-254" class="i">+      ]
+</a><a href="#h1-0-255" id="h1-0-255" class="i">+     },
+</a><a href="#h1-0-256" id="h1-0-256" class="i">+     {
+</a><a href="#h1-0-257" id="h1-0-257" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-258" id="h1-0-258" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-259" id="h1-0-259" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-260" id="h1-0-260" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-261" id="h1-0-261" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-262" id="h1-0-262" class="i">+       &quot;n_batches = 0\n&quot;,
+</a><a href="#h1-0-263" id="h1-0-263" class="i">+       &quot;fill = False\n&quot;,
+</a><a href="#h1-0-264" id="h1-0-264" class="i">+       &quot;if (SAMPLES/BATCH_SIZE % 2 != 0):\n&quot;,
+</a><a href="#h1-0-265" id="h1-0-265" class="i">+       &quot;    n_batches = int(SAMPLES/BATCH_SIZE) + 1\n&quot;,
+</a><a href="#h1-0-266" id="h1-0-266" class="i">+       &quot;    fill = True\n&quot;,
+</a><a href="#h1-0-267" id="h1-0-267" class="i">+       &quot;else:\n&quot;,
+</a><a href="#h1-0-268" id="h1-0-268" class="i">+       &quot;    n_batches = int(SAMPLES/BATCH_SIZE)&quot;
+</a><a href="#h1-0-269" id="h1-0-269" class="i">+      ]
+</a><a href="#h1-0-270" id="h1-0-270" class="i">+     },
+</a><a href="#h1-0-271" id="h1-0-271" class="i">+     {
+</a><a href="#h1-0-272" id="h1-0-272" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-273" id="h1-0-273" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-274" id="h1-0-274" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-275" id="h1-0-275" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-276" id="h1-0-276" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-277" id="h1-0-277" class="i">+       &quot;def random_pad(vec, pad_width, *_, **__):\n&quot;,
+</a><a href="#h1-0-278" id="h1-0-278" class="i">+       &quot;    vec[:pad_width[0]] = np.random.uniform(0, 1, size=pad_width[0])\n&quot;,
+</a><a href="#h1-0-279" id="h1-0-279" class="i">+       &quot;    vec[vec.size-pad_width[1]:] = np.random.uniform(0,1, size=pad_width[1])&quot;
+</a><a href="#h1-0-280" id="h1-0-280" class="i">+      ]
+</a><a href="#h1-0-281" id="h1-0-281" class="i">+     },
+</a><a href="#h1-0-282" id="h1-0-282" class="i">+     {
+</a><a href="#h1-0-283" id="h1-0-283" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-284" id="h1-0-284" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-285" id="h1-0-285" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-286" id="h1-0-286" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-287" id="h1-0-287" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-288" id="h1-0-288" class="i">+       &quot;batches = []\n&quot;,
+</a><a href="#h1-0-289" id="h1-0-289" class="i">+       &quot;last_batch_size = 0\n&quot;,
+</a><a href="#h1-0-290" id="h1-0-290" class="i">+       &quot;for i in range(0, n_batches):\n&quot;,
+</a><a href="#h1-0-291" id="h1-0-291" class="i">+       &quot;    new_batch = X_test[i*BATCH_SIZE:(i+1)*BATCH_SIZE]\n&quot;,
+</a><a href="#h1-0-292" id="h1-0-292" class="i">+       &quot;    if (len(new_batch) &lt; BATCH_SIZE):\n&quot;,
+</a><a href="#h1-0-293" id="h1-0-293" class="i">+       &quot;        last_batch_size = len(new_batch)\n&quot;,
+</a><a href="#h1-0-294" id="h1-0-294" class="i">+       &quot;        new_batch = np.pad(new_batch,  [(0, BATCH_SIZE-len(new_batch)), (0,0)], mode=random_pad)\n&quot;,
+</a><a href="#h1-0-295" id="h1-0-295" class="i">+       &quot;    batches.append(new_batch)&quot;
+</a><a href="#h1-0-296" id="h1-0-296" class="i">+      ]
+</a><a href="#h1-0-297" id="h1-0-297" class="i">+     },
+</a><a href="#h1-0-298" id="h1-0-298" class="i">+     {
+</a><a href="#h1-0-299" id="h1-0-299" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-300" id="h1-0-300" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-301" id="h1-0-301" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-302" id="h1-0-302" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-303" id="h1-0-303" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-304" id="h1-0-304" class="i">+       &quot;outputs = []\n&quot;,
+</a><a href="#h1-0-305" id="h1-0-305" class="i">+       &quot;inference_times = []\n&quot;,
+</a><a href="#h1-0-306" id="h1-0-306" class="i">+       &quot;for i in range(0, len(batches)):\n&quot;,
+</a><a href="#h1-0-307" id="h1-0-307" class="i">+       &quot;    input_buffer = allocate(shape=INPUT_SHAPE, dtype=np.float16)\n&quot;,
+</a><a href="#h1-0-308" id="h1-0-308" class="i">+       &quot;    output_buffer = allocate(shape=OUTPUT_SHAPE, dtype=np.uint16)\n&quot;,
+</a><a href="#h1-0-309" id="h1-0-309" class="i">+       &quot;    input_buffer[:]=batches[i]\n&quot;,
+</a><a href="#h1-0-310" id="h1-0-310" class="i">+       &quot;    start_time = datetime.now()\n&quot;,
+</a><a href="#h1-0-311" id="h1-0-311" class="i">+       &quot;    sendchannel.transfer(input_buffer)\n&quot;,
+</a><a href="#h1-0-312" id="h1-0-312" class="i">+       &quot;    recvchannel.transfer(output_buffer)\n&quot;,
+</a><a href="#h1-0-313" id="h1-0-313" class="i">+       &quot;    sendchannel.wait()\n&quot;,
+</a><a href="#h1-0-314" id="h1-0-314" class="i">+       &quot;    recvchannel.wait()\n&quot;,
+</a><a href="#h1-0-315" id="h1-0-315" class="i">+       &quot;    end_time = datetime.now()\n&quot;,
+</a><a href="#h1-0-316" id="h1-0-316" class="i">+       &quot;    diff_in_ms = (end_time - start_time).total_seconds() * 1000\n&quot;,
+</a><a href="#h1-0-317" id="h1-0-317" class="i">+       &quot;    inference_times.append(diff_in_ms)\n&quot;,
+</a><a href="#h1-0-318" id="h1-0-318" class="i">+       &quot;    if fill == True and i == len(batches) - 1:\n&quot;,
+</a><a href="#h1-0-319" id="h1-0-319" class="i">+       &quot;        outputs.append(output_buffer[0:last_batch_size])\n&quot;,
+</a><a href="#h1-0-320" id="h1-0-320" class="i">+       &quot;    else:\n&quot;,
+</a><a href="#h1-0-321" id="h1-0-321" class="i">+       &quot;        outputs.append(output_buffer)&quot;
+</a><a href="#h1-0-322" id="h1-0-322" class="i">+      ]
+</a><a href="#h1-0-323" id="h1-0-323" class="i">+     },
+</a><a href="#h1-0-324" id="h1-0-324" class="i">+     {
+</a><a href="#h1-0-325" id="h1-0-325" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-326" id="h1-0-326" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-327" id="h1-0-327" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-328" id="h1-0-328" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-329" id="h1-0-329" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-330" id="h1-0-330" class="i">+       &quot;ms_median = statistics.median(inference_times)\n&quot;,
+</a><a href="#h1-0-331" id="h1-0-331" class="i">+       &quot;print(\&quot;median:            \&quot;, ms_median, \&quot; ms\&quot;)\n&quot;,
+</a><a href="#h1-0-332" id="h1-0-332" class="i">+       &quot;print(\&quot;median time for a sample: \&quot;, statistics.median(inference_times)/BATCH_SIZE, \&quot; ms\&quot;)&quot;
+</a><a href="#h1-0-333" id="h1-0-333" class="i">+      ]
+</a><a href="#h1-0-334" id="h1-0-334" class="i">+     },
+</a><a href="#h1-0-335" id="h1-0-335" class="i">+     {
+</a><a href="#h1-0-336" id="h1-0-336" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-337" id="h1-0-337" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-338" id="h1-0-338" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-339" id="h1-0-339" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-340" id="h1-0-340" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-341" id="h1-0-341" class="i">+       &quot;def bin_to_float16(binary_str):\n&quot;,
+</a><a href="#h1-0-342" id="h1-0-342" class="i">+       &quot;    binary_bytes = int(binary_str, 2).to_bytes(2, byteorder=&#39;big&#39;)\n&quot;,
+</a><a href="#h1-0-343" id="h1-0-343" class="i">+       &quot;    float_val = struct.unpack(&#39;&gt;e&#39;, binary_bytes)[0]\n&quot;,
+</a><a href="#h1-0-344" id="h1-0-344" class="i">+       &quot;    return float_val&quot;
+</a><a href="#h1-0-345" id="h1-0-345" class="i">+      ]
+</a><a href="#h1-0-346" id="h1-0-346" class="i">+     },
+</a><a href="#h1-0-347" id="h1-0-347" class="i">+     {
+</a><a href="#h1-0-348" id="h1-0-348" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-349" id="h1-0-349" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-350" id="h1-0-350" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-351" id="h1-0-351" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-352" id="h1-0-352" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-353" id="h1-0-353" class="i">+       &quot;def bin_to_float32(binary):\n&quot;,
+</a><a href="#h1-0-354" id="h1-0-354" class="i">+       &quot;    return struct.unpack(&#39;!f&#39;,struct.pack(&#39;!I&#39;, int(binary, 2)))[0]&quot;
+</a><a href="#h1-0-355" id="h1-0-355" class="i">+      ]
+</a><a href="#h1-0-356" id="h1-0-356" class="i">+     },
+</a><a href="#h1-0-357" id="h1-0-357" class="i">+     {
+</a><a href="#h1-0-358" id="h1-0-358" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-359" id="h1-0-359" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-360" id="h1-0-360" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-361" id="h1-0-361" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-362" id="h1-0-362" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-363" id="h1-0-363" class="i">+       &quot;import struct\n&quot;,
+</a><a href="#h1-0-364" id="h1-0-364" class="i">+       &quot;results_to_dump = []\n&quot;,
+</a><a href="#h1-0-365" id="h1-0-365" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-366" id="h1-0-366" class="i">+       &quot;for outcome in outputs:\n&quot;,
+</a><a href="#h1-0-367" id="h1-0-367" class="i">+       &quot;    for out in outcome:\n&quot;,
+</a><a href="#h1-0-368" id="h1-0-368" class="i">+       &quot;        \n&quot;,
+</a><a href="#h1-0-369" id="h1-0-369" class="i">+       &quot;        if PRECISION == 16:\n&quot;,
+</a><a href="#h1-0-370" id="h1-0-370" class="i">+       &quot;            binary_str_prob0 = bin(out[0])[2:]\n&quot;,
+</a><a href="#h1-0-371" id="h1-0-371" class="i">+       &quot;            prob_0_float_value = bin_to_float16(binary_str_prob0)\n&quot;,
+</a><a href="#h1-0-372" id="h1-0-372" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-373" id="h1-0-373" class="i">+       &quot;            binary_str_prob1 = bin(out[1])[2:]\n&quot;,
+</a><a href="#h1-0-374" id="h1-0-374" class="i">+       &quot;            prob_1_float_value = bin_to_float16(binary_str_prob1)\n&quot;,
+</a><a href="#h1-0-375" id="h1-0-375" class="i">+       &quot;            \n&quot;,
+</a><a href="#h1-0-376" id="h1-0-376" class="i">+       &quot;        elif PRECISION == 32:\n&quot;,
+</a><a href="#h1-0-377" id="h1-0-377" class="i">+       &quot;            bin_str = bin(out[0])[2:].zfill(32)\n&quot;,
+</a><a href="#h1-0-378" id="h1-0-378" class="i">+       &quot;            byte_str = int(bin_str, 2).to_bytes(4, byteorder=&#39;big&#39;)\n&quot;,
+</a><a href="#h1-0-379" id="h1-0-379" class="i">+       &quot;            prob_0_float_value = struct.unpack(&#39;&gt;f&#39;, byte_str)[0]\n&quot;,
+</a><a href="#h1-0-380" id="h1-0-380" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-381" id="h1-0-381" class="i">+       &quot;            bin_str = bin(out[1])[2:].zfill(32)\n&quot;,
+</a><a href="#h1-0-382" id="h1-0-382" class="i">+       &quot;            byte_str = int(bin_str, 2).to_bytes(4, byteorder=&#39;big&#39;)\n&quot;,
+</a><a href="#h1-0-383" id="h1-0-383" class="i">+       &quot;            prob_1_float_value = struct.unpack(&#39;&gt;f&#39;, byte_str)[0]\n&quot;,
+</a><a href="#h1-0-384" id="h1-0-384" class="i">+       &quot;        \n&quot;,
+</a><a href="#h1-0-385" id="h1-0-385" class="i">+       &quot;        classification = np.argmax([prob_0_float_value, prob_1_float_value])\n&quot;,
+</a><a href="#h1-0-386" id="h1-0-386" class="i">+       &quot;        results_to_dump.append([prob_0_float_value, prob_1_float_value, classification, out[2]])&quot;
+</a><a href="#h1-0-387" id="h1-0-387" class="i">+      ]
+</a><a href="#h1-0-388" id="h1-0-388" class="i">+     },
+</a><a href="#h1-0-389" id="h1-0-389" class="i">+     {
+</a><a href="#h1-0-390" id="h1-0-390" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-391" id="h1-0-391" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-392" id="h1-0-392" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-393" id="h1-0-393" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-394" id="h1-0-394" class="i">+      &quot;source&quot;: [
+</a><a href="#h1-0-395" id="h1-0-395" class="i">+       &quot;import csv\n&quot;,
+</a><a href="#h1-0-396" id="h1-0-396" class="i">+       &quot;fields = [&#39;probability_0&#39;, &#39;probability_1&#39;, &#39;classification&#39;, &#39;clock_cycles&#39;] \n&quot;,
+</a><a href="#h1-0-397" id="h1-0-397" class="i">+       &quot;\n&quot;,
+</a><a href="#h1-0-398" id="h1-0-398" class="i">+       &quot;with open(\&quot;predictions.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a><a href="#h1-0-399" id="h1-0-399" class="i">+       &quot;    write = csv.writer(f)\n&quot;,
+</a><a href="#h1-0-400" id="h1-0-400" class="i">+       &quot;    write.writerow(fields)\n&quot;,
+</a><a href="#h1-0-401" id="h1-0-401" class="i">+       &quot;    write.writerows(results_to_dump)&quot;
+</a><a href="#h1-0-402" id="h1-0-402" class="i">+      ]
+</a><a href="#h1-0-403" id="h1-0-403" class="i">+     },
+</a><a href="#h1-0-404" id="h1-0-404" class="i">+     {
+</a><a href="#h1-0-405" id="h1-0-405" class="i">+      &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h1-0-406" id="h1-0-406" class="i">+      &quot;execution_count&quot;: null,
+</a><a href="#h1-0-407" id="h1-0-407" class="i">+      &quot;metadata&quot;: {},
+</a><a href="#h1-0-408" id="h1-0-408" class="i">+      &quot;outputs&quot;: [],
+</a><a href="#h1-0-409" id="h1-0-409" class="i">+      &quot;source&quot;: []
+</a><a href="#h1-0-410" id="h1-0-410" class="i">+     }
+</a><a href="#h1-0-411" id="h1-0-411" class="i">+    ],
+</a><a href="#h1-0-412" id="h1-0-412" class="i">+    &quot;metadata&quot;: {
+</a><a href="#h1-0-413" id="h1-0-413" class="i">+     &quot;kernelspec&quot;: {
+</a><a href="#h1-0-414" id="h1-0-414" class="i">+      &quot;display_name&quot;: &quot;Python 3&quot;,
+</a><a href="#h1-0-415" id="h1-0-415" class="i">+      &quot;language&quot;: &quot;python&quot;,
+</a><a href="#h1-0-416" id="h1-0-416" class="i">+      &quot;name&quot;: &quot;python3&quot;
+</a><a href="#h1-0-417" id="h1-0-417" class="i">+     },
+</a><a href="#h1-0-418" id="h1-0-418" class="i">+     &quot;language_info&quot;: {
+</a><a href="#h1-0-419" id="h1-0-419" class="i">+      &quot;codemirror_mode&quot;: {
+</a><a href="#h1-0-420" id="h1-0-420" class="i">+       &quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h1-0-421" id="h1-0-421" class="i">+       &quot;version&quot;: 3
+</a><a href="#h1-0-422" id="h1-0-422" class="i">+      },
+</a><a href="#h1-0-423" id="h1-0-423" class="i">+      &quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h1-0-424" id="h1-0-424" class="i">+      &quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h1-0-425" id="h1-0-425" class="i">+      &quot;name&quot;: &quot;python&quot;,
+</a><a href="#h1-0-426" id="h1-0-426" class="i">+      &quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h1-0-427" id="h1-0-427" class="i">+      &quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h1-0-428" id="h1-0-428" class="i">+      &quot;version&quot;: &quot;3.6.5&quot;
+</a><a href="#h1-0-429" id="h1-0-429" class="i">+     }
+</a><a href="#h1-0-430" id="h1-0-430" class="i">+    },
+</a><a href="#h1-0-431" id="h1-0-431" class="i">+    &quot;nbformat&quot;: 4,
+</a><a href="#h1-0-432" id="h1-0-432" class="i">+    &quot;nbformat_minor&quot;: 2
+</a>    }
+<a href="#h1-0-434" id="h1-0-434" class="d">- ],
+</a><a href="#h1-0-435" id="h1-0-435" class="d">- &quot;metadata&quot;: {
+</a><a href="#h1-0-436" id="h1-0-436" class="d">-  &quot;kernelspec&quot;: {
+</a><a href="#h1-0-437" id="h1-0-437" class="d">-   &quot;display_name&quot;: &quot;Python 3&quot;,
+</a><a href="#h1-0-438" id="h1-0-438" class="d">-   &quot;language&quot;: &quot;python&quot;,
+</a><a href="#h1-0-439" id="h1-0-439" class="d">-   &quot;name&quot;: &quot;python3&quot;
+</a><a href="#h1-0-440" id="h1-0-440" class="d">-  },
+</a><a href="#h1-0-441" id="h1-0-441" class="d">-  &quot;language_info&quot;: {
+</a><a href="#h1-0-442" id="h1-0-442" class="d">-   &quot;codemirror_mode&quot;: {
+</a><a href="#h1-0-443" id="h1-0-443" class="d">-    &quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h1-0-444" id="h1-0-444" class="d">-    &quot;version&quot;: 3
+</a><a href="#h1-0-445" id="h1-0-445" class="d">-   },
+</a><a href="#h1-0-446" id="h1-0-446" class="d">-   &quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h1-0-447" id="h1-0-447" class="d">-   &quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h1-0-448" id="h1-0-448" class="d">-   &quot;name&quot;: &quot;python&quot;,
+</a><a href="#h1-0-449" id="h1-0-449" class="d">-   &quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h1-0-450" id="h1-0-450" class="d">-   &quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h1-0-451" id="h1-0-451" class="d">-   &quot;version&quot;: &quot;3.6.5&quot;
+</a><a href="#h1-0-452" id="h1-0-452" class="d">-  }
+</a><a href="#h1-0-453" id="h1-0-453" class="d">- },
+</a><a href="#h1-0-454" id="h1-0-454" class="d">- &quot;nbformat&quot;: 4,
+</a><a href="#h1-0-455" id="h1-0-455" class="d">- &quot;nbformat_minor&quot;: 2
+</a><a href="#h1-0-456" id="h1-0-456" class="d">-}
+</a> `
+ )
+</pre>
+</div>
+</body>
+</html>

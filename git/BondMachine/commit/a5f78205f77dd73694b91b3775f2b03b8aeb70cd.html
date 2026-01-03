@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AXI stream automation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a5f78205f77dd73694b91b3775f2b03b8aeb70cd.html">a5f78205f77dd73694b91b3775f2b03b8aeb70cd</a>
+<b>parent</b> <a href="../commit/630c55b0101650379329d56607c43feb5590c4de.html">630c55b0101650379329d56607c43feb5590c4de</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  1 Mar 2023 14:20:15 +0100
+
+AXI stream automation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 23 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -39,6 +39,20 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 
+ 		pconf := conf.ProcbuilderConfig()
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+		// Check if the bmapi module is present, needed for the exclusion of the bondmachine_main module from the accelerators
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		var bmapiModuleAXIStream bool
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		for _, mod := range extramods {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			if mod.Get_Name() == &quot;bmapi&quot; {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				bmapiParams := mod.Get_Params().Params
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+				if bmapiFlavor, ok := bmapiParams[&quot;bmapi_flavor&quot;]; ok {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+					switch bmapiFlavor {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+					case &quot;axist&quot;:
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+						bmapiModuleAXIStream = true
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+					}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+				}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a> 		//Instatiation of the Processor
+ 		for i, dom_id := range bmach.Processors {
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -156,12 +170,15 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 				check(err)
+ 			}
+ 		case &quot;basys3&quot;, &quot;kc705&quot;, &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;zc702&quot;, &quot;ice40lp1k&quot;, &quot;icefun&quot;, &quot;icebreaker&quot;, &quot;de10nano&quot;, &quot;max1000&quot;, &quot;icesugarnano&quot;:
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if _, err := os.Stat(&quot;bondmachine_main.v&quot;); os.IsNotExist(err) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-				f, err := os.Create(&quot;bondmachine_main.v&quot;)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-				check(err)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-				defer f.Close()
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-				_, err = f.WriteString(bmach.Write_verilog_board(conf, &quot;bondmachine&quot;, flavor, iomaps, extramods))
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-				check(err)
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			// Create the board file only if it doesn&#39;t belong to an AXIStream accelerator
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			if !bmapiModuleAXIStream {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				if _, err := os.Stat(&quot;bondmachine_main.v&quot;); os.IsNotExist(err) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+					f, err := os.Create(&quot;bondmachine_main.v&quot;)
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+					check(err)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+					defer f.Close()
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+					_, err = f.WriteString(bmach.Write_verilog_board(conf, &quot;bondmachine&quot;, flavor, iomaps, extramods))
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+					check(err)
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+				}
+</a> 			}
+ 		default:
+ 			return Prerror{&quot;Verilog flavor unknown&quot;}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>memcomposer.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> memcomposer.go (9812B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package basm
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;errors&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;fmt&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;strconv&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strings&quot;
+<a href="#l8" class="line" id="l8">      8</a> 
+<a href="#l9" class="line" id="l9">      9</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l10" class="line" id="l10">     10</a> )
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> func memComposer(bi *BasmInstance) error {
+<a href="#l13" class="line" id="l13">     13</a> 
+<a href="#l14" class="line" id="l14">     14</a> 	if bi.debug {
+<a href="#l15" class="line" id="l15">     15</a> 		fmt.Println(green(&quot;\tConnecting CP code and ROM:&quot;))
+<a href="#l16" class="line" id="l16">     16</a> 	}
+<a href="#l17" class="line" id="l17">     17</a> 
+<a href="#l18" class="line" id="l18">     18</a> 	// Loop over the CP code and data and connect them to the ROM
+<a href="#l19" class="line" id="l19">     19</a> 	for _, cp := range bi.cps {
+<a href="#l20" class="line" id="l20">     20</a> 
+<a href="#l21" class="line" id="l21">     21</a> 		romAlternatives := make([]string, 0)
+<a href="#l22" class="line" id="l22">     22</a> 		ramAlternatives := make([]string, 0)
+<a href="#l23" class="line" id="l23">     23</a> 		romDataAlternatives := make([]string, 0)
+<a href="#l24" class="line" id="l24">     24</a> 		ramDataAlternatives := make([]string, 0)
+<a href="#l25" class="line" id="l25">     25</a> 
+<a href="#l26" class="line" id="l26">     26</a> 		message := &quot;\t\tConnecting &quot;
+<a href="#l27" class="line" id="l27">     27</a> 		cpNewSectionName := &quot;&quot;
+<a href="#l28" class="line" id="l28">     28</a> 		dataNames := &quot;&quot;
+<a href="#l29" class="line" id="l29">     29</a> 		romCodeName := cp.GetMeta(&quot;romcode&quot;)
+<a href="#l30" class="line" id="l30">     30</a> 		if romCodeName != &quot;&quot; {
+<a href="#l31" class="line" id="l31">     31</a> 			message += &quot;romcode &quot; + romCodeName + &quot;, &quot;
+<a href="#l32" class="line" id="l32">     32</a> 			if _, ok := bi.sections[romCodeName]; !ok {
+<a href="#l33" class="line" id="l33">     33</a> 				return errors.New(&quot;ROM code section &quot; + romCodeName + &quot; not found&quot;)
+<a href="#l34" class="line" id="l34">     34</a> 			}
+<a href="#l35" class="line" id="l35">     35</a> 		}
+<a href="#l36" class="line" id="l36">     36</a> 		romDataName := cp.GetMeta(&quot;romdata&quot;)
+<a href="#l37" class="line" id="l37">     37</a> 		if romDataName != &quot;&quot; {
+<a href="#l38" class="line" id="l38">     38</a> 			message += &quot;romdata &quot; + romDataName + &quot;, &quot;
+<a href="#l39" class="line" id="l39">     39</a> 			dataNames += &quot;_od_&quot; + romDataName
+<a href="#l40" class="line" id="l40">     40</a> 			if _, ok := bi.sections[romDataName]; !ok {
+<a href="#l41" class="line" id="l41">     41</a> 				return errors.New(&quot;ROM data section &quot; + romDataName + &quot; not found&quot;)
+<a href="#l42" class="line" id="l42">     42</a> 			}
+<a href="#l43" class="line" id="l43">     43</a> 		}
+<a href="#l44" class="line" id="l44">     44</a> 		ramCodeName := cp.GetMeta(&quot;ramcode&quot;)
+<a href="#l45" class="line" id="l45">     45</a> 		if ramCodeName != &quot;&quot; {
+<a href="#l46" class="line" id="l46">     46</a> 			message += &quot;ramcode &quot; + ramCodeName + &quot;, &quot;
+<a href="#l47" class="line" id="l47">     47</a> 			if _, ok := bi.sections[ramCodeName]; !ok {
+<a href="#l48" class="line" id="l48">     48</a> 				return errors.New(&quot;RAM code section &quot; + ramCodeName + &quot; not found&quot;)
+<a href="#l49" class="line" id="l49">     49</a> 			}
+<a href="#l50" class="line" id="l50">     50</a> 		}
+<a href="#l51" class="line" id="l51">     51</a> 		ramDataName := cp.GetMeta(&quot;ramdata&quot;)
+<a href="#l52" class="line" id="l52">     52</a> 		if ramDataName != &quot;&quot; {
+<a href="#l53" class="line" id="l53">     53</a> 			message += &quot;ramdata &quot; + ramDataName + &quot;, &quot;
+<a href="#l54" class="line" id="l54">     54</a> 			dataNames += &quot;_ad_&quot; + ramDataName
+<a href="#l55" class="line" id="l55">     55</a> 			if _, ok := bi.sections[ramDataName]; !ok {
+<a href="#l56" class="line" id="l56">     56</a> 				return errors.New(&quot;RAM data section &quot; + ramDataName + &quot; not found&quot;)
+<a href="#l57" class="line" id="l57">     57</a> 			}
+<a href="#l58" class="line" id="l58">     58</a> 		}
+<a href="#l59" class="line" id="l59">     59</a> 
+<a href="#l60" class="line" id="l60">     60</a> 		romSections := make([]string, 0)
+<a href="#l61" class="line" id="l61">     61</a> 
+<a href="#l62" class="line" id="l62">     62</a> 		if romCodeName != &quot;&quot; {
+<a href="#l63" class="line" id="l63">     63</a> 			alts := bi.sections[romCodeName].sectionBody.GetMeta(&quot;alternatives&quot;)
+<a href="#l64" class="line" id="l64">     64</a> 			if alts != &quot;&quot; {
+<a href="#l65" class="line" id="l65">     65</a> 				splitAlts := strings.Split(alts, &quot;:&quot;)
+<a href="#l66" class="line" id="l66">     66</a> 				romSections = append(romSections, splitAlts...)
+<a href="#l67" class="line" id="l67">     67</a> 			} else {
+<a href="#l68" class="line" id="l68">     68</a> 				romSections = append(romSections, romCodeName)
+<a href="#l69" class="line" id="l69">     69</a> 			}
+<a href="#l70" class="line" id="l70">     70</a> 		}
+<a href="#l71" class="line" id="l71">     71</a> 
+<a href="#l72" class="line" id="l72">     72</a> 		ramSections := make([]string, 0)
+<a href="#l73" class="line" id="l73">     73</a> 
+<a href="#l74" class="line" id="l74">     74</a> 		if ramCodeName != &quot;&quot; {
+<a href="#l75" class="line" id="l75">     75</a> 			alts := bi.sections[ramCodeName].sectionBody.GetMeta(&quot;alternatives&quot;)
+<a href="#l76" class="line" id="l76">     76</a> 			if alts != &quot;&quot; {
+<a href="#l77" class="line" id="l77">     77</a> 				splitAlts := strings.Split(alts, &quot;:&quot;)
+<a href="#l78" class="line" id="l78">     78</a> 				ramSections = append(ramSections, splitAlts...)
+<a href="#l79" class="line" id="l79">     79</a> 			} else {
+<a href="#l80" class="line" id="l80">     80</a> 				ramSections = append(ramSections, ramCodeName)
+<a href="#l81" class="line" id="l81">     81</a> 			}
+<a href="#l82" class="line" id="l82">     82</a> 		}
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> 		var romData *BasmSection
+<a href="#l85" class="line" id="l85">     85</a> 		var ramData *BasmSection
+<a href="#l86" class="line" id="l86">     86</a> 
+<a href="#l87" class="line" id="l87">     87</a> 		if romDataName != &quot;&quot; {
+<a href="#l88" class="line" id="l88">     88</a> 			romData = bi.sections[romDataName]
+<a href="#l89" class="line" id="l89">     89</a> 		}
+<a href="#l90" class="line" id="l90">     90</a> 		if ramDataName != &quot;&quot; {
+<a href="#l91" class="line" id="l91">     91</a> 			ramData = bi.sections[ramDataName]
+<a href="#l92" class="line" id="l92">     92</a> 		}
+<a href="#l93" class="line" id="l93">     93</a> 
+<a href="#l94" class="line" id="l94">     94</a> 		if len(romSections) == 0 {
+<a href="#l95" class="line" id="l95">     95</a> 			romSections = append(romSections, &quot;&quot;)
+<a href="#l96" class="line" id="l96">     96</a> 		}
+<a href="#l97" class="line" id="l97">     97</a> 		if len(ramSections) == 0 {
+<a href="#l98" class="line" id="l98">     98</a> 			ramSections = append(ramSections, &quot;&quot;)
+<a href="#l99" class="line" id="l99">     99</a> 		}
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a> 		for _, romSection := range romSections {
+<a href="#l102" class="line" id="l102">    102</a> 			for _, ramSection := range ramSections {
+<a href="#l103" class="line" id="l103">    103</a> 				cpNewSectionName = &quot;&quot;
+<a href="#l104" class="line" id="l104">    104</a> 				if bi.debug {
+<a href="#l105" class="line" id="l105">    105</a> 					fmt.Println(green(message))
+<a href="#l106" class="line" id="l106">    106</a> 				}
+<a href="#l107" class="line" id="l107">    107</a> 
+<a href="#l108" class="line" id="l108">    108</a> 				var romCode *BasmSection
+<a href="#l109" class="line" id="l109">    109</a> 				var ramCode *BasmSection
+<a href="#l110" class="line" id="l110">    110</a> 
+<a href="#l111" class="line" id="l111">    111</a> 				if romSection != &quot;&quot; {
+<a href="#l112" class="line" id="l112">    112</a> 					if _, ok := bi.sections[romSection]; !ok {
+<a href="#l113" class="line" id="l113">    113</a> 						return errors.New(&quot;ROM section &quot; + romSection + &quot; not found&quot;)
+<a href="#l114" class="line" id="l114">    114</a> 					} else {
+<a href="#l115" class="line" id="l115">    115</a> 						cpNewSectionName += &quot;_ot_&quot; + romSection
+<a href="#l116" class="line" id="l116">    116</a> 						romCode = bi.sections[romSection]
+<a href="#l117" class="line" id="l117">    117</a> 					}
+<a href="#l118" class="line" id="l118">    118</a> 				}
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> 				if ramSection != &quot;&quot; {
+<a href="#l121" class="line" id="l121">    121</a> 					if _, ok := bi.sections[ramSection]; !ok {
+<a href="#l122" class="line" id="l122">    122</a> 						return errors.New(&quot;RAM section &quot; + ramSection + &quot; not found&quot;)
+<a href="#l123" class="line" id="l123">    123</a> 					} else {
+<a href="#l124" class="line" id="l124">    124</a> 						cpNewSectionName += &quot;_at_&quot; + ramSection
+<a href="#l125" class="line" id="l125">    125</a> 						ramCode = bi.sections[ramSection]
+<a href="#l126" class="line" id="l126">    126</a> 					}
+<a href="#l127" class="line" id="l127">    127</a> 				}
+<a href="#l128" class="line" id="l128">    128</a> 
+<a href="#l129" class="line" id="l129">    129</a> 				cpNewSectionName += dataNames
+<a href="#l130" class="line" id="l130">    130</a> 
+<a href="#l131" class="line" id="l131">    131</a> 				var romSectionLength int = 0
+<a href="#l132" class="line" id="l132">    132</a> 				var ramSectionLength int = 0
+<a href="#l133" class="line" id="l133">    133</a> 				var romDataLength int = 0
+<a href="#l134" class="line" id="l134">    134</a> 				var ramDataLength int = 0
+<a href="#l135" class="line" id="l135">    135</a> 				var romFinalLength int = 0
+<a href="#l136" class="line" id="l136">    136</a> 				var ramFinalLength int = 0
+<a href="#l137" class="line" id="l137">    137</a> 
+<a href="#l138" class="line" id="l138">    138</a> 				if romCode != nil {
+<a href="#l139" class="line" id="l139">    139</a> 					romSectionLength = len(romCode.sectionBody.Lines)
+<a href="#l140" class="line" id="l140">    140</a> 					romFinalLength = romSectionLength
+<a href="#l141" class="line" id="l141">    141</a> 				}
+<a href="#l142" class="line" id="l142">    142</a> 				if ramCode != nil {
+<a href="#l143" class="line" id="l143">    143</a> 					ramSectionLength = len(ramCode.sectionBody.Lines)
+<a href="#l144" class="line" id="l144">    144</a> 					ramFinalLength = ramSectionLength
+<a href="#l145" class="line" id="l145">    145</a> 				}
+<a href="#l146" class="line" id="l146">    146</a> 
+<a href="#l147" class="line" id="l147">    147</a> 				if bi.debug {
+<a href="#l148" class="line" id="l148">    148</a> 					fmt.Println(green(&quot;\t\t\tCode rom section length: &quot; + fmt.Sprintf(&quot;%d&quot;, romSectionLength)))
+<a href="#l149" class="line" id="l149">    149</a> 					fmt.Println(green(&quot;\t\t\tCode ram section length: &quot; + fmt.Sprintf(&quot;%d&quot;, ramSectionLength)))
+<a href="#l150" class="line" id="l150">    150</a> 				}
+<a href="#l151" class="line" id="l151">    151</a> 
+<a href="#l152" class="line" id="l152">    152</a> 				// Resolving Symbols for the composed section
+<a href="#l153" class="line" id="l153">    153</a> 				if romData != nil {
+<a href="#l154" class="line" id="l154">    154</a> 					newSection := new(BasmSection)
+<a href="#l155" class="line" id="l155">    155</a> 					newSection.sectionName = &quot;romdata&quot; + cpNewSectionName
+<a href="#l156" class="line" id="l156">    156</a> 					newSection.sectionType = sectRomData
+<a href="#l157" class="line" id="l157">    157</a> 					newSection.sectionBody = romData.sectionBody.Copy()
+<a href="#l158" class="line" id="l158">    158</a> 					bi.resolveSymbols(newSection, cpNewSectionName)
+<a href="#l159" class="line" id="l159">    159</a> 					bi.sections[newSection.sectionName] = newSection
+<a href="#l160" class="line" id="l160">    160</a> 					romDataAlternatives = append(romDataAlternatives, newSection.sectionName)
+<a href="#l161" class="line" id="l161">    161</a> 
+<a href="#l162" class="line" id="l162">    162</a> 					for _, symbol := range newSection.sectionBody.Lines {
+<a href="#l163" class="line" id="l163">    163</a> 						symbolName := symbol.Operation.GetValue()
+<a href="#l164" class="line" id="l164">    164</a> 						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+<a href="#l165" class="line" id="l165">    165</a> 						location, _ := strconv.Atoi(offset)
+<a href="#l166" class="line" id="l166">    166</a> 						location += romSectionLength
+<a href="#l167" class="line" id="l167">    167</a> 						bi.symbols[&quot;romdata.romdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+<a href="#l168" class="line" id="l168">    168</a> 					}
+<a href="#l169" class="line" id="l169">    169</a> 					resp := bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romdatas/sections:&quot; + romDataName, Name: &quot;datalength&quot;, Op: bmreqs.OpGet})
+<a href="#l170" class="line" id="l170">    170</a> 					if resp.Error != nil {
+<a href="#l171" class="line" id="l171">    171</a> 						return resp.Error
+<a href="#l172" class="line" id="l172">    172</a> 					}
+<a href="#l173" class="line" id="l173">    173</a> 					romDataLength, _ = strconv.Atoi(resp.Value)
+<a href="#l174" class="line" id="l174">    174</a> 					romFinalLength += romDataLength
+<a href="#l175" class="line" id="l175">    175</a> 				}
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a> 				if ramData != nil {
+<a href="#l178" class="line" id="l178">    178</a> 					newSection := new(BasmSection)
+<a href="#l179" class="line" id="l179">    179</a> 					newSection.sectionName = &quot;ramdata&quot; + cpNewSectionName
+<a href="#l180" class="line" id="l180">    180</a> 					newSection.sectionType = sectRamData
+<a href="#l181" class="line" id="l181">    181</a> 					newSection.sectionBody = ramData.sectionBody.Copy()
+<a href="#l182" class="line" id="l182">    182</a> 					bi.resolveSymbols(newSection, cpNewSectionName)
+<a href="#l183" class="line" id="l183">    183</a> 					bi.sections[newSection.sectionName] = newSection
+<a href="#l184" class="line" id="l184">    184</a> 					ramDataAlternatives = append(ramDataAlternatives, newSection.sectionName)
+<a href="#l185" class="line" id="l185">    185</a> 
+<a href="#l186" class="line" id="l186">    186</a> 					for _, symbol := range ramData.sectionBody.Lines {
+<a href="#l187" class="line" id="l187">    187</a> 						symbolName := symbol.Operation.GetValue()
+<a href="#l188" class="line" id="l188">    188</a> 						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+<a href="#l189" class="line" id="l189">    189</a> 						location, _ := strconv.Atoi(offset)
+<a href="#l190" class="line" id="l190">    190</a> 						location += ramSectionLength
+<a href="#l191" class="line" id="l191">    191</a> 						bi.symbols[&quot;ramdata.ramdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+<a href="#l192" class="line" id="l192">    192</a> 					}
+<a href="#l193" class="line" id="l193">    193</a> 					resp := bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramdatas/sections:&quot; + ramDataName, Name: &quot;datalength&quot;, Op: bmreqs.OpGet})
+<a href="#l194" class="line" id="l194">    194</a> 					if resp.Error != nil {
+<a href="#l195" class="line" id="l195">    195</a> 						return resp.Error
+<a href="#l196" class="line" id="l196">    196</a> 					}
+<a href="#l197" class="line" id="l197">    197</a> 					ramDataLength, _ = strconv.Atoi(resp.Value)
+<a href="#l198" class="line" id="l198">    198</a> 					ramFinalLength += ramDataLength
+<a href="#l199" class="line" id="l199">    199</a> 				}
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> 				// If the original section is not empty, we need to create a new section from it
+<a href="#l202" class="line" id="l202">    202</a> 				if romCode != nil {
+<a href="#l203" class="line" id="l203">    203</a> 					newSection := new(BasmSection)
+<a href="#l204" class="line" id="l204">    204</a> 					newSection.sectionName = &quot;romcode&quot; + cpNewSectionName
+<a href="#l205" class="line" id="l205">    205</a> 					newSection.sectionType = sectRomText
+<a href="#l206" class="line" id="l206">    206</a> 					newSection.sectionBody = romCode.sectionBody.Copy()
+<a href="#l207" class="line" id="l207">    207</a> 					bi.resolveSymbols(newSection, cpNewSectionName)
+<a href="#l208" class="line" id="l208">    208</a> 					bi.sections[newSection.sectionName] = newSection
+<a href="#l209" class="line" id="l209">    209</a> 					romAlternatives = append(romAlternatives, newSection.sectionName)
+<a href="#l210" class="line" id="l210">    210</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+<a href="#l211" class="line" id="l211">    211</a> 					bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romSection, &quot;/code:romtexts/sections:&quot;+newSection.sectionName)
+<a href="#l212" class="line" id="l212">    212</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;codelength&quot;, Value: strconv.Itoa(romSectionLength), Op: bmreqs.OpAdd})
+<a href="#l213" class="line" id="l213">    213</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(romDataLength), Op: bmreqs.OpAdd})
+<a href="#l214" class="line" id="l214">    214</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;finallength&quot;, Value: strconv.Itoa(romFinalLength), Op: bmreqs.OpAdd})
+<a href="#l215" class="line" id="l215">    215</a> 				}
+<a href="#l216" class="line" id="l216">    216</a> 
+<a href="#l217" class="line" id="l217">    217</a> 				// Same for RAM code
+<a href="#l218" class="line" id="l218">    218</a> 				if ramCode != nil {
+<a href="#l219" class="line" id="l219">    219</a> 					newSection := new(BasmSection)
+<a href="#l220" class="line" id="l220">    220</a> 					newSection.sectionName = &quot;ramcode&quot; + cpNewSectionName
+<a href="#l221" class="line" id="l221">    221</a> 					newSection.sectionType = sectRamText
+<a href="#l222" class="line" id="l222">    222</a> 					newSection.sectionBody = ramCode.sectionBody.Copy()
+<a href="#l223" class="line" id="l223">    223</a> 					bi.resolveSymbols(newSection, cpNewSectionName)
+<a href="#l224" class="line" id="l224">    224</a> 					bi.sections[newSection.sectionName] = newSection
+<a href="#l225" class="line" id="l225">    225</a> 					ramAlternatives = append(ramAlternatives, newSection.sectionName)
+<a href="#l226" class="line" id="l226">    226</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+<a href="#l227" class="line" id="l227">    227</a> 					bi.rg.Clone(&quot;/code:ramtexts/sections:&quot;+ramSection, &quot;/code:ramtexts/sections:&quot;+newSection.sectionName)
+<a href="#l228" class="line" id="l228">    228</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;codelength&quot;, Value: strconv.Itoa(ramSectionLength), Op: bmreqs.OpAdd})
+<a href="#l229" class="line" id="l229">    229</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(ramDataLength), Op: bmreqs.OpAdd})
+<a href="#l230" class="line" id="l230">    230</a> 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;finallength&quot;, Value: strconv.Itoa(ramFinalLength), Op: bmreqs.OpAdd})
+<a href="#l231" class="line" id="l231">    231</a> 				}
+<a href="#l232" class="line" id="l232">    232</a> 			}
+<a href="#l233" class="line" id="l233">    233</a> 		}
+<a href="#l234" class="line" id="l234">    234</a> 
+<a href="#l235" class="line" id="l235">    235</a> 		switch len(romAlternatives) {
+<a href="#l236" class="line" id="l236">    236</a> 		case 0:
+<a href="#l237" class="line" id="l237">    237</a> 		case 1:
+<a href="#l238" class="line" id="l238">    238</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romcode&quot;, romAlternatives[0])
+<a href="#l239" class="line" id="l239">    239</a> 		default:
+<a href="#l240" class="line" id="l240">    240</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romalternatives&quot;, strings.Join(romAlternatives, &quot;:&quot;))
+<a href="#l241" class="line" id="l241">    241</a> 			cp.BasmMeta.RmMeta(&quot;romcode&quot;)
+<a href="#l242" class="line" id="l242">    242</a> 		}
+<a href="#l243" class="line" id="l243">    243</a> 
+<a href="#l244" class="line" id="l244">    244</a> 		switch len(ramAlternatives) {
+<a href="#l245" class="line" id="l245">    245</a> 		case 0:
+<a href="#l246" class="line" id="l246">    246</a> 		case 1:
+<a href="#l247" class="line" id="l247">    247</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramcode&quot;, ramAlternatives[0])
+<a href="#l248" class="line" id="l248">    248</a> 		default:
+<a href="#l249" class="line" id="l249">    249</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramalternatives&quot;, strings.Join(ramAlternatives, &quot;:&quot;))
+<a href="#l250" class="line" id="l250">    250</a> 			cp.BasmMeta.RmMeta(&quot;ramcode&quot;)
+<a href="#l251" class="line" id="l251">    251</a> 		}
+<a href="#l252" class="line" id="l252">    252</a> 
+<a href="#l253" class="line" id="l253">    253</a> 		switch len(romDataAlternatives) {
+<a href="#l254" class="line" id="l254">    254</a> 		case 0:
+<a href="#l255" class="line" id="l255">    255</a> 		case 1:
+<a href="#l256" class="line" id="l256">    256</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romdata&quot;, romDataAlternatives[0])
+<a href="#l257" class="line" id="l257">    257</a> 		default:
+<a href="#l258" class="line" id="l258">    258</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romdataalternatives&quot;, strings.Join(romDataAlternatives, &quot;:&quot;))
+<a href="#l259" class="line" id="l259">    259</a> 			cp.BasmMeta.RmMeta(&quot;romdata&quot;)
+<a href="#l260" class="line" id="l260">    260</a> 		}
+<a href="#l261" class="line" id="l261">    261</a> 
+<a href="#l262" class="line" id="l262">    262</a> 		switch len(ramDataAlternatives) {
+<a href="#l263" class="line" id="l263">    263</a> 		case 0:
+<a href="#l264" class="line" id="l264">    264</a> 		case 1:
+<a href="#l265" class="line" id="l265">    265</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramdata&quot;, ramDataAlternatives[0])
+<a href="#l266" class="line" id="l266">    266</a> 		default:
+<a href="#l267" class="line" id="l267">    267</a> 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramdataalternatives&quot;, strings.Join(ramDataAlternatives, &quot;:&quot;))
+<a href="#l268" class="line" id="l268">    268</a> 			cp.BasmMeta.RmMeta(&quot;ramdata&quot;)
+<a href="#l269" class="line" id="l269">    269</a> 		}
+<a href="#l270" class="line" id="l270">    270</a> 	}
+<a href="#l271" class="line" id="l271">    271</a> 
+<a href="#l272" class="line" id="l272">    272</a> 	return nil
+<a href="#l273" class="line" id="l273">    273</a> 
+<a href="#l274" class="line" id="l274">    274</a> }
+</pre>
+</div>
+</body>
+</html>

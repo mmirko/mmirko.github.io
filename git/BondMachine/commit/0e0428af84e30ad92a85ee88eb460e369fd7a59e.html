@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmnumbers - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0e0428af84e30ad92a85ee88eb460e369fd7a59e.html">0e0428af84e30ad92a85ee88eb460e369fd7a59e</a>
+<b>parent</b> <a href="../commit/2c72e89319a5f85eff336d02ebcdbba477f67c81.html">2c72e89319a5f85eff336d02ebcdbba477f67c81</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 25 Nov 2022 09:18:20 +0100
+
+bmnumbers
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">bmnumbers/export.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">bmnumbers/import.go</a></td><td> | </td><td class="num">61</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 82 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a> b/<a href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,6 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package bmnumbers
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+// BMNumber is a binary rapresentation of a number as a slice of uint64
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+type BMNumber struct {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	number []uint64
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a> b/<a href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,10 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmnumbers
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import &quot;errors&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func (n *BMNumber) ExportSingleUint() (uint64, error) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	if n != nil &amp;&amp; n.number != nil &amp;&amp; len(n.number) != 1 {
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		return 0, errors.New(&quot;number is not a single uint64&quot;)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	return n.number[0], nil
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/bmnumbers/import.go.html">bmnumbers/import.go</a> b/<a href="../file/bmnumbers/import.go.html">bmnumbers/import.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,61 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmnumbers
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;math&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+// InitBMNumber creates a new BMNumber for a string
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+func ImportNumberFromString(input string) (*BMNumber, error) {
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	if len(input) &gt; 2 {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		if input[:2] == &quot;0x&quot; {
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+			// TODO Hex
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		} else if input[:2] == &quot;0b&quot; {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+			// TODO Binary
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+		} else if input[:2] == &quot;0d&quot; {
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+			// Decimal (also the default)
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+			if s, err := strconv.Atoi(input[2:]); err == nil {
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+				newNumber := BMNumber{}
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+				newNumber.number = make([]uint64, 1)
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+				newNumber.number[0] = uint64(s)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+				return &amp;newNumber, nil
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+			} else {
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+				return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+			}
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+		} else if input[:2] == &quot;0f&quot; {
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+			// Float32
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+			if s, err := strconv.ParseFloat(input[2:], 32); err == nil {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+				newNumber := BMNumber{}
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+				newNumber.number = make([]uint64, 1)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+				newNumber.number[0] = uint64(math.Float32bits(float32(s)))
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+				return &amp;newNumber, nil
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+			} else {
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+				return nil, errors.New(&quot;unknown float32 number &quot; + input)
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+			}
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+		} else {
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+			// Decimal (also the default)
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			if s, err := strconv.Atoi(input); err == nil {
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+				newNumber := BMNumber{}
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+				newNumber.number = make([]uint64, 1)
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+				newNumber.number[0] = uint64(s)
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+				return &amp;newNumber, nil
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+			} else {
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+				return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+			}
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+		}
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	} else {
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+		// Decimal (also the default)
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+		if s, err := strconv.Atoi(input); err == nil {
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+			newNumber := BMNumber{}
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+			newNumber.number = make([]uint64, 1)
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+			newNumber.number[0] = uint64(s)
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+			return &amp;newNumber, nil
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+		} else {
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+			return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+		}
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+	}
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	return nil, errors.New(&quot;unknown number format &quot; + input)
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,5 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package main
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+func main() {
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

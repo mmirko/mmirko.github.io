@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>brvga improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7b849c513220a60f20688835de209deb5eca91bc.html">7b849c513220a60f20688835de209deb5eca91bc</a>
+<b>parent</b> <a href="../commit/360aba81e10f5aecc87fd630538c5e9c304943b2.html">360aba81e10f5aecc87fd630538c5e9c304943b2</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  7 Sep 2022 16:13:14 +0200
+
+brvga improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">brvga/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 36 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a> b/<a href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,10 @@
+</a> package brvgasdl
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;bufio&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;encoding/hex&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;os&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+ 	&quot;github.com/tfriedel6/canvas&quot;
+ 	&quot;github.com/tfriedel6/canvas/sdlcanvas&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -11,7 +15,8 @@ type Header struct {
+</a> }
+ 
+ type Fonts struct {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	fonts []byte
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	fonts  []byte
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	images map[byte]canvas.Image
+</a> }
+ 
+ type BrvgaSdl struct {
+<a href="#h0-2" id="h0-2" class="h">@@ -40,7 +45,36 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 	result.Window = wnd
+ 	result.Canvas = canvas
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	// TODO: Load the header and fonts
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	// Allocate the fonts array
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	result.Fonts = new(Fonts)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	result.Fonts.fonts = make([]byte, 0)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	// Read the fonts file
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	fontsFile, err := os.Open(fontsPath)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	if err != nil {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		return nil, err
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+	defer fontsFile.Close()
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	scanner := bufio.NewScanner(fontsFile)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	for scanner.Scan() {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		if line := scanner.Text(); len(line) &gt; 0 {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+			if line[:2] == &quot;0x&quot; {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+				hexString := line[2:]
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				if decoded, err := hex.DecodeString(hexString); err == nil {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+					result.Fonts.fonts = append(result.Fonts.fonts, decoded...)
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+				}
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		}
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	}
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+	// Load 8x8 fonts
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	for c := 0; c &lt; 128; c++ {
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+		for i := 0; i &lt; 8; i++ {
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+			// charLine := result.Fonts.fonts[c*8+i]
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+		}
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+	}
+</a> 
+ 	return result, nil
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>neuralbond sync async - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e887032bf4ad9c18e0e6bd30c654af06aa7027df.html">e887032bf4ad9c18e0e6bd30c654af06aa7027df</a>
+<b>parent</b> <a href="../commit/b07e1788e815a3c332f19bd837356a53aab11213.html">b07e1788e815a3c332f19bd837356a53aab11213</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  7 Mar 2023 12:30:58 +0100
+
+neuralbond sync async
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/fragmentcomposer.go</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 34 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -23,6 +23,7 @@ var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net con
+</a> var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;JSON description of the BondMachine abstraction&quot;)
+ 
+ var operatingMode = flag.String(&quot;operating-mode&quot;, &quot;romcode&quot;, &quot;Operating mode: romcode, fragment&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var iomode = flag.String(&quot;io-mode&quot;, &quot;async&quot;, &quot;IO mode: async, sync&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h0-1" id="h0-1" class="h">@@ -107,6 +108,15 @@ func main() {
+</a> 		panic(err)
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	switch *iomode {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	case &quot;async&quot;:
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		net.IOMode = neuralbond.ASYNC
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	case &quot;sync&quot;:
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		net.IOMode = neuralbond.SYNC
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	default:
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		panic(&quot;Unknown IO mode&quot;)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	}
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+
+</a> 	net.Normalize()
+ 
+ 	if *saveBasm != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a> b/<a href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -206,7 +206,18 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 			newSection.sectionBody = new(bmline.BasmBody)
+ 
+ 			newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;entry&quot;, &quot;0&quot;)
+<a href="#h1-0-3" id="h1-0-3" class="d">-			newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;iomode&quot;, &quot;async&quot;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			switch bi.global.BasmMeta.GetMeta(&quot;iomode&quot;) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+			case &quot;sync&quot;:
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+				newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;iomode&quot;, &quot;sync&quot;)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			case &quot;async&quot;:
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+				newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;iomode&quot;, &quot;async&quot;)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			default:
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+				if bi.global.BasmMeta.GetMeta(&quot;iomode&quot;) == &quot;&quot; {
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+					newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;iomode&quot;, &quot;async&quot;)
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+				} else {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+					return fmt.Errorf(&quot;wrong iomode&quot;)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+				}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+			}
+</a> 			newSection.sectionBody.Lines = make([]*bmline.BasmLine, 0)
+ 
+ 			newLineE := new(bmline.BasmLine)
+<b>diff --git a/<a id="h2" href="../file/pkg/neuralbond/neuralbond.go.html">pkg/neuralbond/neuralbond.go</a> b/<a href="../file/pkg/neuralbond/neuralbond.go.html">pkg/neuralbond/neuralbond.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -15,12 +15,18 @@ const (
+</a> 	FRAGMENT
+ )
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+const (
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	ASYNC = uint8(0) + iota
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	SYNC
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a> type TrainedNet struct {
+ 	Nodes         []Node
+ 	Weights       []Weight
+ 	Neurons       map[string]*Neuron
+ 	NetConfig     *Config
+ 	RegisterSize  int
+<a href="#h2-0-14" id="h2-0-14" class="i">+	IOMode        uint8
+</a> 	OperatingMode uint8
+ }
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -135,6 +141,12 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 	c := n.NetConfig
+ 	regSize := n.RegisterSize
+ 	result := fmt.Sprintf(&quot;%%meta bmdef     global registersize:%d\n&quot;, regSize)
+<a href="#h2-1-3" id="h2-1-3" class="i">+	switch n.IOMode {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	case ASYNC:
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+		result += fmt.Sprintf(&quot;%%meta bmdef     global iomode:async\n&quot;)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	case SYNC:
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+		result += fmt.Sprintf(&quot;%%meta bmdef     global iomode:sync\n&quot;)
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	}
+</a> 	switch n.OperatingMode {
+ 	case ROMCODE:
+ 		for _, node := range n.Nodes {
+</pre>
+</div>
+</body>
+</html>

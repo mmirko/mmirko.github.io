@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fixed axi stream basic template - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/395c23838f81ebafa30c3aabb1e371e371691cb8.html">395c23838f81ebafa30c3aabb1e371e371691cb8</a>
+<b>parent</b> <a href="../commit/e887032bf4ad9c18e0e6bd30c654af06aa7027df.html">e887032bf4ad9c18e0e6bd30c654af06aa7027df</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Tue,  7 Mar 2023 17:09:20 +0100
+
+fixed axi stream basic template
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_axist_basic.go</a></td><td> | </td><td class="num">49</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>1 file changed, 28 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a> b/<a href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -277,6 +277,7 @@ const (
+</a> 	{{- end }}
+ 
+     assign bm_done = (outputs_counter_incr == samples);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	reg[1:0] send = 2&#39;b00;
+</a> 
+ 	bondmachine bm(.clk(m00_axis_aclk),
+ 	.reset(!m00_axis_aresetn),
+<a href="#h0-1" id="h0-1" class="h">@@ -310,31 +311,41 @@ const (
+</a> 			outputs_counter_pointer &lt;= 0;
+ 			{{- if .Outputs }}
+ 			{{- range .Outputs }}
+<a href="#h0-1-3" id="h0-1-3" class="d">-			{{ . }}_received_r = 1&#39;b0;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			{{ . }}_valid_r = 1&#39;b0;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			{{ . }}_received_r &lt;= 1&#39;b0;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			{{ . }}_valid_r &lt;= 1&#39;b0;
+</a> 			{{- end }}
+ 			{{- end }}
+         end
+         else begin
+             if (writes_done &amp;&amp; !bm_done) begin
+<a href="#h0-1-12" id="h0-1-12" class="d">-                
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			{{- if .Inputs }}
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-			{{- range $index, $element := .Inputs }}
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-			{{ $element }}_r &lt;= stream_data_fifo[outputs_counter+{{ $index }}];
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-			{{- end }}
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-			{{- end }}
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+            
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			if (send == 2&#39;b00) begin
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				send &lt;= 2&#39;b01;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				{{- if .Inputs }}
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				{{- range $index, $element := .Inputs }}
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+				{{ $element }}_r &lt;= stream_data_fifo[outputs_counter+{{ $index }}];
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+				{{- end }}
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				{{- end }}
+</a> 
+<a href="#h0-1-27" id="h0-1-27" class="d">-            {{- if .Inputs }}
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-			{{- range .Inputs }}
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-			{{ . }}_valid_r = 1&#39;b1;
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-			{{- end }}
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-			{{- end }}
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+				{{- if .Inputs }}
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+				{{- range .Inputs }}
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+				{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+				{{- end }}
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+				{{- end }}
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+			end
+</a> 
+<a href="#h0-1-39" id="h0-1-39" class="i">+			if (send == 2&#39;b01) begin
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+				{{- if .Inputs }}
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+				{{- range .Inputs }}
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+				{{ . }}_valid_r &lt;= 1&#39;b0;
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+				{{- end }}
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+				{{- end }}
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+			end
+</a> 
+ 			{{- if .Outputs }}
+ 			{{- $outputsLen := len .Outputs }}
+ 			{{- range $i, $output := .Outputs }}
+<a href="#h0-1-50" id="h0-1-50" class="d">-			if ( {{ $output }}_valid &amp;&amp; !{{ $output }}_received_r) begin
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+			if ( {{ $output }}_valid &amp;&amp; !{{ $output }}_received_r &amp;&amp; send == 2&#39;b10) begin
+</a> 				{{ $output }}_valid_r &lt;= 1&#39;b1;
+ 				{{ $output }}_received_r &lt;= 1&#39;b1;
+ 				output_stream_data_fifo[outputs_counter_pointer+{{ $i }}] &lt;= {{ $output }};
+<a href="#h0-2" id="h0-2" class="h">@@ -359,19 +370,15 @@ const (
+</a> 
+ 				{{- if .Outputs }}
+ 				{{- range .Outputs }}
+<a href="#h0-2-3" id="h0-2-3" class="d">-				{{ . }}_valid_r = 1&#39;b0;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				{{ . }}_valid_r &lt;= 1&#39;b0;
+</a> 				{{- end }}
+ 				{{- end }}
+ 
+ 				outputs_counter_pointer &lt;= outputs_counter_pointer + bmoutputs;
+                 outputs_counter_incr &lt;= outputs_counter_incr + 1;
+                 outputs_counter &lt;= bminputs*(outputs_counter_incr+1);
+<a href="#h0-2-11" id="h0-2-11" class="d">-
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-				{{- if .Inputs }}
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-				{{- range $index, $element := .Inputs }}
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-				{{ $element }}_valid_r &lt;= 1&#39;b0;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-				{{- end }}
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-				{{- end }}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+				
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+				send &lt;= 2&#39;b00;
+</a> 
+ 			end
+ 			else if(
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Generator matchers - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dafd18fc2ad7ed64e1e4c0ed5ece83cf7aba0bcc.html">dafd18fc2ad7ed64e1e4c0ed5ece83cf7aba0bcc</a>
+<b>parent</b> <a href="../commit/01d26fbcf6ce87cb2e1500773cd763e5a2470457.html">01d26fbcf6ce87cb2e1500773cd763e5a2470457</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2023 19:10:26 +0200
+
+Generator matchers
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/dynamical_flopoco.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/dynamical_instructions.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynamical_linear_quantizer.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/dynamical_rsets.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 42 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,6 +6,8 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> )
+ 
+ type DynFloPoCo struct{}
+<a href="#h0-1" id="h0-1" class="h">@@ -104,3 +106,13 @@ func (d DynFloPoCo) CreateInstruction(name string) (Opcode, error) {
+</a> 
+ 	return FloPoCo{floPoCoName: name, regSize: regSize, vHDL: vHDL, topEntity: topEntity, entities: entities, pipeline: pipeline}, nil
+ }
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+func (d DynFloPoCo) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	result := make([]string, 0)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	return result
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+func (d DynFloPoCo) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	result := make([]string, 0)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	return result
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a> b/<a href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,9 +1,16 @@
+</a> package procbuilder
+ 
+<a href="#h1-0-2" id="h1-0-2" class="i">+import &quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+type DynConfig struct {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> type DynamicInstruction interface {
+ 	GetName() string
+ 	MatchName(string) bool
+ 	CreateInstruction(string) (Opcode, error)
+<a href="#h1-0-11" id="h1-0-11" class="i">+	HLAssemblerGeneratorMatch(*DynConfig) []string
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	HLAssemblerGeneratorList(*DynConfig, *bmline.BasmLine) []string
+</a> }
+ 
+ func EventuallyCreateInstruction(name string) (bool, error) {
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -85,3 +86,13 @@ func (d DynLinearQuantizer) CreateInstruction(name string) (Opcode, error) {
+</a> 	return LinearQuantizer{lqName: name, s: s, t: t, opType: opType, max: max, pipeline: new(uint8)}, nil
+ 
+ }
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+func (d DynLinearQuantizer) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	result := make([]string, 0)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	return result
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+}
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+func (d DynLinearQuantizer) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+	result := make([]string, 0)
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+	return result
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/dynamical_rsets.go.html">pkg/procbuilder/dynamical_rsets.go</a> b/<a href="../file/pkg/procbuilder/dynamical_rsets.go.html">pkg/procbuilder/dynamical_rsets.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,6 +3,8 @@ package procbuilder
+</a> import (
+ 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+<a href="#h3-0-3" id="h3-0-3" class="i">+
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> )
+ 
+ type DynRsets struct {
+<a href="#h3-1" id="h3-1" class="h">@@ -28,3 +30,13 @@ func (d DynRsets) CreateInstruction(name string) (Opcode, error) {
+</a> 	return Rsets{rsetsName: name, s: s}, nil
+ 
+ }
+<a href="#h3-1-3" id="h3-1-3" class="i">+func (d DynRsets) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	result := make([]string, 0)
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	return result
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+}
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+func (d DynRsets) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+	result := make([]string, 0)
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+	return result
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

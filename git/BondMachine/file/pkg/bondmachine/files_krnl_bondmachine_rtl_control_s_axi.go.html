@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_krnl_bondmachine_rtl_control_s_axi.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_krnl_bondmachine_rtl_control_s_axi.go (13214B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	krnlBondmachineRTLControlSAxi = `
+<a href="#l5" class="line" id="l5">      5</a> /**
+<a href="#l6" class="line" id="l6">      6</a> * Copyright (C) 2019-2021 Xilinx, Inc
+<a href="#l7" class="line" id="l7">      7</a> *
+<a href="#l8" class="line" id="l8">      8</a> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+<a href="#l9" class="line" id="l9">      9</a> * not use this file except in compliance with the License. A copy of the
+<a href="#l10" class="line" id="l10">     10</a> * License is located at
+<a href="#l11" class="line" id="l11">     11</a> *
+<a href="#l12" class="line" id="l12">     12</a> *     http://www.apache.org/licenses/LICENSE-2.0
+<a href="#l13" class="line" id="l13">     13</a> *
+<a href="#l14" class="line" id="l14">     14</a> * Unless required by applicable law or agreed to in writing, software
+<a href="#l15" class="line" id="l15">     15</a> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+<a href="#l16" class="line" id="l16">     16</a> * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+<a href="#l17" class="line" id="l17">     17</a> * License for the specific language governing permissions and limitations
+<a href="#l18" class="line" id="l18">     18</a> * under the License.
+<a href="#l19" class="line" id="l19">     19</a> */
+<a href="#l20" class="line" id="l20">     20</a> 
+<a href="#l21" class="line" id="l21">     21</a> ` + &quot;`timescale 1ns / 1ps&quot; + `
+<a href="#l22" class="line" id="l22">     22</a> module krnl_bondmachine_rtl_control_s_axi
+<a href="#l23" class="line" id="l23">     23</a> #(parameter
+<a href="#l24" class="line" id="l24">     24</a>     C_S_AXI_ADDR_WIDTH = 6,
+<a href="#l25" class="line" id="l25">     25</a>     C_S_AXI_DATA_WIDTH = 32
+<a href="#l26" class="line" id="l26">     26</a> )(
+<a href="#l27" class="line" id="l27">     27</a>     // axi4 lite slave signals
+<a href="#l28" class="line" id="l28">     28</a>     input  wire                          ACLK,
+<a href="#l29" class="line" id="l29">     29</a>     input  wire                          ARESET,
+<a href="#l30" class="line" id="l30">     30</a>     input  wire                          ACLK_EN,
+<a href="#l31" class="line" id="l31">     31</a>     input  wire [C_S_AXI_ADDR_WIDTH-1:0] AWADDR,
+<a href="#l32" class="line" id="l32">     32</a>     input  wire                          AWVALID,
+<a href="#l33" class="line" id="l33">     33</a>     output wire                          AWREADY,
+<a href="#l34" class="line" id="l34">     34</a>     input  wire [C_S_AXI_DATA_WIDTH-1:0] WDATA,
+<a href="#l35" class="line" id="l35">     35</a>     input  wire [C_S_AXI_DATA_WIDTH/8-1:0] WSTRB,
+<a href="#l36" class="line" id="l36">     36</a>     input  wire                          WVALID,
+<a href="#l37" class="line" id="l37">     37</a>     output wire                          WREADY,
+<a href="#l38" class="line" id="l38">     38</a>     output wire [1:0]                    BRESP,
+<a href="#l39" class="line" id="l39">     39</a>     output wire                          BVALID,
+<a href="#l40" class="line" id="l40">     40</a>     input  wire                          BREADY,
+<a href="#l41" class="line" id="l41">     41</a>     input  wire [C_S_AXI_ADDR_WIDTH-1:0] ARADDR,
+<a href="#l42" class="line" id="l42">     42</a>     input  wire                          ARVALID,
+<a href="#l43" class="line" id="l43">     43</a>     output wire                          ARREADY,
+<a href="#l44" class="line" id="l44">     44</a>     output wire [C_S_AXI_DATA_WIDTH-1:0] RDATA,
+<a href="#l45" class="line" id="l45">     45</a>     output wire [1:0]                    RRESP,
+<a href="#l46" class="line" id="l46">     46</a>     output wire                          RVALID,
+<a href="#l47" class="line" id="l47">     47</a>     input  wire                          RREADY,
+<a href="#l48" class="line" id="l48">     48</a>     output wire                          interrupt,
+<a href="#l49" class="line" id="l49">     49</a>     // user signals
+<a href="#l50" class="line" id="l50">     50</a>     output wire                          ap_start,
+<a href="#l51" class="line" id="l51">     51</a>     input  wire                          ap_done,
+<a href="#l52" class="line" id="l52">     52</a>     input  wire                          ap_ready,
+<a href="#l53" class="line" id="l53">     53</a>     input  wire                          ap_idle,
+<a href="#l54" class="line" id="l54">     54</a>     output wire [63:0]                   a,
+<a href="#l55" class="line" id="l55">     55</a>     output wire [63:0]                   b,
+<a href="#l56" class="line" id="l56">     56</a>     output wire [63:0]                   c
+<a href="#l57" class="line" id="l57">     57</a>     //output wire [31:0]                   length_r
+<a href="#l58" class="line" id="l58">     58</a> );
+<a href="#l59" class="line" id="l59">     59</a> //------------------------Address Info-------------------
+<a href="#l60" class="line" id="l60">     60</a> // 0x00 : Control signals
+<a href="#l61" class="line" id="l61">     61</a> //        bit 0  - ap_start (Read/Write/COH)
+<a href="#l62" class="line" id="l62">     62</a> //        bit 1  - ap_done (Read/COR)
+<a href="#l63" class="line" id="l63">     63</a> //        bit 2  - ap_idle (Read)
+<a href="#l64" class="line" id="l64">     64</a> //        bit 3  - ap_ready (Read)
+<a href="#l65" class="line" id="l65">     65</a> //        bit 7  - auto_restart (Read/Write)
+<a href="#l66" class="line" id="l66">     66</a> //        others - reserved
+<a href="#l67" class="line" id="l67">     67</a> // 0x04 : Global Interrupt Enable Register
+<a href="#l68" class="line" id="l68">     68</a> //        bit 0  - Global Interrupt Enable (Read/Write)
+<a href="#l69" class="line" id="l69">     69</a> //        others - reserved
+<a href="#l70" class="line" id="l70">     70</a> // 0x08 : IP Interrupt Enable Register (Read/Write)
+<a href="#l71" class="line" id="l71">     71</a> //        bit 0  - Channel 0 (ap_done)
+<a href="#l72" class="line" id="l72">     72</a> //        bit 1  - Channel 1 (ap_ready)
+<a href="#l73" class="line" id="l73">     73</a> //        others - reserved
+<a href="#l74" class="line" id="l74">     74</a> // 0x0c : IP Interrupt Status Register (Read/TOW)
+<a href="#l75" class="line" id="l75">     75</a> //        bit 0  - Channel 0 (ap_done)
+<a href="#l76" class="line" id="l76">     76</a> //        bit 1  - Channel 1 (ap_ready)
+<a href="#l77" class="line" id="l77">     77</a> //        others - reserved
+<a href="#l78" class="line" id="l78">     78</a> // 0x10 : Data signal of a
+<a href="#l79" class="line" id="l79">     79</a> //        bit 31~0 - a[31:0] (Read/Write)
+<a href="#l80" class="line" id="l80">     80</a> // 0x14 : Data signal of a
+<a href="#l81" class="line" id="l81">     81</a> //        bit 31~0 - a[63:32] (Read/Write)
+<a href="#l82" class="line" id="l82">     82</a> // 0x18 : reserved
+<a href="#l83" class="line" id="l83">     83</a> // 0x1c : Data signal of b
+<a href="#l84" class="line" id="l84">     84</a> //        bit 31~0 - b[31:0] (Read/Write)
+<a href="#l85" class="line" id="l85">     85</a> // 0x20 : Data signal of b
+<a href="#l86" class="line" id="l86">     86</a> //        bit 31~0 - b[63:32] (Read/Write)
+<a href="#l87" class="line" id="l87">     87</a> // 0x24 : reserved
+<a href="#l88" class="line" id="l88">     88</a> // 0x28 : Data signal of c
+<a href="#l89" class="line" id="l89">     89</a> //        bit 31~0 - c[31:0] (Read/Write)
+<a href="#l90" class="line" id="l90">     90</a> // 0x2c : Data signal of c
+<a href="#l91" class="line" id="l91">     91</a> //        bit 31~0 - c[63:32] (Read/Write)
+<a href="#l92" class="line" id="l92">     92</a> // 0x30 : reserved
+<a href="#l93" class="line" id="l93">     93</a> // 0x34 : Data signal of length_r
+<a href="#l94" class="line" id="l94">     94</a> //        bit 31~0 - length_r[31:0] (Read/Write)
+<a href="#l95" class="line" id="l95">     95</a> // 0x38 : reserved
+<a href="#l96" class="line" id="l96">     96</a> // (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
+<a href="#l97" class="line" id="l97">     97</a> 
+<a href="#l98" class="line" id="l98">     98</a> //------------------------Parameter----------------------
+<a href="#l99" class="line" id="l99">     99</a> localparam
+<a href="#l100" class="line" id="l100">    100</a>     ADDR_AP_CTRL         = 6&#39;h00,
+<a href="#l101" class="line" id="l101">    101</a>     ADDR_GIE             = 6&#39;h04,
+<a href="#l102" class="line" id="l102">    102</a>     ADDR_IER             = 6&#39;h08,
+<a href="#l103" class="line" id="l103">    103</a>     ADDR_ISR             = 6&#39;h0c,
+<a href="#l104" class="line" id="l104">    104</a>     ADDR_A_DATA_0        = 6&#39;h10,
+<a href="#l105" class="line" id="l105">    105</a>     ADDR_A_DATA_1        = 6&#39;h14,
+<a href="#l106" class="line" id="l106">    106</a>     ADDR_A_CTRL          = 6&#39;h18,
+<a href="#l107" class="line" id="l107">    107</a>     ADDR_B_DATA_0        = 6&#39;h1c,
+<a href="#l108" class="line" id="l108">    108</a>     ADDR_B_DATA_1        = 6&#39;h20,
+<a href="#l109" class="line" id="l109">    109</a>     ADDR_B_CTRL          = 6&#39;h24,
+<a href="#l110" class="line" id="l110">    110</a>     ADDR_C_DATA_0        = 6&#39;h28,
+<a href="#l111" class="line" id="l111">    111</a>     ADDR_C_DATA_1        = 6&#39;h2c,
+<a href="#l112" class="line" id="l112">    112</a>     ADDR_C_CTRL          = 6&#39;h30,
+<a href="#l113" class="line" id="l113">    113</a>     ADDR_LENGTH_R_DATA_0 = 6&#39;h34,
+<a href="#l114" class="line" id="l114">    114</a>     ADDR_LENGTH_R_CTRL   = 6&#39;h38,
+<a href="#l115" class="line" id="l115">    115</a>     WRIDLE               = 2&#39;d0,
+<a href="#l116" class="line" id="l116">    116</a>     WRDATA               = 2&#39;d1,
+<a href="#l117" class="line" id="l117">    117</a>     WRRESP               = 2&#39;d2,
+<a href="#l118" class="line" id="l118">    118</a>     RDIDLE               = 2&#39;d0,
+<a href="#l119" class="line" id="l119">    119</a>     RDDATA               = 2&#39;d1,
+<a href="#l120" class="line" id="l120">    120</a>     ADDR_BITS         = 6;
+<a href="#l121" class="line" id="l121">    121</a> 
+<a href="#l122" class="line" id="l122">    122</a> //------------------------Local signal-------------------
+<a href="#l123" class="line" id="l123">    123</a>     reg  [1:0]                    wstate = WRIDLE;
+<a href="#l124" class="line" id="l124">    124</a>     reg  [1:0]                    wnext;
+<a href="#l125" class="line" id="l125">    125</a>     reg  [ADDR_BITS-1:0]          waddr;
+<a href="#l126" class="line" id="l126">    126</a>     wire [31:0]                   wmask;
+<a href="#l127" class="line" id="l127">    127</a>     wire                          aw_hs;
+<a href="#l128" class="line" id="l128">    128</a>     wire                          w_hs;
+<a href="#l129" class="line" id="l129">    129</a>     reg  [1:0]                    rstate = RDIDLE;
+<a href="#l130" class="line" id="l130">    130</a>     reg  [1:0]                    rnext;
+<a href="#l131" class="line" id="l131">    131</a>     reg  [31:0]                   rdata;
+<a href="#l132" class="line" id="l132">    132</a>     wire                          ar_hs;
+<a href="#l133" class="line" id="l133">    133</a>     wire [ADDR_BITS-1:0]          raddr;
+<a href="#l134" class="line" id="l134">    134</a>     // internal registers
+<a href="#l135" class="line" id="l135">    135</a>     wire                          int_ap_idle;
+<a href="#l136" class="line" id="l136">    136</a>     wire                          int_ap_ready;
+<a href="#l137" class="line" id="l137">    137</a>     reg                           int_ap_done = 1&#39;b0;
+<a href="#l138" class="line" id="l138">    138</a>     reg                           int_ap_start = 1&#39;b0;
+<a href="#l139" class="line" id="l139">    139</a>     reg                           int_auto_restart = 1&#39;b0;
+<a href="#l140" class="line" id="l140">    140</a>     reg                           int_gie = 2&#39;b0;
+<a href="#l141" class="line" id="l141">    141</a>     reg  [1:0]                    int_ier = 2&#39;b0;
+<a href="#l142" class="line" id="l142">    142</a>     reg  [1:0]                    int_isr = 2&#39;b0;
+<a href="#l143" class="line" id="l143">    143</a>     reg  [63:0]                   int_a = 64&#39;b0;
+<a href="#l144" class="line" id="l144">    144</a>     reg  [63:0]                   int_b = 64&#39;b0;
+<a href="#l145" class="line" id="l145">    145</a>     //reg  [63:0]                   int_c = 64&#39;b0;
+<a href="#l146" class="line" id="l146">    146</a>     //reg  [31:0]                   int_length_r = 32&#39;b0;
+<a href="#l147" class="line" id="l147">    147</a> 
+<a href="#l148" class="line" id="l148">    148</a> //------------------------Instantiation------------------
+<a href="#l149" class="line" id="l149">    149</a> 
+<a href="#l150" class="line" id="l150">    150</a> //------------------------AXI write fsm------------------
+<a href="#l151" class="line" id="l151">    151</a> assign AWREADY = (~ARESET) &amp; (wstate == WRIDLE);
+<a href="#l152" class="line" id="l152">    152</a> assign WREADY  = (wstate == WRDATA);
+<a href="#l153" class="line" id="l153">    153</a> assign BRESP   = 2&#39;b00;  // OKAY
+<a href="#l154" class="line" id="l154">    154</a> assign BVALID  = (wstate == WRRESP);
+<a href="#l155" class="line" id="l155">    155</a> assign wmask   = { {8{WSTRB[3]}}, {8{WSTRB[2]}}, {8{WSTRB[1]}}, {8{WSTRB[0]}} };
+<a href="#l156" class="line" id="l156">    156</a> assign aw_hs   = AWVALID &amp; AWREADY;
+<a href="#l157" class="line" id="l157">    157</a> assign w_hs    = WVALID &amp; WREADY;
+<a href="#l158" class="line" id="l158">    158</a> 
+<a href="#l159" class="line" id="l159">    159</a> // wstate
+<a href="#l160" class="line" id="l160">    160</a> always @(posedge ACLK) begin
+<a href="#l161" class="line" id="l161">    161</a>     if (ARESET)
+<a href="#l162" class="line" id="l162">    162</a>         wstate &lt;= WRIDLE;
+<a href="#l163" class="line" id="l163">    163</a>     else if (ACLK_EN)
+<a href="#l164" class="line" id="l164">    164</a>         wstate &lt;= wnext;
+<a href="#l165" class="line" id="l165">    165</a> end
+<a href="#l166" class="line" id="l166">    166</a> 
+<a href="#l167" class="line" id="l167">    167</a> // wnext
+<a href="#l168" class="line" id="l168">    168</a> always @(*) begin
+<a href="#l169" class="line" id="l169">    169</a>     case (wstate)
+<a href="#l170" class="line" id="l170">    170</a>         WRIDLE:
+<a href="#l171" class="line" id="l171">    171</a>             if (AWVALID)
+<a href="#l172" class="line" id="l172">    172</a>                 wnext = WRDATA;
+<a href="#l173" class="line" id="l173">    173</a>             else
+<a href="#l174" class="line" id="l174">    174</a>                 wnext = WRIDLE;
+<a href="#l175" class="line" id="l175">    175</a>         WRDATA:
+<a href="#l176" class="line" id="l176">    176</a>             if (WVALID)
+<a href="#l177" class="line" id="l177">    177</a>                 wnext = WRRESP;
+<a href="#l178" class="line" id="l178">    178</a>             else
+<a href="#l179" class="line" id="l179">    179</a>                 wnext = WRDATA;
+<a href="#l180" class="line" id="l180">    180</a>         WRRESP:
+<a href="#l181" class="line" id="l181">    181</a>             if (BREADY)
+<a href="#l182" class="line" id="l182">    182</a>                 wnext = WRIDLE;
+<a href="#l183" class="line" id="l183">    183</a>             else
+<a href="#l184" class="line" id="l184">    184</a>                 wnext = WRRESP;
+<a href="#l185" class="line" id="l185">    185</a>         default:
+<a href="#l186" class="line" id="l186">    186</a>             wnext = WRIDLE;
+<a href="#l187" class="line" id="l187">    187</a>     endcase
+<a href="#l188" class="line" id="l188">    188</a> end
+<a href="#l189" class="line" id="l189">    189</a> 
+<a href="#l190" class="line" id="l190">    190</a> // waddr
+<a href="#l191" class="line" id="l191">    191</a> always @(posedge ACLK) begin
+<a href="#l192" class="line" id="l192">    192</a>     if (ACLK_EN) begin
+<a href="#l193" class="line" id="l193">    193</a>         if (aw_hs)
+<a href="#l194" class="line" id="l194">    194</a>             waddr &lt;= AWADDR[ADDR_BITS-1:0];
+<a href="#l195" class="line" id="l195">    195</a>     end
+<a href="#l196" class="line" id="l196">    196</a> end
+<a href="#l197" class="line" id="l197">    197</a> 
+<a href="#l198" class="line" id="l198">    198</a> //------------------------AXI read fsm-------------------
+<a href="#l199" class="line" id="l199">    199</a> assign ARREADY = (~ARESET) &amp;&amp; (rstate == RDIDLE);
+<a href="#l200" class="line" id="l200">    200</a> assign RDATA   = rdata;
+<a href="#l201" class="line" id="l201">    201</a> assign RRESP   = 2&#39;b00;  // OKAY
+<a href="#l202" class="line" id="l202">    202</a> assign RVALID  = (rstate == RDDATA);
+<a href="#l203" class="line" id="l203">    203</a> assign ar_hs   = ARVALID &amp; ARREADY;
+<a href="#l204" class="line" id="l204">    204</a> assign raddr   = ARADDR[ADDR_BITS-1:0];
+<a href="#l205" class="line" id="l205">    205</a> 
+<a href="#l206" class="line" id="l206">    206</a> // rstate
+<a href="#l207" class="line" id="l207">    207</a> always @(posedge ACLK) begin
+<a href="#l208" class="line" id="l208">    208</a>     if (ARESET)
+<a href="#l209" class="line" id="l209">    209</a>         rstate &lt;= RDIDLE;
+<a href="#l210" class="line" id="l210">    210</a>     else if (ACLK_EN)
+<a href="#l211" class="line" id="l211">    211</a>         rstate &lt;= rnext;
+<a href="#l212" class="line" id="l212">    212</a> end
+<a href="#l213" class="line" id="l213">    213</a> 
+<a href="#l214" class="line" id="l214">    214</a> // rnext
+<a href="#l215" class="line" id="l215">    215</a> always @(*) begin
+<a href="#l216" class="line" id="l216">    216</a>     case (rstate)
+<a href="#l217" class="line" id="l217">    217</a>         RDIDLE:
+<a href="#l218" class="line" id="l218">    218</a>             if (ARVALID)
+<a href="#l219" class="line" id="l219">    219</a>                 rnext = RDDATA;
+<a href="#l220" class="line" id="l220">    220</a>             else
+<a href="#l221" class="line" id="l221">    221</a>                 rnext = RDIDLE;
+<a href="#l222" class="line" id="l222">    222</a>         RDDATA:
+<a href="#l223" class="line" id="l223">    223</a>             if (RREADY &amp; RVALID)
+<a href="#l224" class="line" id="l224">    224</a>                 rnext = RDIDLE;
+<a href="#l225" class="line" id="l225">    225</a>             else
+<a href="#l226" class="line" id="l226">    226</a>                 rnext = RDDATA;
+<a href="#l227" class="line" id="l227">    227</a>         default:
+<a href="#l228" class="line" id="l228">    228</a>             rnext = RDIDLE;
+<a href="#l229" class="line" id="l229">    229</a>     endcase
+<a href="#l230" class="line" id="l230">    230</a> end
+<a href="#l231" class="line" id="l231">    231</a> 
+<a href="#l232" class="line" id="l232">    232</a> // rdata
+<a href="#l233" class="line" id="l233">    233</a> always @(posedge ACLK) begin
+<a href="#l234" class="line" id="l234">    234</a>     if (ACLK_EN) begin
+<a href="#l235" class="line" id="l235">    235</a>         if (ar_hs) begin
+<a href="#l236" class="line" id="l236">    236</a>             rdata &lt;= 1&#39;b0;
+<a href="#l237" class="line" id="l237">    237</a>             case (raddr)
+<a href="#l238" class="line" id="l238">    238</a>                 ADDR_AP_CTRL: begin
+<a href="#l239" class="line" id="l239">    239</a>                     rdata[0] &lt;= int_ap_start;
+<a href="#l240" class="line" id="l240">    240</a>                     rdata[1] &lt;= int_ap_done;
+<a href="#l241" class="line" id="l241">    241</a>                     rdata[2] &lt;= int_ap_idle;
+<a href="#l242" class="line" id="l242">    242</a>                     rdata[3] &lt;= int_ap_ready;
+<a href="#l243" class="line" id="l243">    243</a>                     rdata[7] &lt;= int_auto_restart;
+<a href="#l244" class="line" id="l244">    244</a>                 end
+<a href="#l245" class="line" id="l245">    245</a>                 ADDR_GIE: begin
+<a href="#l246" class="line" id="l246">    246</a>                     rdata &lt;= int_gie;
+<a href="#l247" class="line" id="l247">    247</a>                 end
+<a href="#l248" class="line" id="l248">    248</a>                 ADDR_IER: begin
+<a href="#l249" class="line" id="l249">    249</a>                     rdata &lt;= int_ier;
+<a href="#l250" class="line" id="l250">    250</a>                 end
+<a href="#l251" class="line" id="l251">    251</a>                 ADDR_ISR: begin
+<a href="#l252" class="line" id="l252">    252</a>                     rdata &lt;= int_isr;
+<a href="#l253" class="line" id="l253">    253</a>                 end
+<a href="#l254" class="line" id="l254">    254</a>                 ADDR_A_DATA_0: begin
+<a href="#l255" class="line" id="l255">    255</a>                     rdata &lt;= int_a[31:0];
+<a href="#l256" class="line" id="l256">    256</a>                 end
+<a href="#l257" class="line" id="l257">    257</a>                 ADDR_A_DATA_1: begin
+<a href="#l258" class="line" id="l258">    258</a>                     rdata &lt;= int_a[63:32];
+<a href="#l259" class="line" id="l259">    259</a>                 end
+<a href="#l260" class="line" id="l260">    260</a>                 ADDR_B_DATA_0: begin
+<a href="#l261" class="line" id="l261">    261</a>                     rdata &lt;= int_b[31:0];
+<a href="#l262" class="line" id="l262">    262</a>                 end
+<a href="#l263" class="line" id="l263">    263</a>                 ADDR_B_DATA_1: begin
+<a href="#l264" class="line" id="l264">    264</a>                     rdata &lt;= int_b[63:32];
+<a href="#l265" class="line" id="l265">    265</a>                 end
+<a href="#l266" class="line" id="l266">    266</a>                 // ADDR_C_DATA_0: begin
+<a href="#l267" class="line" id="l267">    267</a>                 //     rdata &lt;= int_c[31:0];
+<a href="#l268" class="line" id="l268">    268</a>                 // end
+<a href="#l269" class="line" id="l269">    269</a>                 // ADDR_C_DATA_1: begin
+<a href="#l270" class="line" id="l270">    270</a>                 //     rdata &lt;= int_c[63:32];
+<a href="#l271" class="line" id="l271">    271</a>                 // end
+<a href="#l272" class="line" id="l272">    272</a>                 // ADDR_LENGTH_R_DATA_0: begin
+<a href="#l273" class="line" id="l273">    273</a>                 //     rdata &lt;= int_length_r[31:0];
+<a href="#l274" class="line" id="l274">    274</a>                 // end
+<a href="#l275" class="line" id="l275">    275</a>             endcase
+<a href="#l276" class="line" id="l276">    276</a>         end
+<a href="#l277" class="line" id="l277">    277</a>     end
+<a href="#l278" class="line" id="l278">    278</a> end
+<a href="#l279" class="line" id="l279">    279</a> 
+<a href="#l280" class="line" id="l280">    280</a> 
+<a href="#l281" class="line" id="l281">    281</a> //------------------------Register logic-----------------
+<a href="#l282" class="line" id="l282">    282</a> assign interrupt    = int_gie &amp; (|int_isr);
+<a href="#l283" class="line" id="l283">    283</a> assign ap_start     = int_ap_start;
+<a href="#l284" class="line" id="l284">    284</a> assign int_ap_idle  = ap_idle;
+<a href="#l285" class="line" id="l285">    285</a> assign int_ap_ready = ap_ready;
+<a href="#l286" class="line" id="l286">    286</a> assign a            = int_a;
+<a href="#l287" class="line" id="l287">    287</a> assign b            = int_b;
+<a href="#l288" class="line" id="l288">    288</a> //assign c            = int_c;
+<a href="#l289" class="line" id="l289">    289</a> //assign length_r     = int_length_r;
+<a href="#l290" class="line" id="l290">    290</a> // int_ap_start
+<a href="#l291" class="line" id="l291">    291</a> always @(posedge ACLK) begin
+<a href="#l292" class="line" id="l292">    292</a>     if (ARESET)
+<a href="#l293" class="line" id="l293">    293</a>         int_ap_start &lt;= 1&#39;b0;
+<a href="#l294" class="line" id="l294">    294</a>     else if (ACLK_EN) begin
+<a href="#l295" class="line" id="l295">    295</a>         if (w_hs &amp;&amp; waddr == ADDR_AP_CTRL &amp;&amp; WSTRB[0] &amp;&amp; WDATA[0])
+<a href="#l296" class="line" id="l296">    296</a>             int_ap_start &lt;= 1&#39;b1;
+<a href="#l297" class="line" id="l297">    297</a>         else if (int_ap_ready)
+<a href="#l298" class="line" id="l298">    298</a>             int_ap_start &lt;= int_auto_restart; // clear on handshake/auto restart
+<a href="#l299" class="line" id="l299">    299</a>     end
+<a href="#l300" class="line" id="l300">    300</a> end
+<a href="#l301" class="line" id="l301">    301</a> 
+<a href="#l302" class="line" id="l302">    302</a> // int_ap_done
+<a href="#l303" class="line" id="l303">    303</a> always @(posedge ACLK) begin
+<a href="#l304" class="line" id="l304">    304</a>     if (ARESET)
+<a href="#l305" class="line" id="l305">    305</a>         int_ap_done &lt;= 1&#39;b0;
+<a href="#l306" class="line" id="l306">    306</a>     else if (ACLK_EN) begin
+<a href="#l307" class="line" id="l307">    307</a>         if (ap_done)
+<a href="#l308" class="line" id="l308">    308</a>             int_ap_done &lt;= 1&#39;b1;
+<a href="#l309" class="line" id="l309">    309</a>         else if (ar_hs &amp;&amp; raddr == ADDR_AP_CTRL)
+<a href="#l310" class="line" id="l310">    310</a>             int_ap_done &lt;= 1&#39;b0; // clear on read
+<a href="#l311" class="line" id="l311">    311</a>     end
+<a href="#l312" class="line" id="l312">    312</a> end
+<a href="#l313" class="line" id="l313">    313</a> 
+<a href="#l314" class="line" id="l314">    314</a> // int_auto_restart
+<a href="#l315" class="line" id="l315">    315</a> always @(posedge ACLK) begin
+<a href="#l316" class="line" id="l316">    316</a>     if (ARESET)
+<a href="#l317" class="line" id="l317">    317</a>         int_auto_restart &lt;= 1&#39;b0;
+<a href="#l318" class="line" id="l318">    318</a>     else if (ACLK_EN) begin
+<a href="#l319" class="line" id="l319">    319</a>         if (w_hs &amp;&amp; waddr == ADDR_AP_CTRL &amp;&amp; WSTRB[0])
+<a href="#l320" class="line" id="l320">    320</a>             int_auto_restart &lt;=  WDATA[7];
+<a href="#l321" class="line" id="l321">    321</a>     end
+<a href="#l322" class="line" id="l322">    322</a> end
+<a href="#l323" class="line" id="l323">    323</a> 
+<a href="#l324" class="line" id="l324">    324</a> // int_gie
+<a href="#l325" class="line" id="l325">    325</a> always @(posedge ACLK) begin
+<a href="#l326" class="line" id="l326">    326</a>     if (ARESET)
+<a href="#l327" class="line" id="l327">    327</a>         int_gie &lt;= 1&#39;b0;
+<a href="#l328" class="line" id="l328">    328</a>     else if (ACLK_EN) begin
+<a href="#l329" class="line" id="l329">    329</a>         if (w_hs &amp;&amp; waddr == ADDR_GIE &amp;&amp; WSTRB[0])
+<a href="#l330" class="line" id="l330">    330</a>             int_gie &lt;= WDATA[0];
+<a href="#l331" class="line" id="l331">    331</a>     end
+<a href="#l332" class="line" id="l332">    332</a> end
+<a href="#l333" class="line" id="l333">    333</a> 
+<a href="#l334" class="line" id="l334">    334</a> // int_ier
+<a href="#l335" class="line" id="l335">    335</a> always @(posedge ACLK) begin
+<a href="#l336" class="line" id="l336">    336</a>     if (ARESET)
+<a href="#l337" class="line" id="l337">    337</a>         int_ier &lt;= 1&#39;b0;
+<a href="#l338" class="line" id="l338">    338</a>     else if (ACLK_EN) begin
+<a href="#l339" class="line" id="l339">    339</a>         if (w_hs &amp;&amp; waddr == ADDR_IER &amp;&amp; WSTRB[0])
+<a href="#l340" class="line" id="l340">    340</a>             int_ier &lt;= WDATA[1:0];
+<a href="#l341" class="line" id="l341">    341</a>     end
+<a href="#l342" class="line" id="l342">    342</a> end
+<a href="#l343" class="line" id="l343">    343</a> 
+<a href="#l344" class="line" id="l344">    344</a> // int_isr[0]
+<a href="#l345" class="line" id="l345">    345</a> always @(posedge ACLK) begin
+<a href="#l346" class="line" id="l346">    346</a>     if (ARESET)
+<a href="#l347" class="line" id="l347">    347</a>         int_isr[0] &lt;= 1&#39;b0;
+<a href="#l348" class="line" id="l348">    348</a>     else if (ACLK_EN) begin
+<a href="#l349" class="line" id="l349">    349</a>         if (int_ier[0] &amp; ap_done)
+<a href="#l350" class="line" id="l350">    350</a>             int_isr[0] &lt;= 1&#39;b1;
+<a href="#l351" class="line" id="l351">    351</a>         else if (w_hs &amp;&amp; waddr == ADDR_ISR &amp;&amp; WSTRB[0])
+<a href="#l352" class="line" id="l352">    352</a>             int_isr[0] &lt;= int_isr[0] ^ WDATA[0]; // toggle on write
+<a href="#l353" class="line" id="l353">    353</a>     end
+<a href="#l354" class="line" id="l354">    354</a> end
+<a href="#l355" class="line" id="l355">    355</a> 
+<a href="#l356" class="line" id="l356">    356</a> // int_isr[1]
+<a href="#l357" class="line" id="l357">    357</a> always @(posedge ACLK) begin
+<a href="#l358" class="line" id="l358">    358</a>     if (ARESET)
+<a href="#l359" class="line" id="l359">    359</a>         int_isr[1] &lt;= 1&#39;b0;
+<a href="#l360" class="line" id="l360">    360</a>     else if (ACLK_EN) begin
+<a href="#l361" class="line" id="l361">    361</a>         if (int_ier[1] &amp; ap_ready)
+<a href="#l362" class="line" id="l362">    362</a>             int_isr[1] &lt;= 1&#39;b1;
+<a href="#l363" class="line" id="l363">    363</a>         else if (w_hs &amp;&amp; waddr == ADDR_ISR &amp;&amp; WSTRB[0])
+<a href="#l364" class="line" id="l364">    364</a>             int_isr[1] &lt;= int_isr[1] ^ WDATA[1]; // toggle on write
+<a href="#l365" class="line" id="l365">    365</a>     end
+<a href="#l366" class="line" id="l366">    366</a> end
+<a href="#l367" class="line" id="l367">    367</a> 
+<a href="#l368" class="line" id="l368">    368</a> // int_a[31:0]
+<a href="#l369" class="line" id="l369">    369</a> always @(posedge ACLK) begin
+<a href="#l370" class="line" id="l370">    370</a>     if (ARESET)
+<a href="#l371" class="line" id="l371">    371</a>         int_a[31:0] &lt;= 0;
+<a href="#l372" class="line" id="l372">    372</a>     else if (ACLK_EN) begin
+<a href="#l373" class="line" id="l373">    373</a>         if (w_hs &amp;&amp; waddr == ADDR_A_DATA_0)
+<a href="#l374" class="line" id="l374">    374</a>             int_a[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_a[31:0] &amp; ~wmask);
+<a href="#l375" class="line" id="l375">    375</a>     end
+<a href="#l376" class="line" id="l376">    376</a> end
+<a href="#l377" class="line" id="l377">    377</a> 
+<a href="#l378" class="line" id="l378">    378</a> // int_a[63:32]
+<a href="#l379" class="line" id="l379">    379</a> always @(posedge ACLK) begin
+<a href="#l380" class="line" id="l380">    380</a>     if (ARESET)
+<a href="#l381" class="line" id="l381">    381</a>         int_a[63:32] &lt;= 0;
+<a href="#l382" class="line" id="l382">    382</a>     else if (ACLK_EN) begin
+<a href="#l383" class="line" id="l383">    383</a>         if (w_hs &amp;&amp; waddr == ADDR_A_DATA_1)
+<a href="#l384" class="line" id="l384">    384</a>             int_a[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_a[63:32] &amp; ~wmask);
+<a href="#l385" class="line" id="l385">    385</a>     end
+<a href="#l386" class="line" id="l386">    386</a> end
+<a href="#l387" class="line" id="l387">    387</a> 
+<a href="#l388" class="line" id="l388">    388</a> // int_b[31:0]
+<a href="#l389" class="line" id="l389">    389</a> always @(posedge ACLK) begin
+<a href="#l390" class="line" id="l390">    390</a>     if (ARESET)
+<a href="#l391" class="line" id="l391">    391</a>         int_b[31:0] &lt;= 0;
+<a href="#l392" class="line" id="l392">    392</a>     else if (ACLK_EN) begin
+<a href="#l393" class="line" id="l393">    393</a>         if (w_hs &amp;&amp; waddr == ADDR_B_DATA_0)
+<a href="#l394" class="line" id="l394">    394</a>             int_b[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_b[31:0] &amp; ~wmask);
+<a href="#l395" class="line" id="l395">    395</a>     end
+<a href="#l396" class="line" id="l396">    396</a> end
+<a href="#l397" class="line" id="l397">    397</a> 
+<a href="#l398" class="line" id="l398">    398</a> // int_b[63:32]
+<a href="#l399" class="line" id="l399">    399</a> always @(posedge ACLK) begin
+<a href="#l400" class="line" id="l400">    400</a>     if (ARESET)
+<a href="#l401" class="line" id="l401">    401</a>         int_b[63:32] &lt;= 0;
+<a href="#l402" class="line" id="l402">    402</a>     else if (ACLK_EN) begin
+<a href="#l403" class="line" id="l403">    403</a>         if (w_hs &amp;&amp; waddr == ADDR_B_DATA_1)
+<a href="#l404" class="line" id="l404">    404</a>             int_b[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_b[63:32] &amp; ~wmask);
+<a href="#l405" class="line" id="l405">    405</a>     end
+<a href="#l406" class="line" id="l406">    406</a> end
+<a href="#l407" class="line" id="l407">    407</a> 
+<a href="#l408" class="line" id="l408">    408</a> // int_c[31:0]
+<a href="#l409" class="line" id="l409">    409</a> // always @(posedge ACLK) begin
+<a href="#l410" class="line" id="l410">    410</a> //     if (ARESET)
+<a href="#l411" class="line" id="l411">    411</a> //         int_c[31:0] &lt;= 0;
+<a href="#l412" class="line" id="l412">    412</a> //     else if (ACLK_EN) begin
+<a href="#l413" class="line" id="l413">    413</a> //         if (w_hs &amp;&amp; waddr == ADDR_C_DATA_0)
+<a href="#l414" class="line" id="l414">    414</a> //             int_c[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_c[31:0] &amp; ~wmask);
+<a href="#l415" class="line" id="l415">    415</a> //     end
+<a href="#l416" class="line" id="l416">    416</a> // end
+<a href="#l417" class="line" id="l417">    417</a> 
+<a href="#l418" class="line" id="l418">    418</a> // // int_c[63:32]
+<a href="#l419" class="line" id="l419">    419</a> // always @(posedge ACLK) begin
+<a href="#l420" class="line" id="l420">    420</a> //     if (ARESET)
+<a href="#l421" class="line" id="l421">    421</a> //         int_c[63:32] &lt;= 0;
+<a href="#l422" class="line" id="l422">    422</a> //     else if (ACLK_EN) begin
+<a href="#l423" class="line" id="l423">    423</a> //         if (w_hs &amp;&amp; waddr == ADDR_C_DATA_1)
+<a href="#l424" class="line" id="l424">    424</a> //             int_c[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_c[63:32] &amp; ~wmask);
+<a href="#l425" class="line" id="l425">    425</a> //     end
+<a href="#l426" class="line" id="l426">    426</a> // end
+<a href="#l427" class="line" id="l427">    427</a> 
+<a href="#l428" class="line" id="l428">    428</a> // int_length_r[31:0]
+<a href="#l429" class="line" id="l429">    429</a> // always @(posedge ACLK) begin
+<a href="#l430" class="line" id="l430">    430</a> //     if (ARESET)
+<a href="#l431" class="line" id="l431">    431</a> //         int_length_r[31:0] &lt;= 0;
+<a href="#l432" class="line" id="l432">    432</a> //     else if (ACLK_EN) begin
+<a href="#l433" class="line" id="l433">    433</a> //         if (w_hs &amp;&amp; waddr == ADDR_LENGTH_R_DATA_0)
+<a href="#l434" class="line" id="l434">    434</a> //             int_length_r[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_length_r[31:0] &amp; ~wmask);
+<a href="#l435" class="line" id="l435">    435</a> //     end
+<a href="#l436" class="line" id="l436">    436</a> // end
+<a href="#l437" class="line" id="l437">    437</a> 
+<a href="#l438" class="line" id="l438">    438</a> 
+<a href="#l439" class="line" id="l439">    439</a> //------------------------Memory logic-------------------
+<a href="#l440" class="line" id="l440">    440</a> 
+<a href="#l441" class="line" id="l441">    441</a> endmodule
+<a href="#l442" class="line" id="l442">    442</a> 
+<a href="#l443" class="line" id="l443">    443</a> `
+<a href="#l444" class="line" id="l444">    444</a> )
+</pre>
+</div>
+</body>
+</html>

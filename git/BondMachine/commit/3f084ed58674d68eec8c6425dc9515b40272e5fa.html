@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parametric quantum gates - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3f084ed58674d68eec8c6425dc9515b40272e5fa.html">3f084ed58674d68eec8c6425dc9515b40272e5fa</a>
+<b>parent</b> <a href="../commit/e7515ed18347b9a257e94d7f7de87e4afcbb8d1e.html">e7515ed18347b9a257e94d7f7de87e4afcbb8d1e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  4 Mar 2024 18:02:39 +0100
+
+Parametric quantum gates
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmmatrix/bmmatrix.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmmatrix/identity.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmmatrix/static2x2.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmqsim/parametric.go</a></td><td> | </td><td class="num">43</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 93 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmmatrix/bmmatrix.go.html">pkg/bmmatrix/bmmatrix.go</a> b/<a href="../file/pkg/bmmatrix/bmmatrix.go.html">pkg/bmmatrix/bmmatrix.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -211,3 +211,17 @@ func MatrixProductComplex(a, b *BmMatrixSquareComplex) *BmMatrixSquareComplex {
+</a> 	}
+ 	return c
+ }
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+func MatrixVectorProductComplex(a *BmMatrixSquareComplex, b []Complex32) ([]Complex32, error) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	if len(b) != a.N {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		return nil, fmt.Errorf(&quot;MatrixVectorProductComplex: vector length does not match matrix size&quot;)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	c := make([]Complex32, a.N)
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	for i := 0; i &lt; a.N; i++ {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		c[i] = Complex32{0, 0}
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		for j := 0; j &lt; a.N; j++ {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			c[i] = Complex32Add(c[i], Complex32Mul(a.Data[i][j], b[j]))
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	return c, nil
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a> b/<a href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,7 @@
+</a> package bmmatrix
+ 
+<a href="#h1-0-2" id="h1-0-2" class="i">+import &quot;math&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a> func IdentityComplex(n int) *BmMatrixSquareComplex {
+ 	m := NewBmMatrixSquareComplex(n)
+ 	for i := 0; i &lt; n; i++ {
+<a href="#h1-1" id="h1-1" class="h">@@ -7,3 +9,26 @@ func IdentityComplex(n int) *BmMatrixSquareComplex {
+</a> 	}
+ 	return m
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+func GlobalPhase(n int, phase float32) *BmMatrixSquareComplex {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	// The real part is the cosine of the phase
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	realPart := float32(math.Cos(float64(phase)))
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	imagPart := float32(math.Sin(float64(phase)))
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	m := NewBmMatrixSquareComplex(n)
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	for i := 0; i &lt; n; i++ {
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		m.Data[i][i] = Complex32{realPart, imagPart}
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	}
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	return m
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+}
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+func PhaseShift(phase float32) *BmMatrixSquareComplex {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	m.Data[1][1] = Complex32{float32(math.Cos(float64(phase))), float32(math.Sin(float64(phase)))}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	return m
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+}
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+func T() *BmMatrixSquareComplex {
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+	return PhaseShift(math.Pi / 4)
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmmatrix/static2x2.go.html">pkg/bmmatrix/static2x2.go</a> b/<a href="../file/pkg/bmmatrix/static2x2.go.html">pkg/bmmatrix/static2x2.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -65,6 +65,15 @@ func P() *BmMatrixSquareComplex {
+</a> 	return S()
+ }
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-func Phase() *BmMatrixSquareComplex {
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	return S()
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+func V() *BmMatrixSquareComplex {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	m.Data[0][0] = Complex32{0.5, 0.5}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	m.Data[0][1] = Complex32{0.5, -0.5}
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	m.Data[1][0] = Complex32{0.5, -0.5}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	m.Data[1][1] = Complex32{0.5, 0.5}
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	return m
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+}
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+func Sx() *BmMatrixSquareComplex {
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	return V()
+</a> }
+<b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/parametric.go.html">pkg/bmqsim/parametric.go</a> b/<a href="../file/pkg/bmqsim/parametric.go.html">pkg/bmqsim/parametric.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,43 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmqsim
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmatrix&quot;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+func (sim *BmQSimulator) Phase(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	// The first parameter is the qbit, we can safely ignore it since it has been already treated
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	// The second parameter is the phase
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	if len(line.Elements) != 2 {
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+		return nil, fmt.Errorf(&quot;Phase: wrong number of parameters&quot;)
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	}
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	phase := line.Elements[1].GetValue()
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	// Convert the phase to a float32
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+	if phaseFloat, err := strconv.ParseFloat(phase, 32); err != nil {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+		return nil, fmt.Errorf(&quot;Phase: error parsing phase %s&quot;, phase)
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	} else {
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+		return bmmatrix.GlobalPhase(2, float32(phaseFloat)), nil
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	}
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+}
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+func (sim *BmQSimulator) P(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+	// The first parameter is the qbit, we can safely ignore it since it has been already treated
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	// The second parameter is the phase
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+	if len(line.Elements) != 2 {
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+		return nil, fmt.Errorf(&quot;P: wrong number of parameters&quot;)
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+	}
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	phase := line.Elements[1].GetValue()
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	// Convert the phase to a float32
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	if phaseFloat, err := strconv.ParseFloat(phase, 32); err != nil {
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+		return nil, fmt.Errorf(&quot;P: error parsing phase %s&quot;, phase)
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	} else {
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+		return bmmatrix.PhaseShift(float32(phaseFloat)), nil
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	}
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

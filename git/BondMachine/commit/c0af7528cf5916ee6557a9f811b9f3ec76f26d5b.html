@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>melbond structure complete - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c0af7528cf5916ee6557a9f811b9f3ec76f26d5b.html">c0af7528cf5916ee6557a9f811b9f3ec76f26d5b</a>
+<b>parent</b> <a href="../commit/726dc3d8f8f89fb73a5aa8828de71b0a72533359.html">726dc3d8f8f89fb73a5aa8828de71b0a72533359</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  5 Apr 2023 00:09:49 +0200
+
+melbond structure complete
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/melbond/melbond.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">go.mod</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">go.sum</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/melbond/evaluator.go</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/melbond/melbond.go</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>5 files changed, 36 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a> b/<a href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,7 +9,7 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/melbond&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/neuralbond&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;github.com/mmirko/mel/pkg/m3number&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/m3melbond&quot;
+</a> 	&quot;github.com/mmirko/mel/pkg/mel&quot;
+ )
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -134,16 +134,16 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	a := new(m3number.M3numberMe3li)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	a := new(m3melbond.M3MelBondMe3li)
+</a> 	var ep *mel.EvolutionParameters
+ 	c := new(mel.MelConfig)
+ 	a.Mel3Object.DefaultCreator = bc.BasmCreator
+ 	c.Debug = false
+<a href="#h0-1-9" id="h0-1-9" class="d">-	a.MelInit(c, ep)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	a.Init(c, ep, []string{&quot;m3uint&quot;, &quot;m3uintcmp&quot;, &quot;m3number&quot;, &quot;m3bool&quot;, &quot;m3boolcmp&quot;, &quot;m3statements&quot;})
+</a> 
+ 	prog := new(melbond.MelBondProgram)
+ 	prog.MelBondConfig = bc
+<a href="#h0-1-14" id="h0-1-14" class="d">-	prog.M3numberMe3li = a
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	prog.M3MelBondMe3li = a
+</a> 
+ 	if len(flag.Args()) != 1 {
+ 		panic(&quot;No mel file specified&quot;)
+<b>diff --git a/<a id="h1" href="../file/go.mod.html">go.mod</a> b/<a href="../file/go.mod.html">go.mod</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,7 +6,7 @@ require (
+</a> 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
+ 	github.com/golang/protobuf v1.5.2
+ 	github.com/mdlayher/raw v0.1.0
+<a href="#h1-0-3" id="h1-0-3" class="d">-	github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	github.com/mmirko/mel v0.0.0-20230404214048-7308a9f0bd4f
+</a> 	github.com/tfriedel6/canvas v0.12.1
+ 	google.golang.org/protobuf v1.30.0
+ )
+<b>diff --git a/<a id="h2" href="../file/go.sum.html">go.sum</a> b/<a href="../file/go.sum.html">go.sum</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -22,6 +22,8 @@ github.com/mdlayher/socket v0.4.0 h1:280wsy40IC9M9q1uPGcLBwXpcTQDtoGwVt+BNoITxIw
+</a> github.com/mdlayher/socket v0.4.0/go.mod h1:xxFqz5GRCUN3UEOm9CZqEJsAbe1C8OwSK46NlmWuVoc=
+ github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba h1:05qR+2gYHFW6Ekh9Kz07AQAuR1xWrG6cSNuWta8Hj34=
+ github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+<a href="#h2-0-3" id="h2-0-3" class="i">+github.com/mmirko/mel v0.0.0-20230404214048-7308a9f0bd4f h1:rT7HOuqfMOcEJ90WSkLsTCgwJwNpPsjsvPvSHBhcxwM=
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+github.com/mmirko/mel v0.0.0-20230404214048-7308a9f0bd4f/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+</a> github.com/tfriedel6/canvas v0.12.1 h1:Oc4gww+cOtix69IaYo8TmRbwpbTl6D1jza2mBM4ZOPo=
+ github.com/tfriedel6/canvas v0.12.1/go.mod h1:WIe1YgsQiKA1awmU6tSs8e5DkceDHC5MHgV5vQQZr/0=
+ github.com/veandco/go-sdl2 v0.4.0 h1:l9q6K+Dvpd/VlZdw2ufApKnWhAQqx9UL8Zrvbjtm3Lw=
+<b>diff --git a/<a id="h3" href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a> b/<a href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -46,7 +46,7 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 	implementation := ev.Implementation[iProg.LibraryID]
+ 
+ 	nodeCodeName := implementation.ImplName + &quot;_&quot; + implementation.ProgramNames[iProg.ProgramID]
+<a href="#h3-0-3" id="h3-0-3" class="d">-	fmt.Print(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	ev.MelBondConfig.CodeChan &lt;- fmt.Sprint(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+</a> 
+ 	isFunctional := true
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -55,9 +55,9 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 	}
+ 
+ 	if !isFunctional {
+<a href="#h3-1-3" id="h3-1-3" class="d">-		fmt.Println(&quot;, &quot; + implementation.ProgramNames[iProg.ProgramID] + &quot;:&quot; + iProg.ProgramValue)
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;, &quot; + implementation.ProgramNames[iProg.ProgramID] + &quot;:&quot; + iProg.ProgramValue)
+</a> 	} else {
+<a href="#h3-1-6" id="h3-1-6" class="d">-		fmt.Println()
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln()
+</a> 	}
+ 
+ 	arg_num := len(iProg.NextPrograms)
+<a href="#h3-2" id="h3-2" class="h">@@ -67,8 +67,8 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 		evaluators[i] = mel3program.ProgMux(ev, prog)
+ 		names[i] = nodeName + string(byte(97+i))
+ 		evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+<a href="#h3-2-3" id="h3-2-3" class="d">-		fmt.Println(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + nodeName + &quot;, type:input, index:&quot; + fmt.Sprint(i))
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-		fmt.Println(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + nodeName + &quot;, type:input, index:&quot; + fmt.Sprint(i))
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a> 		evaluators[i].Visit(prog)
+ 	}
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a> b/<a href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,8 +1,10 @@
+</a> package melbond
+ 
+ import (
+<a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;context&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#h4-0-6" id="h4-0-6" class="d">-	&quot;github.com/mmirko/mel/pkg/m3number&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	&quot;github.com/mmirko/mel/pkg/m3melbond&quot;
+</a> )
+ 
+ type Group []string
+<a href="#h4-1" id="h4-1" class="h">@@ -19,16 +21,36 @@ type MelBondConfig struct {
+</a> 	NeuronLibPath string
+ 	IOMode        uint8
+ 	*bminfo.BMinfo
+<a href="#h4-1-3" id="h4-1-3" class="i">+	CodeChan  chan string
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+	CancelCtx context.CancelFunc
+</a> }
+ 
+ type MelBondProgram struct {
+ 	*MelBondConfig
+<a href="#h4-1-9" id="h4-1-9" class="d">-	*m3number.M3numberMe3li
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+	*m3melbond.M3MelBondMe3li
+</a> 	Source   string
+ 	BasmCode string
+ }
+ 
+ func (p *MelBondProgram) WriteBasm() (string, error) {
+<a href="#h4-1-16" id="h4-1-16" class="i">+
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+	ctx, cancel := context.WithCancel(context.Background())
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+	p.CodeChan = make(chan string)
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+	p.CancelCtx = cancel
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+
+</a><a href="#h4-1-21" id="h4-1-21" class="i">+	go func() {
+</a><a href="#h4-1-22" id="h4-1-22" class="i">+		for {
+</a><a href="#h4-1-23" id="h4-1-23" class="i">+			select {
+</a><a href="#h4-1-24" id="h4-1-24" class="i">+			case &lt;-ctx.Done():
+</a><a href="#h4-1-25" id="h4-1-25" class="i">+				return
+</a><a href="#h4-1-26" id="h4-1-26" class="i">+			case code := &lt;-p.CodeChan:
+</a><a href="#h4-1-27" id="h4-1-27" class="i">+				p.BasmCode += code
+</a><a href="#h4-1-28" id="h4-1-28" class="i">+			}
+</a><a href="#h4-1-29" id="h4-1-29" class="i">+		}
+</a><a href="#h4-1-30" id="h4-1-30" class="i">+	}()
+</a><a href="#h4-1-31" id="h4-1-31" class="i">+
+</a><a href="#h4-1-32" id="h4-1-32" class="i">+	defer cancel()
+</a><a href="#h4-1-33" id="h4-1-33" class="i">+
+</a> 	if err := p.MelStringImport(p.Source); err != nil {
+ 		return &quot;&quot;, err
+ 	} else {
+</pre>
+</div>
+</body>
+</html>

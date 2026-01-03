@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmqsim docs - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7757a25f4af9bbd659e733e6759521da0293394b.html">7757a25f4af9bbd659e733e6759521da0293394b</a>
+<b>parent</b> <a href="../commit/dd7edfb73d7330b50de9a0a0346a9a2b01cb3e77.html">dd7edfb73d7330b50de9a0a0346a9a2b01cb3e77</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  7 Mar 2024 19:34:20 +0100
+
+bmqsim docs
+
+<b>Diffstat:</b>
+<table><tr><td class="T">T</td><td><a href="#h0">cmd/bmqsim/README.md</a></td><td> | </td><td class="num">0</td><td><span class="i"></span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/README.md</a></td><td> | </td><td class="num">52</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 50 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/README.md.html">cmd/bmqsim/README.md</a> b/<a href="../file/cmd/bmqsim/README.md.html">cmd/bmqsim/README.md</a></b>
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/README.md.html">pkg/bmqsim/README.md</a> b/<a href="../file/pkg/bmqsim/README.md.html">pkg/bmqsim/README.md</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -13,6 +13,19 @@ The quantum algorithm is a file containing the quantum circuit to simulate. Let&#39;
+</a> 
+ ## Quantum algorithm
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+The quantum circuit is a file containing the quantum algorithm to simulate. The file is written in the the same format as the one used by the Basm assembler and has the bmq extension. The file is a sequence of instructions, each one in a line inserted in a **block** section. To instruct the simulator, outside the block section, you can use the `%meta` directive to specify the simulator metadata.
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+The following is an example (*program.bmq*) of a quantum algorithm file implementing the Bell state:
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+```bmq
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+%block code1 .sequential
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	qbits	q0,q1
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	zero	q0,q1
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	h	q0
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	cx	q0,q1
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+%endblock
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+%meta bmdef global main:code1
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+```
+</a> ## Backend
+ 
+ Once you have the quantum algorithm, you can choose the backend to use. The backend creates the target hardware architecture of a specific type and flavor. 
+<a href="#h1-1" id="h1-1" class="h">@@ -25,15 +38,50 @@ The subsequent tables show the available backend and architectures types, their 
+</a> | `MatrixSeq` | `--build-matrix-seq` | Sequence of matrices in the FPGA | *Not yet implemented* |
+ | `FullHardwareHardcoded` | `--build-full-hardware-hardcoded` | Full hardware with hardcoded matrices | *Not yet implemented* |
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-Each architecture type is associated to a different set of command line options and activates a different simulator backend. Some of the options are common to all the backends, while others are specific to a single backend. The following sections describe the options for each backend and the common options.
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+Each architecture type is associated to a different set of command line options and activates a different simulator backend. Some of the options are common to all the backends, while others are specific to a single backend. The following sections describe the possible backends and the options.
+</a> 
+ ### Common options
+ 
+<a href="#h1-1-8" id="h1-1-8" class="i">+| Option | Description |
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+| --- | --- |
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+| `-hw-flavor-list` | List the available flavors for the chosen hardware architecture. |
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+| `-hw-flavor` | Choose the flavor of the hardware architecture. |
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+| `-save-basm` | Save the BondMachine Assembly code for the Basm assembler. |
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+| `-build-app` | Build the application template to use the selected hardware architecture. |
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+| `-app-flavor-list` | List the available flavors for the chosen application template. |
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+| `-app-flavor` | Choose the flavor of the application template. |
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+| `-app-file` | Choose the file name of the application template. |
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+
+</a> ### Software simulator
+ 
+<a href="#h1-1-20" id="h1-1-20" class="i">+The software simulator backend is used to simulate the quantum algorithm on a CPU. The program accept a json input file and produces a json output file.
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+The following table shows the command line options specific to the software simulator:
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+| Option | Description |
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+| --- | --- |
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+| `-software-simulation-input` | Choose the input file for the software simulator. |
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+| `-software-simulation-output` | Choose the output file for the software simulator. |
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+An example of usage of the software simulator with the Bell state algorithm previously described (*program.bmq*) is the following:
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+```bash
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+bmqsim --software-simulation --software-simulation-input input.json --software-simulation-output output.json program.bmq
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+```
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+where `input.json`, the input file for the software simulator, is:
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+```json
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+{
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+	{&quot;Vector&quot;:[{&quot;Real&quot;:1,&quot;Imag&quot;:0},{&quot;Real&quot;:0,&quot;Imag&quot;:0},{&quot;Real&quot;:0,&quot;Imag&quot;:0},{&quot;Real&quot;:0,&quot;Imag&quot;:0}]}
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+}
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+```
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+and `output.json`, the output file produced by the simulator, is:
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+```json
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+{
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+	{&quot;Vector&quot;:[{&quot;Real&quot;:0.7071067,&quot;Imag&quot;:0},{&quot;Real&quot;:0,&quot;Imag&quot;:0},{&quot;Real&quot;:0,&quot;Imag&quot;:0},{&quot;Real&quot;:0.7071067,&quot;Imag&quot;:0}]}
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+}
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+```
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+
+</a> ### Hardcoded sequence of matrices
+ 
+<a href="#h1-1-47" id="h1-1-47" class="d">-### Sequence of matrices
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+### Loadable sequence of matrices
+</a> 
+ ### Full hardware with hardcoded matrices
+ 
+</pre>
+</div>
+</body>
+</html>

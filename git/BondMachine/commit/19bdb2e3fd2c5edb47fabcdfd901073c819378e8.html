@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fragment mode - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/19bdb2e3fd2c5edb47fabcdfd901073c819378e8.html">19bdb2e3fd2c5edb47fabcdfd901073c819378e8</a>
+<b>parent</b> <a href="../commit/dcac66668c74f03b676acb95e293be97e3b261a4.html">dcac66668c74f03b676acb95e293be97e3b261a4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 13 Oct 2022 18:22:50 +0200
+
+fragment mode
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">168</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 129 insertions(+), 54 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,7 +11,7 @@ import (
+</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var registerSize = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-bit)&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var registerSize = flag.Int(&quot;register-size&quot;, 32, &quot;Number of bits per register (n-bit)&quot;)
+</a> 
+ var saveBasm = flag.String(&quot;save-basm&quot;, &quot;&quot;, &quot;Create a basm file&quot;)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -20,6 +20,8 @@ var neuronLibPath = flag.String(&quot;neuron-lib-path&quot;, &quot;&quot;, &quot;Path to the neuron libra
+</a> var netFile = flag.String(&quot;net-file&quot;, &quot;&quot;, &quot;JSON description of the net&quot;)
+ var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net configuration&quot;)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+var operatingMode = flag.String(&quot;operating-mode&quot;, &quot;romcode&quot;, &quot;Operating mode: romcode, fragment&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> func init() {
+ 	flag.Parse()
+ 	if *saveBasm == &quot;&quot; {
+<a href="#h0-2" id="h0-2" class="h">@@ -43,6 +45,17 @@ func main() {
+</a> 		panic(&quot;No net file specified&quot;)
+ 	}
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	net.RegisterSize = *registerSize
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	switch *operatingMode {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	case &quot;romcode&quot;:
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		net.OperatingMode = neuralbond.ROMCODE
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	case &quot;fragment&quot;:
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		net.OperatingMode = neuralbond.FRAGMENT
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	default:
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		panic(&quot;Unknown operating mode&quot;)
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+
+</a> 	config := new(neuralbond.Config)
+ 
+ 	// Load net from a JSON file the configuration
+<b>diff --git a/<a id="h1" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,11 +8,18 @@ import (
+</a> 	&quot;sort&quot;
+ )
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+const (
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	ROMCODE = uint8(0) + iota
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	FRAGMENT
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a> type TrainedNet struct {
+<a href="#h1-0-9" id="h1-0-9" class="d">-	Nodes     []Node
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	Weights   []Weight
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	Neurons   map[string]*Neuron
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	NetConfig *Config
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	Nodes         []Node
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	Weights       []Weight
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	Neurons       map[string]*Neuron
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	NetConfig     *Config
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	RegisterSize  int
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	OperatingMode uint8
+</a> }
+ 
+ type Config struct {
+<a href="#h1-1" id="h1-1" class="h">@@ -120,61 +127,116 @@ func (n *TrainedNet) Normalize() {
+</a> 
+ func (n *TrainedNet) WriteBasm() (string, error) {
+ 	c := n.NetConfig
+<a href="#h1-1-3" id="h1-1-3" class="d">-	result := &quot;%meta bmdef     global registersize:32\n&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	for _, node := range n.Nodes {
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-		if node.Type == &quot;input&quot; {
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_0_%d romcode:terminal\n&quot;, node.Pos)
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-			result += fmt.Sprintf(&quot;%%meta iodef input_%d type:io\n&quot;, node.Pos)
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-			// } else if node.Type == &quot;linear&quot; {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-			// } else if node.Type == &quot;summation&quot; {
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:summation, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-			// } else if node.Type == &quot;softmax&quot; {
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d, pos:%d\n&quot;, node.Layer, node.Pos, node.Inputs, node.Pos)
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-		} else if node.Type == &quot;output&quot; {
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-			result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:bm, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-		} else {
+</a><a href="#h1-1-22" id="h1-1-22" class="d">-			if neuron, ok := n.Neurons[node.Type]; ok {
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-				result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:%s&quot;, node.Layer, node.Pos, node.Type)
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-				for _, param := range neuron.Params {
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-					switch param {
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-					case &quot;inputs&quot;:
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-						result += fmt.Sprintf(&quot;, inputs:%d&quot;, node.Inputs)
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-					case &quot;outputs&quot;:
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-						result += fmt.Sprintf(&quot;, outputs:%d&quot;, node.Outputs)
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-					case &quot;bias&quot;:
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-						result += fmt.Sprintf(&quot;, bias:0f%f&quot;, node.Bias)
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-					case &quot;pos&quot;:
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-						result += fmt.Sprintf(&quot;, pos:%d&quot;, node.Pos)
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-					default:
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-						if value, ok := c.Params[param]; ok {
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-							result += fmt.Sprintf(&quot;, %s:%s&quot;, param, value)
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-						} else {
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-							return &quot;&quot;, errors.New(&quot;Unknown parameter &quot; + param)
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+	regSize := n.RegisterSize
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+	result := fmt.Sprintf(&quot;%%meta bmdef     global registersize:%d\n&quot;, regSize)
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+	switch n.OperatingMode {
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+	case ROMCODE:
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+		for _, node := range n.Nodes {
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+			if node.Type == &quot;input&quot; {
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+				result += fmt.Sprintf(&quot;%%meta cpdef node_0_%d romcode:terminal\n&quot;, node.Pos)
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+				result += fmt.Sprintf(&quot;%%meta iodef input_%d type:io\n&quot;, node.Pos)
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+				result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+				result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+				// } else if node.Type == &quot;linear&quot; {
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+				// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+				// } else if node.Type == &quot;summation&quot; {
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+				// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:summation, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+				// } else if node.Type == &quot;softmax&quot; {
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+				// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d, pos:%d\n&quot;, node.Layer, node.Pos, node.Inputs, node.Pos)
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+			} else if node.Type == &quot;output&quot; {
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+				result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+</a><a href="#h1-1-57" id="h1-1-57" class="i">+				result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+</a><a href="#h1-1-58" id="h1-1-58" class="i">+				result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+				result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:bm, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+			} else {
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+				if neuron, ok := n.Neurons[node.Type]; ok {
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+					result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:%s&quot;, node.Layer, node.Pos, node.Type)
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+					for _, param := range neuron.Params {
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+						switch param {
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+						case &quot;inputs&quot;:
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+							result += fmt.Sprintf(&quot;, inputs:%d&quot;, node.Inputs)
+</a><a href="#h1-1-67" id="h1-1-67" class="i">+						case &quot;outputs&quot;:
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+							result += fmt.Sprintf(&quot;, outputs:%d&quot;, node.Outputs)
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+						case &quot;bias&quot;:
+</a><a href="#h1-1-70" id="h1-1-70" class="i">+							result += fmt.Sprintf(&quot;, bias:0f%f&quot;, node.Bias)
+</a><a href="#h1-1-71" id="h1-1-71" class="i">+						case &quot;pos&quot;:
+</a><a href="#h1-1-72" id="h1-1-72" class="i">+							result += fmt.Sprintf(&quot;, pos:%d&quot;, node.Pos)
+</a><a href="#h1-1-73" id="h1-1-73" class="i">+						default:
+</a><a href="#h1-1-74" id="h1-1-74" class="i">+							if value, ok := c.Params[param]; ok {
+</a><a href="#h1-1-75" id="h1-1-75" class="i">+								result += fmt.Sprintf(&quot;, %s:%s&quot;, param, value)
+</a><a href="#h1-1-76" id="h1-1-76" class="i">+							} else {
+</a><a href="#h1-1-77" id="h1-1-77" class="i">+								return &quot;&quot;, errors.New(&quot;Unknown parameter &quot; + param)
+</a><a href="#h1-1-78" id="h1-1-78" class="i">+							}
+</a> 						}
+ 					}
+<a href="#h1-1-81" id="h1-1-81" class="i">+					result += &quot;\n&quot;
+</a> 				}
+<a href="#h1-1-83" id="h1-1-83" class="d">-				result += &quot;\n&quot;
+</a> 			}
+ 		}
+<a href="#h1-1-86" id="h1-1-86" class="d">-	}
+</a> 
+<a href="#h1-1-88" id="h1-1-88" class="d">-	for _, weight := range n.Weights {
+</a><a href="#h1-1-89" id="h1-1-89" class="d">-		weightCP := fmt.Sprintf(&quot;weightcp_%d_%d__%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-90" id="h1-1-90" class="d">-		downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+</a><a href="#h1-1-91" id="h1-1-91" class="d">-		upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-92" id="h1-1-92" class="d">-		result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:0f%f\n&quot;, weightCP, weight.Value)
+</a><a href="#h1-1-93" id="h1-1-93" class="d">-		result += fmt.Sprintf(&quot;%%meta iodef up%s type:io\n&quot;, weightCP)
+</a><a href="#h1-1-94" id="h1-1-94" class="d">-		result += fmt.Sprintf(&quot;%%meta iodef down%s type:io\n&quot;, weightCP)
+</a><a href="#h1-1-95" id="h1-1-95" class="d">-		result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:input, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h1-1-96" id="h1-1-96" class="d">-		result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:output, index:0\n&quot;, weightCP, downNode)
+</a><a href="#h1-1-97" id="h1-1-97" class="d">-		result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:input, index:%d\n&quot;, weightCP, upNode, weight.RelPosUp)
+</a><a href="#h1-1-98" id="h1-1-98" class="d">-		result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:output, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h1-1-99" id="h1-1-99" class="i">+		for _, weight := range n.Weights {
+</a><a href="#h1-1-100" id="h1-1-100" class="i">+			weightCP := fmt.Sprintf(&quot;weightcp_%d_%d__%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-101" id="h1-1-101" class="i">+			downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+</a><a href="#h1-1-102" id="h1-1-102" class="i">+			upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-103" id="h1-1-103" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:0f%f\n&quot;, weightCP, weight.Value)
+</a><a href="#h1-1-104" id="h1-1-104" class="i">+			result += fmt.Sprintf(&quot;%%meta iodef up%s type:io\n&quot;, weightCP)
+</a><a href="#h1-1-105" id="h1-1-105" class="i">+			result += fmt.Sprintf(&quot;%%meta iodef down%s type:io\n&quot;, weightCP)
+</a><a href="#h1-1-106" id="h1-1-106" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:input, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h1-1-107" id="h1-1-107" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:output, index:0\n&quot;, weightCP, downNode)
+</a><a href="#h1-1-108" id="h1-1-108" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:input, index:%d\n&quot;, weightCP, upNode, weight.RelPosUp)
+</a><a href="#h1-1-109" id="h1-1-109" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:output, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h1-1-110" id="h1-1-110" class="i">+		}
+</a><a href="#h1-1-111" id="h1-1-111" class="i">+	case FRAGMENT:
+</a><a href="#h1-1-112" id="h1-1-112" class="i">+		for _, node := range n.Nodes {
+</a><a href="#h1-1-113" id="h1-1-113" class="i">+			if node.Type == &quot;input&quot; {
+</a><a href="#h1-1-114" id="h1-1-114" class="i">+				result += fmt.Sprintf(&quot;%%meta fraginst node_0_%d fragment:terminal\n&quot;, node.Pos)
+</a><a href="#h1-1-115" id="h1-1-115" class="i">+				result += fmt.Sprintf(&quot;%%meta filink input_%d type:fl\n&quot;, node.Pos)
+</a><a href="#h1-1-116" id="h1-1-116" class="i">+				result += fmt.Sprintf(&quot;%%meta filinkatt input_%d fi:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+</a><a href="#h1-1-117" id="h1-1-117" class="i">+			} else if node.Type == &quot;output&quot; {
+</a><a href="#h1-1-118" id="h1-1-118" class="i">+				result += fmt.Sprintf(&quot;%%meta fraginst node_%d_%d fragment:terminal\n&quot;, node.Layer, node.Pos)
+</a><a href="#h1-1-119" id="h1-1-119" class="i">+				result += fmt.Sprintf(&quot;%%meta filink output_%d type:fl\n&quot;, node.Pos)
+</a><a href="#h1-1-120" id="h1-1-120" class="i">+				result += fmt.Sprintf(&quot;%%meta filinkatt output_%d fi:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+</a><a href="#h1-1-121" id="h1-1-121" class="i">+			} else {
+</a><a href="#h1-1-122" id="h1-1-122" class="i">+				if neuron, ok := n.Neurons[node.Type]; ok {
+</a><a href="#h1-1-123" id="h1-1-123" class="i">+					result += fmt.Sprintf(&quot;%%meta fraginst node_%d_%d fragment:%s&quot;, node.Layer, node.Pos, node.Type)
+</a><a href="#h1-1-124" id="h1-1-124" class="i">+					for _, param := range neuron.Params {
+</a><a href="#h1-1-125" id="h1-1-125" class="i">+						switch param {
+</a><a href="#h1-1-126" id="h1-1-126" class="i">+						case &quot;inputs&quot;:
+</a><a href="#h1-1-127" id="h1-1-127" class="i">+							result += fmt.Sprintf(&quot;, inputs:%d&quot;, node.Inputs)
+</a><a href="#h1-1-128" id="h1-1-128" class="i">+						case &quot;outputs&quot;:
+</a><a href="#h1-1-129" id="h1-1-129" class="i">+							result += fmt.Sprintf(&quot;, outputs:%d&quot;, node.Outputs)
+</a><a href="#h1-1-130" id="h1-1-130" class="i">+						case &quot;bias&quot;:
+</a><a href="#h1-1-131" id="h1-1-131" class="i">+							result += fmt.Sprintf(&quot;, bias:0f%f&quot;, node.Bias)
+</a><a href="#h1-1-132" id="h1-1-132" class="i">+						case &quot;pos&quot;:
+</a><a href="#h1-1-133" id="h1-1-133" class="i">+							result += fmt.Sprintf(&quot;, pos:%d&quot;, node.Pos)
+</a><a href="#h1-1-134" id="h1-1-134" class="i">+						default:
+</a><a href="#h1-1-135" id="h1-1-135" class="i">+							if value, ok := c.Params[param]; ok {
+</a><a href="#h1-1-136" id="h1-1-136" class="i">+								result += fmt.Sprintf(&quot;, %s:%s&quot;, param, value)
+</a><a href="#h1-1-137" id="h1-1-137" class="i">+							} else {
+</a><a href="#h1-1-138" id="h1-1-138" class="i">+								return &quot;&quot;, errors.New(&quot;Unknown parameter &quot; + param)
+</a><a href="#h1-1-139" id="h1-1-139" class="i">+							}
+</a><a href="#h1-1-140" id="h1-1-140" class="i">+						}
+</a><a href="#h1-1-141" id="h1-1-141" class="i">+					}
+</a><a href="#h1-1-142" id="h1-1-142" class="i">+					result += &quot;\n&quot;
+</a><a href="#h1-1-143" id="h1-1-143" class="i">+				}
+</a><a href="#h1-1-144" id="h1-1-144" class="i">+			}
+</a><a href="#h1-1-145" id="h1-1-145" class="i">+		}
+</a><a href="#h1-1-146" id="h1-1-146" class="i">+
+</a><a href="#h1-1-147" id="h1-1-147" class="i">+		for _, weight := range n.Weights {
+</a><a href="#h1-1-148" id="h1-1-148" class="i">+			weightFI := fmt.Sprintf(&quot;weightfi_%d_%d__%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-149" id="h1-1-149" class="i">+			downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+</a><a href="#h1-1-150" id="h1-1-150" class="i">+			upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h1-1-151" id="h1-1-151" class="i">+			result += fmt.Sprintf(&quot;%%meta fraginst %s fragment:weight, weight:0f%f\n&quot;, weightFI, weight.Value)
+</a><a href="#h1-1-152" id="h1-1-152" class="i">+			result += fmt.Sprintf(&quot;%%meta filink up%s type:fi\n&quot;, weightFI)
+</a><a href="#h1-1-153" id="h1-1-153" class="i">+			result += fmt.Sprintf(&quot;%%meta filink down%s type:fi\n&quot;, weightFI)
+</a><a href="#h1-1-154" id="h1-1-154" class="i">+			result += fmt.Sprintf(&quot;%%meta filinkatt down%s fi:%s, type:input, index:0\n&quot;, weightFI, weightFI)
+</a><a href="#h1-1-155" id="h1-1-155" class="i">+			result += fmt.Sprintf(&quot;%%meta filinkatt down%s fi:%s, type:output, index:0\n&quot;, weightFI, downNode)
+</a><a href="#h1-1-156" id="h1-1-156" class="i">+			result += fmt.Sprintf(&quot;%%meta filinkatt up%s fi:%s, type:input, index:%d\n&quot;, weightFI, upNode, weight.RelPosUp)
+</a><a href="#h1-1-157" id="h1-1-157" class="i">+			result += fmt.Sprintf(&quot;%%meta filinkatt up%s fi:%s, type:output, index:0\n&quot;, weightFI, weightFI)
+</a><a href="#h1-1-158" id="h1-1-158" class="i">+		}
+</a><a href="#h1-1-159" id="h1-1-159" class="i">+
+</a><a href="#h1-1-160" id="h1-1-160" class="i">+	default:
+</a><a href="#h1-1-161" id="h1-1-161" class="i">+		return &quot;&quot;, errors.New(&quot;unknown operating mode&quot;)
+</a> 	}
+ 
+ 	return result, nil
+</pre>
+</div>
+</body>
+</html>

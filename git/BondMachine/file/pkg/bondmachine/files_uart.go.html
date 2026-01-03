@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_uart.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_uart.go (12119B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	verilogUART = &quot;`timescale 1ns / 1ps&quot; + `
+<a href="#l5" class="line" id="l5">      5</a> // Documented Verilog UART
+<a href="#l6" class="line" id="l6">      6</a> // Copyright (C) 2010 Timothy Goddard (tim@goddard.net.nz)
+<a href="#l7" class="line" id="l7">      7</a> //               2013 Aaron Dahlen
+<a href="#l8" class="line" id="l8">      8</a> // Distributed under the MIT licence.
+<a href="#l9" class="line" id="l9">      9</a> //
+<a href="#l10" class="line" id="l10">     10</a> // Permission is hereby granted, free of charge, to any person obtaining a copy
+<a href="#l11" class="line" id="l11">     11</a> // of this software and associated documentation files (the &quot;Software&quot;), to deal
+<a href="#l12" class="line" id="l12">     12</a> // in the Software without restriction, including without limitation the rights
+<a href="#l13" class="line" id="l13">     13</a> // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+<a href="#l14" class="line" id="l14">     14</a> // copies of the Software, and to permit persons to whom the Software is
+<a href="#l15" class="line" id="l15">     15</a> // furnished to do so, subject to the following conditions:
+<a href="#l16" class="line" id="l16">     16</a> // 
+<a href="#l17" class="line" id="l17">     17</a> // The above copyright notice and this permission notice shall be included in
+<a href="#l18" class="line" id="l18">     18</a> // all copies or substantial portions of the Software.
+<a href="#l19" class="line" id="l19">     19</a> // 
+<a href="#l20" class="line" id="l20">     20</a> // THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+<a href="#l21" class="line" id="l21">     21</a> // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+<a href="#l22" class="line" id="l22">     22</a> // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+<a href="#l23" class="line" id="l23">     23</a> // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+<a href="#l24" class="line" id="l24">     24</a> // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+<a href="#l25" class="line" id="l25">     25</a> // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+<a href="#l26" class="line" id="l26">     26</a> // THE SOFTWARE.
+<a href="#l27" class="line" id="l27">     27</a> // 
+<a href="#l28" class="line" id="l28">     28</a> //** INSTANTIATION ********************************************
+<a href="#l29" class="line" id="l29">     29</a> //
+<a href="#l30" class="line" id="l30">     30</a> //  To instantiate this module copy this section to your main code...
+<a href="#l31" class="line" id="l31">     31</a> //
+<a href="#l32" class="line" id="l32">     32</a> //    {{ .ModuleName }} #(
+<a href="#l33" class="line" id="l33">     33</a> //        .baud_rate(baud_rate),            // default is 9600
+<a href="#l34" class="line" id="l34">     34</a> //        .sys_clk_freq(sys_clk_freq)       // default is 100000000
+<a href="#l35" class="line" id="l35">     35</a> //     )
+<a href="#l36" class="line" id="l36">     36</a> //    instance_name(
+<a href="#l37" class="line" id="l37">     37</a> //        .clk(clk),                        // The master clock for this module
+<a href="#l38" class="line" id="l38">     38</a> //        .rst(rst),                        // Synchronous reset
+<a href="#l39" class="line" id="l39">     39</a> //        .rx(rx),                          // Incoming serial line
+<a href="#l40" class="line" id="l40">     40</a> //        .tx(tx),                          // Outgoing serial line
+<a href="#l41" class="line" id="l41">     41</a> //        .transmit(transmit),              // Signal to transmit
+<a href="#l42" class="line" id="l42">     42</a> //        .tx_byte(tx_byte),                // Byte to transmit       
+<a href="#l43" class="line" id="l43">     43</a> //        .received(received),              // Indicated that a byte has been received
+<a href="#l44" class="line" id="l44">     44</a> //        .rx_byte(rx_byte),                // Byte received
+<a href="#l45" class="line" id="l45">     45</a> //        .is_receiving(is_receiving),      // Low when receive line is idle
+<a href="#l46" class="line" id="l46">     46</a> //        .is_transmitting(is_transmitting),// Low when transmit line is idle
+<a href="#l47" class="line" id="l47">     47</a> //        .recv_error(recv_error)           // Indicates error in receiving packet.
+<a href="#l48" class="line" id="l48">     48</a> //      //.recv_state(recv_state),          // for test bench
+<a href="#l49" class="line" id="l49">     49</a> //      //.tx_state(tx_state)               // for test bench
+<a href="#l50" class="line" id="l50">     50</a> //    );
+<a href="#l51" class="line" id="l51">     51</a> //
+<a href="#l52" class="line" id="l52">     52</a> 
+<a href="#l53" class="line" id="l53">     53</a>  module {{ .ModuleName }}(
+<a href="#l54" class="line" id="l54">     54</a>     input clk,                  // The master clock for this module
+<a href="#l55" class="line" id="l55">     55</a>     input rst,                  // Synchronous reset
+<a href="#l56" class="line" id="l56">     56</a>     input rx,                   // Incoming serial line
+<a href="#l57" class="line" id="l57">     57</a>     output tx,                  // Outgoing serial line
+<a href="#l58" class="line" id="l58">     58</a>     input transmit,             // Assert to begin transmission
+<a href="#l59" class="line" id="l59">     59</a>     input [7:0] tx_byte,        // Byte to transmit
+<a href="#l60" class="line" id="l60">     60</a>     output received,            // Indicates that a byte has been received
+<a href="#l61" class="line" id="l61">     61</a>     output [7:0] rx_byte,       // Byte received
+<a href="#l62" class="line" id="l62">     62</a>     output wire is_receiving,   // Low when receive line is idle.
+<a href="#l63" class="line" id="l63">     63</a>     output wire is_transmitting,// Low when transmit line is idle.
+<a href="#l64" class="line" id="l64">     64</a>     output wire recv_error,      // Indicates error in receiving packet.
+<a href="#l65" class="line" id="l65">     65</a>     output reg [3:0] rx_samples,
+<a href="#l66" class="line" id="l66">     66</a>     output reg [3:0] rx_sample_countdown
+<a href="#l67" class="line" id="l67">     67</a> );
+<a href="#l68" class="line" id="l68">     68</a> 
+<a href="#l69" class="line" id="l69">     69</a> // The clock_divider is calculated using baud_rate and sys_clk_freq.  
+<a href="#l70" class="line" id="l70">     70</a> // To modify baud rate you can modify the defaults shown below or instantiate
+<a href="#l71" class="line" id="l71">     71</a> // the module using the template shown in the INSTANTIATION section above. 
+<a href="#l72" class="line" id="l72">     72</a> // For aditional information about instantiation please see:
+<a href="#l73" class="line" id="l73">     73</a> // http://www.sunburst-design.com/papers/CummingsHDLCON2002_Parameters_rev1_2.pdf
+<a href="#l74" class="line" id="l74">     74</a> 
+<a href="#l75" class="line" id="l75">     75</a>     parameter baud_rate = {{ .BaudRate }};
+<a href="#l76" class="line" id="l76">     76</a>     parameter sys_clk_freq = 100000000;
+<a href="#l77" class="line" id="l77">     77</a>    
+<a href="#l78" class="line" id="l78">     78</a>     localparam one_baud_cnt = sys_clk_freq / (baud_rate);
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> //** SYMBOLIC STATE DECLARATIONS ******************************
+<a href="#l81" class="line" id="l81">     81</a> 
+<a href="#l82" class="line" id="l82">     82</a>     localparam [2:0]     
+<a href="#l83" class="line" id="l83">     83</a>         RX_IDLE             = 3&#39;d0, 
+<a href="#l84" class="line" id="l84">     84</a>         RX_CHECK_START      = 3&#39;d1, 
+<a href="#l85" class="line" id="l85">     85</a>         RX_SAMPLE_BITS      = 3&#39;d2,
+<a href="#l86" class="line" id="l86">     86</a>         RX_READ_BITS        = 3&#39;d3,      
+<a href="#l87" class="line" id="l87">     87</a>         RX_CHECK_STOP       = 3&#39;d4, 
+<a href="#l88" class="line" id="l88">     88</a>         RX_DELAY_RESTART    = 3&#39;d5,
+<a href="#l89" class="line" id="l89">     89</a>         RX_ERROR            = 3&#39;d6,      
+<a href="#l90" class="line" id="l90">     90</a>         RX_RECEIVED         = 3&#39;d7; 
+<a href="#l91" class="line" id="l91">     91</a> 
+<a href="#l92" class="line" id="l92">     92</a>     localparam [1:0]     
+<a href="#l93" class="line" id="l93">     93</a>         TX_IDLE             = 2&#39;d0,
+<a href="#l94" class="line" id="l94">     94</a>         TX_SENDING          = 2&#39;d1,
+<a href="#l95" class="line" id="l95">     95</a>         TX_DELAY_RESTART    = 2&#39;d2,
+<a href="#l96" class="line" id="l96">     96</a>         TX_RECOVER          = 2&#39;d3;
+<a href="#l97" class="line" id="l97">     97</a>   
+<a href="#l98" class="line" id="l98">     98</a>   
+<a href="#l99" class="line" id="l99">     99</a> //** SIGNAL DECLARATIONS **************************************
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a>     reg [log2(one_baud_cnt * 16)-1:0] rx_clk;
+<a href="#l102" class="line" id="l102">    102</a>     reg [log2(one_baud_cnt)-1:0] tx_clk;
+<a href="#l103" class="line" id="l103">    103</a> 
+<a href="#l104" class="line" id="l104">    104</a>     reg [2:0] recv_state = RX_IDLE;
+<a href="#l105" class="line" id="l105">    105</a>     reg [3:0] rx_bits_remaining;
+<a href="#l106" class="line" id="l106">    106</a>     reg [7:0] rx_data;
+<a href="#l107" class="line" id="l107">    107</a>      
+<a href="#l108" class="line" id="l108">    108</a>     reg tx_out = 1&#39;b1;
+<a href="#l109" class="line" id="l109">    109</a>     reg [1:0] tx_state = TX_IDLE;
+<a href="#l110" class="line" id="l110">    110</a>     reg [3:0] tx_bits_remaining;
+<a href="#l111" class="line" id="l111">    111</a>     reg [7:0] tx_data;
+<a href="#l112" class="line" id="l112">    112</a>     
+<a href="#l113" class="line" id="l113">    113</a> 
+<a href="#l114" class="line" id="l114">    114</a> //** ASSIGN STATEMENTS ****************************************
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a>     assign received = recv_state == RX_RECEIVED;
+<a href="#l117" class="line" id="l117">    117</a>     assign recv_error = recv_state == RX_ERROR;
+<a href="#l118" class="line" id="l118">    118</a>     assign is_receiving = recv_state != RX_IDLE;
+<a href="#l119" class="line" id="l119">    119</a>     assign rx_byte = rx_data;
+<a href="#l120" class="line" id="l120">    120</a> 
+<a href="#l121" class="line" id="l121">    121</a>     assign tx = tx_out;
+<a href="#l122" class="line" id="l122">    122</a>     assign is_transmitting = tx_state != TX_IDLE;
+<a href="#l123" class="line" id="l123">    123</a> 
+<a href="#l124" class="line" id="l124">    124</a> 
+<a href="#l125" class="line" id="l125">    125</a> //** TASKS / FUNCTIONS **************************************** 
+<a href="#l126" class="line" id="l126">    126</a> 
+<a href="#l127" class="line" id="l127">    127</a>     function integer log2(input integer M);
+<a href="#l128" class="line" id="l128">    128</a>         integer i;
+<a href="#l129" class="line" id="l129">    129</a>     begin
+<a href="#l130" class="line" id="l130">    130</a>         log2 = 1;
+<a href="#l131" class="line" id="l131">    131</a>         for (i = 0; 2**i &lt;= M; i = i + 1)
+<a href="#l132" class="line" id="l132">    132</a>             log2 = i + 1;
+<a href="#l133" class="line" id="l133">    133</a>     end endfunction
+<a href="#l134" class="line" id="l134">    134</a>     
+<a href="#l135" class="line" id="l135">    135</a>     
+<a href="#l136" class="line" id="l136">    136</a> //** Body *****************************************************
+<a href="#l137" class="line" id="l137">    137</a> 
+<a href="#l138" class="line" id="l138">    138</a>     always @(posedge clk) begin
+<a href="#l139" class="line" id="l139">    139</a>         if (rst) begin
+<a href="#l140" class="line" id="l140">    140</a>             recv_state = RX_IDLE;
+<a href="#l141" class="line" id="l141">    141</a>             tx_state = TX_IDLE;
+<a href="#l142" class="line" id="l142">    142</a>         end
+<a href="#l143" class="line" id="l143">    143</a>                               
+<a href="#l144" class="line" id="l144">    144</a>         // Countdown timers for the receiving and transmitting
+<a href="#l145" class="line" id="l145">    145</a>         // state machines are decremented.
+<a href="#l146" class="line" id="l146">    146</a>         
+<a href="#l147" class="line" id="l147">    147</a>         if(rx_clk) begin
+<a href="#l148" class="line" id="l148">    148</a>             rx_clk = rx_clk - 1&#39;d1;
+<a href="#l149" class="line" id="l149">    149</a>         end
+<a href="#l150" class="line" id="l150">    150</a>     
+<a href="#l151" class="line" id="l151">    151</a>         if(tx_clk) begin
+<a href="#l152" class="line" id="l152">    152</a>             tx_clk = tx_clk - 1&#39;d1;
+<a href="#l153" class="line" id="l153">    153</a>         end
+<a href="#l154" class="line" id="l154">    154</a>         
+<a href="#l155" class="line" id="l155">    155</a>     
+<a href="#l156" class="line" id="l156">    156</a> //** Receive state machine ************************************
+<a href="#l157" class="line" id="l157">    157</a> 
+<a href="#l158" class="line" id="l158">    158</a>         case (recv_state)
+<a href="#l159" class="line" id="l159">    159</a>             RX_IDLE: begin
+<a href="#l160" class="line" id="l160">    160</a>                 // A low pulse on the receive line indicates the
+<a href="#l161" class="line" id="l161">    161</a>                 // start of data.
+<a href="#l162" class="line" id="l162">    162</a>                 if (!rx) begin
+<a href="#l163" class="line" id="l163">    163</a>                     // Wait 1/2 of the bit period
+<a href="#l164" class="line" id="l164">    164</a>                     rx_clk = one_baud_cnt / 2;
+<a href="#l165" class="line" id="l165">    165</a>                     recv_state = RX_CHECK_START;
+<a href="#l166" class="line" id="l166">    166</a>                 end
+<a href="#l167" class="line" id="l167">    167</a>             end
+<a href="#l168" class="line" id="l168">    168</a>             
+<a href="#l169" class="line" id="l169">    169</a>             RX_CHECK_START: begin
+<a href="#l170" class="line" id="l170">    170</a>                 if (!rx_clk) begin
+<a href="#l171" class="line" id="l171">    171</a>                     // Check the pulse is still there
+<a href="#l172" class="line" id="l172">    172</a>                     if (!rx) begin
+<a href="#l173" class="line" id="l173">    173</a>                         // Pulse still there - good
+<a href="#l174" class="line" id="l174">    174</a>                         // Wait the bit period plus 3/8 of the next
+<a href="#l175" class="line" id="l175">    175</a>                         rx_clk = (one_baud_cnt / 2) + (one_baud_cnt * 3) / 8; 
+<a href="#l176" class="line" id="l176">    176</a>                         rx_bits_remaining = 8;  
+<a href="#l177" class="line" id="l177">    177</a>                         recv_state = RX_SAMPLE_BITS;
+<a href="#l178" class="line" id="l178">    178</a>                         rx_samples = 0;
+<a href="#l179" class="line" id="l179">    179</a>                         rx_sample_countdown = 5;
+<a href="#l180" class="line" id="l180">    180</a>                     end else begin
+<a href="#l181" class="line" id="l181">    181</a>                         // Pulse lasted less than half the period -
+<a href="#l182" class="line" id="l182">    182</a>                         // not a valid transmission.
+<a href="#l183" class="line" id="l183">    183</a>                         recv_state = RX_ERROR;
+<a href="#l184" class="line" id="l184">    184</a>                     end
+<a href="#l185" class="line" id="l185">    185</a>                 end
+<a href="#l186" class="line" id="l186">    186</a>             end
+<a href="#l187" class="line" id="l187">    187</a>             
+<a href="#l188" class="line" id="l188">    188</a>             RX_SAMPLE_BITS: begin
+<a href="#l189" class="line" id="l189">    189</a>                 // sample the rx line multiple times 
+<a href="#l190" class="line" id="l190">    190</a>                 if (!rx_clk) begin
+<a href="#l191" class="line" id="l191">    191</a>                     if (rx) begin
+<a href="#l192" class="line" id="l192">    192</a>                         rx_samples =  rx_samples + 1&#39;d1;
+<a href="#l193" class="line" id="l193">    193</a>                     end
+<a href="#l194" class="line" id="l194">    194</a>                     rx_clk = one_baud_cnt / 8;
+<a href="#l195" class="line" id="l195">    195</a>                     rx_sample_countdown = rx_sample_countdown -1&#39;d1;
+<a href="#l196" class="line" id="l196">    196</a>                     recv_state = rx_sample_countdown ? RX_SAMPLE_BITS : RX_READ_BITS;
+<a href="#l197" class="line" id="l197">    197</a>                 end
+<a href="#l198" class="line" id="l198">    198</a>             end
+<a href="#l199" class="line" id="l199">    199</a>             
+<a href="#l200" class="line" id="l200">    200</a>             RX_READ_BITS: begin
+<a href="#l201" class="line" id="l201">    201</a>                 if (!rx_clk) begin
+<a href="#l202" class="line" id="l202">    202</a>                     // Should be finished sampling the pulse here.
+<a href="#l203" class="line" id="l203">    203</a>                     // Update and prep for next
+<a href="#l204" class="line" id="l204">    204</a>                     if (rx_samples &gt; 3) begin
+<a href="#l205" class="line" id="l205">    205</a>                         rx_data = {1&#39;d1, rx_data[7:1]};
+<a href="#l206" class="line" id="l206">    206</a>                     end else begin
+<a href="#l207" class="line" id="l207">    207</a>                         rx_data = {1&#39;d0, rx_data[7:1]};
+<a href="#l208" class="line" id="l208">    208</a>                     end
+<a href="#l209" class="line" id="l209">    209</a>                     
+<a href="#l210" class="line" id="l210">    210</a>                     rx_clk = (one_baud_cnt * 3) / 8;
+<a href="#l211" class="line" id="l211">    211</a>                     rx_samples = 0;
+<a href="#l212" class="line" id="l212">    212</a>                     rx_sample_countdown = 5;
+<a href="#l213" class="line" id="l213">    213</a>                     rx_bits_remaining = rx_bits_remaining - 1&#39;d1;
+<a href="#l214" class="line" id="l214">    214</a>                     
+<a href="#l215" class="line" id="l215">    215</a>                     if(rx_bits_remaining)begin
+<a href="#l216" class="line" id="l216">    216</a>                         recv_state = RX_SAMPLE_BITS;
+<a href="#l217" class="line" id="l217">    217</a>                     end else begin
+<a href="#l218" class="line" id="l218">    218</a>                         recv_state = RX_CHECK_STOP;
+<a href="#l219" class="line" id="l219">    219</a>                         rx_clk = one_baud_cnt / 2;
+<a href="#l220" class="line" id="l220">    220</a>                     end
+<a href="#l221" class="line" id="l221">    221</a>                 end
+<a href="#l222" class="line" id="l222">    222</a>             end
+<a href="#l223" class="line" id="l223">    223</a>             
+<a href="#l224" class="line" id="l224">    224</a>             RX_CHECK_STOP: begin
+<a href="#l225" class="line" id="l225">    225</a>                 if (!rx_clk) begin
+<a href="#l226" class="line" id="l226">    226</a>                     // Should resume half-way through the stop bit
+<a href="#l227" class="line" id="l227">    227</a>                     // This should be high - if not, reject the
+<a href="#l228" class="line" id="l228">    228</a>                     // transmission and signal an error.
+<a href="#l229" class="line" id="l229">    229</a>                     recv_state = rx ? RX_RECEIVED : RX_ERROR;
+<a href="#l230" class="line" id="l230">    230</a>                 end
+<a href="#l231" class="line" id="l231">    231</a>             end
+<a href="#l232" class="line" id="l232">    232</a>             
+<a href="#l233" class="line" id="l233">    233</a> 
+<a href="#l234" class="line" id="l234">    234</a>             
+<a href="#l235" class="line" id="l235">    235</a>             RX_ERROR: begin
+<a href="#l236" class="line" id="l236">    236</a>                 // There was an error receiving.
+<a href="#l237" class="line" id="l237">    237</a>                 // Raises the recv_error flag for one clock
+<a href="#l238" class="line" id="l238">    238</a>                 // cycle while in this state and then waits
+<a href="#l239" class="line" id="l239">    239</a>                 // 2 bit periods before accepting another
+<a href="#l240" class="line" id="l240">    240</a>                 // transmission.
+<a href="#l241" class="line" id="l241">    241</a>                 rx_clk = 8 * sys_clk_freq / (baud_rate);
+<a href="#l242" class="line" id="l242">    242</a>                 recv_state = RX_DELAY_RESTART;
+<a href="#l243" class="line" id="l243">    243</a>             end
+<a href="#l244" class="line" id="l244">    244</a>             
+<a href="#l245" class="line" id="l245">    245</a>     // why is this state needed?  Why not go to idle and wait for next? 
+<a href="#l246" class="line" id="l246">    246</a>     
+<a href="#l247" class="line" id="l247">    247</a>             RX_DELAY_RESTART: begin
+<a href="#l248" class="line" id="l248">    248</a>                 // Waits a set number of cycles before accepting
+<a href="#l249" class="line" id="l249">    249</a>                 // another transmission.
+<a href="#l250" class="line" id="l250">    250</a>                 recv_state = rx_clk ? RX_DELAY_RESTART : RX_IDLE;
+<a href="#l251" class="line" id="l251">    251</a>             end
+<a href="#l252" class="line" id="l252">    252</a>             
+<a href="#l253" class="line" id="l253">    253</a>             
+<a href="#l254" class="line" id="l254">    254</a>             RX_RECEIVED: begin
+<a href="#l255" class="line" id="l255">    255</a>                 // Successfully received a byte.
+<a href="#l256" class="line" id="l256">    256</a>                 // Raises the received flag for one clock
+<a href="#l257" class="line" id="l257">    257</a>                 // cycle while in this state.
+<a href="#l258" class="line" id="l258">    258</a>                 recv_state = RX_IDLE;
+<a href="#l259" class="line" id="l259">    259</a>             end
+<a href="#l260" class="line" id="l260">    260</a>             
+<a href="#l261" class="line" id="l261">    261</a>         endcase
+<a href="#l262" class="line" id="l262">    262</a>         
+<a href="#l263" class="line" id="l263">    263</a>         
+<a href="#l264" class="line" id="l264">    264</a> //** Transmit state machine ***********************************
+<a href="#l265" class="line" id="l265">    265</a> 
+<a href="#l266" class="line" id="l266">    266</a>         case (tx_state)
+<a href="#l267" class="line" id="l267">    267</a>             TX_IDLE: begin
+<a href="#l268" class="line" id="l268">    268</a>                 if (transmit) begin
+<a href="#l269" class="line" id="l269">    269</a>                     // If the transmit flag is raised in the idle
+<a href="#l270" class="line" id="l270">    270</a>                     // state, start transmitting the current content
+<a href="#l271" class="line" id="l271">    271</a>                     // of the tx_byte input.
+<a href="#l272" class="line" id="l272">    272</a>                     tx_data = tx_byte;
+<a href="#l273" class="line" id="l273">    273</a>                     // Send the initial, low pulse of 1 bit period
+<a href="#l274" class="line" id="l274">    274</a>                     // to signal the start, followed by the data
+<a href="#l275" class="line" id="l275">    275</a>                   //  tx_clk_divider =  clock_divide;                                
+<a href="#l276" class="line" id="l276">    276</a>                     tx_clk = one_baud_cnt;
+<a href="#l277" class="line" id="l277">    277</a>                     tx_out = 0;
+<a href="#l278" class="line" id="l278">    278</a>                     tx_bits_remaining = 8;
+<a href="#l279" class="line" id="l279">    279</a>                     tx_state = TX_SENDING;
+<a href="#l280" class="line" id="l280">    280</a>                 end
+<a href="#l281" class="line" id="l281">    281</a>             end
+<a href="#l282" class="line" id="l282">    282</a>             
+<a href="#l283" class="line" id="l283">    283</a>             TX_SENDING: begin
+<a href="#l284" class="line" id="l284">    284</a>                 if (!tx_clk) begin
+<a href="#l285" class="line" id="l285">    285</a>                     if (tx_bits_remaining) begin
+<a href="#l286" class="line" id="l286">    286</a>                         tx_bits_remaining = tx_bits_remaining - 1&#39;d1;
+<a href="#l287" class="line" id="l287">    287</a>                         tx_out = tx_data[0];
+<a href="#l288" class="line" id="l288">    288</a>                         tx_data = {1&#39;b0, tx_data[7:1]};
+<a href="#l289" class="line" id="l289">    289</a>                         tx_clk = one_baud_cnt;
+<a href="#l290" class="line" id="l290">    290</a>                         tx_state = TX_SENDING;
+<a href="#l291" class="line" id="l291">    291</a>                     end else begin
+<a href="#l292" class="line" id="l292">    292</a>                         // Set delay to send out 2 stop bits.
+<a href="#l293" class="line" id="l293">    293</a>                         tx_out = 1;
+<a href="#l294" class="line" id="l294">    294</a>                         tx_clk = 16 * one_baud_cnt;// tx_countdown = 16;
+<a href="#l295" class="line" id="l295">    295</a>                         tx_state = TX_DELAY_RESTART;
+<a href="#l296" class="line" id="l296">    296</a>                     end
+<a href="#l297" class="line" id="l297">    297</a>                 end
+<a href="#l298" class="line" id="l298">    298</a>             end
+<a href="#l299" class="line" id="l299">    299</a>             
+<a href="#l300" class="line" id="l300">    300</a>             TX_DELAY_RESTART: begin
+<a href="#l301" class="line" id="l301">    301</a>                 // Wait until tx_countdown reaches the end before
+<a href="#l302" class="line" id="l302">    302</a>                 // we send another transmission. This covers the
+<a href="#l303" class="line" id="l303">    303</a>                 // &quot;stop bit&quot; delay.
+<a href="#l304" class="line" id="l304">    304</a>                 tx_state = tx_clk ? TX_DELAY_RESTART : TX_RECOVER;// TX_IDLE;
+<a href="#l305" class="line" id="l305">    305</a>             end
+<a href="#l306" class="line" id="l306">    306</a>             
+<a href="#l307" class="line" id="l307">    307</a>             TX_RECOVER: begin
+<a href="#l308" class="line" id="l308">    308</a>                 // Wait unitil the transmit line is deactivated.  This prevents repeated characters
+<a href="#l309" class="line" id="l309">    309</a>                 tx_state = transmit ? TX_RECOVER : TX_IDLE;
+<a href="#l310" class="line" id="l310">    310</a>            
+<a href="#l311" class="line" id="l311">    311</a>             end
+<a href="#l312" class="line" id="l312">    312</a>             
+<a href="#l313" class="line" id="l313">    313</a>         endcase
+<a href="#l314" class="line" id="l314">    314</a>     end
+<a href="#l315" class="line" id="l315">    315</a> 
+<a href="#l316" class="line" id="l316">    316</a> endmodule
+<a href="#l317" class="line" id="l317">    317</a> 
+<a href="#l318" class="line" id="l318">    318</a> `
+<a href="#l319" class="line" id="l319">    319</a> )
+</pre>
+</div>
+</body>
+</html>

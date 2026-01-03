@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>uart - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a29217ab5b50b38032a49f88df5cad6f95165a00.html">a29217ab5b50b38032a49f88df5cad6f95165a00</a>
+<b>parent</b> <a href="../commit/dd93277675c4c437b111e5d8aada742070c0f6a1.html">dd93277675c4c437b111e5d8aada742070c0f6a1</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 23 Feb 2023 13:22:31 +0100
+
+uart
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/shr_uart.go</a></td><td> | </td><td class="num">56</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 31 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a> b/<a href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -98,31 +98,37 @@ func (sm Uart_instance) Write_verilog(bmach *Bondmachine, soIndex int, uartName 
+</a> 		}
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	// Create the fifo where the CPs will write to
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	wFifo := bmstack.CreateBasicStack()
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	wFifo.ModuleName = uartName + &quot;wfifo&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	wFifo.DataSize = 8
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	wFifo.Depth = sm.Depth
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	wFifo.MemType = &quot;FIFO&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	wFifo.Senders = senders
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	wFifo.Receivers = []string{&quot;uartwriter&quot;}
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	r, _ := wFifo.WriteHDL()
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	result += r
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	// Create the fifo where the CPs will read from
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	rFifo := bmstack.CreateBasicStack()
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	rFifo.ModuleName = uartName + &quot;rfifo&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	rFifo.DataSize = 8
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-	rFifo.Depth = sm.Depth
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-	rFifo.MemType = &quot;FIFO&quot;
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-	rFifo.Senders = []string{&quot;uartreader&quot;}
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	rFifo.Receivers = receivers
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-	r, _ = rFifo.WriteHDL()
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-	result += r
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	// Create the fifo where the CPs will write to (if there are any)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	if len(senders) != 0 {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		wFifo := bmstack.CreateBasicStack()
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		wFifo.ModuleName = uartName + &quot;wfifo&quot;
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		wFifo.DataSize = 8
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		wFifo.Depth = sm.Depth
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+		wFifo.MemType = &quot;FIFO&quot;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+		wFifo.Senders = senders
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		wFifo.Receivers = []string{&quot;uartwriter&quot;}
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+		r, _ := wFifo.WriteHDL()
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+		result += r
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	}
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	// Create the fifo where the CPs will read from (if there are any)
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	if len(receivers) != 0 {
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		rFifo := bmstack.CreateBasicStack()
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+		rFifo.ModuleName = uartName + &quot;rfifo&quot;
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+		rFifo.DataSize = 8
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+		rFifo.Depth = sm.Depth
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		rFifo.MemType = &quot;FIFO&quot;
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+		rFifo.Senders = []string{&quot;uartreader&quot;}
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+		rFifo.Receivers = receivers
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		r, _ := rFifo.WriteHDL()
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+		result += r
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+	}
+</a> 
+ 	// TODO : add the uart module
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>docs - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/24027c0c7b296594cc330915bb324e5af5a84a76.html">24027c0c7b296594cc330915bb324e5af5a84a76</a>
+<b>parent</b> <a href="../commit/462c15f7c4f18948d45adea5a49fb8938f2de35e.html">462c15f7c4f18948d45adea5a49fb8938f2de35e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun,  5 Feb 2023 10:24:13 +0100
+
+docs
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmstack/README.md</a></td><td> | </td><td class="num">61</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmstack/bmstack.go</a></td><td> | </td><td class="num">9</td><td><span class="i"></span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 60 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmstack/README.md.html">pkg/bmstack/README.md</a> b/<a href="../file/pkg/bmstack/README.md.html">pkg/bmstack/README.md</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1 +1,59 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-# BondMachine
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+# bmstack
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+bmstack is part of BondMachine project. Within the project It is used to create stacks and queues distributed among several BondMachine cores. due to its generality it can also be used as standalone tool to produce HDL shared stacks and queues to be used in other projects.
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+The HDL code is build using golang templates that creates the code starting from the following data structure. The comments describe the meaning of each field.
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+```go
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+type Push struct {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	Agent string  // the name of the agent that will push the data 
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	Tick  uint64  // the tick when the data will be pushed
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	Value string  // the value of the data to be pushed
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+type Pop struct {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	Agent string  // the name of the agent that will pop the data
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	Tick  uint64  // the tick when the data will be popped
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+}
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+type BmStack struct {
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	ModuleName string    // the name of the module
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	DataSize   int       // the size of the data in bits
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	Depth      int       // the depth of the stack/queue
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	Senders    []string  // the names of the signals that will be used to send data to the stack
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	Receivers  []string  // the names of the signals that will be used to receive data from the stack
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	MemType    string    // &quot;LIFO&quot; for a stack or &quot;FIFO&quot; for a queue
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	funcMap    template.FuncMap
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	// TestBench data
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	Pops         []Pop
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	Pushes       []Push
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	TestSequence []string // Pushes and pops in order
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+}
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+```
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+The library can be used in two ways.
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+The first one is from a go program. After creating a BmStack object, the user can call the WriteHDL method to produce the HDL code.
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+An example on how the library can be used this way can be seen in the go test file (bmstack_test.go).
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+The second part of the stuct can be filled with test data. These data are used to produce a test bench for the stack. Using the test bench the user can verify the correctness of the stack. The test bench is produced by calling the WriteTestBench function.
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+```go
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+func TestWriteHDL(t *testing.T) {
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	bmstack := BmStack{
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+		ModuleName: &quot;test&quot;,
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		DataSize:   32,
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+		Depth:      4,
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+		Senders:    []string{&quot;sender1&quot;, &quot;sender2&quot;},
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		Receivers:  []string{&quot;receiver1&quot;, &quot;receiver2&quot;},
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+		MemType:    &quot;LIFO&quot;,
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	}
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+	bmstack.WriteTestBench()
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+}
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+```
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+the library also came with a companion CLI executable called bmstack that provides the basic interface to the library. This is the second Possibile way to use it.
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+WIP
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+To see how the library is used in the BondMachine project, please refer to the BondMachine examples directory that contains many examples of BondMachines using stacks and queues.
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a> b/<a href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -39,15 +39,6 @@ type BmStack struct {
+</a> 	Pops         []Pop
+ 	Pushes       []Push
+ 	TestSequence []string // Pushes and pops in order
+<a href="#h1-0-3" id="h1-0-3" class="d">-
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	// Rsize       uint8
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	// Buswidth    string
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	// Inputs      []string
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	// InputsBins  []string
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	// Outputs     []string
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	// OutputsBins []string
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	// SendSM      stateMachine
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	// PackageName string
+</a> }
+ 
+ func CreateBasicStack() *BmStack {
+</pre>
+</div>
+</body>
+</html>

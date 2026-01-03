@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SAJ - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/39e86e9f0e886d6e47b6845770def6f8285e55c9.html">39e86e9f0e886d6e47b6845770def6f8285e55c9</a>
+<b>parent</b> <a href="../commit/e6ba72f9a8b51bfdce4f24018a214d64cebfa2bb.html">e6ba72f9a8b51bfdce4f24018a214d64cebfa2bb</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  7 Aug 2023 14:57:45 +0200
+
+SAJ
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">43</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/romcomposer.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>9 files changed, 76 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -201,6 +201,7 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 	for i, cp := range bi.cps {
+ 		romCode := cp.GetMeta(&quot;romcode&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+		romData := cp.GetMeta(&quot;romdata&quot;)
+</a> 		myMachine := bMach.Domains[i]
+ 		myArch := &amp;myMachine.Arch
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -220,6 +221,40 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 			return err
+ 		}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+		if romData != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			wordSize := myArch.Max_word()
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			fmt.Println(&quot;Word size: &quot;, wordSize)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			wordPad := &quot;&quot;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			for i := 0; i &lt; int(wordSize); i++ {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				wordPad += &quot;0&quot;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			if wordSize &lt; 8 {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				return errors.New(&quot;word size is too small&quot;)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			data := make([]string, 0)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			for _, line := range bi.sections[romData].sectionBody.Lines {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+				for _, arg := range line.Elements {
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+					hexVal := arg.GetValue()
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+					if n, err := bmnumbers.ImportString(hexVal); err == nil {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+						nS, _ := n.ExportBinary(false)
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+						nS = &quot;00000000&quot; + nS
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+						nS = nS[len(nS)-8:]
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+						nS = nS + wordPad
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+						nS = nS[:wordSize]
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+						data = append(data, nS)
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+					} else {
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+						return err
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+					}
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+				}
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+			}
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+			myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+			myMachine.Data.Vars = data
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+		}
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+
+</a> 	}
+ 
+ 	// Will keep track of the processed attach
+<a href="#h0-2" id="h0-2" class="h">@@ -584,8 +619,12 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 	// 	return nil, err
+ 	// }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	// myArch.WordSize = uint8(16)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	// If there is a data section, we need to add it to the machine and update the O field prior to assembling
+</a> 	if romData != &quot;&quot; {
+ 		wordSize := myMachine.Max_word()
+<a href="#h0-2-8" id="h0-2-8" class="i">+		// fmt.Println(&quot;Word size: &quot;, wordSize)
+</a> 		wordPad := &quot;&quot;
+ 		for i := 0; i &lt; int(wordSize); i++ {
+ 			wordPad += &quot;0&quot;
+<a href="#h0-3" id="h0-3" class="h">@@ -601,7 +640,7 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 				hexVal := arg.GetValue()
+ 				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+ 					nS, _ := n.ExportBinary(false)
+<a href="#h0-3-3" id="h0-3-3" class="d">-					nS = wordPad + nS
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+					nS = nS + wordPad
+</a> 					nS = nS[len(nS)-int(wordSize):]
+ 					data = append(data, nS)
+ 				} else {
+<a href="#h0-4" id="h0-4" class="h">@@ -611,7 +650,7 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 		}
+ 
+ 		myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+<a href="#h0-4-3" id="h0-4-3" class="d">-		myMachine.Data.Vars = data
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		// myMachine.Data.Vars = data
+</a> 
+ 	}
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a> b/<a href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -81,6 +81,9 @@ func romComposer(bi *BasmInstance) error {
+</a> 			}
+ 		}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+		// TODO Temporary fix
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		usefullSection = true
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> 		bi.sections[newSection.sectionName] = newSection
+ 		if usefullSection {
+ 			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romcode&quot;, newSection.sectionName)
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -368,8 +368,8 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+ 		result += &quot;	reg exec_mode; // 0 = harvard , 1=VN\n&quot;
+ 		result += &quot;	reg [1:0] vn_state;\n&quot;
+<a href="#h2-0-3" id="h2-0-3" class="d">-		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-		result += &quot;	assign current_instruction= (exec_mode==1&#39;b0) rom_value : ram_instruction;\n&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		result += &quot;	localparam FETCH=2&#39;b00, WAIT=2&#39;b10, EXECUTE=2&#39;b01;\n&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		result += &quot;	assign current_instruction= (exec_mode==1&#39;b0) ? rom_value : ram_instruction;\n&quot;
+</a> 		result += &quot;\n&quot;
+ 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+ 			result += &quot;	assign ram_addr = _pc;\n&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -380,7 +380,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+ 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+ 		result += &quot;	reg [1:0] vn_state;\n&quot;
+<a href="#h2-1-3" id="h2-1-3" class="d">-		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		result += &quot;	localparam FETCH=2&#39;b00, WAIT=2&#39;b10, EXECUTE=2&#39;b01;\n&quot;
+</a> 		result += &quot;	assign current_instruction=ram_instruction;\n&quot;
+ 		result += &quot;\n&quot;
+ 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+<a href="#h2-2" id="h2-2" class="h">@@ -424,6 +424,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;			if (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) begin\n&quot;
+ 		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+ 		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+<a href="#h2-2-3" id="h2-2-3" class="i">+		result += &quot;			end\n&quot;
+</a> 		result += &quot;			else begin\n&quot;
+ 	case &quot;vn&quot;:
+ 		result += &quot;			case (vn_state)\n&quot;
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -54,10 +54,12 @@ func (op Jz) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;							&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-		result += &quot;								if(_&quot; + strings.ToLower(Get_register_name(i)) + &quot; == &#39;b0)\n&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R))+&quot;]&quot;)
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-		result += &quot;								else\n&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-		result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+		result += &quot;								if(_&quot; + strings.ToLower(Get_register_name(i)) + &quot; == &#39;b0) begin\n&quot;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+		result += NextInstruction(conf, arch, 8, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1-int(arch.R))+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R))+&quot;]&quot;)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+		result += &quot;								end\n&quot;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		result += &quot;								else begin\n&quot;
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+		result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+		result += &quot;								end\n&quot;
+</a> 		result += &quot;								$display(\&quot;JZ &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;							end\n&quot;
+ 	}
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -120,7 +120,7 @@ func (op M2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	}
+ 
+ 	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+<a href="#h4-0-3" id="h4-0-3" class="d">-		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		ramAddr = &quot; (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) ? _pc : &quot; + ramAddr
+</a> 	}
+ 
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -162,7 +162,7 @@ func (op M2rri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	}
+ 
+ 	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+<a href="#h5-0-3" id="h5-0-3" class="d">-		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		ramAddr = &quot; (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) ? _pc : &quot; + ramAddr
+</a> 	}
+ 
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -94,7 +94,7 @@ func (op R2m) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	}
+ 
+ 	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+<a href="#h6-0-3" id="h6-0-3" class="d">-		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		ramAddr = &quot; (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) ? _pc : &quot; + ramAddr
+</a> 	}
+ 
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -95,7 +95,7 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	}
+ 
+ 	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+<a href="#h7-0-3" id="h7-0-3" class="d">-		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+		ramAddr = &quot; (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) ? _pc : &quot; + ramAddr
+</a> 	}
+ 
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -41,13 +41,25 @@ func (op Saj) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> }
+ 
+ func (op Saj) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+<a href="#h8-0-3" id="h8-0-3" class="d">-	// TODO
+</a><a href="#h8-0-4" id="h8-0-4" class="d">-	result := &quot;&quot;
+</a><a href="#h8-0-5" id="h8-0-5" class="d">-	result += &quot;				SAJ: begin\n&quot;
+</a><a href="#h8-0-6" id="h8-0-6" class="d">-	result += &quot;					$display(\&quot;SAJ\&quot;);\n&quot;
+</a><a href="#h8-0-7" id="h8-0-7" class="d">-	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h8-0-8" id="h8-0-8" class="d">-	result += &quot;				end\n&quot;
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+	opbits := arch.Opcodes_bits()
+</a> 
+<a href="#h8-0-12" id="h8-0-12" class="i">+	result := &quot;&quot;
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+	result += &quot;					SAJ: begin\n&quot;
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+	result += &quot;					if (exec_mode == 1&#39;b0) begin\n&quot;
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	result += &quot;						exec_mode &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+	result += &quot;						vn_state &lt;= FETCH;\n&quot;
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+	result += &quot;					end else begin\n&quot;
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+	result += &quot;						exec_mode &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+	if arch.O == 1 {
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;];\n&quot;
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+		result += &quot;						$display(\&quot;SAJ \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+	} else {
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;];\n&quot;
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+		result += &quot;						$display(\&quot;SAJ \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+	}
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+	result += &quot;					end\n&quot;
+</a> 	return result
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

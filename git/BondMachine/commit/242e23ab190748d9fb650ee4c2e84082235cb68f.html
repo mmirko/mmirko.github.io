@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>updated files for float operation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/242e23ab190748d9fb650ee4c2e84082235cb68f.html">242e23ab190748d9fb650ee4c2e84082235cb68f</a>
+<b>parent</b> <a href="../commit/e2339f757c63c30bea1e4c8211c7ba69bcf3e7ff.html">e2339f757c63c30bea1e4c8211c7ba69bcf3e7ff</a>
+<b>Author:</b> Giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Fri, 28 Apr 2023 10:12:19 +0200
+
+updated files for float operation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/files_addf16.go</a></td><td> | </td><td class="num">284</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/files_addf32.go</a></td><td> | </td><td class="num">284</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/files_divf16.go</a></td><td> | </td><td class="num">310</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/files_divf32.go</a></td><td> | </td><td class="num">308</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/files_multf16.go</a></td><td> | </td><td class="num">269</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/files_multf32.go</a></td><td> | </td><td class="num">269</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 1724 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/files_addf16.go.html">pkg/procbuilder/files_addf16.go</a> b/<a href="../file/pkg/procbuilder/files_addf16.go.html">pkg/procbuilder/files_addf16.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,6 +4,290 @@ const (
+</a> 	addf16 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	input_a,
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+        input_b,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+        input_a_stb,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+        input_b_stb,
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+        output_z_ack,
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+        clk,
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+        rst,
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+        output_z,
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+        output_z_stb,
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+        input_a_ack,
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+        input_b_ack);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+  input     clk;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+  input     rst;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+  input     [15:0] input_a;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+  input     [15:0] input_b;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+  output    [15:0] output_z;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+  reg       [15:0] s_output_z;
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+            align         = 4&#39;d4,
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+            add_0         = 4&#39;d5,
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+            add_1         = 4&#39;d6,
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+            normalise_1   = 4&#39;d7,
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+            normalise_2   = 4&#39;d8,
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+            round         = 4&#39;d9,
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+            pack          = 4&#39;d10,
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+            put_z         = 4&#39;d11;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+  reg       [15:0] a, b, z;
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+  reg       [13:0] a_m, b_m;
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+  reg       [10:0] z_m;
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+  reg       [6:0] a_e, b_e, z_e;
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+  reg       [14:0] sum;
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+  always @(posedge clk)
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+  begin
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+    case(state)
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+      get_a:
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+      begin
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+          a &lt;= input_a;
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+          state &lt;= get_b;
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+        end
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+      end
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+      get_b:
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+      begin
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+          b &lt;= input_b;
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+          state &lt;= unpack;
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+        end
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+      end
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+      unpack:
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+      begin
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+        a_m &lt;= {a[9 : 0], 3&#39;d0};
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+        b_m &lt;= {b[9 : 0], 3&#39;d0};
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+        a_e &lt;= a[14 : 10] - 15;
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+        b_e &lt;= b[14 : 10] - 15;
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+        a_s &lt;= a[15];
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+        b_s &lt;= b[15];
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+        state &lt;= special_cases;
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+      end
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+      special_cases:
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+      begin
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h0-0-96" id="h0-0-96" class="i">+        if ((a_e == 16 &amp;&amp; a_m != 0) || (b_e == 16 &amp;&amp; b_m != 0)) begin
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+          z[15] &lt;= 1;
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+          z[9] &lt;= 1;
+</a><a href="#h0-0-100" id="h0-0-100" class="i">+          z[8:0] &lt;= 0;
+</a><a href="#h0-0-101" id="h0-0-101" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-102" id="h0-0-102" class="i">+        //if a is inf return inf
+</a><a href="#h0-0-103" id="h0-0-103" class="i">+        end else if (a_e == 16) begin
+</a><a href="#h0-0-104" id="h0-0-104" class="i">+          z[15] &lt;= a_s;
+</a><a href="#h0-0-105" id="h0-0-105" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h0-0-106" id="h0-0-106" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h0-0-107" id="h0-0-107" class="i">+          //if a is inf and signs don&#39;t match return nan
+</a><a href="#h0-0-108" id="h0-0-108" class="i">+          if ((b_e == 16) &amp;&amp; (a_s != b_s)) begin
+</a><a href="#h0-0-109" id="h0-0-109" class="i">+              z[15] &lt;= b_s;
+</a><a href="#h0-0-110" id="h0-0-110" class="i">+              z[14:10] &lt;= 255;
+</a><a href="#h0-0-111" id="h0-0-111" class="i">+              z[9] &lt;= 1;
+</a><a href="#h0-0-112" id="h0-0-112" class="i">+              z[8:0] &lt;= 0;
+</a><a href="#h0-0-113" id="h0-0-113" class="i">+          end
+</a><a href="#h0-0-114" id="h0-0-114" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-115" id="h0-0-115" class="i">+        //if b is inf return inf
+</a><a href="#h0-0-116" id="h0-0-116" class="i">+        end else if (b_e == 16) begin
+</a><a href="#h0-0-117" id="h0-0-117" class="i">+          z[15] &lt;= b_s;
+</a><a href="#h0-0-118" id="h0-0-118" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h0-0-119" id="h0-0-119" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h0-0-120" id="h0-0-120" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-121" id="h0-0-121" class="i">+        //if a is zero return b
+</a><a href="#h0-0-122" id="h0-0-122" class="i">+        end else if ((($signed(a_e) == -15) &amp;&amp; (a_m == 0)) &amp;&amp; (($signed(b_e) == -15) &amp;&amp; (b_m == 0))) begin
+</a><a href="#h0-0-123" id="h0-0-123" class="i">+          z[15] &lt;= a_s &amp; b_s;
+</a><a href="#h0-0-124" id="h0-0-124" class="i">+          z[14:10] &lt;= b_e[4:0] + 15;
+</a><a href="#h0-0-125" id="h0-0-125" class="i">+          z[9:0] &lt;= b_m[13:3];
+</a><a href="#h0-0-126" id="h0-0-126" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-127" id="h0-0-127" class="i">+        //if a is zero return b
+</a><a href="#h0-0-128" id="h0-0-128" class="i">+        end else if (($signed(a_e) == -15) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h0-0-129" id="h0-0-129" class="i">+          z[15] &lt;= b_s;
+</a><a href="#h0-0-130" id="h0-0-130" class="i">+          z[14:10] &lt;= b_e[4:0] + 15;
+</a><a href="#h0-0-131" id="h0-0-131" class="i">+          z[9:0] &lt;= b_m[13:3];
+</a><a href="#h0-0-132" id="h0-0-132" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-133" id="h0-0-133" class="i">+        //if b is zero return a
+</a><a href="#h0-0-134" id="h0-0-134" class="i">+        end else if (($signed(b_e) == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h0-0-135" id="h0-0-135" class="i">+          z[15] &lt;= a_s;
+</a><a href="#h0-0-136" id="h0-0-136" class="i">+          z[14:10] &lt;= a_e[4:0] + 15;
+</a><a href="#h0-0-137" id="h0-0-137" class="i">+          z[9:0] &lt;= a_m[13:3];
+</a><a href="#h0-0-138" id="h0-0-138" class="i">+          state &lt;= put_z;
+</a><a href="#h0-0-139" id="h0-0-139" class="i">+        end else begin
+</a><a href="#h0-0-140" id="h0-0-140" class="i">+          //Denormalised Number
+</a><a href="#h0-0-141" id="h0-0-141" class="i">+          if ($signed(a_e) == -15) begin
+</a><a href="#h0-0-142" id="h0-0-142" class="i">+            a_e &lt;= -14;
+</a><a href="#h0-0-143" id="h0-0-143" class="i">+          end else begin
+</a><a href="#h0-0-144" id="h0-0-144" class="i">+            a_m[13] &lt;= 1;
+</a><a href="#h0-0-145" id="h0-0-145" class="i">+          end
+</a><a href="#h0-0-146" id="h0-0-146" class="i">+          //Denormalised Number
+</a><a href="#h0-0-147" id="h0-0-147" class="i">+          if ($signed(b_e) == -15) begin
+</a><a href="#h0-0-148" id="h0-0-148" class="i">+            b_e &lt;= -14;
+</a><a href="#h0-0-149" id="h0-0-149" class="i">+          end else begin
+</a><a href="#h0-0-150" id="h0-0-150" class="i">+            b_m[13] &lt;= 1;
+</a><a href="#h0-0-151" id="h0-0-151" class="i">+          end
+</a><a href="#h0-0-152" id="h0-0-152" class="i">+          state &lt;= align;
+</a><a href="#h0-0-153" id="h0-0-153" class="i">+        end
+</a><a href="#h0-0-154" id="h0-0-154" class="i">+      end
+</a><a href="#h0-0-155" id="h0-0-155" class="i">+
+</a><a href="#h0-0-156" id="h0-0-156" class="i">+      align:
+</a><a href="#h0-0-157" id="h0-0-157" class="i">+      begin
+</a><a href="#h0-0-158" id="h0-0-158" class="i">+        if ($signed(a_e) &gt; $signed(b_e)) begin
+</a><a href="#h0-0-159" id="h0-0-159" class="i">+          b_e &lt;= b_e + 1;
+</a><a href="#h0-0-160" id="h0-0-160" class="i">+          b_m &lt;= b_m &gt;&gt; 1;
+</a><a href="#h0-0-161" id="h0-0-161" class="i">+          b_m[0] &lt;= b_m[0] | b_m[1];
+</a><a href="#h0-0-162" id="h0-0-162" class="i">+        end else if ($signed(a_e) &lt; $signed(b_e)) begin
+</a><a href="#h0-0-163" id="h0-0-163" class="i">+          a_e &lt;= a_e + 1;
+</a><a href="#h0-0-164" id="h0-0-164" class="i">+          a_m &lt;= a_m &gt;&gt; 1;
+</a><a href="#h0-0-165" id="h0-0-165" class="i">+          a_m[0] &lt;= a_m[0] | a_m[1];
+</a><a href="#h0-0-166" id="h0-0-166" class="i">+        end else begin
+</a><a href="#h0-0-167" id="h0-0-167" class="i">+          state &lt;= add_0;
+</a><a href="#h0-0-168" id="h0-0-168" class="i">+        end
+</a><a href="#h0-0-169" id="h0-0-169" class="i">+      end
+</a><a href="#h0-0-170" id="h0-0-170" class="i">+
+</a><a href="#h0-0-171" id="h0-0-171" class="i">+      add_0:
+</a><a href="#h0-0-172" id="h0-0-172" class="i">+      begin
+</a><a href="#h0-0-173" id="h0-0-173" class="i">+        z_e &lt;= a_e;
+</a><a href="#h0-0-174" id="h0-0-174" class="i">+        if (a_s == b_s) begin
+</a><a href="#h0-0-175" id="h0-0-175" class="i">+          sum &lt;= a_m + b_m;
+</a><a href="#h0-0-176" id="h0-0-176" class="i">+          z_s &lt;= a_s;
+</a><a href="#h0-0-177" id="h0-0-177" class="i">+        end else begin
+</a><a href="#h0-0-178" id="h0-0-178" class="i">+          if (a_m &gt;= b_m) begin
+</a><a href="#h0-0-179" id="h0-0-179" class="i">+            sum &lt;= a_m - b_m;
+</a><a href="#h0-0-180" id="h0-0-180" class="i">+            z_s &lt;= a_s;
+</a><a href="#h0-0-181" id="h0-0-181" class="i">+          end else begin
+</a><a href="#h0-0-182" id="h0-0-182" class="i">+            sum &lt;= b_m - a_m;
+</a><a href="#h0-0-183" id="h0-0-183" class="i">+            z_s &lt;= b_s;
+</a><a href="#h0-0-184" id="h0-0-184" class="i">+          end
+</a><a href="#h0-0-185" id="h0-0-185" class="i">+        end
+</a><a href="#h0-0-186" id="h0-0-186" class="i">+        state &lt;= add_1;
+</a><a href="#h0-0-187" id="h0-0-187" class="i">+      end
+</a><a href="#h0-0-188" id="h0-0-188" class="i">+
+</a><a href="#h0-0-189" id="h0-0-189" class="i">+      add_1:
+</a><a href="#h0-0-190" id="h0-0-190" class="i">+      begin
+</a><a href="#h0-0-191" id="h0-0-191" class="i">+        if (sum[14]) begin
+</a><a href="#h0-0-192" id="h0-0-192" class="i">+          z_m &lt;= sum[14:4];
+</a><a href="#h0-0-193" id="h0-0-193" class="i">+          guard &lt;= sum[3];
+</a><a href="#h0-0-194" id="h0-0-194" class="i">+          round_bit &lt;= sum[2];
+</a><a href="#h0-0-195" id="h0-0-195" class="i">+          sticky &lt;= sum[1] | sum[0];
+</a><a href="#h0-0-196" id="h0-0-196" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h0-0-197" id="h0-0-197" class="i">+        end else begin
+</a><a href="#h0-0-198" id="h0-0-198" class="i">+          z_m &lt;= sum[13:3];
+</a><a href="#h0-0-199" id="h0-0-199" class="i">+          guard &lt;= sum[2];
+</a><a href="#h0-0-200" id="h0-0-200" class="i">+          round_bit &lt;= sum[1];
+</a><a href="#h0-0-201" id="h0-0-201" class="i">+          sticky &lt;= sum[0];
+</a><a href="#h0-0-202" id="h0-0-202" class="i">+        end
+</a><a href="#h0-0-203" id="h0-0-203" class="i">+        state &lt;= normalise_1;
+</a><a href="#h0-0-204" id="h0-0-204" class="i">+      end
+</a><a href="#h0-0-205" id="h0-0-205" class="i">+
+</a><a href="#h0-0-206" id="h0-0-206" class="i">+      normalise_1:
+</a><a href="#h0-0-207" id="h0-0-207" class="i">+      begin
+</a><a href="#h0-0-208" id="h0-0-208" class="i">+        if (z_m[10] == 0 &amp;&amp; $signed(z_e) &gt; -14) begin
+</a><a href="#h0-0-209" id="h0-0-209" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h0-0-210" id="h0-0-210" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h0-0-211" id="h0-0-211" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h0-0-212" id="h0-0-212" class="i">+          guard &lt;= round_bit;
+</a><a href="#h0-0-213" id="h0-0-213" class="i">+          round_bit &lt;= 0;
+</a><a href="#h0-0-214" id="h0-0-214" class="i">+        end else begin
+</a><a href="#h0-0-215" id="h0-0-215" class="i">+          state &lt;= normalise_2;
+</a><a href="#h0-0-216" id="h0-0-216" class="i">+        end
+</a><a href="#h0-0-217" id="h0-0-217" class="i">+      end
+</a><a href="#h0-0-218" id="h0-0-218" class="i">+
+</a><a href="#h0-0-219" id="h0-0-219" class="i">+      normalise_2:
+</a><a href="#h0-0-220" id="h0-0-220" class="i">+      begin
+</a><a href="#h0-0-221" id="h0-0-221" class="i">+        if ($signed(z_e) &lt; -14) begin
+</a><a href="#h0-0-222" id="h0-0-222" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h0-0-223" id="h0-0-223" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h0-0-224" id="h0-0-224" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h0-0-225" id="h0-0-225" class="i">+          round_bit &lt;= guard;
+</a><a href="#h0-0-226" id="h0-0-226" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h0-0-227" id="h0-0-227" class="i">+        end else begin
+</a><a href="#h0-0-228" id="h0-0-228" class="i">+          state &lt;= round;
+</a><a href="#h0-0-229" id="h0-0-229" class="i">+        end
+</a><a href="#h0-0-230" id="h0-0-230" class="i">+      end
+</a><a href="#h0-0-231" id="h0-0-231" class="i">+
+</a><a href="#h0-0-232" id="h0-0-232" class="i">+      round:
+</a><a href="#h0-0-233" id="h0-0-233" class="i">+      begin
+</a><a href="#h0-0-234" id="h0-0-234" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h0-0-235" id="h0-0-235" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h0-0-236" id="h0-0-236" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h0-0-237" id="h0-0-237" class="i">+            z_e &lt;=z_e + 1; 
+</a><a href="#h0-0-238" id="h0-0-238" class="i">+          end
+</a><a href="#h0-0-239" id="h0-0-239" class="i">+        end
+</a><a href="#h0-0-240" id="h0-0-240" class="i">+        state &lt;= pack;
+</a><a href="#h0-0-241" id="h0-0-241" class="i">+      end
+</a><a href="#h0-0-242" id="h0-0-242" class="i">+
+</a><a href="#h0-0-243" id="h0-0-243" class="i">+      pack:
+</a><a href="#h0-0-244" id="h0-0-244" class="i">+      begin
+</a><a href="#h0-0-245" id="h0-0-245" class="i">+        z[9 : 0] &lt;= z_m[9:0];
+</a><a href="#h0-0-246" id="h0-0-246" class="i">+        z[14 : 10] &lt;= z_e[4:0] + 15;
+</a><a href="#h0-0-247" id="h0-0-247" class="i">+        z[15] &lt;= z_s;
+</a><a href="#h0-0-248" id="h0-0-248" class="i">+        if ($signed(z_e) == -14 &amp;&amp; z_m[10] == 0) begin
+</a><a href="#h0-0-249" id="h0-0-249" class="i">+          z[14 : 10] &lt;= 0;
+</a><a href="#h0-0-250" id="h0-0-250" class="i">+        end
+</a><a href="#h0-0-251" id="h0-0-251" class="i">+        if ($signed(z_e) == -14 &amp;&amp; z_m[10:0] == 11&#39;h0) begin
+</a><a href="#h0-0-252" id="h0-0-252" class="i">+          z[15] &lt;= 1&#39;b0; // FIX SIGN BUG: -a + a = +0.
+</a><a href="#h0-0-253" id="h0-0-253" class="i">+        end
+</a><a href="#h0-0-254" id="h0-0-254" class="i">+        //if overflow occurs, return inf
+</a><a href="#h0-0-255" id="h0-0-255" class="i">+        if ($signed(z_e) &gt; 15) begin
+</a><a href="#h0-0-256" id="h0-0-256" class="i">+          z[9 : 0] &lt;= 0;
+</a><a href="#h0-0-257" id="h0-0-257" class="i">+          z[14 : 10] &lt;= 255;
+</a><a href="#h0-0-258" id="h0-0-258" class="i">+          z[15] &lt;= z_s;
+</a><a href="#h0-0-259" id="h0-0-259" class="i">+        end
+</a><a href="#h0-0-260" id="h0-0-260" class="i">+        state &lt;= put_z;
+</a><a href="#h0-0-261" id="h0-0-261" class="i">+      end
+</a><a href="#h0-0-262" id="h0-0-262" class="i">+
+</a><a href="#h0-0-263" id="h0-0-263" class="i">+      put_z:
+</a><a href="#h0-0-264" id="h0-0-264" class="i">+      begin
+</a><a href="#h0-0-265" id="h0-0-265" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h0-0-266" id="h0-0-266" class="i">+        s_output_z &lt;= z;
+</a><a href="#h0-0-267" id="h0-0-267" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h0-0-268" id="h0-0-268" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h0-0-269" id="h0-0-269" class="i">+          state &lt;= get_a;
+</a><a href="#h0-0-270" id="h0-0-270" class="i">+        end
+</a><a href="#h0-0-271" id="h0-0-271" class="i">+      end
+</a><a href="#h0-0-272" id="h0-0-272" class="i">+
+</a><a href="#h0-0-273" id="h0-0-273" class="i">+    endcase
+</a><a href="#h0-0-274" id="h0-0-274" class="i">+
+</a><a href="#h0-0-275" id="h0-0-275" class="i">+    if (rst == 1) begin
+</a><a href="#h0-0-276" id="h0-0-276" class="i">+      state &lt;= get_a;
+</a><a href="#h0-0-277" id="h0-0-277" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h0-0-278" id="h0-0-278" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h0-0-279" id="h0-0-279" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h0-0-280" id="h0-0-280" class="i">+    end
+</a><a href="#h0-0-281" id="h0-0-281" class="i">+
+</a><a href="#h0-0-282" id="h0-0-282" class="i">+  end
+</a><a href="#h0-0-283" id="h0-0-283" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h0-0-284" id="h0-0-284" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h0-0-285" id="h0-0-285" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h0-0-286" id="h0-0-286" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/files_addf32.go.html">pkg/procbuilder/files_addf32.go</a> b/<a href="../file/pkg/procbuilder/files_addf32.go.html">pkg/procbuilder/files_addf32.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,6 +4,290 @@ const (
+</a> 	addf32 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	input_a,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+        input_b,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+        input_a_stb,
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+        input_b_stb,
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+        output_z_ack,
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+        clk,
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+        rst,
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+        output_z,
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+        output_z_stb,
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+        input_a_ack,
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+        input_b_ack);
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+  input     clk;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+  input     rst;
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+  input     [31:0] input_a;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+  input     [31:0] input_b;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+  output    [31:0] output_z;
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+  reg       [31:0] s_output_z;
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+            align         = 4&#39;d4,
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+            add_0         = 4&#39;d5,
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+            add_1         = 4&#39;d6,
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+            normalise_1   = 4&#39;d7,
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+            normalise_2   = 4&#39;d8,
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+            round         = 4&#39;d9,
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+            pack          = 4&#39;d10,
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+            put_z         = 4&#39;d11;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+  reg       [31:0] a, b, z;
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+  reg       [26:0] a_m, b_m;
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+  reg       [23:0] z_m;
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+  reg       [9:0] a_e, b_e, z_e;
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+  reg       [27:0] sum;
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+  always @(posedge clk)
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+  begin
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+    case(state)
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+      get_a:
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+      begin
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+          a &lt;= input_a;
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+          state &lt;= get_b;
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+        end
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+      end
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+      get_b:
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+      begin
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+          b &lt;= input_b;
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+          state &lt;= unpack;
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+        end
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+      end
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+      unpack:
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+      begin
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+        a_m &lt;= {a[22 : 0], 3&#39;d0};
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+        b_m &lt;= {b[22 : 0], 3&#39;d0};
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+        a_e &lt;= a[30 : 23] - 127;
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+        b_e &lt;= b[30 : 23] - 127;
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+        a_s &lt;= a[31];
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+        b_s &lt;= b[31];
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+        state &lt;= special_cases;
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+      end
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+      special_cases:
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+      begin
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+          z[31] &lt;= 1;
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+          z[22] &lt;= 1;
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+          z[21:0] &lt;= 0;
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+        //if a is inf return inf
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+        end else if (a_e == 128) begin
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+          z[31] &lt;= a_s;
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+          //if a is inf and signs don&#39;t match return nan
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+          if ((b_e == 128) &amp;&amp; (a_s != b_s)) begin
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+              z[31] &lt;= b_s;
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+              z[30:23] &lt;= 255;
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+              z[22] &lt;= 1;
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+              z[21:0] &lt;= 0;
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+          end
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+        //if b is inf return inf
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+        end else if (b_e == 128) begin
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+          z[31] &lt;= b_s;
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+        //if a is zero return b
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+        end else if ((($signed(a_e) == -127) &amp;&amp; (a_m == 0)) &amp;&amp; (($signed(b_e) == -127) &amp;&amp; (b_m == 0))) begin
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+          z[31] &lt;= a_s &amp; b_s;
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+          z[30:23] &lt;= b_e[7:0] + 127;
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+          z[22:0] &lt;= b_m[26:3];
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+        //if a is zero return b
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+          z[31] &lt;= b_s;
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+          z[30:23] &lt;= b_e[7:0] + 127;
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+          z[22:0] &lt;= b_m[26:3];
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+        //if b is zero return a
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+          z[31] &lt;= a_s;
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+          z[30:23] &lt;= a_e[7:0] + 127;
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+          z[22:0] &lt;= a_m[26:3];
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+          state &lt;= put_z;
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+        end else begin
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+          //Denormalised Number
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+          if ($signed(a_e) == -127) begin
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+            a_e &lt;= -126;
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+          end else begin
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+            a_m[26] &lt;= 1;
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+          end
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+          //Denormalised Number
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+          if ($signed(b_e) == -127) begin
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+            b_e &lt;= -126;
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+          end else begin
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+            b_m[26] &lt;= 1;
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+          end
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+          state &lt;= align;
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+        end
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+      end
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+      align:
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+      begin
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+        if ($signed(a_e) &gt; $signed(b_e)) begin
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+          b_e &lt;= b_e + 1;
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+          b_m &lt;= b_m &gt;&gt; 1;
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+          b_m[0] &lt;= b_m[0] | b_m[1];
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+        end else if ($signed(a_e) &lt; $signed(b_e)) begin
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+          a_e &lt;= a_e + 1;
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+          a_m &lt;= a_m &gt;&gt; 1;
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+          a_m[0] &lt;= a_m[0] | a_m[1];
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+        end else begin
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+          state &lt;= add_0;
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+        end
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+      end
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+      add_0:
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+      begin
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+        z_e &lt;= a_e;
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+        if (a_s == b_s) begin
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+          sum &lt;= a_m + b_m;
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+          z_s &lt;= a_s;
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+        end else begin
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+          if (a_m &gt;= b_m) begin
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+            sum &lt;= a_m - b_m;
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+            z_s &lt;= a_s;
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+          end else begin
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+            sum &lt;= b_m - a_m;
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+            z_s &lt;= b_s;
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+          end
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+        end
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+        state &lt;= add_1;
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+      end
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+      add_1:
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+      begin
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+        if (sum[27]) begin
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+          z_m &lt;= sum[27:4];
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+          guard &lt;= sum[3];
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+          round_bit &lt;= sum[2];
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+          sticky &lt;= sum[1] | sum[0];
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+        end else begin
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+          z_m &lt;= sum[26:3];
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+          guard &lt;= sum[2];
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+          round_bit &lt;= sum[1];
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+          sticky &lt;= sum[0];
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+        end
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+        state &lt;= normalise_1;
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+      end
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+      normalise_1:
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+      begin
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+        if (z_m[23] == 0 &amp;&amp; $signed(z_e) &gt; -126) begin
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+          guard &lt;= round_bit;
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+          round_bit &lt;= 0;
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+        end else begin
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+          state &lt;= normalise_2;
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+        end
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+      end
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+      normalise_2:
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+      begin
+</a><a href="#h1-0-221" id="h1-0-221" class="i">+        if ($signed(z_e) &lt; -126) begin
+</a><a href="#h1-0-222" id="h1-0-222" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h1-0-223" id="h1-0-223" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h1-0-224" id="h1-0-224" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h1-0-225" id="h1-0-225" class="i">+          round_bit &lt;= guard;
+</a><a href="#h1-0-226" id="h1-0-226" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h1-0-227" id="h1-0-227" class="i">+        end else begin
+</a><a href="#h1-0-228" id="h1-0-228" class="i">+          state &lt;= round;
+</a><a href="#h1-0-229" id="h1-0-229" class="i">+        end
+</a><a href="#h1-0-230" id="h1-0-230" class="i">+      end
+</a><a href="#h1-0-231" id="h1-0-231" class="i">+
+</a><a href="#h1-0-232" id="h1-0-232" class="i">+      round:
+</a><a href="#h1-0-233" id="h1-0-233" class="i">+      begin
+</a><a href="#h1-0-234" id="h1-0-234" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h1-0-235" id="h1-0-235" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h1-0-236" id="h1-0-236" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h1-0-237" id="h1-0-237" class="i">+            z_e &lt;=z_e + 1;
+</a><a href="#h1-0-238" id="h1-0-238" class="i">+          end
+</a><a href="#h1-0-239" id="h1-0-239" class="i">+        end
+</a><a href="#h1-0-240" id="h1-0-240" class="i">+        state &lt;= pack;
+</a><a href="#h1-0-241" id="h1-0-241" class="i">+      end
+</a><a href="#h1-0-242" id="h1-0-242" class="i">+
+</a><a href="#h1-0-243" id="h1-0-243" class="i">+      pack:
+</a><a href="#h1-0-244" id="h1-0-244" class="i">+      begin
+</a><a href="#h1-0-245" id="h1-0-245" class="i">+        z[22 : 0] &lt;= z_m[22:0];
+</a><a href="#h1-0-246" id="h1-0-246" class="i">+        z[30 : 23] &lt;= z_e[7:0] + 127;
+</a><a href="#h1-0-247" id="h1-0-247" class="i">+        z[31] &lt;= z_s;
+</a><a href="#h1-0-248" id="h1-0-248" class="i">+        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin
+</a><a href="#h1-0-249" id="h1-0-249" class="i">+          z[30 : 23] &lt;= 0;
+</a><a href="#h1-0-250" id="h1-0-250" class="i">+        end
+</a><a href="#h1-0-251" id="h1-0-251" class="i">+        if ($signed(z_e) == -126 &amp;&amp; z_m[23:0] == 24&#39;h0) begin
+</a><a href="#h1-0-252" id="h1-0-252" class="i">+          z[31] &lt;= 1&#39;b0; // FIX SIGN BUG: -a + a = +0.
+</a><a href="#h1-0-253" id="h1-0-253" class="i">+        end
+</a><a href="#h1-0-254" id="h1-0-254" class="i">+        //if overflow occurs, return inf
+</a><a href="#h1-0-255" id="h1-0-255" class="i">+        if ($signed(z_e) &gt; 127) begin
+</a><a href="#h1-0-256" id="h1-0-256" class="i">+          z[22 : 0] &lt;= 0;
+</a><a href="#h1-0-257" id="h1-0-257" class="i">+          z[30 : 23] &lt;= 255;
+</a><a href="#h1-0-258" id="h1-0-258" class="i">+          z[31] &lt;= z_s;
+</a><a href="#h1-0-259" id="h1-0-259" class="i">+        end
+</a><a href="#h1-0-260" id="h1-0-260" class="i">+        state &lt;= put_z;
+</a><a href="#h1-0-261" id="h1-0-261" class="i">+      end
+</a><a href="#h1-0-262" id="h1-0-262" class="i">+
+</a><a href="#h1-0-263" id="h1-0-263" class="i">+      put_z:
+</a><a href="#h1-0-264" id="h1-0-264" class="i">+      begin
+</a><a href="#h1-0-265" id="h1-0-265" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h1-0-266" id="h1-0-266" class="i">+        s_output_z &lt;= z;
+</a><a href="#h1-0-267" id="h1-0-267" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h1-0-268" id="h1-0-268" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h1-0-269" id="h1-0-269" class="i">+          state &lt;= get_a;
+</a><a href="#h1-0-270" id="h1-0-270" class="i">+        end
+</a><a href="#h1-0-271" id="h1-0-271" class="i">+      end
+</a><a href="#h1-0-272" id="h1-0-272" class="i">+
+</a><a href="#h1-0-273" id="h1-0-273" class="i">+    endcase
+</a><a href="#h1-0-274" id="h1-0-274" class="i">+
+</a><a href="#h1-0-275" id="h1-0-275" class="i">+    if (rst == 1) begin
+</a><a href="#h1-0-276" id="h1-0-276" class="i">+      state &lt;= get_a;
+</a><a href="#h1-0-277" id="h1-0-277" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h1-0-278" id="h1-0-278" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h1-0-279" id="h1-0-279" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h1-0-280" id="h1-0-280" class="i">+    end
+</a><a href="#h1-0-281" id="h1-0-281" class="i">+
+</a><a href="#h1-0-282" id="h1-0-282" class="i">+  end
+</a><a href="#h1-0-283" id="h1-0-283" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h1-0-284" id="h1-0-284" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h1-0-285" id="h1-0-285" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h1-0-286" id="h1-0-286" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/files_divf16.go.html">pkg/procbuilder/files_divf16.go</a> b/<a href="../file/pkg/procbuilder/files_divf16.go.html">pkg/procbuilder/files_divf16.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -4,6 +4,316 @@ const (
+</a> 	divf16 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h2-0-3" id="h2-0-3" class="i">+	input_a,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+        input_b,
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+        input_a_stb,
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+        input_b_stb,
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+        output_z_ack,
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+        clk,
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+        rst,
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+        output_z,
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+        output_z_stb,
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+        input_a_ack,
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+        input_b_ack);
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+  input     clk;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+  input     rst;
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+  input     [15:0] input_a;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+  input     [15:0] input_b;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+  output    [15:0] output_z;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+  reg       [15:0] s_output_z;
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+            normalise_a   = 4&#39;d4,
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+            normalise_b   = 4&#39;d5,
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+            divide_0      = 4&#39;d6,
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+            divide_1      = 4&#39;d7,
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+            divide_2      = 4&#39;d8,
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+            divide_3      = 4&#39;d9,
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+            normalise_1   = 4&#39;d10,
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+            normalise_2   = 4&#39;d11,
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+            round         = 4&#39;d12,
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+            pack          = 4&#39;d13,
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+            put_z         = 4&#39;d14;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+  reg       [15:0] a, b, z; // [31:0] -&gt; [15:0]
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+  reg       [10:0] a_m, b_m, z_m; // [23:0] -&gt; [10:0]
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+  reg       [6:0] a_e, b_e, z_e; // [9:0] -&gt; [6:0]
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+  reg       [24:0] quotient, divisor, dividend, remainder; // 10*2 + 4       (23*2) + 4
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+  reg       [5:0] count;
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+  always @(posedge clk)
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+  begin
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+    case(state)
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+      get_a:
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+      begin
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+          a &lt;= input_a;
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+          state &lt;= get_b;
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+        end
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+      end
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+      get_b:
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+      begin
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+          b &lt;= input_b;
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+          state &lt;= unpack;
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+        end
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+      end
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+      unpack:
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+      begin
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+        a_m &lt;= a[9:0]; // [22:0] -&gt; [9:0]
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+        b_m &lt;= b[9:0];
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+        a_e &lt;= a[14:10] - 15; // [30:23] -&gt; [14:10]
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+        b_e &lt;= b[14:10] - 15;
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+        a_s &lt;= a[15];
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+        b_s &lt;= b[15];
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+        state &lt;= special_cases;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+      end
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+      special_cases:
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+      begin
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+        if ((a_e == 16 &amp;&amp; a_m != 0) || (b_e == 16 &amp;&amp; b_m != 0)) begin
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+          z[15] &lt;= 1;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+          z[9] &lt;= 1;
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+          z[8:0] &lt;= 0; // [21:0] -&gt; [8:0]
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+          //if a is inf and b is inf return NaN 
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+        end else if ((a_e == 16) &amp;&amp; (b_e == 16)) begin
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+          z[15] &lt;= 1;
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+          z[9] &lt;= 1;
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+          z[8:0] &lt;= 0;
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+        //if a is inf return inf
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+        end else if (a_e == 16) begin
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+           //if b is zero return NaN
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+          if ($signed(b_e == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+            z[15] &lt;= 1;
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+            z[14:10] &lt;= 255;
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+            z[9] &lt;= 1;
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+            z[8:0] &lt;= 0;
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+            state &lt;= put_z;
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+          end
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+        //if b is inf return zero
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+        end else if (b_e == 16) begin
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+        //if a is zero return zero
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+        end else if (($signed(a_e) == -15) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+           //if b is zero return NaN
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+          if (($signed(b_e) == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+            z[15] &lt;= 1;
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+            z[14:10] &lt;= 255;
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+            z[9] &lt;= 1;
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+            z[8:0] &lt;= 0;
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+            state &lt;= put_z;
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+          end
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+        //if b is zero return inf
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+        end else if (($signed(b_e) == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+          state &lt;= put_z;
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+        end else begin
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+          //Denormalised Number
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+          if ($signed(a_e) == -15) begin
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+            a_e &lt;= -14;
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+          end else begin
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+            a_m[10] &lt;= 1;
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+          end
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+          //Denormalised Number
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+          if ($signed(b_e) == -15) begin
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+            b_e &lt;= -14;
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+          end else begin
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+            b_m[10] &lt;= 1;
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+          end
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+          state &lt;= normalise_a;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+        end
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+      end
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+      normalise_a:
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+      begin
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+        if (a_m[10]) begin
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+          state &lt;= normalise_b;
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+        end else begin
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+          a_m &lt;= a_m &lt;&lt; 1;
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+          a_e &lt;= a_e - 1;
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+        end
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+      end
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+      normalise_b:
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+      begin
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+        if (b_m[10]) begin
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+          state &lt;= divide_0;
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+        end else begin
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+          b_m &lt;= b_m &lt;&lt; 1;
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+          b_e &lt;= b_e - 1;
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+        end
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+      end
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+    // fino a qui tutto ok
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+      divide_0:
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+      begin
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+        z_s &lt;= a_s ^ b_s;
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+        z_e &lt;= a_e - b_e;
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+        quotient &lt;= 0;
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+        remainder &lt;= 0;
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+        count &lt;= 0;
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+        dividend &lt;= a_m &lt;&lt; 14; 
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+        divisor &lt;= b_m;
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+        state &lt;= divide_1;
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+      end
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+      divide_1:
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+      begin
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+        quotient &lt;= quotient &lt;&lt; 1;
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+        remainder &lt;= remainder &lt;&lt; 1;
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+        remainder[0] &lt;= dividend[24];
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+        dividend &lt;= dividend &lt;&lt; 1;
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+        state &lt;= divide_2;
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+      end
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+      divide_2:
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+      begin
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+        if (remainder &gt;= divisor) begin
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+          quotient[0] &lt;= 1;
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+          remainder &lt;= remainder - divisor;
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+        end
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+        if (count == 23) begin
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+          state &lt;= divide_3;
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+        end else begin
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+          count &lt;= count + 1;
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+          state &lt;= divide_1;
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+        end
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+      end
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+      divide_3:
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+      begin
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+        z_m &lt;= quotient[13:3];
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+        guard &lt;= quotient[2];
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+        round_bit &lt;= quotient[1];
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+        sticky &lt;= quotient[0] | (remainder != 0);
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+        state &lt;= normalise_1;
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+      end
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+      normalise_1:
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+      begin
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+        if (z_m[10] == 0 &amp;&amp; $signed(z_e) &gt; -14) begin
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+          guard &lt;= round_bit;
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+          round_bit &lt;= 0;
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+        end else begin
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+          state &lt;= normalise_2;
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+        end
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+      end
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+      normalise_2:
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+      begin
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+        if ($signed(z_e) &lt; -14) begin
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+          round_bit &lt;= guard;
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+        end else begin
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+          state &lt;= round;
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+        end
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+      end
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+      round:
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+      begin
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+            z_e &lt;=z_e + 1;
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+          end
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+        end
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+        state &lt;= pack;
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+      end
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+      pack:
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+      begin
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+        z[9:0] &lt;= z_m[9:0];
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+        z[14:10] &lt;= z_e[4:0] + 15;
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+        z[15] &lt;= z_s;
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+        if ($signed(z_e) == -14 &amp;&amp; z_m[10] == 0) begin
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+        end
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+        //if overflow occurs, return inf
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+        if ($signed(z_e) &gt; 15) begin
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+          z[15] &lt;= z_s;
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+        end
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+        state &lt;= put_z;
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+      end
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+      put_z:
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+      begin
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+        s_output_z &lt;= z;
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+          state &lt;= get_a;
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+        end
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+      end
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+
+</a><a href="#h2-0-299" id="h2-0-299" class="i">+    endcase
+</a><a href="#h2-0-300" id="h2-0-300" class="i">+
+</a><a href="#h2-0-301" id="h2-0-301" class="i">+    if (rst == 1) begin
+</a><a href="#h2-0-302" id="h2-0-302" class="i">+      state &lt;= get_a;
+</a><a href="#h2-0-303" id="h2-0-303" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h2-0-304" id="h2-0-304" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h2-0-305" id="h2-0-305" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h2-0-306" id="h2-0-306" class="i">+    end
+</a><a href="#h2-0-307" id="h2-0-307" class="i">+
+</a><a href="#h2-0-308" id="h2-0-308" class="i">+  end
+</a><a href="#h2-0-309" id="h2-0-309" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h2-0-310" id="h2-0-310" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h2-0-311" id="h2-0-311" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h2-0-312" id="h2-0-312" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/files_divf32.go.html">pkg/procbuilder/files_divf32.go</a> b/<a href="../file/pkg/procbuilder/files_divf32.go.html">pkg/procbuilder/files_divf32.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,6 +4,314 @@ const (
+</a> 	divf32 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h3-0-3" id="h3-0-3" class="i">+	input_a,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+        input_b,
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+        input_a_stb,
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+        input_b_stb,
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+        output_z_ack,
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+        clk,
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+        rst,
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+        output_z,
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+        output_z_stb,
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+        input_a_ack,
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+        input_b_ack);
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+  input     clk;
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+  input     rst;
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+  input     [31:0] input_a;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+  input     [31:0] input_b;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+  output    [31:0] output_z;
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+  reg       [31:0] s_output_z;
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+            normalise_a   = 4&#39;d4,
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+            normalise_b   = 4&#39;d5,
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+            divide_0      = 4&#39;d6,
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+            divide_1      = 4&#39;d7,
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+            divide_2      = 4&#39;d8,
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+            divide_3      = 4&#39;d9,
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+            normalise_1   = 4&#39;d10,
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+            normalise_2   = 4&#39;d11,
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+            round         = 4&#39;d12,
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+            pack          = 4&#39;d13,
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+            put_z         = 4&#39;d14;
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+  reg       [31:0] a, b, z;
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+  reg       [23:0] a_m, b_m, z_m;
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+  reg       [9:0] a_e, b_e, z_e;
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+  reg       [50:0] quotient, divisor, dividend, remainder;
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+  reg       [5:0] count;
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+  always @(posedge clk)
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+  begin
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+    case(state)
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+      get_a:
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+      begin
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+          a &lt;= input_a;
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+          state &lt;= get_b;
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+        end
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+      end
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+      get_b:
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+      begin
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+          b &lt;= input_b;
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+          state &lt;= unpack;
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+        end
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+      end
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+      unpack:
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+      begin
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+        a_m &lt;= a[22 : 0];
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+        b_m &lt;= b[22 : 0];
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+        a_e &lt;= a[30 : 23] - 127;
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+        b_e &lt;= b[30 : 23] - 127;
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+        a_s &lt;= a[31];
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+        b_s &lt;= b[31];
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+        state &lt;= special_cases;
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+      end
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+      special_cases:
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+      begin
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+          z[31] &lt;= 1;
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+          z[22] &lt;= 1;
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+          z[21:0] &lt;= 0;
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+          //if a is inf and b is inf return NaN 
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+        end else if ((a_e == 128) &amp;&amp; (b_e == 128)) begin
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+          z[31] &lt;= 1;
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+          z[22] &lt;= 1;
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+          z[21:0] &lt;= 0;
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+        //if a is inf return inf
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+        end else if (a_e == 128) begin
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+           //if b is zero return NaN
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+          if ($signed(b_e == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+            z[31] &lt;= 1;
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+            z[30:23] &lt;= 255;
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+            z[22] &lt;= 1;
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+            z[21:0] &lt;= 0;
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+            state &lt;= put_z;
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+          end
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+        //if b is inf return zero
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+        end else if (b_e == 128) begin
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+          z[30:23] &lt;= 0;
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+        //if a is zero return zero
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+          z[30:23] &lt;= 0;
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+           //if b is zero return NaN
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+          if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+            z[31] &lt;= 1;
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+            z[30:23] &lt;= 255;
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+            z[22] &lt;= 1;
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+            z[21:0] &lt;= 0;
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+            state &lt;= put_z;
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+          end
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+        //if b is zero return inf
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+          state &lt;= put_z;
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+        end else begin
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+          //Denormalised Number
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+          if ($signed(a_e) == -127) begin
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+            a_e &lt;= -126;
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+          end else begin
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+            a_m[23] &lt;= 1;
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+          end
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+          //Denormalised Number
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+          if ($signed(b_e) == -127) begin
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+            b_e &lt;= -126;
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+          end else begin
+</a><a href="#h3-0-163" id="h3-0-163" class="i">+            b_m[23] &lt;= 1;
+</a><a href="#h3-0-164" id="h3-0-164" class="i">+          end
+</a><a href="#h3-0-165" id="h3-0-165" class="i">+          state &lt;= normalise_a;
+</a><a href="#h3-0-166" id="h3-0-166" class="i">+        end
+</a><a href="#h3-0-167" id="h3-0-167" class="i">+      end
+</a><a href="#h3-0-168" id="h3-0-168" class="i">+
+</a><a href="#h3-0-169" id="h3-0-169" class="i">+      normalise_a:
+</a><a href="#h3-0-170" id="h3-0-170" class="i">+      begin
+</a><a href="#h3-0-171" id="h3-0-171" class="i">+        if (a_m[23]) begin
+</a><a href="#h3-0-172" id="h3-0-172" class="i">+          state &lt;= normalise_b;
+</a><a href="#h3-0-173" id="h3-0-173" class="i">+        end else begin
+</a><a href="#h3-0-174" id="h3-0-174" class="i">+          a_m &lt;= a_m &lt;&lt; 1;
+</a><a href="#h3-0-175" id="h3-0-175" class="i">+          a_e &lt;= a_e - 1;
+</a><a href="#h3-0-176" id="h3-0-176" class="i">+        end
+</a><a href="#h3-0-177" id="h3-0-177" class="i">+      end
+</a><a href="#h3-0-178" id="h3-0-178" class="i">+
+</a><a href="#h3-0-179" id="h3-0-179" class="i">+      normalise_b:
+</a><a href="#h3-0-180" id="h3-0-180" class="i">+      begin
+</a><a href="#h3-0-181" id="h3-0-181" class="i">+        if (b_m[23]) begin
+</a><a href="#h3-0-182" id="h3-0-182" class="i">+          state &lt;= divide_0;
+</a><a href="#h3-0-183" id="h3-0-183" class="i">+        end else begin
+</a><a href="#h3-0-184" id="h3-0-184" class="i">+          b_m &lt;= b_m &lt;&lt; 1;
+</a><a href="#h3-0-185" id="h3-0-185" class="i">+          b_e &lt;= b_e - 1;
+</a><a href="#h3-0-186" id="h3-0-186" class="i">+        end
+</a><a href="#h3-0-187" id="h3-0-187" class="i">+      end
+</a><a href="#h3-0-188" id="h3-0-188" class="i">+
+</a><a href="#h3-0-189" id="h3-0-189" class="i">+      divide_0:
+</a><a href="#h3-0-190" id="h3-0-190" class="i">+      begin
+</a><a href="#h3-0-191" id="h3-0-191" class="i">+        z_s &lt;= a_s ^ b_s;
+</a><a href="#h3-0-192" id="h3-0-192" class="i">+        z_e &lt;= a_e - b_e;
+</a><a href="#h3-0-193" id="h3-0-193" class="i">+        quotient &lt;= 0;
+</a><a href="#h3-0-194" id="h3-0-194" class="i">+        remainder &lt;= 0;
+</a><a href="#h3-0-195" id="h3-0-195" class="i">+        count &lt;= 0;
+</a><a href="#h3-0-196" id="h3-0-196" class="i">+        dividend &lt;= a_m &lt;&lt; 27;
+</a><a href="#h3-0-197" id="h3-0-197" class="i">+        divisor &lt;= b_m;
+</a><a href="#h3-0-198" id="h3-0-198" class="i">+        state &lt;= divide_1;
+</a><a href="#h3-0-199" id="h3-0-199" class="i">+      end
+</a><a href="#h3-0-200" id="h3-0-200" class="i">+
+</a><a href="#h3-0-201" id="h3-0-201" class="i">+      divide_1:
+</a><a href="#h3-0-202" id="h3-0-202" class="i">+      begin
+</a><a href="#h3-0-203" id="h3-0-203" class="i">+        quotient &lt;= quotient &lt;&lt; 1;
+</a><a href="#h3-0-204" id="h3-0-204" class="i">+        remainder &lt;= remainder &lt;&lt; 1;
+</a><a href="#h3-0-205" id="h3-0-205" class="i">+        remainder[0] &lt;= dividend[50];
+</a><a href="#h3-0-206" id="h3-0-206" class="i">+        dividend &lt;= dividend &lt;&lt; 1;
+</a><a href="#h3-0-207" id="h3-0-207" class="i">+        state &lt;= divide_2;
+</a><a href="#h3-0-208" id="h3-0-208" class="i">+      end
+</a><a href="#h3-0-209" id="h3-0-209" class="i">+
+</a><a href="#h3-0-210" id="h3-0-210" class="i">+      divide_2:
+</a><a href="#h3-0-211" id="h3-0-211" class="i">+      begin
+</a><a href="#h3-0-212" id="h3-0-212" class="i">+        if (remainder &gt;= divisor) begin
+</a><a href="#h3-0-213" id="h3-0-213" class="i">+          quotient[0] &lt;= 1;
+</a><a href="#h3-0-214" id="h3-0-214" class="i">+          remainder &lt;= remainder - divisor;
+</a><a href="#h3-0-215" id="h3-0-215" class="i">+        end
+</a><a href="#h3-0-216" id="h3-0-216" class="i">+        if (count == 49) begin
+</a><a href="#h3-0-217" id="h3-0-217" class="i">+          state &lt;= divide_3;
+</a><a href="#h3-0-218" id="h3-0-218" class="i">+        end else begin
+</a><a href="#h3-0-219" id="h3-0-219" class="i">+          count &lt;= count + 1;
+</a><a href="#h3-0-220" id="h3-0-220" class="i">+          state &lt;= divide_1;
+</a><a href="#h3-0-221" id="h3-0-221" class="i">+        end
+</a><a href="#h3-0-222" id="h3-0-222" class="i">+      end
+</a><a href="#h3-0-223" id="h3-0-223" class="i">+
+</a><a href="#h3-0-224" id="h3-0-224" class="i">+      divide_3:
+</a><a href="#h3-0-225" id="h3-0-225" class="i">+      begin
+</a><a href="#h3-0-226" id="h3-0-226" class="i">+        z_m &lt;= quotient[26:3];
+</a><a href="#h3-0-227" id="h3-0-227" class="i">+        guard &lt;= quotient[2];
+</a><a href="#h3-0-228" id="h3-0-228" class="i">+        round_bit &lt;= quotient[1];
+</a><a href="#h3-0-229" id="h3-0-229" class="i">+        sticky &lt;= quotient[0] | (remainder != 0);
+</a><a href="#h3-0-230" id="h3-0-230" class="i">+        state &lt;= normalise_1;
+</a><a href="#h3-0-231" id="h3-0-231" class="i">+      end
+</a><a href="#h3-0-232" id="h3-0-232" class="i">+
+</a><a href="#h3-0-233" id="h3-0-233" class="i">+      normalise_1:
+</a><a href="#h3-0-234" id="h3-0-234" class="i">+      begin
+</a><a href="#h3-0-235" id="h3-0-235" class="i">+        if (z_m[23] == 0 &amp;&amp; $signed(z_e) &gt; -126) begin
+</a><a href="#h3-0-236" id="h3-0-236" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h3-0-237" id="h3-0-237" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h3-0-238" id="h3-0-238" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h3-0-239" id="h3-0-239" class="i">+          guard &lt;= round_bit;
+</a><a href="#h3-0-240" id="h3-0-240" class="i">+          round_bit &lt;= 0;
+</a><a href="#h3-0-241" id="h3-0-241" class="i">+        end else begin
+</a><a href="#h3-0-242" id="h3-0-242" class="i">+          state &lt;= normalise_2;
+</a><a href="#h3-0-243" id="h3-0-243" class="i">+        end
+</a><a href="#h3-0-244" id="h3-0-244" class="i">+      end
+</a><a href="#h3-0-245" id="h3-0-245" class="i">+
+</a><a href="#h3-0-246" id="h3-0-246" class="i">+      normalise_2:
+</a><a href="#h3-0-247" id="h3-0-247" class="i">+      begin
+</a><a href="#h3-0-248" id="h3-0-248" class="i">+        if ($signed(z_e) &lt; -126) begin
+</a><a href="#h3-0-249" id="h3-0-249" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h3-0-250" id="h3-0-250" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h3-0-251" id="h3-0-251" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h3-0-252" id="h3-0-252" class="i">+          round_bit &lt;= guard;
+</a><a href="#h3-0-253" id="h3-0-253" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h3-0-254" id="h3-0-254" class="i">+        end else begin
+</a><a href="#h3-0-255" id="h3-0-255" class="i">+          state &lt;= round;
+</a><a href="#h3-0-256" id="h3-0-256" class="i">+        end
+</a><a href="#h3-0-257" id="h3-0-257" class="i">+      end
+</a><a href="#h3-0-258" id="h3-0-258" class="i">+
+</a><a href="#h3-0-259" id="h3-0-259" class="i">+      round:
+</a><a href="#h3-0-260" id="h3-0-260" class="i">+      begin
+</a><a href="#h3-0-261" id="h3-0-261" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h3-0-262" id="h3-0-262" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h3-0-263" id="h3-0-263" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h3-0-264" id="h3-0-264" class="i">+            z_e &lt;=z_e + 1;
+</a><a href="#h3-0-265" id="h3-0-265" class="i">+          end
+</a><a href="#h3-0-266" id="h3-0-266" class="i">+        end
+</a><a href="#h3-0-267" id="h3-0-267" class="i">+        state &lt;= pack;
+</a><a href="#h3-0-268" id="h3-0-268" class="i">+      end
+</a><a href="#h3-0-269" id="h3-0-269" class="i">+
+</a><a href="#h3-0-270" id="h3-0-270" class="i">+      pack:
+</a><a href="#h3-0-271" id="h3-0-271" class="i">+      begin
+</a><a href="#h3-0-272" id="h3-0-272" class="i">+        z[22 : 0] &lt;= z_m[22:0];
+</a><a href="#h3-0-273" id="h3-0-273" class="i">+        z[30 : 23] &lt;= z_e[7:0] + 127;
+</a><a href="#h3-0-274" id="h3-0-274" class="i">+        z[31] &lt;= z_s;
+</a><a href="#h3-0-275" id="h3-0-275" class="i">+        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin
+</a><a href="#h3-0-276" id="h3-0-276" class="i">+          z[30 : 23] &lt;= 0;
+</a><a href="#h3-0-277" id="h3-0-277" class="i">+        end
+</a><a href="#h3-0-278" id="h3-0-278" class="i">+        //if overflow occurs, return inf
+</a><a href="#h3-0-279" id="h3-0-279" class="i">+        if ($signed(z_e) &gt; 127) begin
+</a><a href="#h3-0-280" id="h3-0-280" class="i">+          z[22 : 0] &lt;= 0;
+</a><a href="#h3-0-281" id="h3-0-281" class="i">+          z[30 : 23] &lt;= 255;
+</a><a href="#h3-0-282" id="h3-0-282" class="i">+          z[31] &lt;= z_s;
+</a><a href="#h3-0-283" id="h3-0-283" class="i">+        end
+</a><a href="#h3-0-284" id="h3-0-284" class="i">+        state &lt;= put_z;
+</a><a href="#h3-0-285" id="h3-0-285" class="i">+      end
+</a><a href="#h3-0-286" id="h3-0-286" class="i">+
+</a><a href="#h3-0-287" id="h3-0-287" class="i">+      put_z:
+</a><a href="#h3-0-288" id="h3-0-288" class="i">+      begin
+</a><a href="#h3-0-289" id="h3-0-289" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h3-0-290" id="h3-0-290" class="i">+        s_output_z &lt;= z;
+</a><a href="#h3-0-291" id="h3-0-291" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h3-0-292" id="h3-0-292" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h3-0-293" id="h3-0-293" class="i">+          state &lt;= get_a;
+</a><a href="#h3-0-294" id="h3-0-294" class="i">+        end
+</a><a href="#h3-0-295" id="h3-0-295" class="i">+      end
+</a><a href="#h3-0-296" id="h3-0-296" class="i">+
+</a><a href="#h3-0-297" id="h3-0-297" class="i">+    endcase
+</a><a href="#h3-0-298" id="h3-0-298" class="i">+
+</a><a href="#h3-0-299" id="h3-0-299" class="i">+    if (rst == 1) begin
+</a><a href="#h3-0-300" id="h3-0-300" class="i">+      state &lt;= get_a;
+</a><a href="#h3-0-301" id="h3-0-301" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h3-0-302" id="h3-0-302" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h3-0-303" id="h3-0-303" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h3-0-304" id="h3-0-304" class="i">+    end
+</a><a href="#h3-0-305" id="h3-0-305" class="i">+
+</a><a href="#h3-0-306" id="h3-0-306" class="i">+  end
+</a><a href="#h3-0-307" id="h3-0-307" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h3-0-308" id="h3-0-308" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h3-0-309" id="h3-0-309" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h3-0-310" id="h3-0-310" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/files_multf16.go.html">pkg/procbuilder/files_multf16.go</a> b/<a href="../file/pkg/procbuilder/files_multf16.go.html">pkg/procbuilder/files_multf16.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -4,6 +4,275 @@ const (
+</a> 	multf16 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h4-0-3" id="h4-0-3" class="i">+	input_a,
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+        input_b,
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+        input_a_stb,
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+        input_b_stb,
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+        output_z_ack,
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+        clk,
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+        rst,
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+        output_z,
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+        output_z_stb,
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+        input_a_ack,
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+        input_b_ack);
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+  input     clk;
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+  input     rst;
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+  input     [15:0] input_a;
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+  input     [15:0] input_b;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+  output    [15:0] output_z;
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+  reg       [15:0] s_output_z;
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+            normalise_a   = 4&#39;d4,
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+            normalise_b   = 4&#39;d5,
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+            multiply_0    = 4&#39;d6,
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+            multiply_1    = 4&#39;d7,
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+            normalise_1   = 4&#39;d8,
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+            normalise_2   = 4&#39;d9,
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+            round         = 4&#39;d10,
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+            pack          = 4&#39;d11,
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+            put_z         = 4&#39;d12;
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+  reg       [15:0] a, b, z; // 15 -&gt; 15
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+  reg       [10:0] a_m, b_m, z_m; // 23 -&gt; 10
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+  reg       [6:0] a_e, b_e, z_e;
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+  reg       [21:0] product; // 10*2 + 1
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+  always @(posedge clk)
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+  begin
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+    case(state)
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+      get_a:
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+      begin
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+          a &lt;= input_a;
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+          state &lt;= get_b;
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+        end
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+      end
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+      get_b:
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+      begin
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+          b &lt;= input_b;
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+          state &lt;= unpack;
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+        end
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+      end
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+      unpack:
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+      begin
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+        a_m &lt;= a[9:0];
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+        b_m &lt;= b[9:0];
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+        a_e &lt;= a[14:10] - 15;
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+        b_e &lt;= b[14:10] - 15;
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+        a_s &lt;= a[15];
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+        b_s &lt;= b[15];
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+        state &lt;= special_cases;
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+      end
+</a><a href="#h4-0-92" id="h4-0-92" class="i">+
+</a><a href="#h4-0-93" id="h4-0-93" class="i">+      special_cases:
+</a><a href="#h4-0-94" id="h4-0-94" class="i">+      begin
+</a><a href="#h4-0-95" id="h4-0-95" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h4-0-96" id="h4-0-96" class="i">+        if ((a_e == 16 &amp;&amp; a_m != 0) || (b_e == 16 &amp;&amp; b_m != 0)) begin
+</a><a href="#h4-0-97" id="h4-0-97" class="i">+          z[15] &lt;= 1;
+</a><a href="#h4-0-98" id="h4-0-98" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h4-0-99" id="h4-0-99" class="i">+          z[9] &lt;= 1;
+</a><a href="#h4-0-100" id="h4-0-100" class="i">+          z[8:0] &lt;= 0;
+</a><a href="#h4-0-101" id="h4-0-101" class="i">+          state &lt;= put_z;
+</a><a href="#h4-0-102" id="h4-0-102" class="i">+        //if a is inf return inf
+</a><a href="#h4-0-103" id="h4-0-103" class="i">+        end else if (a_e == 16) begin
+</a><a href="#h4-0-104" id="h4-0-104" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h4-0-105" id="h4-0-105" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h4-0-106" id="h4-0-106" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h4-0-107" id="h4-0-107" class="i">+          //if b is zero return NaN
+</a><a href="#h4-0-108" id="h4-0-108" class="i">+          if (($signed(b_e) == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h4-0-109" id="h4-0-109" class="i">+            z[15] &lt;= 1;
+</a><a href="#h4-0-110" id="h4-0-110" class="i">+            z[14:10] &lt;= 255;
+</a><a href="#h4-0-111" id="h4-0-111" class="i">+            z[9] &lt;= 1;
+</a><a href="#h4-0-112" id="h4-0-112" class="i">+            z[8:0] &lt;= 0;
+</a><a href="#h4-0-113" id="h4-0-113" class="i">+          end
+</a><a href="#h4-0-114" id="h4-0-114" class="i">+          state &lt;= put_z;
+</a><a href="#h4-0-115" id="h4-0-115" class="i">+        //if b is inf return inf
+</a><a href="#h4-0-116" id="h4-0-116" class="i">+        end else if (b_e == 16) begin
+</a><a href="#h4-0-117" id="h4-0-117" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h4-0-118" id="h4-0-118" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h4-0-119" id="h4-0-119" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h4-0-120" id="h4-0-120" class="i">+          //if a is zero return NaN
+</a><a href="#h4-0-121" id="h4-0-121" class="i">+          if (($signed(a_e) == -15) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h4-0-122" id="h4-0-122" class="i">+            z[15] &lt;= 1;
+</a><a href="#h4-0-123" id="h4-0-123" class="i">+            z[14:10] &lt;= 255;
+</a><a href="#h4-0-124" id="h4-0-124" class="i">+            z[9] &lt;= 1;
+</a><a href="#h4-0-125" id="h4-0-125" class="i">+            z[8:0] &lt;= 0;
+</a><a href="#h4-0-126" id="h4-0-126" class="i">+          end
+</a><a href="#h4-0-127" id="h4-0-127" class="i">+          state &lt;= put_z;
+</a><a href="#h4-0-128" id="h4-0-128" class="i">+        //if a is zero return zero
+</a><a href="#h4-0-129" id="h4-0-129" class="i">+        end else if (($signed(a_e) == -15) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h4-0-130" id="h4-0-130" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h4-0-131" id="h4-0-131" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h4-0-132" id="h4-0-132" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h4-0-133" id="h4-0-133" class="i">+          state &lt;= put_z;
+</a><a href="#h4-0-134" id="h4-0-134" class="i">+        //if b is zero return zero
+</a><a href="#h4-0-135" id="h4-0-135" class="i">+        end else if (($signed(b_e) == -15) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h4-0-136" id="h4-0-136" class="i">+          z[15] &lt;= a_s ^ b_s;
+</a><a href="#h4-0-137" id="h4-0-137" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h4-0-138" id="h4-0-138" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h4-0-139" id="h4-0-139" class="i">+          state &lt;= put_z;
+</a><a href="#h4-0-140" id="h4-0-140" class="i">+        end else begin
+</a><a href="#h4-0-141" id="h4-0-141" class="i">+          //Denormalised Number
+</a><a href="#h4-0-142" id="h4-0-142" class="i">+          if ($signed(a_e) == -15) begin
+</a><a href="#h4-0-143" id="h4-0-143" class="i">+            a_e &lt;= -14;
+</a><a href="#h4-0-144" id="h4-0-144" class="i">+          end else begin
+</a><a href="#h4-0-145" id="h4-0-145" class="i">+            a_m[10] &lt;= 1;
+</a><a href="#h4-0-146" id="h4-0-146" class="i">+          end
+</a><a href="#h4-0-147" id="h4-0-147" class="i">+          //Denormalised Number
+</a><a href="#h4-0-148" id="h4-0-148" class="i">+          if ($signed(b_e) == -15) begin
+</a><a href="#h4-0-149" id="h4-0-149" class="i">+            b_e &lt;= -14;
+</a><a href="#h4-0-150" id="h4-0-150" class="i">+          end else begin
+</a><a href="#h4-0-151" id="h4-0-151" class="i">+            b_m[10] &lt;= 1;
+</a><a href="#h4-0-152" id="h4-0-152" class="i">+          end
+</a><a href="#h4-0-153" id="h4-0-153" class="i">+          state &lt;= normalise_a;
+</a><a href="#h4-0-154" id="h4-0-154" class="i">+        end
+</a><a href="#h4-0-155" id="h4-0-155" class="i">+      end
+</a><a href="#h4-0-156" id="h4-0-156" class="i">+
+</a><a href="#h4-0-157" id="h4-0-157" class="i">+      normalise_a:
+</a><a href="#h4-0-158" id="h4-0-158" class="i">+      begin
+</a><a href="#h4-0-159" id="h4-0-159" class="i">+        if (a_m[10]) begin
+</a><a href="#h4-0-160" id="h4-0-160" class="i">+          state &lt;= normalise_b;
+</a><a href="#h4-0-161" id="h4-0-161" class="i">+        end else begin
+</a><a href="#h4-0-162" id="h4-0-162" class="i">+          a_m &lt;= a_m &lt;&lt; 1;
+</a><a href="#h4-0-163" id="h4-0-163" class="i">+          a_e &lt;= a_e - 1;
+</a><a href="#h4-0-164" id="h4-0-164" class="i">+        end
+</a><a href="#h4-0-165" id="h4-0-165" class="i">+      end
+</a><a href="#h4-0-166" id="h4-0-166" class="i">+
+</a><a href="#h4-0-167" id="h4-0-167" class="i">+      normalise_b:
+</a><a href="#h4-0-168" id="h4-0-168" class="i">+      begin
+</a><a href="#h4-0-169" id="h4-0-169" class="i">+        if (b_m[10]) begin
+</a><a href="#h4-0-170" id="h4-0-170" class="i">+          state &lt;= multiply_0;
+</a><a href="#h4-0-171" id="h4-0-171" class="i">+        end else begin
+</a><a href="#h4-0-172" id="h4-0-172" class="i">+          b_m &lt;= b_m &lt;&lt; 1;
+</a><a href="#h4-0-173" id="h4-0-173" class="i">+          b_e &lt;= b_e - 1;
+</a><a href="#h4-0-174" id="h4-0-174" class="i">+        end
+</a><a href="#h4-0-175" id="h4-0-175" class="i">+      end
+</a><a href="#h4-0-176" id="h4-0-176" class="i">+
+</a><a href="#h4-0-177" id="h4-0-177" class="i">+      multiply_0:
+</a><a href="#h4-0-178" id="h4-0-178" class="i">+      begin
+</a><a href="#h4-0-179" id="h4-0-179" class="i">+        z_s &lt;= a_s ^ b_s;
+</a><a href="#h4-0-180" id="h4-0-180" class="i">+        z_e &lt;= a_e + b_e + 1;
+</a><a href="#h4-0-181" id="h4-0-181" class="i">+        product &lt;= a_m * b_m;
+</a><a href="#h4-0-182" id="h4-0-182" class="i">+        state &lt;= multiply_1;
+</a><a href="#h4-0-183" id="h4-0-183" class="i">+      end
+</a><a href="#h4-0-184" id="h4-0-184" class="i">+
+</a><a href="#h4-0-185" id="h4-0-185" class="i">+      multiply_1:
+</a><a href="#h4-0-186" id="h4-0-186" class="i">+      begin
+</a><a href="#h4-0-187" id="h4-0-187" class="i">+        z_m &lt;= product[21:11];
+</a><a href="#h4-0-188" id="h4-0-188" class="i">+        guard &lt;= product[10];
+</a><a href="#h4-0-189" id="h4-0-189" class="i">+        round_bit &lt;= product[9];
+</a><a href="#h4-0-190" id="h4-0-190" class="i">+        sticky &lt;= (product[8:0] != 0);
+</a><a href="#h4-0-191" id="h4-0-191" class="i">+        state &lt;= normalise_1;
+</a><a href="#h4-0-192" id="h4-0-192" class="i">+      end
+</a><a href="#h4-0-193" id="h4-0-193" class="i">+
+</a><a href="#h4-0-194" id="h4-0-194" class="i">+      normalise_1:
+</a><a href="#h4-0-195" id="h4-0-195" class="i">+      begin
+</a><a href="#h4-0-196" id="h4-0-196" class="i">+        if (z_m[10] == 0) begin
+</a><a href="#h4-0-197" id="h4-0-197" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h4-0-198" id="h4-0-198" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h4-0-199" id="h4-0-199" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h4-0-200" id="h4-0-200" class="i">+          guard &lt;= round_bit;
+</a><a href="#h4-0-201" id="h4-0-201" class="i">+          round_bit &lt;= 0;
+</a><a href="#h4-0-202" id="h4-0-202" class="i">+        end else begin
+</a><a href="#h4-0-203" id="h4-0-203" class="i">+          state &lt;= normalise_2;
+</a><a href="#h4-0-204" id="h4-0-204" class="i">+        end
+</a><a href="#h4-0-205" id="h4-0-205" class="i">+      end
+</a><a href="#h4-0-206" id="h4-0-206" class="i">+
+</a><a href="#h4-0-207" id="h4-0-207" class="i">+      normalise_2:
+</a><a href="#h4-0-208" id="h4-0-208" class="i">+      begin
+</a><a href="#h4-0-209" id="h4-0-209" class="i">+        if ($signed(z_e) &lt; -14) begin
+</a><a href="#h4-0-210" id="h4-0-210" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h4-0-211" id="h4-0-211" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h4-0-212" id="h4-0-212" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h4-0-213" id="h4-0-213" class="i">+          round_bit &lt;= guard;
+</a><a href="#h4-0-214" id="h4-0-214" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h4-0-215" id="h4-0-215" class="i">+        end else begin
+</a><a href="#h4-0-216" id="h4-0-216" class="i">+          state &lt;= round;
+</a><a href="#h4-0-217" id="h4-0-217" class="i">+        end
+</a><a href="#h4-0-218" id="h4-0-218" class="i">+      end
+</a><a href="#h4-0-219" id="h4-0-219" class="i">+
+</a><a href="#h4-0-220" id="h4-0-220" class="i">+      round:
+</a><a href="#h4-0-221" id="h4-0-221" class="i">+      begin
+</a><a href="#h4-0-222" id="h4-0-222" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h4-0-223" id="h4-0-223" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h4-0-224" id="h4-0-224" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h4-0-225" id="h4-0-225" class="i">+            z_e &lt;=z_e + 1;
+</a><a href="#h4-0-226" id="h4-0-226" class="i">+          end
+</a><a href="#h4-0-227" id="h4-0-227" class="i">+        end
+</a><a href="#h4-0-228" id="h4-0-228" class="i">+        state &lt;= pack;
+</a><a href="#h4-0-229" id="h4-0-229" class="i">+      end
+</a><a href="#h4-0-230" id="h4-0-230" class="i">+
+</a><a href="#h4-0-231" id="h4-0-231" class="i">+      pack:
+</a><a href="#h4-0-232" id="h4-0-232" class="i">+      begin
+</a><a href="#h4-0-233" id="h4-0-233" class="i">+        z[9:0] &lt;= z_m[9:0];
+</a><a href="#h4-0-234" id="h4-0-234" class="i">+        z[14:10] &lt;= z_e[4:0] + 15;
+</a><a href="#h4-0-235" id="h4-0-235" class="i">+        z[15] &lt;= z_s;
+</a><a href="#h4-0-236" id="h4-0-236" class="i">+        if ($signed(z_e) == -14 &amp;&amp; z_m[10] == 0) begin
+</a><a href="#h4-0-237" id="h4-0-237" class="i">+          z[14:10] &lt;= 0;
+</a><a href="#h4-0-238" id="h4-0-238" class="i">+        end
+</a><a href="#h4-0-239" id="h4-0-239" class="i">+        //if overflow occurs, return inf
+</a><a href="#h4-0-240" id="h4-0-240" class="i">+        if ($signed(z_e) &gt; 15) begin
+</a><a href="#h4-0-241" id="h4-0-241" class="i">+          z[9:0] &lt;= 0;
+</a><a href="#h4-0-242" id="h4-0-242" class="i">+          z[14:10] &lt;= 255;
+</a><a href="#h4-0-243" id="h4-0-243" class="i">+          z[15] &lt;= z_s;
+</a><a href="#h4-0-244" id="h4-0-244" class="i">+        end
+</a><a href="#h4-0-245" id="h4-0-245" class="i">+        state &lt;= put_z;
+</a><a href="#h4-0-246" id="h4-0-246" class="i">+      end
+</a><a href="#h4-0-247" id="h4-0-247" class="i">+
+</a><a href="#h4-0-248" id="h4-0-248" class="i">+      put_z:
+</a><a href="#h4-0-249" id="h4-0-249" class="i">+      begin
+</a><a href="#h4-0-250" id="h4-0-250" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h4-0-251" id="h4-0-251" class="i">+        s_output_z &lt;= z;
+</a><a href="#h4-0-252" id="h4-0-252" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h4-0-253" id="h4-0-253" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h4-0-254" id="h4-0-254" class="i">+          state &lt;= get_a;
+</a><a href="#h4-0-255" id="h4-0-255" class="i">+        end
+</a><a href="#h4-0-256" id="h4-0-256" class="i">+      end
+</a><a href="#h4-0-257" id="h4-0-257" class="i">+
+</a><a href="#h4-0-258" id="h4-0-258" class="i">+    endcase
+</a><a href="#h4-0-259" id="h4-0-259" class="i">+
+</a><a href="#h4-0-260" id="h4-0-260" class="i">+    if (rst == 1) begin
+</a><a href="#h4-0-261" id="h4-0-261" class="i">+      state &lt;= get_a;
+</a><a href="#h4-0-262" id="h4-0-262" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h4-0-263" id="h4-0-263" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h4-0-264" id="h4-0-264" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h4-0-265" id="h4-0-265" class="i">+    end
+</a><a href="#h4-0-266" id="h4-0-266" class="i">+
+</a><a href="#h4-0-267" id="h4-0-267" class="i">+  end
+</a><a href="#h4-0-268" id="h4-0-268" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h4-0-269" id="h4-0-269" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h4-0-270" id="h4-0-270" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h4-0-271" id="h4-0-271" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/files_multf32.go.html">pkg/procbuilder/files_multf32.go</a> b/<a href="../file/pkg/procbuilder/files_multf32.go.html">pkg/procbuilder/files_multf32.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -4,6 +4,275 @@ const (
+</a> 	multf32 = `
+ 
+ module {{.ModuleName}} (
+<a href="#h5-0-3" id="h5-0-3" class="i">+	input_a,
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+        input_b,
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+        input_a_stb,
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+        input_b_stb,
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+        output_z_ack,
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+        clk,
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+        rst,
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+        output_z,
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+        output_z_stb,
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+        input_a_ack,
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+        input_b_ack);
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+  input     clk;
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+  input     rst;
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+  input     [31:0] input_a;
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+  input     input_a_stb;
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+  output    input_a_ack;
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+  input     [31:0] input_b;
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+  input     input_b_stb;
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+  output    input_b_ack;
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+  output    [31:0] output_z;
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+  output    output_z_stb;
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+  input     output_z_ack;
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+  reg       s_output_z_stb;
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+  reg       [31:0] s_output_z;
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+  reg       s_input_a_ack;
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+  reg       s_input_b_ack;
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+  reg       [3:0] state;
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+  parameter get_a         = 4&#39;d0,
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+            get_b         = 4&#39;d1,
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+            unpack        = 4&#39;d2,
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+            special_cases = 4&#39;d3,
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+            normalise_a   = 4&#39;d4,
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+            normalise_b   = 4&#39;d5,
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+            multiply_0    = 4&#39;d6,
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+            multiply_1    = 4&#39;d7,
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+            normalise_1   = 4&#39;d8,
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+            normalise_2   = 4&#39;d9,
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+            round         = 4&#39;d10,
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+            pack          = 4&#39;d11,
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+            put_z         = 4&#39;d12;
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+  reg       [31:0] a, b, z;
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+  reg       [23:0] a_m, b_m, z_m;
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+  reg       [9:0] a_e, b_e, z_e;
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+  reg       a_s, b_s, z_s;
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+  reg       guard, round_bit, sticky;
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+  reg       [47:0] product;
+</a><a href="#h5-0-56" id="h5-0-56" class="i">+
+</a><a href="#h5-0-57" id="h5-0-57" class="i">+  always @(posedge clk)
+</a><a href="#h5-0-58" id="h5-0-58" class="i">+  begin
+</a><a href="#h5-0-59" id="h5-0-59" class="i">+
+</a><a href="#h5-0-60" id="h5-0-60" class="i">+    case(state)
+</a><a href="#h5-0-61" id="h5-0-61" class="i">+
+</a><a href="#h5-0-62" id="h5-0-62" class="i">+      get_a:
+</a><a href="#h5-0-63" id="h5-0-63" class="i">+      begin
+</a><a href="#h5-0-64" id="h5-0-64" class="i">+        s_input_a_ack &lt;= 1;
+</a><a href="#h5-0-65" id="h5-0-65" class="i">+        if (s_input_a_ack &amp;&amp; input_a_stb) begin
+</a><a href="#h5-0-66" id="h5-0-66" class="i">+          a &lt;= input_a;
+</a><a href="#h5-0-67" id="h5-0-67" class="i">+          s_input_a_ack &lt;= 0;
+</a><a href="#h5-0-68" id="h5-0-68" class="i">+          state &lt;= get_b;
+</a><a href="#h5-0-69" id="h5-0-69" class="i">+        end
+</a><a href="#h5-0-70" id="h5-0-70" class="i">+      end
+</a><a href="#h5-0-71" id="h5-0-71" class="i">+
+</a><a href="#h5-0-72" id="h5-0-72" class="i">+      get_b:
+</a><a href="#h5-0-73" id="h5-0-73" class="i">+      begin
+</a><a href="#h5-0-74" id="h5-0-74" class="i">+        s_input_b_ack &lt;= 1;
+</a><a href="#h5-0-75" id="h5-0-75" class="i">+        if (s_input_b_ack &amp;&amp; input_b_stb) begin
+</a><a href="#h5-0-76" id="h5-0-76" class="i">+          b &lt;= input_b;
+</a><a href="#h5-0-77" id="h5-0-77" class="i">+          s_input_b_ack &lt;= 0;
+</a><a href="#h5-0-78" id="h5-0-78" class="i">+          state &lt;= unpack;
+</a><a href="#h5-0-79" id="h5-0-79" class="i">+        end
+</a><a href="#h5-0-80" id="h5-0-80" class="i">+      end
+</a><a href="#h5-0-81" id="h5-0-81" class="i">+
+</a><a href="#h5-0-82" id="h5-0-82" class="i">+      unpack:
+</a><a href="#h5-0-83" id="h5-0-83" class="i">+      begin
+</a><a href="#h5-0-84" id="h5-0-84" class="i">+        a_m &lt;= a[22 : 0];
+</a><a href="#h5-0-85" id="h5-0-85" class="i">+        b_m &lt;= b[22 : 0];
+</a><a href="#h5-0-86" id="h5-0-86" class="i">+        a_e &lt;= a[30 : 23] - 127;
+</a><a href="#h5-0-87" id="h5-0-87" class="i">+        b_e &lt;= b[30 : 23] - 127;
+</a><a href="#h5-0-88" id="h5-0-88" class="i">+        a_s &lt;= a[31];
+</a><a href="#h5-0-89" id="h5-0-89" class="i">+        b_s &lt;= b[31];
+</a><a href="#h5-0-90" id="h5-0-90" class="i">+        state &lt;= special_cases;
+</a><a href="#h5-0-91" id="h5-0-91" class="i">+      end
+</a><a href="#h5-0-92" id="h5-0-92" class="i">+
+</a><a href="#h5-0-93" id="h5-0-93" class="i">+      special_cases:
+</a><a href="#h5-0-94" id="h5-0-94" class="i">+      begin
+</a><a href="#h5-0-95" id="h5-0-95" class="i">+        //if a is NaN or b is NaN return NaN 
+</a><a href="#h5-0-96" id="h5-0-96" class="i">+        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin
+</a><a href="#h5-0-97" id="h5-0-97" class="i">+          z[31] &lt;= 1;
+</a><a href="#h5-0-98" id="h5-0-98" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h5-0-99" id="h5-0-99" class="i">+          z[22] &lt;= 1;
+</a><a href="#h5-0-100" id="h5-0-100" class="i">+          z[21:0] &lt;= 0;
+</a><a href="#h5-0-101" id="h5-0-101" class="i">+          state &lt;= put_z;
+</a><a href="#h5-0-102" id="h5-0-102" class="i">+        //if a is inf return inf
+</a><a href="#h5-0-103" id="h5-0-103" class="i">+        end else if (a_e == 128) begin
+</a><a href="#h5-0-104" id="h5-0-104" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h5-0-105" id="h5-0-105" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h5-0-106" id="h5-0-106" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h5-0-107" id="h5-0-107" class="i">+          //if b is zero return NaN
+</a><a href="#h5-0-108" id="h5-0-108" class="i">+          if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h5-0-109" id="h5-0-109" class="i">+            z[31] &lt;= 1;
+</a><a href="#h5-0-110" id="h5-0-110" class="i">+            z[30:23] &lt;= 255;
+</a><a href="#h5-0-111" id="h5-0-111" class="i">+            z[22] &lt;= 1;
+</a><a href="#h5-0-112" id="h5-0-112" class="i">+            z[21:0] &lt;= 0;
+</a><a href="#h5-0-113" id="h5-0-113" class="i">+          end
+</a><a href="#h5-0-114" id="h5-0-114" class="i">+          state &lt;= put_z;
+</a><a href="#h5-0-115" id="h5-0-115" class="i">+        //if b is inf return inf
+</a><a href="#h5-0-116" id="h5-0-116" class="i">+        end else if (b_e == 128) begin
+</a><a href="#h5-0-117" id="h5-0-117" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h5-0-118" id="h5-0-118" class="i">+          z[30:23] &lt;= 255;
+</a><a href="#h5-0-119" id="h5-0-119" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h5-0-120" id="h5-0-120" class="i">+          //if a is zero return NaN
+</a><a href="#h5-0-121" id="h5-0-121" class="i">+          if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h5-0-122" id="h5-0-122" class="i">+            z[31] &lt;= 1;
+</a><a href="#h5-0-123" id="h5-0-123" class="i">+            z[30:23] &lt;= 255;
+</a><a href="#h5-0-124" id="h5-0-124" class="i">+            z[22] &lt;= 1;
+</a><a href="#h5-0-125" id="h5-0-125" class="i">+            z[21:0] &lt;= 0;
+</a><a href="#h5-0-126" id="h5-0-126" class="i">+          end
+</a><a href="#h5-0-127" id="h5-0-127" class="i">+          state &lt;= put_z;
+</a><a href="#h5-0-128" id="h5-0-128" class="i">+        //if a is zero return zero
+</a><a href="#h5-0-129" id="h5-0-129" class="i">+        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin
+</a><a href="#h5-0-130" id="h5-0-130" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h5-0-131" id="h5-0-131" class="i">+          z[30:23] &lt;= 0;
+</a><a href="#h5-0-132" id="h5-0-132" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h5-0-133" id="h5-0-133" class="i">+          state &lt;= put_z;
+</a><a href="#h5-0-134" id="h5-0-134" class="i">+        //if b is zero return zero
+</a><a href="#h5-0-135" id="h5-0-135" class="i">+        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin
+</a><a href="#h5-0-136" id="h5-0-136" class="i">+          z[31] &lt;= a_s ^ b_s;
+</a><a href="#h5-0-137" id="h5-0-137" class="i">+          z[30:23] &lt;= 0;
+</a><a href="#h5-0-138" id="h5-0-138" class="i">+          z[22:0] &lt;= 0;
+</a><a href="#h5-0-139" id="h5-0-139" class="i">+          state &lt;= put_z;
+</a><a href="#h5-0-140" id="h5-0-140" class="i">+        end else begin
+</a><a href="#h5-0-141" id="h5-0-141" class="i">+          //Denormalised Number
+</a><a href="#h5-0-142" id="h5-0-142" class="i">+          if ($signed(a_e) == -127) begin
+</a><a href="#h5-0-143" id="h5-0-143" class="i">+            a_e &lt;= -126;
+</a><a href="#h5-0-144" id="h5-0-144" class="i">+          end else begin
+</a><a href="#h5-0-145" id="h5-0-145" class="i">+            a_m[23] &lt;= 1;
+</a><a href="#h5-0-146" id="h5-0-146" class="i">+          end
+</a><a href="#h5-0-147" id="h5-0-147" class="i">+          //Denormalised Number
+</a><a href="#h5-0-148" id="h5-0-148" class="i">+          if ($signed(b_e) == -127) begin
+</a><a href="#h5-0-149" id="h5-0-149" class="i">+            b_e &lt;= -126;
+</a><a href="#h5-0-150" id="h5-0-150" class="i">+          end else begin
+</a><a href="#h5-0-151" id="h5-0-151" class="i">+            b_m[23] &lt;= 1;
+</a><a href="#h5-0-152" id="h5-0-152" class="i">+          end
+</a><a href="#h5-0-153" id="h5-0-153" class="i">+          state &lt;= normalise_a;
+</a><a href="#h5-0-154" id="h5-0-154" class="i">+        end
+</a><a href="#h5-0-155" id="h5-0-155" class="i">+      end
+</a><a href="#h5-0-156" id="h5-0-156" class="i">+
+</a><a href="#h5-0-157" id="h5-0-157" class="i">+      normalise_a:
+</a><a href="#h5-0-158" id="h5-0-158" class="i">+      begin
+</a><a href="#h5-0-159" id="h5-0-159" class="i">+        if (a_m[23]) begin
+</a><a href="#h5-0-160" id="h5-0-160" class="i">+          state &lt;= normalise_b;
+</a><a href="#h5-0-161" id="h5-0-161" class="i">+        end else begin
+</a><a href="#h5-0-162" id="h5-0-162" class="i">+          a_m &lt;= a_m &lt;&lt; 1;
+</a><a href="#h5-0-163" id="h5-0-163" class="i">+          a_e &lt;= a_e - 1;
+</a><a href="#h5-0-164" id="h5-0-164" class="i">+        end
+</a><a href="#h5-0-165" id="h5-0-165" class="i">+      end
+</a><a href="#h5-0-166" id="h5-0-166" class="i">+
+</a><a href="#h5-0-167" id="h5-0-167" class="i">+      normalise_b:
+</a><a href="#h5-0-168" id="h5-0-168" class="i">+      begin
+</a><a href="#h5-0-169" id="h5-0-169" class="i">+        if (b_m[23]) begin
+</a><a href="#h5-0-170" id="h5-0-170" class="i">+          state &lt;= multiply_0;
+</a><a href="#h5-0-171" id="h5-0-171" class="i">+        end else begin
+</a><a href="#h5-0-172" id="h5-0-172" class="i">+          b_m &lt;= b_m &lt;&lt; 1;
+</a><a href="#h5-0-173" id="h5-0-173" class="i">+          b_e &lt;= b_e - 1;
+</a><a href="#h5-0-174" id="h5-0-174" class="i">+        end
+</a><a href="#h5-0-175" id="h5-0-175" class="i">+      end
+</a><a href="#h5-0-176" id="h5-0-176" class="i">+
+</a><a href="#h5-0-177" id="h5-0-177" class="i">+      multiply_0:
+</a><a href="#h5-0-178" id="h5-0-178" class="i">+      begin
+</a><a href="#h5-0-179" id="h5-0-179" class="i">+        z_s &lt;= a_s ^ b_s;
+</a><a href="#h5-0-180" id="h5-0-180" class="i">+        z_e &lt;= a_e + b_e + 1;
+</a><a href="#h5-0-181" id="h5-0-181" class="i">+        product &lt;= a_m * b_m;
+</a><a href="#h5-0-182" id="h5-0-182" class="i">+        state &lt;= multiply_1;
+</a><a href="#h5-0-183" id="h5-0-183" class="i">+      end
+</a><a href="#h5-0-184" id="h5-0-184" class="i">+
+</a><a href="#h5-0-185" id="h5-0-185" class="i">+      multiply_1:
+</a><a href="#h5-0-186" id="h5-0-186" class="i">+      begin
+</a><a href="#h5-0-187" id="h5-0-187" class="i">+        z_m &lt;= product[47:24];
+</a><a href="#h5-0-188" id="h5-0-188" class="i">+        guard &lt;= product[23];
+</a><a href="#h5-0-189" id="h5-0-189" class="i">+        round_bit &lt;= product[22];
+</a><a href="#h5-0-190" id="h5-0-190" class="i">+        sticky &lt;= (product[21:0] != 0);
+</a><a href="#h5-0-191" id="h5-0-191" class="i">+        state &lt;= normalise_1;
+</a><a href="#h5-0-192" id="h5-0-192" class="i">+      end
+</a><a href="#h5-0-193" id="h5-0-193" class="i">+
+</a><a href="#h5-0-194" id="h5-0-194" class="i">+      normalise_1:
+</a><a href="#h5-0-195" id="h5-0-195" class="i">+      begin
+</a><a href="#h5-0-196" id="h5-0-196" class="i">+        if (z_m[23] == 0) begin
+</a><a href="#h5-0-197" id="h5-0-197" class="i">+          z_e &lt;= z_e - 1;
+</a><a href="#h5-0-198" id="h5-0-198" class="i">+          z_m &lt;= z_m &lt;&lt; 1;
+</a><a href="#h5-0-199" id="h5-0-199" class="i">+          z_m[0] &lt;= guard;
+</a><a href="#h5-0-200" id="h5-0-200" class="i">+          guard &lt;= round_bit;
+</a><a href="#h5-0-201" id="h5-0-201" class="i">+          round_bit &lt;= 0;
+</a><a href="#h5-0-202" id="h5-0-202" class="i">+        end else begin
+</a><a href="#h5-0-203" id="h5-0-203" class="i">+          state &lt;= normalise_2;
+</a><a href="#h5-0-204" id="h5-0-204" class="i">+        end
+</a><a href="#h5-0-205" id="h5-0-205" class="i">+      end
+</a><a href="#h5-0-206" id="h5-0-206" class="i">+
+</a><a href="#h5-0-207" id="h5-0-207" class="i">+      normalise_2:
+</a><a href="#h5-0-208" id="h5-0-208" class="i">+      begin
+</a><a href="#h5-0-209" id="h5-0-209" class="i">+        if ($signed(z_e) &lt; -126) begin
+</a><a href="#h5-0-210" id="h5-0-210" class="i">+          z_e &lt;= z_e + 1;
+</a><a href="#h5-0-211" id="h5-0-211" class="i">+          z_m &lt;= z_m &gt;&gt; 1;
+</a><a href="#h5-0-212" id="h5-0-212" class="i">+          guard &lt;= z_m[0];
+</a><a href="#h5-0-213" id="h5-0-213" class="i">+          round_bit &lt;= guard;
+</a><a href="#h5-0-214" id="h5-0-214" class="i">+          sticky &lt;= sticky | round_bit;
+</a><a href="#h5-0-215" id="h5-0-215" class="i">+        end else begin
+</a><a href="#h5-0-216" id="h5-0-216" class="i">+          state &lt;= round;
+</a><a href="#h5-0-217" id="h5-0-217" class="i">+        end
+</a><a href="#h5-0-218" id="h5-0-218" class="i">+      end
+</a><a href="#h5-0-219" id="h5-0-219" class="i">+
+</a><a href="#h5-0-220" id="h5-0-220" class="i">+      round:
+</a><a href="#h5-0-221" id="h5-0-221" class="i">+      begin
+</a><a href="#h5-0-222" id="h5-0-222" class="i">+        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin
+</a><a href="#h5-0-223" id="h5-0-223" class="i">+          z_m &lt;= z_m + 1;
+</a><a href="#h5-0-224" id="h5-0-224" class="i">+          if (z_m == 24&#39;hffffff) begin
+</a><a href="#h5-0-225" id="h5-0-225" class="i">+            z_e &lt;=z_e + 1;
+</a><a href="#h5-0-226" id="h5-0-226" class="i">+          end
+</a><a href="#h5-0-227" id="h5-0-227" class="i">+        end
+</a><a href="#h5-0-228" id="h5-0-228" class="i">+        state &lt;= pack;
+</a><a href="#h5-0-229" id="h5-0-229" class="i">+      end
+</a><a href="#h5-0-230" id="h5-0-230" class="i">+
+</a><a href="#h5-0-231" id="h5-0-231" class="i">+      pack:
+</a><a href="#h5-0-232" id="h5-0-232" class="i">+      begin
+</a><a href="#h5-0-233" id="h5-0-233" class="i">+        z[22 : 0] &lt;= z_m[22:0];
+</a><a href="#h5-0-234" id="h5-0-234" class="i">+        z[30 : 23] &lt;= z_e[7:0] + 127;
+</a><a href="#h5-0-235" id="h5-0-235" class="i">+        z[31] &lt;= z_s;
+</a><a href="#h5-0-236" id="h5-0-236" class="i">+        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin
+</a><a href="#h5-0-237" id="h5-0-237" class="i">+          z[30 : 23] &lt;= 0;
+</a><a href="#h5-0-238" id="h5-0-238" class="i">+        end
+</a><a href="#h5-0-239" id="h5-0-239" class="i">+        //if overflow occurs, return inf
+</a><a href="#h5-0-240" id="h5-0-240" class="i">+        if ($signed(z_e) &gt; 127) begin
+</a><a href="#h5-0-241" id="h5-0-241" class="i">+          z[22 : 0] &lt;= 0;
+</a><a href="#h5-0-242" id="h5-0-242" class="i">+          z[30 : 23] &lt;= 255;
+</a><a href="#h5-0-243" id="h5-0-243" class="i">+          z[31] &lt;= z_s;
+</a><a href="#h5-0-244" id="h5-0-244" class="i">+        end
+</a><a href="#h5-0-245" id="h5-0-245" class="i">+        state &lt;= put_z;
+</a><a href="#h5-0-246" id="h5-0-246" class="i">+      end
+</a><a href="#h5-0-247" id="h5-0-247" class="i">+
+</a><a href="#h5-0-248" id="h5-0-248" class="i">+      put_z:
+</a><a href="#h5-0-249" id="h5-0-249" class="i">+      begin
+</a><a href="#h5-0-250" id="h5-0-250" class="i">+        s_output_z_stb &lt;= 1;
+</a><a href="#h5-0-251" id="h5-0-251" class="i">+        s_output_z &lt;= z;
+</a><a href="#h5-0-252" id="h5-0-252" class="i">+        if (s_output_z_stb &amp;&amp; output_z_ack) begin
+</a><a href="#h5-0-253" id="h5-0-253" class="i">+          s_output_z_stb &lt;= 0;
+</a><a href="#h5-0-254" id="h5-0-254" class="i">+          state &lt;= get_a;
+</a><a href="#h5-0-255" id="h5-0-255" class="i">+        end
+</a><a href="#h5-0-256" id="h5-0-256" class="i">+      end
+</a><a href="#h5-0-257" id="h5-0-257" class="i">+
+</a><a href="#h5-0-258" id="h5-0-258" class="i">+    endcase
+</a><a href="#h5-0-259" id="h5-0-259" class="i">+
+</a><a href="#h5-0-260" id="h5-0-260" class="i">+    if (rst == 1) begin
+</a><a href="#h5-0-261" id="h5-0-261" class="i">+      state &lt;= get_a;
+</a><a href="#h5-0-262" id="h5-0-262" class="i">+      s_input_a_ack &lt;= 0;
+</a><a href="#h5-0-263" id="h5-0-263" class="i">+      s_input_b_ack &lt;= 0;
+</a><a href="#h5-0-264" id="h5-0-264" class="i">+      s_output_z_stb &lt;= 0;
+</a><a href="#h5-0-265" id="h5-0-265" class="i">+    end
+</a><a href="#h5-0-266" id="h5-0-266" class="i">+
+</a><a href="#h5-0-267" id="h5-0-267" class="i">+  end
+</a><a href="#h5-0-268" id="h5-0-268" class="i">+  assign input_a_ack = s_input_a_ack;
+</a><a href="#h5-0-269" id="h5-0-269" class="i">+  assign input_b_ack = s_input_b_ack;
+</a><a href="#h5-0-270" id="h5-0-270" class="i">+  assign output_z_stb = s_output_z_stb;
+</a><a href="#h5-0-271" id="h5-0-271" class="i">+  assign output_z = s_output_z;
+</a> endmodule
+ 
+ `
+</pre>
+</div>
+</body>
+</html>

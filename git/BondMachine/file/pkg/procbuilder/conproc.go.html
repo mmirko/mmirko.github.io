@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>conproc.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> conproc.go (23425B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package procbuilder
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;fmt&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;math/rand&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;os&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strconv&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;strings&quot;
+<a href="#l9" class="line" id="l9">      9</a> 
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmstack&quot;
+<a href="#l13" class="line" id="l13">     13</a> )
+<a href="#l14" class="line" id="l14">     14</a> 
+<a href="#l15" class="line" id="l15">     15</a> const (
+<a href="#l16" class="line" id="l16">     16</a> 	letters = &quot;0123456789abcdef&quot;
+<a href="#l17" class="line" id="l17">     17</a> )
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a> // The CPU
+<a href="#l20" class="line" id="l20">     20</a> type Conproc struct {
+<a href="#l21" class="line" id="l21">     21</a> 	CpID     uint32
+<a href="#l22" class="line" id="l22">     22</a> 	Rsize    uint8
+<a href="#l23" class="line" id="l23">     23</a> 	R        uint8 // Number of n-bit registers
+<a href="#l24" class="line" id="l24">     24</a> 	N        uint8 // Number of n-bit inputs
+<a href="#l25" class="line" id="l25">     25</a> 	M        uint8 // Number of n-bit outputs
+<a href="#l26" class="line" id="l26">     26</a> 	Op       []Opcode
+<a href="#l27" class="line" id="l27">     27</a> 	Threaded int
+<a href="#l28" class="line" id="l28">     28</a> }
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> type Config struct {
+<a href="#l31" class="line" id="l31">     31</a> 	*bmreqs.ReqRoot
+<a href="#l32" class="line" id="l32">     32</a> 	*bcof.BCOFEntry
+<a href="#l33" class="line" id="l33">     33</a> 	HwOptimizations
+<a href="#l34" class="line" id="l34">     34</a> 	Debug             bool
+<a href="#l35" class="line" id="l35">     35</a> 	Commented_verilog bool
+<a href="#l36" class="line" id="l36">     36</a> 	Runinfo           *RuntimeInfo
+<a href="#l37" class="line" id="l37">     37</a> }
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> type RuntimeInfo struct {
+<a href="#l40" class="line" id="l40">     40</a> 	HeaderFlags map[string]bool
+<a href="#l41" class="line" id="l41">     41</a> }
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a> func RandStringBytes(n int) string {
+<a href="#l44" class="line" id="l44">     44</a> 	b := make([]byte, n)
+<a href="#l45" class="line" id="l45">     45</a> 	for i := range b {
+<a href="#l46" class="line" id="l46">     46</a> 		b[i] = letters[rand.Intn(len(letters))]
+<a href="#l47" class="line" id="l47">     47</a> 	}
+<a href="#l48" class="line" id="l48">     48</a> 	return string(b)
+<a href="#l49" class="line" id="l49">     49</a> }
+<a href="#l50" class="line" id="l50">     50</a> 
+<a href="#l51" class="line" id="l51">     51</a> func (ri *RuntimeInfo) Init() {
+<a href="#l52" class="line" id="l52">     52</a> 	ri.HeaderFlags = make(map[string]bool)
+<a href="#l53" class="line" id="l53">     53</a> }
+<a href="#l54" class="line" id="l54">     54</a> 
+<a href="#l55" class="line" id="l55">     55</a> func (ri *RuntimeInfo) Check(flag string) bool {
+<a href="#l56" class="line" id="l56">     56</a> 	if _, present := ri.HeaderFlags[flag]; present {
+<a href="#l57" class="line" id="l57">     57</a> 		return false
+<a href="#l58" class="line" id="l58">     58</a> 	} else {
+<a href="#l59" class="line" id="l59">     59</a> 		ri.HeaderFlags[flag] = true
+<a href="#l60" class="line" id="l60">     60</a> 		return true
+<a href="#l61" class="line" id="l61">     61</a> 	}
+<a href="#l62" class="line" id="l62">     62</a> }
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> func (proc *Conproc) String() string {
+<a href="#l65" class="line" id="l65">     65</a> 	reg_num := 1 &lt;&lt; proc.R
+<a href="#l66" class="line" id="l66">     66</a> 
+<a href="#l67" class="line" id="l67">     67</a> 	result := &quot;Opcodes: &quot;
+<a href="#l68" class="line" id="l68">     68</a> 	for _, op := range proc.Op {
+<a href="#l69" class="line" id="l69">     69</a> 		result += op.Op_get_name() + &quot; &quot;
+<a href="#l70" class="line" id="l70">     70</a> 	}
+<a href="#l71" class="line" id="l71">     71</a> 
+<a href="#l72" class="line" id="l72">     72</a> 	result += &quot;\nRegisters: &quot;
+<a href="#l73" class="line" id="l73">     73</a> 	for i := 0; i &lt; reg_num; i++ {
+<a href="#l74" class="line" id="l74">     74</a> 		result += strings.ToUpper(Get_register_name(i)) + &quot; &quot;
+<a href="#l75" class="line" id="l75">     75</a> 	}
+<a href="#l76" class="line" id="l76">     76</a> 
+<a href="#l77" class="line" id="l77">     77</a> 	return result
+<a href="#l78" class="line" id="l78">     78</a> }
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> func (proc *Conproc) Decode_opcode(intr string) (int, error) {
+<a href="#l81" class="line" id="l81">     81</a> 	opbits := proc.Opcodes_bits()
+<a href="#l82" class="line" id="l82">     82</a> 	result := get_id(intr[0:opbits])
+<a href="#l83" class="line" id="l83">     83</a> 	return result, nil
+<a href="#l84" class="line" id="l84">     84</a> }
+<a href="#l85" class="line" id="l85">     85</a> 
+<a href="#l86" class="line" id="l86">     86</a> func (proc *Conproc) Opcodes_bits() int {
+<a href="#l87" class="line" id="l87">     87</a> 	served := 1
+<a href="#l88" class="line" id="l88">     88</a> 	for bits := 1; bits &lt; 16; bits++ {
+<a href="#l89" class="line" id="l89">     89</a> 		if served&lt;&lt;uint8(bits) &gt;= len(proc.Op) {
+<a href="#l90" class="line" id="l90">     90</a> 			return bits
+<a href="#l91" class="line" id="l91">     91</a> 		}
+<a href="#l92" class="line" id="l92">     92</a> 	}
+<a href="#l93" class="line" id="l93">     93</a> 	return 1
+<a href="#l94" class="line" id="l94">     94</a> }
+<a href="#l95" class="line" id="l95">     95</a> 
+<a href="#l96" class="line" id="l96">     96</a> func (proc *Conproc) Inputs_bits() int {
+<a href="#l97" class="line" id="l97">     97</a> 	served := 1
+<a href="#l98" class="line" id="l98">     98</a> 	for bits := 1; bits &lt; 16; bits++ {
+<a href="#l99" class="line" id="l99">     99</a> 		if served&lt;&lt;uint8(bits) &gt;= int(proc.N) {
+<a href="#l100" class="line" id="l100">    100</a> 			return bits
+<a href="#l101" class="line" id="l101">    101</a> 		}
+<a href="#l102" class="line" id="l102">    102</a> 	}
+<a href="#l103" class="line" id="l103">    103</a> 	return 1
+<a href="#l104" class="line" id="l104">    104</a> }
+<a href="#l105" class="line" id="l105">    105</a> 
+<a href="#l106" class="line" id="l106">    106</a> func (proc *Conproc) Outputs_bits() int {
+<a href="#l107" class="line" id="l107">    107</a> 	served := 1
+<a href="#l108" class="line" id="l108">    108</a> 	for bits := 1; bits &lt; 16; bits++ {
+<a href="#l109" class="line" id="l109">    109</a> 		if served&lt;&lt;uint8(bits) &gt;= int(proc.M) {
+<a href="#l110" class="line" id="l110">    110</a> 			return bits
+<a href="#l111" class="line" id="l111">    111</a> 		}
+<a href="#l112" class="line" id="l112">    112</a> 	}
+<a href="#l113" class="line" id="l113">    113</a> 	return 1
+<a href="#l114" class="line" id="l114">    114</a> }
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a> func (proc *Conproc) Write_opcodes_verilog() string {
+<a href="#l117" class="line" id="l117">    117</a> 	opbits := proc.Opcodes_bits()
+<a href="#l118" class="line" id="l118">    118</a> 
+<a href="#l119" class="line" id="l119">    119</a> 	result := &quot;&quot;
+<a href="#l120" class="line" id="l120">    120</a> 	result += &quot;			// Opcodes in the instructions, length according the number of the selected.\n&quot;
+<a href="#l121" class="line" id="l121">    121</a> 
+<a href="#l122" class="line" id="l122">    122</a> 	for i, op := range proc.Op {
+<a href="#l123" class="line" id="l123">    123</a> 		if i == 0 {
+<a href="#l124" class="line" id="l124">    124</a> 			if len(proc.Op) == 1 {
+<a href="#l125" class="line" id="l125">    125</a> 				result += &quot;	localparam	&quot; + strings.ToUpper(op.Op_get_name()) + &quot;=&quot; + strconv.Itoa(opbits) + &quot;&#39;b&quot; + zeros_prefix(opbits, get_binary(i)) + &quot;;          // &quot; + op.Op_get_desc() + &quot;\n&quot;
+<a href="#l126" class="line" id="l126">    126</a> 			} else {
+<a href="#l127" class="line" id="l127">    127</a> 				result += &quot;	localparam	&quot; + strings.ToUpper(op.Op_get_name()) + &quot;=&quot; + strconv.Itoa(opbits) + &quot;&#39;b&quot; + zeros_prefix(opbits, get_binary(i)) + &quot;,          // &quot; + op.Op_get_desc() + &quot;\n&quot;
+<a href="#l128" class="line" id="l128">    128</a> 			}
+<a href="#l129" class="line" id="l129">    129</a> 		} else if i == len(proc.Op)-1 {
+<a href="#l130" class="line" id="l130">    130</a> 			result += &quot;			&quot; + strings.ToUpper(op.Op_get_name()) + &quot;=&quot; + strconv.Itoa(opbits) + &quot;&#39;b&quot; + zeros_prefix(opbits, get_binary(i)) + &quot;;          // &quot; + op.Op_get_desc() + &quot;\n&quot;
+<a href="#l131" class="line" id="l131">    131</a> 		} else {
+<a href="#l132" class="line" id="l132">    132</a> 			result += &quot;			&quot; + strings.ToUpper(op.Op_get_name()) + &quot;=&quot; + strconv.Itoa(opbits) + &quot;&#39;b&quot; + zeros_prefix(opbits, get_binary(i)) + &quot;,          // &quot; + op.Op_get_desc() + &quot;\n&quot;
+<a href="#l133" class="line" id="l133">    133</a> 		}
+<a href="#l134" class="line" id="l134">    134</a> 	}
+<a href="#l135" class="line" id="l135">    135</a> 
+<a href="#l136" class="line" id="l136">    136</a> 	result += &quot;\n&quot;
+<a href="#l137" class="line" id="l137">    137</a> 	return result
+<a href="#l138" class="line" id="l138">    138</a> }
+<a href="#l139" class="line" id="l139">    139</a> func ThreadInstructionStart(conf *Config, arch *Arch, tabs int) string {
+<a href="#l140" class="line" id="l140">    140</a> 	result := &quot;&quot;
+<a href="#l141" class="line" id="l141">    141</a> 	tabS := &quot;&quot;
+<a href="#l142" class="line" id="l142">    142</a> 	for i := 0; i &lt; tabs; i++ {
+<a href="#l143" class="line" id="l143">    143</a> 		tabS += &quot;\t&quot;
+<a href="#l144" class="line" id="l144">    144</a> 	}
+<a href="#l145" class="line" id="l145">    145</a> 	switch arch.Modes[0] {
+<a href="#l146" class="line" id="l146">    146</a> 	case &quot;ha&quot;:
+<a href="#l147" class="line" id="l147">    147</a> 		if arch.Threaded &gt; 0 {
+<a href="#l148" class="line" id="l148">    148</a> 			regNum := 1 &lt;&lt; arch.R
+<a href="#l149" class="line" id="l149">    149</a> 			threadStack := &quot;threadStack&quot; + strconv.Itoa(arch.Threaded)
+<a href="#l150" class="line" id="l150">    150</a> 			sm := threadStack + &quot;SM&quot;
+<a href="#l151" class="line" id="l151">    151</a> 			result += tabS + &quot;if (nicecount == 8&#39;b0) begin\n&quot;
+<a href="#l152" class="line" id="l152">    152</a> 			result += tabS + &quot;\tcase (&quot; + sm + &quot;)\n&quot;
+<a href="#l153" class="line" id="l153">    153</a> 			result += tabS + &quot;\tCTXEXE: begin\n&quot;
+<a href="#l154" class="line" id="l154">    154</a> 			result += tabS + &quot;\t\t&quot; + sm + &quot; &lt;= CTXSEND;\n&quot;
+<a href="#l155" class="line" id="l155">    155</a> 			result += tabS + &quot;\t\tprovpc &lt;= _pc;\n&quot;
+<a href="#l156" class="line" id="l156">    156</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l157" class="line" id="l157">    157</a> 			result += tabS + &quot;\tCTXSEND: begin\n&quot;
+<a href="#l158" class="line" id="l158">    158</a> 			// result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;empty) begin\n&quot;
+<a href="#l159" class="line" id="l159">    159</a> 			// result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXEXE;\n&quot;
+<a href="#l160" class="line" id="l160">    160</a> 			// result += tabS + &quot;\t\t\tnicecount &lt;= nice;\n&quot;
+<a href="#l161" class="line" id="l161">    161</a> 			// result += tabS + &quot;\t\tend\n&quot;
+<a href="#l162" class="line" id="l162">    162</a> 			// result += tabS + &quot;\t\telse begin\n&quot;
+<a href="#l163" class="line" id="l163">    163</a> 			result += tabS + &quot;\t\t\tif (!&quot; + threadStack + &quot;senderAck) begin\n&quot;
+<a href="#l164" class="line" id="l164">    164</a> 			regList := &quot;&quot;
+<a href="#l165" class="line" id="l165">    165</a> 			for i := 0; i &lt; regNum; i++ {
+<a href="#l166" class="line" id="l166">    166</a> 				regList += &quot;_&quot; + strings.ToLower(Get_register_name(i)) + &quot;, &quot;
+<a href="#l167" class="line" id="l167">    167</a> 			}
+<a href="#l168" class="line" id="l168">    168</a> 			result += tabS + &quot;\t\t\t\t&quot; + threadStack + &quot;senderData &lt;= {ThreadID, 1&#39;b0, provpc, &quot; + regList + &quot;nice};\n&quot;
+<a href="#l169" class="line" id="l169">    169</a> 			result += tabS + &quot;\t\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b1;\n&quot;
+<a href="#l170" class="line" id="l170">    170</a> 			result += tabS + &quot;\t\t\t\t&quot; + sm + &quot; &lt;= CTXWSEND;\n&quot;
+<a href="#l171" class="line" id="l171">    171</a> 			// result += tabS + &quot;\t\t\tend\n&quot;
+<a href="#l172" class="line" id="l172">    172</a> 			result += tabS + &quot;\t\tend\n&quot;
+<a href="#l173" class="line" id="l173">    173</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l174" class="line" id="l174">    174</a> 			result += tabS + &quot;\tCTXWSEND: begin\n&quot;
+<a href="#l175" class="line" id="l175">    175</a> 			result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;senderAck) begin\n&quot;
+<a href="#l176" class="line" id="l176">    176</a> 			result += tabS + &quot;\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b0;\n&quot;
+<a href="#l177" class="line" id="l177">    177</a> 			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXREQNEW;\n&quot;
+<a href="#l178" class="line" id="l178">    178</a> 			result += tabS + &quot;\t\tend\n&quot;
+<a href="#l179" class="line" id="l179">    179</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l180" class="line" id="l180">    180</a> 			result += tabS + &quot;\tCTXREQNEW: begin\n&quot;
+<a href="#l181" class="line" id="l181">    181</a> 			result += tabS + &quot;\t\t&quot; + threadStack + &quot;receiverRead &lt;= 1&#39;b1;\n&quot;
+<a href="#l182" class="line" id="l182">    182</a> 			result += tabS + &quot;\t\t&quot; + sm + &quot; &lt;= CTXNEW;\n&quot;
+<a href="#l183" class="line" id="l183">    183</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l184" class="line" id="l184">    184</a> 			result += tabS + &quot;\tCTXNEW: begin\n&quot;
+<a href="#l185" class="line" id="l185">    185</a> 			result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;receiverAck &amp;&amp; &quot; + threadStack + &quot;receiverRead) begin\n&quot;
+<a href="#l186" class="line" id="l186">    186</a> 			result += tabS + &quot;\t\t\t&quot; + threadStack + &quot;receiverRead &lt;= 1&#39;b0;\n&quot;
+<a href="#l187" class="line" id="l187">    187</a> 			result += tabS + &quot;\t\t\t{ThreadID, dummy_source, provpc, &quot; + regList + &quot;nice} &lt;= &quot; + threadStack + &quot;receiverData;\n&quot;
+<a href="#l188" class="line" id="l188">    188</a> 			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXCHKNICE;\n&quot;
+<a href="#l189" class="line" id="l189">    189</a> 			result += tabS + &quot;\t\tend\n&quot;
+<a href="#l190" class="line" id="l190">    190</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l191" class="line" id="l191">    191</a> 			result += tabS + &quot;\tCTXCHKNICE: begin\n&quot;
+<a href="#l192" class="line" id="l192">    192</a> 			result += tabS + &quot;\t\tif (nice == 8&#39;b0) begin\n&quot;
+<a href="#l193" class="line" id="l193">    193</a> 			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXSEND;\n&quot;
+<a href="#l194" class="line" id="l194">    194</a> 			result += tabS + &quot;\t\tend\n&quot;
+<a href="#l195" class="line" id="l195">    195</a> 			result += tabS + &quot;\t\telse begin\n&quot;
+<a href="#l196" class="line" id="l196">    196</a> 			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXEXE;\n&quot;
+<a href="#l197" class="line" id="l197">    197</a> 			result += tabS + &quot;\t\t\tnicecount &lt;= nice;\n&quot;
+<a href="#l198" class="line" id="l198">    198</a> 			result += tabS + &quot;\t\t\t_pc &lt;= provpc;\n&quot;
+<a href="#l199" class="line" id="l199">    199</a> 			result += tabS + &quot;\t\tend\n&quot;
+<a href="#l200" class="line" id="l200">    200</a> 			result += tabS + &quot;\tend\n&quot;
+<a href="#l201" class="line" id="l201">    201</a> 			result += tabS + &quot;\tendcase\n&quot;
+<a href="#l202" class="line" id="l202">    202</a> 			result += tabS + &quot;end\n&quot;
+<a href="#l203" class="line" id="l203">    203</a> 			result += tabS + &quot;else begin\n&quot;
+<a href="#l204" class="line" id="l204">    204</a> 			result += tabS + &quot;\tnicecount &lt;= nicecount - 1;\n&quot;
+<a href="#l205" class="line" id="l205">    205</a> 		}
+<a href="#l206" class="line" id="l206">    206</a> 	case &quot;hy&quot;:
+<a href="#l207" class="line" id="l207">    207</a> 	case &quot;vn&quot;:
+<a href="#l208" class="line" id="l208">    208</a> 	}
+<a href="#l209" class="line" id="l209">    209</a> 	return result
+<a href="#l210" class="line" id="l210">    210</a> }
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> func ThreadInstructionEnd(conf *Config, arch *Arch, tabs int) string {
+<a href="#l213" class="line" id="l213">    213</a> 	result := &quot;&quot;
+<a href="#l214" class="line" id="l214">    214</a> 	tabS := &quot;&quot;
+<a href="#l215" class="line" id="l215">    215</a> 	for i := 0; i &lt; tabs; i++ {
+<a href="#l216" class="line" id="l216">    216</a> 		tabS += &quot;\t&quot;
+<a href="#l217" class="line" id="l217">    217</a> 	}
+<a href="#l218" class="line" id="l218">    218</a> 	switch arch.Modes[0] {
+<a href="#l219" class="line" id="l219">    219</a> 	case &quot;ha&quot;:
+<a href="#l220" class="line" id="l220">    220</a> 		if arch.Threaded &gt; 0 {
+<a href="#l221" class="line" id="l221">    221</a> 			result += tabS + &quot;end\n&quot;
+<a href="#l222" class="line" id="l222">    222</a> 		}
+<a href="#l223" class="line" id="l223">    223</a> 	case &quot;hy&quot;:
+<a href="#l224" class="line" id="l224">    224</a> 	case &quot;vn&quot;:
+<a href="#l225" class="line" id="l225">    225</a> 	}
+<a href="#l226" class="line" id="l226">    226</a> 	return result
+<a href="#l227" class="line" id="l227">    227</a> }
+<a href="#l228" class="line" id="l228">    228</a> 
+<a href="#l229" class="line" id="l229">    229</a> func NextInstruction(conf *Config, arch *Arch, tabs int, jumpTo string) string {
+<a href="#l230" class="line" id="l230">    230</a> 	result := &quot;&quot;
+<a href="#l231" class="line" id="l231">    231</a> 	tabS := &quot;&quot;
+<a href="#l232" class="line" id="l232">    232</a> 	for i := 0; i &lt; tabs; i++ {
+<a href="#l233" class="line" id="l233">    233</a> 		tabS += &quot;\t&quot;
+<a href="#l234" class="line" id="l234">    234</a> 	}
+<a href="#l235" class="line" id="l235">    235</a> 	switch arch.Modes[0] {
+<a href="#l236" class="line" id="l236">    236</a> 	case &quot;ha&quot;:
+<a href="#l237" class="line" id="l237">    237</a> 		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+<a href="#l238" class="line" id="l238">    238</a> 	case &quot;hy&quot;:
+<a href="#l239" class="line" id="l239">    239</a> 		result += tabS + &quot;if (exec_mode == 1&#39;b1) begin\n&quot;
+<a href="#l240" class="line" id="l240">    240</a> 		result += tabS + &quot;\tvn_state &lt;= FETCH;\n&quot;
+<a href="#l241" class="line" id="l241">    241</a> 		result += tabS + &quot;end\n&quot;
+<a href="#l242" class="line" id="l242">    242</a> 		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+<a href="#l243" class="line" id="l243">    243</a> 	case &quot;vn&quot;:
+<a href="#l244" class="line" id="l244">    244</a> 		result += tabS + &quot;vn_state &lt;= FETCH;\n&quot;
+<a href="#l245" class="line" id="l245">    245</a> 		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+<a href="#l246" class="line" id="l246">    246</a> 	}
+<a href="#l247" class="line" id="l247">    247</a> 	return result
+<a href="#l248" class="line" id="l248">    248</a> }
+<a href="#l249" class="line" id="l249">    249</a> 
+<a href="#l250" class="line" id="l250">    250</a> func ExecutionCase(conf *Config, arch *Arch, tabs int, open bool) string {
+<a href="#l251" class="line" id="l251">    251</a> 	result := &quot;&quot;
+<a href="#l252" class="line" id="l252">    252</a> 	tabS := &quot;&quot;
+<a href="#l253" class="line" id="l253">    253</a> 	for i := 0; i &lt; tabs; i++ {
+<a href="#l254" class="line" id="l254">    254</a> 		tabS += &quot;\t&quot;
+<a href="#l255" class="line" id="l255">    255</a> 	}
+<a href="#l256" class="line" id="l256">    256</a> 
+<a href="#l257" class="line" id="l257">    257</a> 	switch arch.Modes[0] {
+<a href="#l258" class="line" id="l258">    258</a> 	case &quot;ha&quot;:
+<a href="#l259" class="line" id="l259">    259</a> 	case &quot;hy&quot;:
+<a href="#l260" class="line" id="l260">    260</a> 		if open {
+<a href="#l261" class="line" id="l261">    261</a> 			result += tabS + &quot;if (exec_mode == 1&#39;b0 || vn_state == EXECUTE) begin\n&quot;
+<a href="#l262" class="line" id="l262">    262</a> 		} else {
+<a href="#l263" class="line" id="l263">    263</a> 			result += tabS + &quot;end\n&quot;
+<a href="#l264" class="line" id="l264">    264</a> 		}
+<a href="#l265" class="line" id="l265">    265</a> 	case &quot;vn&quot;:
+<a href="#l266" class="line" id="l266">    266</a> 		if open {
+<a href="#l267" class="line" id="l267">    267</a> 			result += tabS + &quot;if (vn_state == EXECUTE) begin\n&quot;
+<a href="#l268" class="line" id="l268">    268</a> 		} else {
+<a href="#l269" class="line" id="l269">    269</a> 			result += tabS + &quot;end\n&quot;
+<a href="#l270" class="line" id="l270">    270</a> 		}
+<a href="#l271" class="line" id="l271">    271</a> 	}
+<a href="#l272" class="line" id="l272">    272</a> 	return result
+<a href="#l273" class="line" id="l273">    273</a> }
+<a href="#l274" class="line" id="l274">    274</a> 
+<a href="#l275" class="line" id="l275">    275</a> func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_name string, flavor string) string {
+<a href="#l276" class="line" id="l276">    276</a> 	regsize := int(proc.Rsize)
+<a href="#l277" class="line" id="l277">    277</a> 	rom_word := arch.Max_word()
+<a href="#l278" class="line" id="l278">    278</a> 	opbits := proc.Opcodes_bits()
+<a href="#l279" class="line" id="l279">    279</a> 	inbits := proc.Inputs_bits()
+<a href="#l280" class="line" id="l280">    280</a> 	outbits := proc.Outputs_bits()
+<a href="#l281" class="line" id="l281">    281</a> 
+<a href="#l282" class="line" id="l282">    282</a> 	reg_num := 1 &lt;&lt; proc.R
+<a href="#l283" class="line" id="l283">    283</a> 
+<a href="#l284" class="line" id="l284">    284</a> 	result := &quot;&quot;
+<a href="#l285" class="line" id="l285">    285</a> 
+<a href="#l286" class="line" id="l286">    286</a> 	arch.Tag = fmt.Sprint(proc.CpID)
+<a href="#l287" class="line" id="l287">    287</a> 
+<a href="#l288" class="line" id="l288">    288</a> 	// Module header
+<a href="#l289" class="line" id="l289">    289</a> 	result += &quot;`timescale 1ns/1ps\n&quot;
+<a href="#l290" class="line" id="l290">    290</a> 	result += &quot;module &quot; + processor_module_name + &quot;(clock_signal, reset_signal&quot;
+<a href="#l291" class="line" id="l291">    291</a> 
+<a href="#l292" class="line" id="l292">    292</a> 	ramh := &quot;&quot;
+<a href="#l293" class="line" id="l293">    293</a> 
+<a href="#l294" class="line" id="l294">    294</a> 	if int(arch.L) != 0 {
+<a href="#l295" class="line" id="l295">    295</a> 		ramh += &quot;, ram_din, ram_dout, ram_addr, ram_wren, ram_en&quot;
+<a href="#l296" class="line" id="l296">    296</a> 	}
+<a href="#l297" class="line" id="l297">    297</a> 	result += &quot;, rom_bus, rom_value&quot; + ramh
+<a href="#l298" class="line" id="l298">    298</a> 
+<a href="#l299" class="line" id="l299">    299</a> 	for i := 0; i &lt; int(arch.N); i++ {
+<a href="#l300" class="line" id="l300">    300</a> 		result += &quot;, &quot; + Get_input_name(i) + &quot;, &quot; + Get_input_name(i) + &quot;_valid, &quot; + Get_input_name(i) + &quot;_received&quot;
+<a href="#l301" class="line" id="l301">    301</a> 	}
+<a href="#l302" class="line" id="l302">    302</a> 
+<a href="#l303" class="line" id="l303">    303</a> 	for i := 0; i &lt; int(arch.M); i++ {
+<a href="#l304" class="line" id="l304">    304</a> 		result += &quot;, &quot; + Get_output_name(i) + &quot;, &quot; + Get_output_name(i) + &quot;_valid, &quot; + Get_output_name(i) + &quot;_received&quot;
+<a href="#l305" class="line" id="l305">    305</a> 	}
+<a href="#l306" class="line" id="l306">    306</a> 
+<a href="#l307" class="line" id="l307">    307</a> 	if arch.Shared_constraints != &quot;&quot; {
+<a href="#l308" class="line" id="l308">    308</a> 		header := &quot;&quot;
+<a href="#l309" class="line" id="l309">    309</a> 		seq := make(map[string]int)
+<a href="#l310" class="line" id="l310">    310</a> 		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+<a href="#l311" class="line" id="l311">    311</a> 		for _, constraint := range constraints {
+<a href="#l312" class="line" id="l312">    312</a> 			values := strings.Split(constraint, &quot;:&quot;)
+<a href="#l313" class="line" id="l313">    313</a> 			soname := values[0]
+<a href="#l314" class="line" id="l314">    314</a> 			if _, ok := seq[soname]; ok {
+<a href="#l315" class="line" id="l315">    315</a> 				seq[soname]++
+<a href="#l316" class="line" id="l316">    316</a> 			} else {
+<a href="#l317" class="line" id="l317">    317</a> 				seq[soname] = 0
+<a href="#l318" class="line" id="l318">    318</a> 			}
+<a href="#l319" class="line" id="l319">    319</a> 
+<a href="#l320" class="line" id="l320">    320</a> 			for _, so := range Allshared {
+<a href="#l321" class="line" id="l321">    321</a> 				if so.Shr_get_name() == soname {
+<a href="#l322" class="line" id="l322">    322</a> 					header += so.GetArchHeader(arch, constraint, seq[soname])
+<a href="#l323" class="line" id="l323">    323</a> 				}
+<a href="#l324" class="line" id="l324">    324</a> 			}
+<a href="#l325" class="line" id="l325">    325</a> 		}
+<a href="#l326" class="line" id="l326">    326</a> 		result += header
+<a href="#l327" class="line" id="l327">    327</a> 	}
+<a href="#l328" class="line" id="l328">    328</a> 
+<a href="#l329" class="line" id="l329">    329</a> 	result += &quot;);\n\n&quot;
+<a href="#l330" class="line" id="l330">    330</a> 
+<a href="#l331" class="line" id="l331">    331</a> 	// Header variables declarations
+<a href="#l332" class="line" id="l332">    332</a> 	result += &quot;\tinput clock_signal;\n&quot;
+<a href="#l333" class="line" id="l333">    333</a> 	result += &quot;\tinput reset_signal;\n&quot;
+<a href="#l334" class="line" id="l334">    334</a> 
+<a href="#l335" class="line" id="l335">    335</a> 	result += &quot;\toutput  [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] rom_bus;\n&quot;
+<a href="#l336" class="line" id="l336">    336</a> 	result += &quot;\tinput  [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] rom_value;\n&quot;
+<a href="#l337" class="line" id="l337">    337</a> 
+<a href="#l338" class="line" id="l338">    338</a> 	if int(arch.L) != 0 {
+<a href="#l339" class="line" id="l339">    339</a> 		result += &quot;\tinput  [&quot; + strconv.Itoa(regsize-1) + &quot;:0] ram_dout;\n&quot;
+<a href="#l340" class="line" id="l340">    340</a> 		result += &quot;\toutput [&quot; + strconv.Itoa(regsize-1) + &quot;:0] ram_din;\n&quot;
+<a href="#l341" class="line" id="l341">    341</a> 		result += &quot;\toutput  [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] ram_addr;\n&quot;
+<a href="#l342" class="line" id="l342">    342</a> 		result += &quot;\toutput ram_wren, ram_en;\n&quot;
+<a href="#l343" class="line" id="l343">    343</a> 	}
+<a href="#l344" class="line" id="l344">    344</a> 
+<a href="#l345" class="line" id="l345">    345</a> 	result += &quot;\n&quot;
+<a href="#l346" class="line" id="l346">    346</a> 
+<a href="#l347" class="line" id="l347">    347</a> 	for i := 0; i &lt; int(arch.N); i++ {
+<a href="#l348" class="line" id="l348">    348</a> 		result += &quot;\tinput [&quot; + strconv.Itoa(regsize-1) + &quot;:0] &quot; + Get_input_name(i) + &quot;;\n&quot;
+<a href="#l349" class="line" id="l349">    349</a> 		result += &quot;\tinput &quot; + Get_input_name(i) + &quot;_valid;\n&quot;
+<a href="#l350" class="line" id="l350">    350</a> 		result += &quot;\toutput &quot; + Get_input_name(i) + &quot;_received;\n&quot;
+<a href="#l351" class="line" id="l351">    351</a> 	}
+<a href="#l352" class="line" id="l352">    352</a> 
+<a href="#l353" class="line" id="l353">    353</a> 	for i := 0; i &lt; int(arch.M); i++ {
+<a href="#l354" class="line" id="l354">    354</a> 		result += &quot;\toutput [&quot; + strconv.Itoa(regsize-1) + &quot;:0] &quot; + Get_output_name(i) + &quot;;\n&quot;
+<a href="#l355" class="line" id="l355">    355</a> 		result += &quot;\toutput &quot; + Get_output_name(i) + &quot;_valid;\n&quot;
+<a href="#l356" class="line" id="l356">    356</a> 		result += &quot;\tinput &quot; + Get_output_name(i) + &quot;_received;\n&quot;
+<a href="#l357" class="line" id="l357">    357</a> 	}
+<a href="#l358" class="line" id="l358">    358</a> 
+<a href="#l359" class="line" id="l359">    359</a> 	result += &quot;\n&quot;
+<a href="#l360" class="line" id="l360">    360</a> 
+<a href="#l361" class="line" id="l361">    361</a> 	if arch.Shared_constraints != &quot;&quot; {
+<a href="#l362" class="line" id="l362">    362</a> 		params := &quot;&quot;
+<a href="#l363" class="line" id="l363">    363</a> 		seq := make(map[string]int)
+<a href="#l364" class="line" id="l364">    364</a> 		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+<a href="#l365" class="line" id="l365">    365</a> 		for _, constraint := range constraints {
+<a href="#l366" class="line" id="l366">    366</a> 			values := strings.Split(constraint, &quot;:&quot;)
+<a href="#l367" class="line" id="l367">    367</a> 			soname := values[0]
+<a href="#l368" class="line" id="l368">    368</a> 			if _, ok := seq[soname]; ok {
+<a href="#l369" class="line" id="l369">    369</a> 				seq[soname]++
+<a href="#l370" class="line" id="l370">    370</a> 			} else {
+<a href="#l371" class="line" id="l371">    371</a> 				seq[soname] = 0
+<a href="#l372" class="line" id="l372">    372</a> 			}
+<a href="#l373" class="line" id="l373">    373</a> 
+<a href="#l374" class="line" id="l374">    374</a> 			for _, so := range Allshared {
+<a href="#l375" class="line" id="l375">    375</a> 				if so.Shr_get_name() == soname {
+<a href="#l376" class="line" id="l376">    376</a> 					params += so.GetCPParams(arch, constraint, seq[soname])
+<a href="#l377" class="line" id="l377">    377</a> 					params += &quot;\n&quot;
+<a href="#l378" class="line" id="l378">    378</a> 				}
+<a href="#l379" class="line" id="l379">    379</a> 			}
+<a href="#l380" class="line" id="l380">    380</a> 		}
+<a href="#l381" class="line" id="l381">    381</a> 		result += params
+<a href="#l382" class="line" id="l382">    382</a> 	}
+<a href="#l383" class="line" id="l383">    383</a> 
+<a href="#l384" class="line" id="l384">    384</a> 	//	// Module header
+<a href="#l385" class="line" id="l385">    385</a> 	//	result += &quot;module &quot; + processor_module_name + &quot;(input clock_signal, input reset_signal, output [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] rom_bus, input [&quot; + strconv.Itoa(rom_word-1) + &quot;:0] rom_value&quot;
+<a href="#l386" class="line" id="l386">    386</a> 	//
+<a href="#l387" class="line" id="l387">    387</a> 	//	for i := 0; i &lt; int(proc.N); i++ {
+<a href="#l388" class="line" id="l388">    388</a> 	//		result += &quot;, input [&quot; + strconv.Itoa(regsize-1) + &quot;:0] &quot; + Get_input_name(i)
+<a href="#l389" class="line" id="l389">    389</a> 	//
+<a href="#l390" class="line" id="l390">    390</a> 	//	}
+<a href="#l391" class="line" id="l391">    391</a> 	//
+<a href="#l392" class="line" id="l392">    392</a> 	//	for i := 0; i &lt; int(proc.M); i++ {
+<a href="#l393" class="line" id="l393">    393</a> 	//		result += &quot;, output [&quot; + strconv.Itoa(regsize-1) + &quot;:0] &quot; + Get_output_name(i)
+<a href="#l394" class="line" id="l394">    394</a> 	//
+<a href="#l395" class="line" id="l395">    395</a> 	//	}
+<a href="#l396" class="line" id="l396">    396</a> 	//
+<a href="#l397" class="line" id="l397">    397</a> 	//	result += &quot;);\n&quot;
+<a href="#l398" class="line" id="l398">    398</a> 
+<a href="#l399" class="line" id="l399">    399</a> 	// Opcodes generation
+<a href="#l400" class="line" id="l400">    400</a> 
+<a href="#l401" class="line" id="l401">    401</a> 	result += proc.Write_opcodes_verilog()
+<a href="#l402" class="line" id="l402">    402</a> 
+<a href="#l403" class="line" id="l403">    403</a> 	// Registers generation
+<a href="#l404" class="line" id="l404">    404</a> 	result += &quot;	localparam	&quot; + strings.ToUpper(Get_register_name(0)) + &quot;=&quot; + strconv.Itoa(int(proc.R)) + &quot;&#39;b&quot; + zeros_prefix(int(proc.R), get_binary(0)) + &quot;,		// Registers in the intructions\n&quot;
+<a href="#l405" class="line" id="l405">    405</a> 
+<a href="#l406" class="line" id="l406">    406</a> 	for i := 1; i &lt; reg_num; i++ {
+<a href="#l407" class="line" id="l407">    407</a> 		if i == reg_num-1 {
+<a href="#l408" class="line" id="l408">    408</a> 			result += &quot;			&quot; + strings.ToUpper(Get_register_name(i)) + &quot;=&quot; + strconv.Itoa(int(proc.R)) + &quot;&#39;b&quot; + zeros_prefix(int(proc.R), get_binary(i)) + &quot;;\n&quot;
+<a href="#l409" class="line" id="l409">    409</a> 		} else {
+<a href="#l410" class="line" id="l410">    410</a> 			result += &quot;			&quot; + strings.ToUpper(Get_register_name(i)) + &quot;=&quot; + strconv.Itoa(int(proc.R)) + &quot;&#39;b&quot; + zeros_prefix(int(proc.R), get_binary(i)) + &quot;,\n&quot;
+<a href="#l411" class="line" id="l411">    411</a> 		}
+<a href="#l412" class="line" id="l412">    412</a> 	}
+<a href="#l413" class="line" id="l413">    413</a> 
+<a href="#l414" class="line" id="l414">    414</a> 	for i := 0; i &lt; int(proc.N); i++ {
+<a href="#l415" class="line" id="l415">    415</a> 		if i == 0 {
+<a href="#l416" class="line" id="l416">    416</a> 			result += &quot;	localparam&quot;
+<a href="#l417" class="line" id="l417">    417</a> 		}
+<a href="#l418" class="line" id="l418">    418</a> 		if i == int(proc.N)-1 {
+<a href="#l419" class="line" id="l419">    419</a> 			result += &quot;			&quot; + strings.ToUpper(Get_input_name(i)) + &quot;=&quot; + strconv.Itoa(int(inbits)) + &quot;&#39;b&quot; + zeros_prefix(int(inbits), get_binary(i)) + &quot;;\n&quot;
+<a href="#l420" class="line" id="l420">    420</a> 		} else {
+<a href="#l421" class="line" id="l421">    421</a> 			result += &quot;			&quot; + strings.ToUpper(Get_input_name(i)) + &quot;=&quot; + strconv.Itoa(int(inbits)) + &quot;&#39;b&quot; + zeros_prefix(int(inbits), get_binary(i)) + &quot;,\n&quot;
+<a href="#l422" class="line" id="l422">    422</a> 		}
+<a href="#l423" class="line" id="l423">    423</a> 	}
+<a href="#l424" class="line" id="l424">    424</a> 
+<a href="#l425" class="line" id="l425">    425</a> 	for i := 0; i &lt; int(proc.M); i++ {
+<a href="#l426" class="line" id="l426">    426</a> 		if i == 0 {
+<a href="#l427" class="line" id="l427">    427</a> 			result += &quot;	localparam&quot;
+<a href="#l428" class="line" id="l428">    428</a> 		}
+<a href="#l429" class="line" id="l429">    429</a> 		if i == int(proc.M)-1 {
+<a href="#l430" class="line" id="l430">    430</a> 			result += &quot;			&quot; + strings.ToUpper(Get_output_name(i)) + &quot;=&quot; + strconv.Itoa(int(outbits)) + &quot;&#39;b&quot; + zeros_prefix(int(outbits), get_binary(i)) + &quot;;\n&quot;
+<a href="#l431" class="line" id="l431">    431</a> 		} else {
+<a href="#l432" class="line" id="l432">    432</a> 			result += &quot;			&quot; + strings.ToUpper(Get_output_name(i)) + &quot;=&quot; + strconv.Itoa(int(outbits)) + &quot;&#39;b&quot; + zeros_prefix(int(outbits), get_binary(i)) + &quot;,\n&quot;
+<a href="#l433" class="line" id="l433">    433</a> 		}
+<a href="#l434" class="line" id="l434">    434</a> 	}
+<a href="#l435" class="line" id="l435">    435</a> 
+<a href="#l436" class="line" id="l436">    436</a> 	for i := 0; i &lt; int(proc.M); i++ {
+<a href="#l437" class="line" id="l437">    437</a> 		result += &quot;	reg [&quot; + strconv.Itoa(regsize-1) + &quot;:0] _aux&quot; + Get_output_name(i) + &quot;;\n&quot;
+<a href="#l438" class="line" id="l438">    438</a> 	}
+<a href="#l439" class="line" id="l439">    439</a> 
+<a href="#l440" class="line" id="l440">    440</a> 	result += &quot;\n&quot;
+<a href="#l441" class="line" id="l441">    441</a> 	result += &quot;	reg [&quot; + strconv.Itoa(regsize-1) + &quot;:0] _ram [0:&quot; + strconv.Itoa((1&lt;&lt;arch.L)-1) + &quot;];		// Internal processor RAM\n&quot;
+<a href="#l442" class="line" id="l442">    442</a> 	result += &quot;\n&quot;
+<a href="#l443" class="line" id="l443">    443</a> 	switch arch.Modes[0] {
+<a href="#l444" class="line" id="l444">    444</a> 	case &quot;ha&quot;:
+<a href="#l445" class="line" id="l445">    445</a> 		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+<a href="#l446" class="line" id="l446">    446</a> 	case &quot;hy&quot;:
+<a href="#l447" class="line" id="l447">    447</a> 		if arch.L &gt; arch.O {
+<a href="#l448" class="line" id="l448">    448</a> 			result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+<a href="#l449" class="line" id="l449">    449</a> 		} else {
+<a href="#l450" class="line" id="l450">    450</a> 			result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+<a href="#l451" class="line" id="l451">    451</a> 		}
+<a href="#l452" class="line" id="l452">    452</a> 	case &quot;vn&quot;:
+<a href="#l453" class="line" id="l453">    453</a> 		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+<a href="#l454" class="line" id="l454">    454</a> 	}
+<a href="#l455" class="line" id="l455">    455</a> 	result += &quot;\n&quot;
+<a href="#l456" class="line" id="l456">    456</a> 	result += &quot;	// The number of registers are 2^R, two letters and an underscore as identifier , maximum R=8 and 265 rigisters\n&quot;
+<a href="#l457" class="line" id="l457">    457</a> 
+<a href="#l458" class="line" id="l458">    458</a> 	for i := 0; i &lt; reg_num; i++ {
+<a href="#l459" class="line" id="l459">    459</a> 		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(regsize-1) + &quot;:0] _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+<a href="#l460" class="line" id="l460">    460</a> 	}
+<a href="#l461" class="line" id="l461">    461</a> 
+<a href="#l462" class="line" id="l462">    462</a> 	// Multithreading
+<a href="#l463" class="line" id="l463">    463</a> 	if proc.Threaded &gt; 0 {
+<a href="#l464" class="line" id="l464">    464</a> 
+<a href="#l465" class="line" id="l465">    465</a> 		result += &quot;\n&quot;
+<a href="#l466" class="line" id="l466">    466</a> 		result += &quot;	// Threaded processor\n&quot;
+<a href="#l467" class="line" id="l467">    467</a> 		result += &quot;\n&quot;
+<a href="#l468" class="line" id="l468">    468</a> 
+<a href="#l469" class="line" id="l469">    469</a> 		pcBits := 0
+<a href="#l470" class="line" id="l470">    470</a> 		sourceBit := 0
+<a href="#l471" class="line" id="l471">    471</a> 		switch arch.Modes[0] {
+<a href="#l472" class="line" id="l472">    472</a> 		case &quot;ha&quot;:
+<a href="#l473" class="line" id="l473">    473</a> 			pcBits = int(arch.O)
+<a href="#l474" class="line" id="l474">    474</a> 			sourceBit = 0
+<a href="#l475" class="line" id="l475">    475</a> 		case &quot;hy&quot;:
+<a href="#l476" class="line" id="l476">    476</a> 			if arch.L &gt; arch.O {
+<a href="#l477" class="line" id="l477">    477</a> 				pcBits = int(arch.L)
+<a href="#l478" class="line" id="l478">    478</a> 			} else {
+<a href="#l479" class="line" id="l479">    479</a> 				pcBits = int(arch.O)
+<a href="#l480" class="line" id="l480">    480</a> 			}
+<a href="#l481" class="line" id="l481">    481</a> 			sourceBit = 1
+<a href="#l482" class="line" id="l482">    482</a> 		case &quot;vn&quot;:
+<a href="#l483" class="line" id="l483">    483</a> 			pcBits = int(arch.L)
+<a href="#l484" class="line" id="l484">    484</a> 			sourceBit = 1
+<a href="#l485" class="line" id="l485">    485</a> 		}
+<a href="#l486" class="line" id="l486">    486</a> 
+<a href="#l487" class="line" id="l487">    487</a> 		depth := strconv.Itoa(proc.Threaded)
+<a href="#l488" class="line" id="l488">    488</a> 		thIDBits := Needed_bits(proc.Threaded)
+<a href="#l489" class="line" id="l489">    489</a> 		regNum := 1 &lt;&lt; proc.R
+<a href="#l490" class="line" id="l490">    490</a> 		regBits := regNum * regsize
+<a href="#l491" class="line" id="l491">    491</a> 
+<a href="#l492" class="line" id="l492">    492</a> 		// threadStack is the name of the thread stack TODO
+<a href="#l493" class="line" id="l493">    493</a> 		threadStack := &quot;threadStack&quot; + depth
+<a href="#l494" class="line" id="l494">    494</a> 		// datasize is:
+<a href="#l495" class="line" id="l495">    495</a> 		// - the bits to store the thread id
+<a href="#l496" class="line" id="l496">    496</a> 		// - the bits to store the code source
+<a href="#l497" class="line" id="l497">    497</a> 		// - the bits to store the PC
+<a href="#l498" class="line" id="l498">    498</a> 		// - the bits to store the registers
+<a href="#l499" class="line" id="l499">    499</a> 		// - the bits to store the nice (8 bits)
+<a href="#l500" class="line" id="l500">    500</a> 
+<a href="#l501" class="line" id="l501">    501</a> 		result += &quot;\treg[&quot; + strconv.Itoa(thIDBits-1) + &quot;:0] ThreadID;\n&quot;
+<a href="#l502" class="line" id="l502">    502</a> 		result += &quot;\treg[7:0] nice;\n&quot;
+<a href="#l503" class="line" id="l503">    503</a> 		result += &quot;\treg[7:0] nicecount;\n&quot;
+<a href="#l504" class="line" id="l504">    504</a> 		result += &quot;\treg dummy_source;\n&quot;
+<a href="#l505" class="line" id="l505">    505</a> 		result += &quot;\treg[&quot; + strconv.Itoa(pcBits-1) + &quot;:0] provpc;\n&quot;
+<a href="#l506" class="line" id="l506">    506</a> 		result += &quot;\n&quot;
+<a href="#l507" class="line" id="l507">    507</a> 		dataSize := thIDBits + sourceBit + pcBits + regBits + 8
+<a href="#l508" class="line" id="l508">    508</a> 		result += &quot;	reg [2:0] &quot; + threadStack + &quot;SM;\n&quot;
+<a href="#l509" class="line" id="l509">    509</a> 		result += &quot;	localparam	CTXSEND = 3&#39;b000,\n&quot; // Context switch send the current thread to the stack
+<a href="#l510" class="line" id="l510">    510</a> 		result += &quot;			CTXWSEND = 3&#39;b001,\n&quot;         // Wait for the stack to send the current thread
+<a href="#l511" class="line" id="l511">    511</a> 		result += &quot;			CTXREQNEW = 3&#39;b010,\n&quot;        // Request a new thread from the stack
+<a href="#l512" class="line" id="l512">    512</a> 		result += &quot;			CTXNEW = 3&#39;b011,\n&quot;           // New thread from the stack received
+<a href="#l513" class="line" id="l513">    513</a> 		result += &quot;			CTXCHKNICE = 3&#39;b100,\n&quot;       // Check if the nice is 0
+<a href="#l514" class="line" id="l514">    514</a> 		result += &quot;			CTXEXE = 3&#39;b101;\n&quot;           // Execute the thread
+<a href="#l515" class="line" id="l515">    515</a> 
+<a href="#l516" class="line" id="l516">    516</a> 		result += &quot;\n&quot;
+<a href="#l517" class="line" id="l517">    517</a> 		result += &quot;\treg [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + threadStack + &quot;senderData;\n&quot;
+<a href="#l518" class="line" id="l518">    518</a> 		result += &quot;\treg &quot; + threadStack + &quot;senderWrite;\n&quot;
+<a href="#l519" class="line" id="l519">    519</a> 		result += &quot;\twire &quot; + threadStack + &quot;senderAck;\n&quot;
+<a href="#l520" class="line" id="l520">    520</a> 		result += &quot;\n&quot;
+<a href="#l521" class="line" id="l521">    521</a> 		result += &quot;\twire [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + threadStack + &quot;receiverData;\n&quot;
+<a href="#l522" class="line" id="l522">    522</a> 		result += &quot;\treg &quot; + threadStack + &quot;receiverRead;\n&quot;
+<a href="#l523" class="line" id="l523">    523</a> 		result += &quot;\twire &quot; + threadStack + &quot;receiverAck;\n&quot;
+<a href="#l524" class="line" id="l524">    524</a> 		result += &quot;\n&quot;
+<a href="#l525" class="line" id="l525">    525</a> 		result += &quot;\twire &quot; + threadStack + &quot;empty;\n&quot;
+<a href="#l526" class="line" id="l526">    526</a> 		result += &quot;\twire &quot; + threadStack + &quot;full;\n&quot;
+<a href="#l527" class="line" id="l527">    527</a> 		result += &quot;\n&quot;
+<a href="#l528" class="line" id="l528">    528</a> 		result += &quot;\t&quot; + threadStack + &quot; &quot; + threadStack + &quot;_inst (\n&quot;
+<a href="#l529" class="line" id="l529">    529</a> 		result += &quot;\t\t.clk(clock_signal),\n&quot;
+<a href="#l530" class="line" id="l530">    530</a> 		result += &quot;\t\t.reset(reset_signal),\n&quot;
+<a href="#l531" class="line" id="l531">    531</a> 		result += &quot;\t\t.senderData(&quot; + threadStack + &quot;senderData),\n&quot;
+<a href="#l532" class="line" id="l532">    532</a> 		result += &quot;\t\t.senderWrite(&quot; + threadStack + &quot;senderWrite),\n&quot;
+<a href="#l533" class="line" id="l533">    533</a> 		result += &quot;\t\t.senderAck(&quot; + threadStack + &quot;senderAck),\n&quot;
+<a href="#l534" class="line" id="l534">    534</a> 		result += &quot;\t\t.receiverData(&quot; + threadStack + &quot;receiverData),\n&quot;
+<a href="#l535" class="line" id="l535">    535</a> 		result += &quot;\t\t.receiverRead(&quot; + threadStack + &quot;receiverRead),\n&quot;
+<a href="#l536" class="line" id="l536">    536</a> 		result += &quot;\t\t.receiverAck(&quot; + threadStack + &quot;receiverAck),\n&quot;
+<a href="#l537" class="line" id="l537">    537</a> 		result += &quot;\t\t.empty(&quot; + threadStack + &quot;empty),\n&quot;
+<a href="#l538" class="line" id="l538">    538</a> 		result += &quot;\t\t.full(&quot; + threadStack + &quot;full)\n&quot;
+<a href="#l539" class="line" id="l539">    539</a> 		result += &quot;\t);\n&quot;
+<a href="#l540" class="line" id="l540">    540</a> 		result += &quot;\n&quot;
+<a href="#l541" class="line" id="l541">    541</a> 		result += &quot;initial begin\n&quot;
+<a href="#l542" class="line" id="l542">    542</a> 		result += &quot;	&quot; + threadStack + &quot;SM &lt;= CTXEXE;\n&quot;
+<a href="#l543" class="line" id="l543">    543</a> 		result += &quot;\tnice &lt;= 8&#39;b00000100;\n&quot;
+<a href="#l544" class="line" id="l544">    544</a> 		result += &quot;\tnicecount &lt;= 8&#39;b00000100;\n&quot;
+<a href="#l545" class="line" id="l545">    545</a> 		result += &quot;end\n&quot;
+<a href="#l546" class="line" id="l546">    546</a> 
+<a href="#l547" class="line" id="l547">    547</a> 		s := bmstack.CreateBasicStack()
+<a href="#l548" class="line" id="l548">    548</a> 		s.ModuleName = threadStack
+<a href="#l549" class="line" id="l549">    549</a> 		s.DataSize = dataSize
+<a href="#l550" class="line" id="l550">    550</a> 		s.Depth = proc.Threaded
+<a href="#l551" class="line" id="l551">    551</a> 		s.MemType = &quot;FIFO&quot;
+<a href="#l552" class="line" id="l552">    552</a> 		s.Senders = []string{&quot;sender&quot;}
+<a href="#l553" class="line" id="l553">    553</a> 		s.Receivers = []string{&quot;receiver&quot;}
+<a href="#l554" class="line" id="l554">    554</a> 
+<a href="#l555" class="line" id="l555">    555</a> 		f, _ := os.Create(threadStack + &quot;stack.v&quot;)
+<a href="#l556" class="line" id="l556">    556</a> 		r, _ := s.WriteHDL()
+<a href="#l557" class="line" id="l557">    557</a> 		f.WriteString(r)
+<a href="#l558" class="line" id="l558">    558</a> 		f.Close()
+<a href="#l559" class="line" id="l559">    559</a> 	}
+<a href="#l560" class="line" id="l560">    560</a> 
+<a href="#l561" class="line" id="l561">    561</a> 	// modes handling
+<a href="#l562" class="line" id="l562">    562</a> 	switch arch.Modes[0] {
+<a href="#l563" class="line" id="l563">    563</a> 	case &quot;ha&quot;:
+<a href="#l564" class="line" id="l564">    564</a> 		result += &quot;\n&quot;
+<a href="#l565" class="line" id="l565">    565</a> 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+<a href="#l566" class="line" id="l566">    566</a> 		result += &quot;	assign current_instruction=rom_value;\n&quot;
+<a href="#l567" class="line" id="l567">    567</a> 		result += &quot;\n&quot;
+<a href="#l568" class="line" id="l568">    568</a> 	case &quot;hy&quot;:
+<a href="#l569" class="line" id="l569">    569</a> 		result += &quot;\n&quot;
+<a href="#l570" class="line" id="l570">    570</a> 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+<a href="#l571" class="line" id="l571">    571</a> 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+<a href="#l572" class="line" id="l572">    572</a> 		result += &quot;	reg exec_mode; // 0 = harvard , 1=VN\n&quot;
+<a href="#l573" class="line" id="l573">    573</a> 		result += &quot;	reg [1:0] vn_state;\n&quot;
+<a href="#l574" class="line" id="l574">    574</a> 		result += &quot;	localparam FETCH=2&#39;b00, WAIT=2&#39;b10, EXECUTE=2&#39;b01;\n&quot;
+<a href="#l575" class="line" id="l575">    575</a> 		result += &quot;	assign current_instruction= (exec_mode==1&#39;b0) ? rom_value : ram_instruction;\n&quot;
+<a href="#l576" class="line" id="l576">    576</a> 		result += &quot;\n&quot;
+<a href="#l577" class="line" id="l577">    577</a> 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+<a href="#l578" class="line" id="l578">    578</a> 			result += &quot;	assign ram_addr = _pc;\n&quot;
+<a href="#l579" class="line" id="l579">    579</a> 			result += &quot;	assign ram_en = 1&#39;b1;\n&quot;
+<a href="#l580" class="line" id="l580">    580</a> 		}
+<a href="#l581" class="line" id="l581">    581</a> 	case &quot;vn&quot;:
+<a href="#l582" class="line" id="l582">    582</a> 		result += &quot;\n&quot;
+<a href="#l583" class="line" id="l583">    583</a> 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+<a href="#l584" class="line" id="l584">    584</a> 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+<a href="#l585" class="line" id="l585">    585</a> 		result += &quot;	reg [1:0] vn_state;\n&quot;
+<a href="#l586" class="line" id="l586">    586</a> 		result += &quot;	localparam FETCH=2&#39;b00, WAIT=2&#39;b10, EXECUTE=2&#39;b01;\n&quot;
+<a href="#l587" class="line" id="l587">    587</a> 		result += &quot;	assign current_instruction=ram_instruction;\n&quot;
+<a href="#l588" class="line" id="l588">    588</a> 		result += &quot;\n&quot;
+<a href="#l589" class="line" id="l589">    589</a> 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+<a href="#l590" class="line" id="l590">    590</a> 			result += &quot;	assign ram_addr = _pc;\n&quot;
+<a href="#l591" class="line" id="l591">    591</a> 			result += &quot;	assign ram_en = 1&#39;b1;\n&quot;
+<a href="#l592" class="line" id="l592">    592</a> 		}
+<a href="#l593" class="line" id="l593">    593</a> 	}
+<a href="#l594" class="line" id="l594">    594</a> 
+<a href="#l595" class="line" id="l595">    595</a> 	for _, op := range proc.Op {
+<a href="#l596" class="line" id="l596">    596</a> 		if conf.Commented_verilog {
+<a href="#l597" class="line" id="l597">    597</a> 			result += &quot;\n// Start of the component \&quot;header\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+<a href="#l598" class="line" id="l598">    598</a> 		}
+<a href="#l599" class="line" id="l599">    599</a> 		result += op.OpInstructionVerilogHeader(conf, arch, flavor, processor_module_name)
+<a href="#l600" class="line" id="l600">    600</a> 	}
+<a href="#l601" class="line" id="l601">    601</a> 
+<a href="#l602" class="line" id="l602">    602</a> 	result += &quot;\n&quot;
+<a href="#l603" class="line" id="l603">    603</a> 	result += &quot;	always @(posedge clock_signal, posedge reset_signal)\n&quot;
+<a href="#l604" class="line" id="l604">    604</a> 	result += &quot;	begin\n&quot;
+<a href="#l605" class="line" id="l605">    605</a> 	result += &quot;		if(reset_signal)\n&quot;
+<a href="#l606" class="line" id="l606">    606</a> 	result += &quot;		begin\n&quot;
+<a href="#l607" class="line" id="l607">    607</a> 	switch arch.Modes[0] {
+<a href="#l608" class="line" id="l608">    608</a> 	case &quot;ha&quot;:
+<a href="#l609" class="line" id="l609">    609</a> 		result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+<a href="#l610" class="line" id="l610">    610</a> 	case &quot;hy&quot;:
+<a href="#l611" class="line" id="l611">    611</a> 		if arch.L &gt; arch.O {
+<a href="#l612" class="line" id="l612">    612</a> 			result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.L)) + &quot;&#39;h0;\n&quot;
+<a href="#l613" class="line" id="l613">    613</a> 		} else {
+<a href="#l614" class="line" id="l614">    614</a> 			result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+<a href="#l615" class="line" id="l615">    615</a> 		}
+<a href="#l616" class="line" id="l616">    616</a> 	case &quot;vn&quot;:
+<a href="#l617" class="line" id="l617">    617</a> 		result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.L)) + &quot;&#39;h0;\n&quot;
+<a href="#l618" class="line" id="l618">    618</a> 	}
+<a href="#l619" class="line" id="l619">    619</a> 
+<a href="#l620" class="line" id="l620">    620</a> 	for i := 0; i &lt; reg_num; i++ {
+<a href="#l621" class="line" id="l621">    621</a> 		result += &quot;			_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + strconv.Itoa(int(arch.Rsize)) + &quot;&#39;h0;\n&quot;
+<a href="#l622" class="line" id="l622">    622</a> 	}
+<a href="#l623" class="line" id="l623">    623</a> 
+<a href="#l624" class="line" id="l624">    624</a> 	for _, op := range proc.Op {
+<a href="#l625" class="line" id="l625">    625</a> 		if conf.Commented_verilog {
+<a href="#l626" class="line" id="l626">    626</a> 			result += &quot;\n// Start of the component \&quot;reset\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+<a href="#l627" class="line" id="l627">    627</a> 		}
+<a href="#l628" class="line" id="l628">    628</a> 		result += op.Op_instruction_verilog_reset(arch, flavor)
+<a href="#l629" class="line" id="l629">    629</a> 	}
+<a href="#l630" class="line" id="l630">    630</a> 
+<a href="#l631" class="line" id="l631">    631</a> 	result += &quot;		end\n&quot;
+<a href="#l632" class="line" id="l632">    632</a> 	result += &quot;		else begin\n&quot;
+<a href="#l633" class="line" id="l633">    633</a> 
+<a href="#l634" class="line" id="l634">    634</a> 	switch arch.Modes[0] {
+<a href="#l635" class="line" id="l635">    635</a> 	case &quot;ha&quot;:
+<a href="#l636" class="line" id="l636">    636</a> 		result += &quot;			// ha placeholder\n&quot;
+<a href="#l637" class="line" id="l637">    637</a> 	case &quot;hy&quot;:
+<a href="#l638" class="line" id="l638">    638</a> 		result += &quot;			if (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) begin\n&quot;
+<a href="#l639" class="line" id="l639">    639</a> 		result += &quot;				vn_state &lt;= WAIT;\n&quot;
+<a href="#l640" class="line" id="l640">    640</a> 		result += &quot;			end\n&quot;
+<a href="#l641" class="line" id="l641">    641</a> 		result += &quot;			else if (exec_mode == 1&#39;b1 &amp;&amp; vn_state == WAIT) begin\n&quot;
+<a href="#l642" class="line" id="l642">    642</a> 		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+<a href="#l643" class="line" id="l643">    643</a> 		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+<a href="#l644" class="line" id="l644">    644</a> 		result += &quot;			end\n&quot;
+<a href="#l645" class="line" id="l645">    645</a> 		result += &quot;			else begin\n&quot;
+<a href="#l646" class="line" id="l646">    646</a> 	case &quot;vn&quot;:
+<a href="#l647" class="line" id="l647">    647</a> 		result += &quot;			case (vn_state)\n&quot;
+<a href="#l648" class="line" id="l648">    648</a> 		result += &quot;			FETCH: begin\n&quot;
+<a href="#l649" class="line" id="l649">    649</a> 		result += &quot;				vn_state &lt;= WAIT;\n&quot;
+<a href="#l650" class="line" id="l650">    650</a> 		result += &quot;			end\n&quot;
+<a href="#l651" class="line" id="l651">    651</a> 		result += &quot;			WAIT: begin\n&quot;
+<a href="#l652" class="line" id="l652">    652</a> 		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+<a href="#l653" class="line" id="l653">    653</a> 		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+<a href="#l654" class="line" id="l654">    654</a> 		result += &quot;			end\n&quot;
+<a href="#l655" class="line" id="l655">    655</a> 		result += &quot;			EXECUTE: begin\n&quot;
+<a href="#l656" class="line" id="l656">    656</a> 	}
+<a href="#l657" class="line" id="l657">    657</a> 
+<a href="#l658" class="line" id="l658">    658</a> 	result += &quot;			$display(\&quot;Program Counter:%d\&quot;, _pc);\n&quot;
+<a href="#l659" class="line" id="l659">    659</a> 	result += &quot;			$display(\&quot;Instruction:%b\&quot;, rom_value);\n&quot;
+<a href="#l660" class="line" id="l660">    660</a> 
+<a href="#l661" class="line" id="l661">    661</a> 	format := &quot;&quot;
+<a href="#l662" class="line" id="l662">    662</a> 	list := &quot;&quot;
+<a href="#l663" class="line" id="l663">    663</a> 	for i := 0; i &lt; reg_num; i++ {
+<a href="#l664" class="line" id="l664">    664</a> 		format = format + strings.ToLower(Get_register_name(i)) + &quot;:%b &quot;
+<a href="#l665" class="line" id="l665">    665</a> 		list = list + &quot;, _&quot; + strings.ToLower(Get_register_name(i))
+<a href="#l666" class="line" id="l666">    666</a> 	}
+<a href="#l667" class="line" id="l667">    667</a> 
+<a href="#l668" class="line" id="l668">    668</a> 	result += &quot;			$display(\&quot;Registers &quot; + format + &quot;\&quot;&quot; + list + &quot;);\n&quot;
+<a href="#l669" class="line" id="l669">    669</a> 
+<a href="#l670" class="line" id="l670">    670</a> 	for _, op := range proc.Op {
+<a href="#l671" class="line" id="l671">    671</a> 		if conf.Commented_verilog {
+<a href="#l672" class="line" id="l672">    672</a> 			result += &quot;\n// Start of the component \&quot;internal state\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+<a href="#l673" class="line" id="l673">    673</a> 		}
+<a href="#l674" class="line" id="l674">    674</a> 		result += op.Op_instruction_verilog_internal_state(arch, flavor)
+<a href="#l675" class="line" id="l675">    675</a> 	}
+<a href="#l676" class="line" id="l676">    676</a> 
+<a href="#l677" class="line" id="l677">    677</a> 	// TODO What are they, maybe needed by some opcode ?
+<a href="#l678" class="line" id="l678">    678</a> 	//	result += &quot;			else\n&quot;
+<a href="#l679" class="line" id="l679">    679</a> 	//	result += &quot;				begin\n&quot;
+<a href="#l680" class="line" id="l680">    680</a> 
+<a href="#l681" class="line" id="l681">    681</a> 	for _, op := range proc.Op {
+<a href="#l682" class="line" id="l682">    682</a> 		if conf.Commented_verilog {
+<a href="#l683" class="line" id="l683">    683</a> 			result += &quot;\n// Start of the component \&quot;default state\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+<a href="#l684" class="line" id="l684">    684</a> 		}
+<a href="#l685" class="line" id="l685">    685</a> 		result += op.Op_instruction_verilog_default_state(arch, flavor)
+<a href="#l686" class="line" id="l686">    686</a> 	}
+<a href="#l687" class="line" id="l687">    687</a> 
+<a href="#l688" class="line" id="l688">    688</a> 	if opbits == 1 {
+<a href="#l689" class="line" id="l689">    689</a> 		result += &quot;				case(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+<a href="#l690" class="line" id="l690">    690</a> 	} else {
+<a href="#l691" class="line" id="l691">    691</a> 		result += &quot;				case(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+<a href="#l692" class="line" id="l692">    692</a> 	}
+<a href="#l693" class="line" id="l693">    693</a> 
+<a href="#l694" class="line" id="l694">    694</a> 	for _, op := range proc.Op {
+<a href="#l695" class="line" id="l695">    695</a> 		if conf.Commented_verilog {
+<a href="#l696" class="line" id="l696">    696</a> 			result += &quot;\n// Start of the component of the \&quot;state machine\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+<a href="#l697" class="line" id="l697">    697</a> 		}
+<a href="#l698" class="line" id="l698">    698</a> 		result += op.Op_instruction_verilog_state_machine(conf, arch, conf.ReqRoot, flavor)
+<a href="#l699" class="line" id="l699">    699</a> 	}
+<a href="#l700" class="line" id="l700">    700</a> 
+<a href="#l701" class="line" id="l701">    701</a> 	result += &quot;					default : begin\n&quot;
+<a href="#l702" class="line" id="l702">    702</a> 	result += &quot;						$display(\&quot;Unknown Opcode\&quot;);\n&quot;
+<a href="#l703" class="line" id="l703">    703</a> 	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+<a href="#l704" class="line" id="l704">    704</a> 	result += &quot;					end\n&quot;
+<a href="#l705" class="line" id="l705">    705</a> 
+<a href="#l706" class="line" id="l706">    706</a> 	result += &quot;				endcase\n&quot;
+<a href="#l707" class="line" id="l707">    707</a> 
+<a href="#l708" class="line" id="l708">    708</a> 	// TODO What are they, maybe needed by some opcode ?
+<a href="#l709" class="line" id="l709">    709</a> 	//	result += &quot;			end\n&quot;
+<a href="#l710" class="line" id="l710">    710</a> 
+<a href="#l711" class="line" id="l711">    711</a> 	switch arch.Modes[0] {
+<a href="#l712" class="line" id="l712">    712</a> 	case &quot;ha&quot;:
+<a href="#l713" class="line" id="l713">    713</a> 		result += &quot;			// ha placeholder\n&quot;
+<a href="#l714" class="line" id="l714">    714</a> 	case &quot;hy&quot;:
+<a href="#l715" class="line" id="l715">    715</a> 		result += &quot;			end\n&quot;
+<a href="#l716" class="line" id="l716">    716</a> 	case &quot;vn&quot;:
+<a href="#l717" class="line" id="l717">    717</a> 		result += &quot;				end\n&quot;
+<a href="#l718" class="line" id="l718">    718</a> 		result += &quot;			endcase\n&quot;
+<a href="#l719" class="line" id="l719">    719</a> 	}
+<a href="#l720" class="line" id="l720">    720</a> 
+<a href="#l721" class="line" id="l721">    721</a> 	result += &quot;		end\n&quot;
+<a href="#l722" class="line" id="l722">    722</a> 	result += &quot;	end\n&quot;
+<a href="#l723" class="line" id="l723">    723</a> 	result += &quot;	assign rom_bus = _pc;\n&quot;
+<a href="#l724" class="line" id="l724">    724</a> 
+<a href="#l725" class="line" id="l725">    725</a> 	for _, op := range proc.Op {
+<a href="#l726" class="line" id="l726">    726</a> 		result += op.Op_instruction_verilog_footer(arch, flavor)
+<a href="#l727" class="line" id="l727">    727</a> 	}
+<a href="#l728" class="line" id="l728">    728</a> 
+<a href="#l729" class="line" id="l729">    729</a> 	for i := 0; i &lt; int(proc.N); i++ {
+<a href="#l730" class="line" id="l730">    730</a> 		result += &quot;	assign &quot; + Get_input_name(i) + &quot;_received = &quot; + Get_input_name(i) + &quot;_recv;\n&quot;
+<a href="#l731" class="line" id="l731">    731</a> 	}
+<a href="#l732" class="line" id="l732">    732</a> 
+<a href="#l733" class="line" id="l733">    733</a> 	for i := 0; i &lt; int(proc.M); i++ {
+<a href="#l734" class="line" id="l734">    734</a> 		result += &quot;	assign &quot; + Get_output_name(i) + &quot; = _aux&quot; + Get_output_name(i) + &quot;;\n&quot;
+<a href="#l735" class="line" id="l735">    735</a> 		result += &quot;	assign &quot; + Get_output_name(i) + &quot;_valid = &quot; + Get_output_name(i) + &quot;_val;\n&quot;
+<a href="#l736" class="line" id="l736">    736</a> 	}
+<a href="#l737" class="line" id="l737">    737</a> 
+<a href="#l738" class="line" id="l738">    738</a> 	result += &quot;endmodule\n&quot;
+<a href="#l739" class="line" id="l739">    739</a> 
+<a href="#l740" class="line" id="l740">    740</a> 	doneextramod := make(map[string]bool)
+<a href="#l741" class="line" id="l741">    741</a> 
+<a href="#l742" class="line" id="l742">    742</a> 	for _, op := range proc.Op {
+<a href="#l743" class="line" id="l743">    743</a> 		modlist, modcode := op.Op_instruction_verilog_extra_modules(arch, flavor)
+<a href="#l744" class="line" id="l744">    744</a> 		for i, module := range modlist {
+<a href="#l745" class="line" id="l745">    745</a> 			if _, ok := doneextramod[module]; !ok {
+<a href="#l746" class="line" id="l746">    746</a> 				result += modcode[i]
+<a href="#l747" class="line" id="l747">    747</a> 				doneextramod[module] = true
+<a href="#l748" class="line" id="l748">    748</a> 			}
+<a href="#l749" class="line" id="l749">    749</a> 		}
+<a href="#l750" class="line" id="l750">    750</a> 
+<a href="#l751" class="line" id="l751">    751</a> 		files, filesCode := op.ExtraFiles(arch)
+<a href="#l752" class="line" id="l752">    752</a> 		for i, file := range files {
+<a href="#l753" class="line" id="l753">    753</a> 			f, _ := os.Create(file)
+<a href="#l754" class="line" id="l754">    754</a> 			f.WriteString(filesCode[i])
+<a href="#l755" class="line" id="l755">    755</a> 			f.Close()
+<a href="#l756" class="line" id="l756">    756</a> 		}
+<a href="#l757" class="line" id="l757">    757</a> 	}
+<a href="#l758" class="line" id="l758">    758</a> 
+<a href="#l759" class="line" id="l759">    759</a> 	return result
+<a href="#l760" class="line" id="l760">    760</a> }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>r2t - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c8b9e86ef7ef9cb7bfd96d4848d07ff24dcbc359.html">c8b9e86ef7ef9cb7bfd96d4848d07ff24dcbc359</a>
+<b>parent</b> <a href="../commit/173b274e589cb14ab1abf5c4de4fafddef23bacf.html">173b274e589cb14ab1abf5c4de4fafddef23bacf</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 20 Jan 2023 15:25:10 +0100
+
+r2t
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">127</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/shr_stack.go</a></td><td> | </td><td class="num">70</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>3 files changed, 97 insertions(+), 101 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -87,6 +87,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, R2s{})
+ 	Allopcodes = append(Allopcodes, R2v{})
+ 	Allopcodes = append(Allopcodes, R2vri{})
+<a href="#h0-0-3" id="h0-0-3" class="i">+	Allopcodes = append(Allopcodes, R2t{})
+</a> 	Allopcodes = append(Allopcodes, Ro2r{})
+ 	Allopcodes = append(Allopcodes, Ro2rri{})
+ 	Allopcodes = append(Allopcodes, Rsc{})
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,12 +12,16 @@ import (
+</a> // The R2t opcode
+ type R2t struct{}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+func (op R2t) getStackName(stackId int) string {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	return &quot;st&quot; + strconv.Itoa(stackId)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> func (op R2t) Op_get_name() string {
+ 	return &quot;r2t&quot;
+ }
+ 
+ func (op R2t) Op_get_desc() string {
+<a href="#h1-0-12" id="h1-0-12" class="d">-	return &quot;Copy a register value to the video ram&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	return &quot;Copy a register value to a shared stack&quot;
+</a> }
+ 
+ func (op R2t) Op_show_assembler(arch *Arch) string {
+<a href="#h1-1" id="h1-1" class="h">@@ -48,97 +52,64 @@ func (Op R2t) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	//rom_word := arch.Max_word()
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	//opbits := arch.Opcodes_bits()
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	//reg_num := 1 &lt;&lt; arch.R
+</a> 
+<a href="#h1-1-8" id="h1-1-8" class="d">-	result := &quot;&quot;
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-	result += &quot;					R2T: begin\n&quot;
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-	/*if arch.R == 1 {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-	} else {
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-	}
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-		result += &quot;							wr_int_ram &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-		result += &quot;							addr_ram_r2m &lt;= #1 rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.Rsize)) + &quot;];\n&quot;
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-		result += &quot;							ram_din_i &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-		result += &quot;							$display(\&quot;R2M &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-		result += &quot;						end\n&quot;
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	stackNum := 0
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+	if arch.Shared_constraints != &quot;&quot; {
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+		for _, constraint := range constraints {
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+			soname := values[0]
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			if soname == &quot;stack&quot; {
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+				stackNum++
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+			}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+		}
+</a> 	}
+<a href="#h1-1-33" id="h1-1-33" class="d">-	result += &quot;						endcase\n&quot;*/
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-	result += &quot;					end\n&quot;
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-	return result
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-}
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-
+</a><a href="#h1-1-40" id="h1-1-40" class="d">-func (op R2t) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h1-1-41" id="h1-1-41" class="d">-	result := &quot;&quot;
+</a> 
+ 	rom_word := arch.Max_word()
+<a href="#h1-1-44" id="h1-1-44" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+	outbits := arch.Outputs_bits()
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+<a href="#h1-1-50" id="h1-1-50" class="d">-	// This is always the first module if present
+</a><a href="#h1-1-51" id="h1-1-51" class="d">-	firstModule := true
+</a><a href="#h1-1-52" id="h1-1-52" class="d">-	lastModule := true
+</a><a href="#h1-1-53" id="h1-1-53" class="d">-
+</a><a href="#h1-1-54" id="h1-1-54" class="d">-	// If r2tri is also present, that will be the last opcode
+</a><a href="#h1-1-55" id="h1-1-55" class="d">-	for _, currOp := range arch.Op {
+</a><a href="#h1-1-56" id="h1-1-56" class="d">-		if currOp.Op_get_name() == &quot;r2tri&quot; {
+</a><a href="#h1-1-57" id="h1-1-57" class="d">-			lastModule = false
+</a><a href="#h1-1-58" id="h1-1-58" class="d">-			break
+</a><a href="#h1-1-59" id="h1-1-59" class="d">-		}
+</a><a href="#h1-1-60" id="h1-1-60" class="d">-	}
+</a><a href="#h1-1-61" id="h1-1-61" class="d">-	//	result += &quot;\tassign vram_din = vram_din_i;\n&quot;
+</a><a href="#h1-1-62" id="h1-1-62" class="d">-	//	result += &quot;\tassign vram_addr = addr_vram_r2t;\n&quot;
+</a><a href="#h1-1-63" id="h1-1-63" class="d">-	//	result += &quot;\tassign vram_wren = wr_int_vram;\n&quot;
+</a><a href="#h1-1-64" id="h1-1-64" class="d">-	//	result += &quot;\tassign vram_en = 1&#39;b1;\n&quot;
+</a><a href="#h1-1-65" id="h1-1-65" class="d">-
+</a><a href="#h1-1-66" id="h1-1-66" class="d">-	// Check for differences
+</a><a href="#h1-1-67" id="h1-1-67" class="d">-	//	result += &quot;\talways @(rom_value&quot;
+</a><a href="#h1-1-68" id="h1-1-68" class="d">-	//	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-1-69" id="h1-1-69" class="d">-	//		result += &quot;,_&quot; + strings.ToLower(Get_register_name(i))
+</a><a href="#h1-1-70" id="h1-1-70" class="d">-	//}
+</a><a href="#h1-1-71" id="h1-1-71" class="d">-	//result += &quot;)\n&quot;
+</a><a href="#h1-1-72" id="h1-1-72" class="d">-	if firstModule {
+</a><a href="#h1-1-73" id="h1-1-73" class="d">-		result += &quot;\talways @(posedge clock_signal)\n&quot;
+</a><a href="#h1-1-74" id="h1-1-74" class="d">-		result += &quot;\tbegin\n&quot;
+</a><a href="#h1-1-75" id="h1-1-75" class="d">-		if opbits == 1 {
+</a><a href="#h1-1-76" id="h1-1-76" class="d">-			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+</a><a href="#h1-1-77" id="h1-1-77" class="i">+	result := &quot;&quot;
+</a><a href="#h1-1-78" id="h1-1-78" class="i">+	result += &quot;					R2T: begin\n&quot;
+</a><a href="#h1-1-79" id="h1-1-79" class="i">+	if stackNum &gt; 0 {
+</a><a href="#h1-1-80" id="h1-1-80" class="i">+		if arch.R == 1 {
+</a><a href="#h1-1-81" id="h1-1-81" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a> 		} else {
+<a href="#h1-1-83" id="h1-1-83" class="d">-			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+</a><a href="#h1-1-84" id="h1-1-84" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 		}
+<a href="#h1-1-86" id="h1-1-86" class="d">-	}
+</a><a href="#h1-1-87" id="h1-1-87" class="i">+		for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-1-88" id="h1-1-88" class="i">+			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-1-89" id="h1-1-89" class="i">+
+</a><a href="#h1-1-90" id="h1-1-90" class="i">+			if outbits == 1 {
+</a><a href="#h1-1-91" id="h1-1-91" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h1-1-92" id="h1-1-92" class="i">+			} else {
+</a><a href="#h1-1-93" id="h1-1-93" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(outbits)) + &quot;])\n&quot;
+</a><a href="#h1-1-94" id="h1-1-94" class="i">+			}
+</a> 
+<a href="#h1-1-96" id="h1-1-96" class="d">-	result += &quot;		R2T: begin\n&quot;
+</a><a href="#h1-1-97" id="h1-1-97" class="i">+			for j := 0; j &lt; stackNum; j++ {
+</a><a href="#h1-1-98" id="h1-1-98" class="i">+				result += &quot;							&quot; + strings.ToUpper(op.getStackName(j)) + &quot; : begin\n&quot;
+</a><a href="#h1-1-99" id="h1-1-99" class="i">+				result += &quot;								_aux&quot; + strings.ToLower(op.getStackName(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h1-1-100" id="h1-1-100" class="i">+				result += &quot;								$display(\&quot;R2O &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(op.getStackName(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h1-1-101" id="h1-1-101" class="i">+				result += &quot;							end\n&quot;
+</a> 
+<a href="#h1-1-103" id="h1-1-103" class="d">-	if arch.R == 1 {
+</a><a href="#h1-1-104" id="h1-1-104" class="d">-		result += &quot;			case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-1-105" id="h1-1-105" class="i">+			}
+</a><a href="#h1-1-106" id="h1-1-106" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h1-1-107" id="h1-1-107" class="i">+			result += &quot;						end\n&quot;
+</a><a href="#h1-1-108" id="h1-1-108" class="i">+		}
+</a><a href="#h1-1-109" id="h1-1-109" class="i">+		result += &quot;						endcase\n&quot;
+</a> 	} else {
+<a href="#h1-1-111" id="h1-1-111" class="d">-		result += &quot;			case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-1-112" id="h1-1-112" class="d">-	}
+</a><a href="#h1-1-113" id="h1-1-113" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-1-114" id="h1-1-114" class="d">-		result += &quot;				&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-1-115" id="h1-1-115" class="d">-		result += &quot;					vtm0_wren_i &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h1-1-116" id="h1-1-116" class="d">-		result += &quot;					vtm0_addr_i[7:0] &lt;= rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-8) + &quot;];\n&quot;
+</a><a href="#h1-1-117" id="h1-1-117" class="d">-		result += &quot;					vtm0_din_i[7:0] &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[7:0];\n&quot;
+</a><a href="#h1-1-118" id="h1-1-118" class="d">-		result += &quot;					$display(\&quot;R2T &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h1-1-119" id="h1-1-119" class="d">-		result += &quot;				end\n&quot;
+</a><a href="#h1-1-120" id="h1-1-120" class="d">-	}
+</a><a href="#h1-1-121" id="h1-1-121" class="d">-	result += &quot;			endcase\n&quot;
+</a><a href="#h1-1-122" id="h1-1-122" class="d">-	result += &quot;\t	end\n&quot;
+</a><a href="#h1-1-123" id="h1-1-123" class="d">-	if lastModule {
+</a><a href="#h1-1-124" id="h1-1-124" class="d">-		result += &quot;\t	default:\n&quot;
+</a><a href="#h1-1-125" id="h1-1-125" class="d">-		result += &quot;			vtm0_wren_i &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h1-1-126" id="h1-1-126" class="d">-		result += &quot;\t	endcase\n&quot;
+</a><a href="#h1-1-127" id="h1-1-127" class="d">-		result += &quot;\tend\n&quot;
+</a><a href="#h1-1-128" id="h1-1-128" class="i">+		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+</a> 	}
+<a href="#h1-1-130" id="h1-1-130" class="i">+	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-1-131" id="h1-1-131" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h1-1-132" id="h1-1-132" class="i">+	return result
+</a><a href="#h1-1-133" id="h1-1-133" class="i">+
+</a><a href="#h1-1-134" id="h1-1-134" class="i">+}
+</a> 
+<a href="#h1-1-136" id="h1-1-136" class="i">+func (op R2t) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h1-1-137" id="h1-1-137" class="i">+	result := &quot;&quot;
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a> b/<a href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -16,18 +16,44 @@ func (op Stack) Shortname() string {
+</a> }
+ 
+ func (op Stack) Get_header(arch *Arch, shared_constraint string, seq int) string {
+<a href="#h2-0-3" id="h2-0-3" class="i">+	result := &quot;&quot;
+</a> 	stackName := &quot;st&quot; + strconv.Itoa(seq)
+<a href="#h2-0-5" id="h2-0-5" class="d">-	return &quot;, &quot; + stackName + &quot;din, &quot; + stackName + &quot;dout, &quot; + stackName + &quot;addr, &quot; + stackName + &quot;wren, &quot; + stackName + &quot;en&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+		if op.Op_get_name() == &quot;r2t&quot; {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+			result += &quot;, &quot; + stackName + &quot;senderData, &quot; + stackName + &quot;senderWrite, &quot; + stackName + &quot;senderAck&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+			break
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+		}
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		if op.Op_get_name() == &quot;t2r&quot; {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+			result += &quot;, &quot; + stackName + &quot;receiverData, &quot; + stackName + &quot;receiverRead, &quot; + stackName + &quot;receiverAck&quot;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+			break
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+		}
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	}
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	return result
+</a> }
+ 
+ func (op Stack) Get_params(arch *Arch, shared_constraint string, seq int) string {
+ 	stackName := &quot;st&quot; + strconv.Itoa(seq)
+ 	result := &quot;&quot;
+<a href="#h2-0-24" id="h2-0-24" class="d">-	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;din;\n&quot;
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;addr;\n&quot;
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-	result += &quot;	output &quot; + stackName + &quot;wren;\n&quot;
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-	result += &quot;	output &quot; + stackName + &quot;en;\n&quot;
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;dout;\n&quot;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+		if op.Op_get_name() == &quot;r2t&quot; {
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+			result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;senderData;\n&quot;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+			result += &quot;	output &quot; + stackName + &quot;senderWrite;\n&quot;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+			result += &quot;	input &quot; + stackName + &quot;senderAck;\n&quot;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+			break
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+		}
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	}
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+		if op.Op_get_name() == &quot;t2r&quot; {
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;receiverData;\n&quot;
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+			result += &quot;	input &quot; + stackName + &quot;receiverRead;\n&quot;
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+			result += &quot;	output &quot; + stackName + &quot;receiverAck;\n&quot;
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+			break
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+		}
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	}
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+
+</a> 	return result
+ }
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -49,24 +75,22 @@ func (op Stack) Get_internal_params(arch *Arch, shared_constraint string, seq in
+</a> 
+ 	stackName := &quot;st&quot; + strconv.Itoa(seq)
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;din;\n&quot;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;addr;\n&quot;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	result += &quot;	output &quot; + stackName + &quot;wren;\n&quot;
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-	result += &quot;	output &quot; + stackName + &quot;en;\n&quot;
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;dout;\n&quot;
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-	if seq == 0 {
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_din_i[&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_addr_i [&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-		result += &quot;\treg [&quot; + strconv.Itoa(stackNum-1) + &quot;:0] q_wren_i;\n&quot;
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-		result += &quot;\twire [&quot; + strconv.Itoa(stackNum-1) + &quot;:0] q_en_i;\n&quot;
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-		result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_dout_i [&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+		if op.Op_get_name() == &quot;r2t&quot; {
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+			result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;senderData;\n&quot;
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+			result += &quot;	output &quot; + stackName + &quot;senderWrite;\n&quot;
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+			result += &quot;	input &quot; + stackName + &quot;senderAck;\n&quot;
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+			break
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+		}
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+	}
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-1-24" id="h2-1-24" class="i">+		if op.Op_get_name() == &quot;t2r&quot; {
+</a><a href="#h2-1-25" id="h2-1-25" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;receiverData;\n&quot;
+</a><a href="#h2-1-26" id="h2-1-26" class="i">+			result += &quot;	input &quot; + stackName + &quot;receiverRead;\n&quot;
+</a><a href="#h2-1-27" id="h2-1-27" class="i">+			result += &quot;	output &quot; + stackName + &quot;receiverAck;\n&quot;
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+			break
+</a><a href="#h2-1-29" id="h2-1-29" class="i">+		}
+</a> 	}
+ 
+<a href="#h2-1-32" id="h2-1-32" class="d">-	result += &quot;\tassign &quot; + stackName + &quot;din = q_din_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h2-1-33" id="h2-1-33" class="d">-	result += &quot;\tassign &quot; + stackName + &quot;addr = q_addr_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h2-1-34" id="h2-1-34" class="d">-	result += &quot;\tassign &quot; + stackName + &quot;wren = q_wren_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h2-1-35" id="h2-1-35" class="d">-	result += &quot;\tassign &quot; + stackName + &quot;en = q_en_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h2-1-36" id="h2-1-36" class="d">-	result += &quot;\tassign q_dout_i[&quot; + strconv.Itoa(seq) + &quot;] = &quot; + stackName + &quot;dout;\n&quot;
+</a> 	return result
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>creatorbm.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> creatorbm.go (29495B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package basm
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;errors&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;fmt&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;sort&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strconv&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;strings&quot;
+<a href="#l9" class="line" id="l9">      9</a> 
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+<a href="#l13" class="line" id="l13">     13</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l14" class="line" id="l14">     14</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#l15" class="line" id="l15">     15</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#l16" class="line" id="l16">     16</a> )
+<a href="#l17" class="line" id="l17">     17</a> 
+<a href="#l18" class="line" id="l18">     18</a> // Assembler2BondMachine transform an assembled instance into a BCOF file
+<a href="#l19" class="line" id="l19">     19</a> func (bi *BasmInstance) Assembler2BondMachine() error {
+<a href="#l20" class="line" id="l20">     20</a> 	if bi.bm == nil {
+<a href="#l21" class="line" id="l21">     21</a> 		if bi.debug {
+<a href="#l22" class="line" id="l22">     22</a> 			fmt.Println(purple(&quot;BondMachine generator&quot;) + &quot;: &quot; + red(&quot;An existing BondMachine has not been provided, the assembler will create a new one&quot;))
+<a href="#l23" class="line" id="l23">     23</a> 		}
+<a href="#l24" class="line" id="l24">     24</a> 		return bi.assembler2NewBondMachine()
+<a href="#l25" class="line" id="l25">     25</a> 	} else {
+<a href="#l26" class="line" id="l26">     26</a> 		if bi.debug {
+<a href="#l27" class="line" id="l27">     27</a> 			fmt.Println(purple(&quot;BondMachine generator&quot;) + &quot;: &quot; + red(&quot;An existing BondMachine has been provided, the assembler will use that as assembler target&quot;))
+<a href="#l28" class="line" id="l28">     28</a> 		}
+<a href="#l29" class="line" id="l29">     29</a> 		bi.result = bi.bm
+<a href="#l30" class="line" id="l30">     30</a> 	}
+<a href="#l31" class="line" id="l31">     31</a> 	return nil
+<a href="#l32" class="line" id="l32">     32</a> }
+<a href="#l33" class="line" id="l33">     33</a> 
+<a href="#l34" class="line" id="l34">     34</a> func (bi *BasmInstance) assembler2NewBondMachine() error {
+<a href="#l35" class="line" id="l35">     35</a> 	if bi.debug {
+<a href="#l36" class="line" id="l36">     36</a> 		fmt.Println(&quot;\t&quot; + green(&quot;BondMachine metadata&quot;))
+<a href="#l37" class="line" id="l37">     37</a> 	}
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> 	registerSize := bi.global.GetMeta(&quot;registersize&quot;)
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a> 	if registerSize == &quot;&quot; {
+<a href="#l42" class="line" id="l42">     42</a> 		return errors.New(&quot;register size not specified&quot;)
+<a href="#l43" class="line" id="l43">     43</a> 	}
+<a href="#l44" class="line" id="l44">     44</a> 
+<a href="#l45" class="line" id="l45">     45</a> 	var rSize uint8
+<a href="#l46" class="line" id="l46">     46</a> 	if size, err := strconv.Atoi(registerSize); err == nil {
+<a href="#l47" class="line" id="l47">     47</a> 		if 0 &lt; size &amp;&amp; size &lt; 256 {
+<a href="#l48" class="line" id="l48">     48</a> 			rSize = uint8(size)
+<a href="#l49" class="line" id="l49">     49</a> 		} else {
+<a href="#l50" class="line" id="l50">     50</a> 			return errors.New(&quot;wrong value for register size&quot;)
+<a href="#l51" class="line" id="l51">     51</a> 		}
+<a href="#l52" class="line" id="l52">     52</a> 	} else {
+<a href="#l53" class="line" id="l53">     53</a> 		return errors.New(&quot;register size not valid&quot;)
+<a href="#l54" class="line" id="l54">     54</a> 	}
+<a href="#l55" class="line" id="l55">     55</a> 	if bi.debug {
+<a href="#l56" class="line" id="l56">     56</a> 		fmt.Println(&quot;\t\t&quot;+green(&quot;register size:&quot;), rSize)
+<a href="#l57" class="line" id="l57">     57</a> 	}
+<a href="#l58" class="line" id="l58">     58</a> 
+<a href="#l59" class="line" id="l59">     59</a> 	if bi.debug {
+<a href="#l60" class="line" id="l60">     60</a> 		fmt.Println(&quot;\t&quot; + green(&quot;Processors creation&quot;))
+<a href="#l61" class="line" id="l61">     61</a> 	}
+<a href="#l62" class="line" id="l62">     62</a> 
+<a href="#l63" class="line" id="l63">     63</a> 	cps := make([]*procbuilder.Machine, len(bi.cps))
+<a href="#l64" class="line" id="l64">     64</a> 	cpIndexes := make(map[string]string)
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;bm&quot;, Value: &quot;cps&quot;, Op: bmreqs.OpAdd})
+<a href="#l67" class="line" id="l67">     67</a> 
+<a href="#l68" class="line" id="l68">     68</a> 	// Precompute the shared constraints in order to get the specs of the processors
+<a href="#l69" class="line" id="l69">     69</a> 	sharedConstraints, err := bi.sharedPrecompute()
+<a href="#l70" class="line" id="l70">     70</a> 	if err != nil {
+<a href="#l71" class="line" id="l71">     71</a> 		return err
+<a href="#l72" class="line" id="l72">     72</a> 	}
+<a href="#l73" class="line" id="l73">     73</a> 
+<a href="#l74" class="line" id="l74">     74</a> 	for i, cp := range bi.cps {
+<a href="#l75" class="line" id="l75">     75</a> 		if bi.debug {
+<a href="#l76" class="line" id="l76">     76</a> 			fmt.Println(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+<a href="#l77" class="line" id="l77">     77</a> 		}
+<a href="#l78" class="line" id="l78">     78</a> 
+<a href="#l79" class="line" id="l79">     79</a> 		// Check for the ROM and RAM alternatives and select the right one by rewriting the meta romcode and ramcode
+<a href="#l80" class="line" id="l80">     80</a> 		if err := bi.CodeChoice(rSize, i, sharedConstraints[i]); err != nil {
+<a href="#l81" class="line" id="l81">     81</a> 			return err
+<a href="#l82" class="line" id="l82">     82</a> 		}
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> 		romCode := cp.GetMeta(&quot;romcode&quot;)
+<a href="#l85" class="line" id="l85">     85</a> 		if bi.debug {
+<a href="#l86" class="line" id="l86">     86</a> 			if romCode != &quot;&quot; {
+<a href="#l87" class="line" id="l87">     87</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom code: &quot;) + yellow(romCode))
+<a href="#l88" class="line" id="l88">     88</a> 			} else {
+<a href="#l89" class="line" id="l89">     89</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom code: &quot;) + yellow(&quot;not specified&quot;))
+<a href="#l90" class="line" id="l90">     90</a> 			}
+<a href="#l91" class="line" id="l91">     91</a> 		}
+<a href="#l92" class="line" id="l92">     92</a> 
+<a href="#l93" class="line" id="l93">     93</a> 		romData := cp.GetMeta(&quot;romdata&quot;)
+<a href="#l94" class="line" id="l94">     94</a> 		if bi.debug {
+<a href="#l95" class="line" id="l95">     95</a> 			if romData != &quot;&quot; {
+<a href="#l96" class="line" id="l96">     96</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom data: &quot;) + yellow(romData))
+<a href="#l97" class="line" id="l97">     97</a> 			} else {
+<a href="#l98" class="line" id="l98">     98</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom data: &quot;) + yellow(&quot;not specified&quot;))
+<a href="#l99" class="line" id="l99">     99</a> 			}
+<a href="#l100" class="line" id="l100">    100</a> 		}
+<a href="#l101" class="line" id="l101">    101</a> 
+<a href="#l102" class="line" id="l102">    102</a> 		ramCode := cp.GetMeta(&quot;ramcode&quot;)
+<a href="#l103" class="line" id="l103">    103</a> 		if bi.debug {
+<a href="#l104" class="line" id="l104">    104</a> 			if ramCode != &quot;&quot; {
+<a href="#l105" class="line" id="l105">    105</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram code: &quot;) + yellow(ramCode))
+<a href="#l106" class="line" id="l106">    106</a> 			} else {
+<a href="#l107" class="line" id="l107">    107</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram code: &quot;) + yellow(&quot;not specified&quot;))
+<a href="#l108" class="line" id="l108">    108</a> 			}
+<a href="#l109" class="line" id="l109">    109</a> 		}
+<a href="#l110" class="line" id="l110">    110</a> 
+<a href="#l111" class="line" id="l111">    111</a> 		ramData := cp.GetMeta(&quot;ramdata&quot;)
+<a href="#l112" class="line" id="l112">    112</a> 		if bi.debug {
+<a href="#l113" class="line" id="l113">    113</a> 			if ramData != &quot;&quot; {
+<a href="#l114" class="line" id="l114">    114</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram data: &quot;) + yellow(ramData))
+<a href="#l115" class="line" id="l115">    115</a> 			} else {
+<a href="#l116" class="line" id="l116">    116</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram data: &quot;) + yellow(&quot;not specified&quot;))
+<a href="#l117" class="line" id="l117">    117</a> 			}
+<a href="#l118" class="line" id="l118">    118</a> 		}
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> 		execMode := cp.GetMeta(&quot;execmode&quot;)
+<a href="#l121" class="line" id="l121">    121</a> 		if execMode == &quot;&quot; {
+<a href="#l122" class="line" id="l122">    122</a> 			execMode = bi.global.GetMeta(&quot;defaultexecmode&quot;)
+<a href="#l123" class="line" id="l123">    123</a> 		}
+<a href="#l124" class="line" id="l124">    124</a> 
+<a href="#l125" class="line" id="l125">    125</a> 		if bi.debug {
+<a href="#l126" class="line" id="l126">    126</a> 			if execMode != &quot;&quot; {
+<a href="#l127" class="line" id="l127">    127</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;execution mode: &quot;) + yellow(execMode))
+<a href="#l128" class="line" id="l128">    128</a> 			} else {
+<a href="#l129" class="line" id="l129">    129</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;execution mode: &quot;) + yellow(&quot;not specified, defaulting to &#39;ha&#39;&quot;))
+<a href="#l130" class="line" id="l130">    130</a> 			}
+<a href="#l131" class="line" id="l131">    131</a> 		}
+<a href="#l132" class="line" id="l132">    132</a> 
+<a href="#l133" class="line" id="l133">    133</a> 		if execMode == &quot;&quot; {
+<a href="#l134" class="line" id="l134">    134</a> 			execMode = &quot;ha&quot;
+<a href="#l135" class="line" id="l135">    135</a> 		}
+<a href="#l136" class="line" id="l136">    136</a> 
+<a href="#l137" class="line" id="l137">    137</a> 		bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps&quot;, T: bmreqs.ObjectSet, Name: &quot;id&quot;, Value: strconv.Itoa(i), Op: bmreqs.OpAdd})
+<a href="#l138" class="line" id="l138">    138</a> 
+<a href="#l139" class="line" id="l139">    139</a> 		if cpm, err := bi.CreateConnectingProcessor(rSize, cp, i, romCode, romData, ramCode, ramData, execMode); err == nil {
+<a href="#l140" class="line" id="l140">    140</a> 			cps[i] = cpm
+<a href="#l141" class="line" id="l141">    141</a> 			cpIndexes[cp.GetValue()] = strconv.Itoa(i)
+<a href="#l142" class="line" id="l142">    142</a> 			if bi.BMinfo != nil {
+<a href="#l143" class="line" id="l143">    143</a> 				if bi.CPNames == nil {
+<a href="#l144" class="line" id="l144">    144</a> 					bi.CPNames = make(map[int]string)
+<a href="#l145" class="line" id="l145">    145</a> 				}
+<a href="#l146" class="line" id="l146">    146</a> 				bi.CPNames[i] = cp.GetValue()
+<a href="#l147" class="line" id="l147">    147</a> 			}
+<a href="#l148" class="line" id="l148">    148</a> 		} else {
+<a href="#l149" class="line" id="l149">    149</a> 			return err
+<a href="#l150" class="line" id="l150">    150</a> 		}
+<a href="#l151" class="line" id="l151">    151</a> 
+<a href="#l152" class="line" id="l152">    152</a> 	}
+<a href="#l153" class="line" id="l153">    153</a> 
+<a href="#l154" class="line" id="l154">    154</a> 	bMach := new(bondmachine.Bondmachine)
+<a href="#l155" class="line" id="l155">    155</a> 
+<a href="#l156" class="line" id="l156">    156</a> 	bMach.Rsize = uint8(rSize)
+<a href="#l157" class="line" id="l157">    157</a> 
+<a href="#l158" class="line" id="l158">    158</a> 	bMach.Init()
+<a href="#l159" class="line" id="l159">    159</a> 
+<a href="#l160" class="line" id="l160">    160</a> 	// Attach the Connecting processors
+<a href="#l161" class="line" id="l161">    161</a> 	for i, cp := range cps {
+<a href="#l162" class="line" id="l162">    162</a> 		bMach.Domains = append(bMach.Domains, cp)
+<a href="#l163" class="line" id="l163">    163</a> 		if _, ok := bMach.Add_processor(i); ok != nil {
+<a href="#l164" class="line" id="l164">    164</a> 			return errors.New(&quot;attach processor failed&quot;)
+<a href="#l165" class="line" id="l165">    165</a> 		}
+<a href="#l166" class="line" id="l166">    166</a> 	}
+<a href="#l167" class="line" id="l167">    167</a> 
+<a href="#l168" class="line" id="l168">    168</a> 	// Insert the Shared Objects into the BM and compose and hash of name,constraint
+<a href="#l169" class="line" id="l169">    169</a> 	constrains := make(map[string]string)
+<a href="#l170" class="line" id="l170">    170</a> 	soIndexes := make(map[string]string)
+<a href="#l171" class="line" id="l171">    171</a> 	for i, so := range bi.sos {
+<a href="#l172" class="line" id="l172">    172</a> 		if bi.debug {
+<a href="#l173" class="line" id="l173">    173</a> 			fmt.Print(&quot;\t\t&quot; + green(&quot;SO: &quot;) + yellow(so.GetValue()))
+<a href="#l174" class="line" id="l174">    174</a> 		}
+<a href="#l175" class="line" id="l175">    175</a> 		constraint := so.GetMeta(&quot;constraint&quot;)
+<a href="#l176" class="line" id="l176">    176</a> 		if bi.debug {
+<a href="#l177" class="line" id="l177">    177</a> 			fmt.Println(&quot; - &quot; + green(&quot;constraint: &quot;) + yellow(constraint))
+<a href="#l178" class="line" id="l178">    178</a> 		}
+<a href="#l179" class="line" id="l179">    179</a> 		bMach.Add_shared_objects([]string{constraint})
+<a href="#l180" class="line" id="l180">    180</a> 		constrains[so.GetValue()] = constraint
+<a href="#l181" class="line" id="l181">    181</a> 		soIndexes[so.GetValue()] = strconv.Itoa(i)
+<a href="#l182" class="line" id="l182">    182</a> 	}
+<a href="#l183" class="line" id="l183">    183</a> 
+<a href="#l184" class="line" id="l184">    184</a> 	// Will keep track of the processed attach
+<a href="#l185" class="line" id="l185">    185</a> 	soattDone := make([]bool, len(bi.soAttach))
+<a href="#l186" class="line" id="l186">    186</a> 
+<a href="#l187" class="line" id="l187">    187</a> 	// Process every CP
+<a href="#l188" class="line" id="l188">    188</a> 	for i, cp := range bi.cps {
+<a href="#l189" class="line" id="l189">    189</a> 		cpName := cp.GetValue()
+<a href="#l190" class="line" id="l190">    190</a> 		expectedIndex := 0
+<a href="#l191" class="line" id="l191">    191</a> 		expectedIndexS := &quot;0&quot;
+<a href="#l192" class="line" id="l192">    192</a> 		cpConstraints := make([]string, 0)
+<a href="#l193" class="line" id="l193">    193</a> 		for {
+<a href="#l194" class="line" id="l194">    194</a> 			indexFound := false
+<a href="#l195" class="line" id="l195">    195</a> 			// Process every SO attach searching for the couple CP index
+<a href="#l196" class="line" id="l196">    196</a> 			for j, soatt := range bi.soAttach {
+<a href="#l197" class="line" id="l197">    197</a> 				if soatt.GetMeta(&quot;cp&quot;) == cpName &amp;&amp; soatt.GetMeta(&quot;index&quot;) == expectedIndexS {
+<a href="#l198" class="line" id="l198">    198</a> 					endpoints := make([]string, 2)
+<a href="#l199" class="line" id="l199">    199</a> 					endpoints[0] = strconv.Itoa(i)
+<a href="#l200" class="line" id="l200">    200</a> 					endpoints[1] = soIndexes[soatt.GetValue()]
+<a href="#l201" class="line" id="l201">    201</a> 					// Attach the SO to the CP
+<a href="#l202" class="line" id="l202">    202</a> 					bMach.Connect_processor_shared_object(endpoints)
+<a href="#l203" class="line" id="l203">    203</a> 					indexFound = true
+<a href="#l204" class="line" id="l204">    204</a> 					soattDone[j] = true
+<a href="#l205" class="line" id="l205">    205</a> 					cpConstraints = append(cpConstraints, constrains[soatt.GetValue()])
+<a href="#l206" class="line" id="l206">    206</a> 					break
+<a href="#l207" class="line" id="l207">    207</a> 				}
+<a href="#l208" class="line" id="l208">    208</a> 			}
+<a href="#l209" class="line" id="l209">    209</a> 			if indexFound {
+<a href="#l210" class="line" id="l210">    210</a> 				expectedIndex += 1
+<a href="#l211" class="line" id="l211">    211</a> 				expectedIndexS = strconv.Itoa(expectedIndex)
+<a href="#l212" class="line" id="l212">    212</a> 			} else {
+<a href="#l213" class="line" id="l213">    213</a> 				break
+<a href="#l214" class="line" id="l214">    214</a> 			}
+<a href="#l215" class="line" id="l215">    215</a> 		}
+<a href="#l216" class="line" id="l216">    216</a> 		// compose the Shared constraint of every processor
+<a href="#l217" class="line" id="l217">    217</a> 		bMach.Domains[i].Shared_constraints = strings.Join(cpConstraints, &quot;,&quot;)
+<a href="#l218" class="line" id="l218">    218</a> 	}
+<a href="#l219" class="line" id="l219">    219</a> 
+<a href="#l220" class="line" id="l220">    220</a> 	for _, val := range soattDone {
+<a href="#l221" class="line" id="l221">    221</a> 		if !val {
+<a href="#l222" class="line" id="l222">    222</a> 			return errors.New(&quot;processor SO index inconsistent&quot;)
+<a href="#l223" class="line" id="l223">    223</a> 		}
+<a href="#l224" class="line" id="l224">    224</a> 	}
+<a href="#l225" class="line" id="l225">    225</a> 
+<a href="#l226" class="line" id="l226">    226</a> 	// Now that Shared Objects are attached, we can assemble the code (it was not possible before)
+<a href="#l227" class="line" id="l227">    227</a> 
+<a href="#l228" class="line" id="l228">    228</a> 	for i, cp := range bi.cps {
+<a href="#l229" class="line" id="l229">    229</a> 		romCode := cp.GetMeta(&quot;romcode&quot;)
+<a href="#l230" class="line" id="l230">    230</a> 		romData := cp.GetMeta(&quot;romdata&quot;)
+<a href="#l231" class="line" id="l231">    231</a> 		myMachine := bMach.Domains[i]
+<a href="#l232" class="line" id="l232">    232</a> 		myArch := &amp;myMachine.Arch
+<a href="#l233" class="line" id="l233">    233</a> 
+<a href="#l234" class="line" id="l234">    234</a> 		prog := &quot;&quot;
+<a href="#l235" class="line" id="l235">    235</a> 
+<a href="#l236" class="line" id="l236">    236</a> 		romCodeContrib := 0
+<a href="#l237" class="line" id="l237">    237</a> 
+<a href="#l238" class="line" id="l238">    238</a> 		if romCode != &quot;&quot; {
+<a href="#l239" class="line" id="l239">    239</a> 			for _, line := range bi.sections[romCode].sectionBody.Lines {
+<a href="#l240" class="line" id="l240">    240</a> 				prog += line.Operation.GetValue()
+<a href="#l241" class="line" id="l241">    241</a> 				for _, arg := range line.Elements {
+<a href="#l242" class="line" id="l242">    242</a> 					prog += &quot; &quot; + arg.GetValue()
+<a href="#l243" class="line" id="l243">    243</a> 				}
+<a href="#l244" class="line" id="l244">    244</a> 				prog += &quot;\n&quot;
+<a href="#l245" class="line" id="l245">    245</a> 			}
+<a href="#l246" class="line" id="l246">    246</a> 
+<a href="#l247" class="line" id="l247">    247</a> 			if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+<a href="#l248" class="line" id="l248">    248</a> 				myMachine.Program = prog
+<a href="#l249" class="line" id="l249">    249</a> 			} else {
+<a href="#l250" class="line" id="l250">    250</a> 				return err
+<a href="#l251" class="line" id="l251">    251</a> 			}
+<a href="#l252" class="line" id="l252">    252</a> 
+<a href="#l253" class="line" id="l253">    253</a> 			romCodeContrib = len(bi.sections[romCode].sectionBody.Lines)
+<a href="#l254" class="line" id="l254">    254</a> 		}
+<a href="#l255" class="line" id="l255">    255</a> 
+<a href="#l256" class="line" id="l256">    256</a> 		if romData != &quot;&quot; {
+<a href="#l257" class="line" id="l257">    257</a> 			wordSize := myArch.Max_word()
+<a href="#l258" class="line" id="l258">    258</a> 			// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#l259" class="line" id="l259">    259</a> 			if wordSize &lt; 8 {
+<a href="#l260" class="line" id="l260">    260</a> 				return errors.New(&quot;word size is too small&quot;)
+<a href="#l261" class="line" id="l261">    261</a> 			}
+<a href="#l262" class="line" id="l262">    262</a> 
+<a href="#l263" class="line" id="l263">    263</a> 			data := make([]string, 0)
+<a href="#l264" class="line" id="l264">    264</a> 
+<a href="#l265" class="line" id="l265">    265</a> 			for _, line := range bi.sections[romData].sectionBody.Lines {
+<a href="#l266" class="line" id="l266">    266</a> 				for _, arg := range line.Elements {
+<a href="#l267" class="line" id="l267">    267</a> 					hexVal := arg.GetValue()
+<a href="#l268" class="line" id="l268">    268</a> 					if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#l269" class="line" id="l269">    269</a> 						nS, _ := n.ExportBinaryNBits(int(wordSize))
+<a href="#l270" class="line" id="l270">    270</a> 						data = append(data, nS)
+<a href="#l271" class="line" id="l271">    271</a> 					} else {
+<a href="#l272" class="line" id="l272">    272</a> 						return err
+<a href="#l273" class="line" id="l273">    273</a> 					}
+<a href="#l274" class="line" id="l274">    274</a> 				}
+<a href="#l275" class="line" id="l275">    275</a> 			}
+<a href="#l276" class="line" id="l276">    276</a> 
+<a href="#l277" class="line" id="l277">    277</a> 			myArch.O = uint8(Needed_bits(romCodeContrib + len(data)))
+<a href="#l278" class="line" id="l278">    278</a> 			myMachine.Data.Vars = data
+<a href="#l279" class="line" id="l279">    279</a> 
+<a href="#l280" class="line" id="l280">    280</a> 		}
+<a href="#l281" class="line" id="l281">    281</a> 
+<a href="#l282" class="line" id="l282">    282</a> 		if bi.debug {
+<a href="#l283" class="line" id="l283">    283</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (post-data): &quot;) + yellow(myArch.O))
+<a href="#l284" class="line" id="l284">    284</a> 			fmt.Println(green(&quot;\t\tProcessor created dump: &quot;))
+<a href="#l285" class="line" id="l285">    285</a> 			fmt.Println(green(&quot;\t\t----&quot;))
+<a href="#l286" class="line" id="l286">    286</a> 			fmt.Println(cps[i])
+<a href="#l287" class="line" id="l287">    287</a> 			fmt.Println(green(&quot;\t\t----&quot;))
+<a href="#l288" class="line" id="l288">    288</a> 		}
+<a href="#l289" class="line" id="l289">    289</a> 	}
+<a href="#l290" class="line" id="l290">    290</a> 
+<a href="#l291" class="line" id="l291">    291</a> 	// Will keep track of the processed attach
+<a href="#l292" class="line" id="l292">    292</a> 	ioAttDone := make([]bool, len(bi.ioAttach))
+<a href="#l293" class="line" id="l293">    293</a> 
+<a href="#l294" class="line" id="l294">    294</a> 	endPoints := make([]string, len(bi.ioAttach))
+<a href="#l295" class="line" id="l295">    295</a> 	var e1 string
+<a href="#l296" class="line" id="l296">    296</a> 	var e2 string
+<a href="#l297" class="line" id="l297">    297</a> 
+<a href="#l298" class="line" id="l298">    298</a> 	for i, ioAtt := range bi.ioAttach {
+<a href="#l299" class="line" id="l299">    299</a> 		if !ioAttDone[i] {
+<a href="#l300" class="line" id="l300">    300</a> 			// Process every IO attach searching for the couple CP index
+<a href="#l301" class="line" id="l301">    301</a> 			for j, ioAtt2 := range bi.ioAttach {
+<a href="#l302" class="line" id="l302">    302</a> 				if !ioAttDone[j] {
+<a href="#l303" class="line" id="l303">    303</a> 					if ioAtt.GetValue() == ioAtt2.GetValue() {
+<a href="#l304" class="line" id="l304">    304</a> 						e1cp := ioAtt.GetMeta(&quot;cp&quot;)
+<a href="#l305" class="line" id="l305">    305</a> 						e1type := ioAtt.GetMeta(&quot;type&quot;)
+<a href="#l306" class="line" id="l306">    306</a> 						e1index := ioAtt.GetMeta(&quot;index&quot;)
+<a href="#l307" class="line" id="l307">    307</a> 						if e1cp == &quot;bm&quot; {
+<a href="#l308" class="line" id="l308">    308</a> 							if e1type == &quot;input&quot; {
+<a href="#l309" class="line" id="l309">    309</a> 								e1 = &quot;i&quot; + e1index
+<a href="#l310" class="line" id="l310">    310</a> 							} else if e1type == &quot;output&quot; {
+<a href="#l311" class="line" id="l311">    311</a> 								e1 = &quot;o&quot; + e1index
+<a href="#l312" class="line" id="l312">    312</a> 							} else {
+<a href="#l313" class="line" id="l313">    313</a> 								return errors.New(&quot;wrong IO type&quot;)
+<a href="#l314" class="line" id="l314">    314</a> 							}
+<a href="#l315" class="line" id="l315">    315</a> 						} else {
+<a href="#l316" class="line" id="l316">    316</a> 							if e1type == &quot;input&quot; {
+<a href="#l317" class="line" id="l317">    317</a> 								e1 = &quot;p&quot; + cpIndexes[e1cp] + &quot;i&quot; + e1index
+<a href="#l318" class="line" id="l318">    318</a> 							} else if e1type == &quot;output&quot; {
+<a href="#l319" class="line" id="l319">    319</a> 								e1 = &quot;p&quot; + cpIndexes[e1cp] + &quot;o&quot; + e1index
+<a href="#l320" class="line" id="l320">    320</a> 							} else {
+<a href="#l321" class="line" id="l321">    321</a> 								return errors.New(&quot;wrong IO type&quot;)
+<a href="#l322" class="line" id="l322">    322</a> 							}
+<a href="#l323" class="line" id="l323">    323</a> 						}
+<a href="#l324" class="line" id="l324">    324</a> 
+<a href="#l325" class="line" id="l325">    325</a> 						e2cp := ioAtt2.GetMeta(&quot;cp&quot;)
+<a href="#l326" class="line" id="l326">    326</a> 						e2type := ioAtt2.GetMeta(&quot;type&quot;)
+<a href="#l327" class="line" id="l327">    327</a> 						e2index := ioAtt2.GetMeta(&quot;index&quot;)
+<a href="#l328" class="line" id="l328">    328</a> 						if e2cp == &quot;bm&quot; {
+<a href="#l329" class="line" id="l329">    329</a> 							if e2type == &quot;input&quot; {
+<a href="#l330" class="line" id="l330">    330</a> 								e2 = &quot;i&quot; + e2index
+<a href="#l331" class="line" id="l331">    331</a> 							} else if e2type == &quot;output&quot; {
+<a href="#l332" class="line" id="l332">    332</a> 								e2 = &quot;o&quot; + e2index
+<a href="#l333" class="line" id="l333">    333</a> 							} else {
+<a href="#l334" class="line" id="l334">    334</a> 								return errors.New(&quot;wrong IO type&quot;)
+<a href="#l335" class="line" id="l335">    335</a> 							}
+<a href="#l336" class="line" id="l336">    336</a> 						} else {
+<a href="#l337" class="line" id="l337">    337</a> 							if e2type == &quot;input&quot; {
+<a href="#l338" class="line" id="l338">    338</a> 								e2 = &quot;p&quot; + cpIndexes[e2cp] + &quot;i&quot; + e2index
+<a href="#l339" class="line" id="l339">    339</a> 							} else if e2type == &quot;output&quot; {
+<a href="#l340" class="line" id="l340">    340</a> 								e2 = &quot;p&quot; + cpIndexes[e2cp] + &quot;o&quot; + e2index
+<a href="#l341" class="line" id="l341">    341</a> 							} else {
+<a href="#l342" class="line" id="l342">    342</a> 								return errors.New(&quot;wrong IO type&quot;)
+<a href="#l343" class="line" id="l343">    343</a> 							}
+<a href="#l344" class="line" id="l344">    344</a> 						}
+<a href="#l345" class="line" id="l345">    345</a> 						endPoints[i] = e1 + &quot;,&quot; + e2
+<a href="#l346" class="line" id="l346">    346</a> 						ioAttDone[i] = true
+<a href="#l347" class="line" id="l347">    347</a> 						ioAttDone[j] = true
+<a href="#l348" class="line" id="l348">    348</a> 					}
+<a href="#l349" class="line" id="l349">    349</a> 				}
+<a href="#l350" class="line" id="l350">    350</a> 			}
+<a href="#l351" class="line" id="l351">    351</a> 		}
+<a href="#l352" class="line" id="l352">    352</a> 	}
+<a href="#l353" class="line" id="l353">    353</a> 
+<a href="#l354" class="line" id="l354">    354</a> 	for _, val := range ioAttDone {
+<a href="#l355" class="line" id="l355">    355</a> 		if !val {
+<a href="#l356" class="line" id="l356">    356</a> 			return errors.New(&quot;processor IO index inconsistent&quot;)
+<a href="#l357" class="line" id="l357">    357</a> 		}
+<a href="#l358" class="line" id="l358">    358</a> 	}
+<a href="#l359" class="line" id="l359">    359</a> 
+<a href="#l360" class="line" id="l360">    360</a> 	inToAdd := 0
+<a href="#l361" class="line" id="l361">    361</a> 	outToAdd := 0
+<a href="#l362" class="line" id="l362">    362</a> 	for _, end := range endPoints {
+<a href="#l363" class="line" id="l363">    363</a> 		if end != &quot;&quot; {
+<a href="#l364" class="line" id="l364">    364</a> 			ends := strings.Split(end, &quot;,&quot;)
+<a href="#l365" class="line" id="l365">    365</a> 			if ends[0][0] == &#39;i&#39; {
+<a href="#l366" class="line" id="l366">    366</a> 				inNum, _ := strconv.Atoi(ends[0][1:])
+<a href="#l367" class="line" id="l367">    367</a> 				if inNum+1 &gt; inToAdd {
+<a href="#l368" class="line" id="l368">    368</a> 					inToAdd = inNum + 1
+<a href="#l369" class="line" id="l369">    369</a> 				}
+<a href="#l370" class="line" id="l370">    370</a> 			}
+<a href="#l371" class="line" id="l371">    371</a> 			if ends[0][0] == &#39;o&#39; {
+<a href="#l372" class="line" id="l372">    372</a> 				outNum, _ := strconv.Atoi(ends[0][1:])
+<a href="#l373" class="line" id="l373">    373</a> 				if outNum+1 &gt; outToAdd {
+<a href="#l374" class="line" id="l374">    374</a> 					outToAdd = outNum + 1
+<a href="#l375" class="line" id="l375">    375</a> 				}
+<a href="#l376" class="line" id="l376">    376</a> 			}
+<a href="#l377" class="line" id="l377">    377</a> 			if ends[1][0] == &#39;i&#39; {
+<a href="#l378" class="line" id="l378">    378</a> 				inNum, _ := strconv.Atoi(ends[1][1:])
+<a href="#l379" class="line" id="l379">    379</a> 				if inNum+1 &gt; inToAdd {
+<a href="#l380" class="line" id="l380">    380</a> 					inToAdd = inNum + 1
+<a href="#l381" class="line" id="l381">    381</a> 				}
+<a href="#l382" class="line" id="l382">    382</a> 			}
+<a href="#l383" class="line" id="l383">    383</a> 			if ends[1][0] == &#39;o&#39; {
+<a href="#l384" class="line" id="l384">    384</a> 				outNum, _ := strconv.Atoi(ends[1][1:])
+<a href="#l385" class="line" id="l385">    385</a> 				if outNum+1 &gt; outToAdd {
+<a href="#l386" class="line" id="l386">    386</a> 					outToAdd = outNum + 1
+<a href="#l387" class="line" id="l387">    387</a> 				}
+<a href="#l388" class="line" id="l388">    388</a> 			}
+<a href="#l389" class="line" id="l389">    389</a> 		}
+<a href="#l390" class="line" id="l390">    390</a> 	}
+<a href="#l391" class="line" id="l391">    391</a> 
+<a href="#l392" class="line" id="l392">    392</a> 	// TODO recheck the code and include errors handling
+<a href="#l393" class="line" id="l393">    393</a> 
+<a href="#l394" class="line" id="l394">    394</a> 	for i := 0; i &lt; inToAdd; i++ {
+<a href="#l395" class="line" id="l395">    395</a> 		bMach.Add_input()
+<a href="#l396" class="line" id="l396">    396</a> 	}
+<a href="#l397" class="line" id="l397">    397</a> 
+<a href="#l398" class="line" id="l398">    398</a> 	for i := 0; i &lt; outToAdd; i++ {
+<a href="#l399" class="line" id="l399">    399</a> 		bMach.Add_output()
+<a href="#l400" class="line" id="l400">    400</a> 	}
+<a href="#l401" class="line" id="l401">    401</a> 
+<a href="#l402" class="line" id="l402">    402</a> 	for _, end := range endPoints {
+<a href="#l403" class="line" id="l403">    403</a> 		if end != &quot;&quot; {
+<a href="#l404" class="line" id="l404">    404</a> 			//fmt.Println(end)
+<a href="#l405" class="line" id="l405">    405</a> 			bMach.Add_bond(strings.Split(end, &quot;,&quot;))
+<a href="#l406" class="line" id="l406">    406</a> 		}
+<a href="#l407" class="line" id="l407">    407</a> 	}
+<a href="#l408" class="line" id="l408">    408</a> 	// fmt.Println(ioIns, ioOuts)
+<a href="#l409" class="line" id="l409">    409</a> 
+<a href="#l410" class="line" id="l410">    410</a> 	bi.result = bMach
+<a href="#l411" class="line" id="l411">    411</a> 
+<a href="#l412" class="line" id="l412">    412</a> 	return nil
+<a href="#l413" class="line" id="l413">    413</a> }
+<a href="#l414" class="line" id="l414">    414</a> 
+<a href="#l415" class="line" id="l415">    415</a> func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, cp *bmline.BasmElement, procid int, romCode string, romData string, ramCode string, ramData string, execMode string) (*procbuilder.Machine, error) {
+<a href="#l416" class="line" id="l416">    416</a> 	myMachine := new(procbuilder.Machine)
+<a href="#l417" class="line" id="l417">    417</a> 
+<a href="#l418" class="line" id="l418">    418</a> 	myArch := &amp;myMachine.Arch
+<a href="#l419" class="line" id="l419">    419</a> 
+<a href="#l420" class="line" id="l420">    420</a> 	myArch.Rsize = uint8(rSize)
+<a href="#l421" class="line" id="l421">    421</a> 
+<a href="#l422" class="line" id="l422">    422</a> 	myArch.Modes = make([]string, 1)
+<a href="#l423" class="line" id="l423">    423</a> 	myArch.Modes[0] = execMode
+<a href="#l424" class="line" id="l424">    424</a> 
+<a href="#l425" class="line" id="l425">    425</a> 	var resp bmreqs.ReqResponse
+<a href="#l426" class="line" id="l426">    426</a> 
+<a href="#l427" class="line" id="l427">    427</a> 	tabs := &quot;\t\t&quot;
+<a href="#l428" class="line" id="l428">    428</a> 
+<a href="#l429" class="line" id="l429">    429</a> 	if bi.extra != &quot;&quot; {
+<a href="#l430" class="line" id="l430">    430</a> 		tabs = bi.extra
+<a href="#l431" class="line" id="l431">    431</a> 	}
+<a href="#l432" class="line" id="l432">    432</a> 
+<a href="#l433" class="line" id="l433">    433</a> 	// Processing Code sections: CP has to have at least one code section
+<a href="#l434" class="line" id="l434">    434</a> 	// Getting the ROM code requirements
+<a href="#l435" class="line" id="l435">    435</a> 
+<a href="#l436" class="line" id="l436">    436</a> 	if romCode == &quot;&quot; &amp;&amp; ramCode == &quot;&quot; {
+<a href="#l437" class="line" id="l437">    437</a> 		return nil, errors.New(&quot;no code section specified, neither ROM nor RAM&quot;)
+<a href="#l438" class="line" id="l438">    438</a> 	}
+<a href="#l439" class="line" id="l439">    439</a> 
+<a href="#l440" class="line" id="l440">    440</a> 	opCodesROM := make([]string, 0)
+<a href="#l441" class="line" id="l441">    441</a> 
+<a href="#l442" class="line" id="l442">    442</a> 	if romCode != &quot;&quot; {
+<a href="#l443" class="line" id="l443">    443</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+<a href="#l444" class="line" id="l444">    444</a> 		if resp.Error != nil {
+<a href="#l445" class="line" id="l445">    445</a> 			return nil, resp.Error
+<a href="#l446" class="line" id="l446">    446</a> 		}
+<a href="#l447" class="line" id="l447">    447</a> 		opCodesROM = strings.Split(resp.Value, &quot;,&quot;)
+<a href="#l448" class="line" id="l448">    448</a> 	}
+<a href="#l449" class="line" id="l449">    449</a> 
+<a href="#l450" class="line" id="l450">    450</a> 	opCodesRAM := make([]string, 0)
+<a href="#l451" class="line" id="l451">    451</a> 
+<a href="#l452" class="line" id="l452">    452</a> 	// Getting the RAM code requirements
+<a href="#l453" class="line" id="l453">    453</a> 	if ramCode != &quot;&quot; {
+<a href="#l454" class="line" id="l454">    454</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+<a href="#l455" class="line" id="l455">    455</a> 		if resp.Error != nil {
+<a href="#l456" class="line" id="l456">    456</a> 			return nil, resp.Error
+<a href="#l457" class="line" id="l457">    457</a> 		}
+<a href="#l458" class="line" id="l458">    458</a> 		opCodesRAM = strings.Split(resp.Value, &quot;,&quot;)
+<a href="#l459" class="line" id="l459">    459</a> 	}
+<a href="#l460" class="line" id="l460">    460</a> 	// The final list of opCodes is the union of the two lists
+<a href="#l461" class="line" id="l461">    461</a> 	opCodes := make([]procbuilder.Opcode, 0)
+<a href="#l462" class="line" id="l462">    462</a> 
+<a href="#l463" class="line" id="l463">    463</a> outer:
+<a href="#l464" class="line" id="l464">    464</a> 	for _, op := range procbuilder.Allopcodes {
+<a href="#l465" class="line" id="l465">    465</a> 		for _, opn := range opCodesROM {
+<a href="#l466" class="line" id="l466">    466</a> 			if opn == op.Op_get_name() {
+<a href="#l467" class="line" id="l467">    467</a> 				opCodes = append(opCodes, op)
+<a href="#l468" class="line" id="l468">    468</a> 				continue outer
+<a href="#l469" class="line" id="l469">    469</a> 			}
+<a href="#l470" class="line" id="l470">    470</a> 		}
+<a href="#l471" class="line" id="l471">    471</a> 		for _, opn := range opCodesRAM {
+<a href="#l472" class="line" id="l472">    472</a> 			if opn == op.Op_get_name() {
+<a href="#l473" class="line" id="l473">    473</a> 				opCodes = append(opCodes, op)
+<a href="#l474" class="line" id="l474">    474</a> 				continue outer
+<a href="#l475" class="line" id="l475">    475</a> 			}
+<a href="#l476" class="line" id="l476">    476</a> 		}
+<a href="#l477" class="line" id="l477">    477</a> 	}
+<a href="#l478" class="line" id="l478">    478</a> 
+<a href="#l479" class="line" id="l479">    479</a> 	sort.Sort(procbuilder.ByName(opCodes))
+<a href="#l480" class="line" id="l480">    480</a> 
+<a href="#l481" class="line" id="l481">    481</a> 	myArch.Op = opCodes
+<a href="#l482" class="line" id="l482">    482</a> 
+<a href="#l483" class="line" id="l483">    483</a> 	threads := 0
+<a href="#l484" class="line" id="l484">    484</a> 	if cp.GetMeta(&quot;threaded&quot;) != &quot;&quot; {
+<a href="#l485" class="line" id="l485">    485</a> 		if value, err := strconv.Atoi(cp.GetMeta(&quot;threaded&quot;)); err == nil {
+<a href="#l486" class="line" id="l486">    486</a> 			threads = value
+<a href="#l487" class="line" id="l487">    487</a> 		} else {
+<a href="#l488" class="line" id="l488">    488</a> 			return nil, err
+<a href="#l489" class="line" id="l489">    489</a> 		}
+<a href="#l490" class="line" id="l490">    490</a> 	}
+<a href="#l491" class="line" id="l491">    491</a> 
+<a href="#l492" class="line" id="l492">    492</a> 	myArch.Threaded = threads
+<a href="#l493" class="line" id="l493">    493</a> 
+<a href="#l494" class="line" id="l494">    494</a> 	// TODO: check how it is used and if it is needed, eventually remove or substitute with the merge of the two lists
+<a href="#l495" class="line" id="l495">    495</a> 	bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romCode, &quot;/bm:cps/id:&quot;+strconv.Itoa(procid))
+<a href="#l496" class="line" id="l496">    496</a> 
+<a href="#l497" class="line" id="l497">    497</a> 	regs := make([]string, 0)
+<a href="#l498" class="line" id="l498">    498</a> 
+<a href="#l499" class="line" id="l499">    499</a> 	// Getting the registers requirements on the ROM code
+<a href="#l500" class="line" id="l500">    500</a> 	if romCode != &quot;&quot; {
+<a href="#l501" class="line" id="l501">    501</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+<a href="#l502" class="line" id="l502">    502</a> 		if resp.Error == nil {
+<a href="#l503" class="line" id="l503">    503</a> 			regs = strings.Split(resp.Value, &quot;,&quot;)
+<a href="#l504" class="line" id="l504">    504</a> 		}
+<a href="#l505" class="line" id="l505">    505</a> 	}
+<a href="#l506" class="line" id="l506">    506</a> 
+<a href="#l507" class="line" id="l507">    507</a> 	// Getting the registers requirements on the RAM code, appending to the previous list
+<a href="#l508" class="line" id="l508">    508</a> 	if ramCode != &quot;&quot; {
+<a href="#l509" class="line" id="l509">    509</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+<a href="#l510" class="line" id="l510">    510</a> 		if resp.Error == nil {
+<a href="#l511" class="line" id="l511">    511</a> 			for _, reg := range strings.Split(resp.Value, &quot;,&quot;) {
+<a href="#l512" class="line" id="l512">    512</a> 				if !stringInSlice(reg, regs) {
+<a href="#l513" class="line" id="l513">    513</a> 					regs = append(regs, reg)
+<a href="#l514" class="line" id="l514">    514</a> 				}
+<a href="#l515" class="line" id="l515">    515</a> 			}
+<a href="#l516" class="line" id="l516">    516</a> 		}
+<a href="#l517" class="line" id="l517">    517</a> 	}
+<a href="#l518" class="line" id="l518">    518</a> 
+<a href="#l519" class="line" id="l519">    519</a> 	if len(regs) == 0 {
+<a href="#l520" class="line" id="l520">    520</a> 		return nil, errors.New(&quot;no registers found on ROM/RAM code&quot;)
+<a href="#l521" class="line" id="l521">    521</a> 	}
+<a href="#l522" class="line" id="l522">    522</a> 
+<a href="#l523" class="line" id="l523">    523</a> 	// Sorting the registers list (ordering using the compareStrings function)
+<a href="#l524" class="line" id="l524">    524</a> 	sort.Slice(regs, func(i, j int) bool {
+<a href="#l525" class="line" id="l525">    525</a> 		return compareStrings(regs[i], regs[j])
+<a href="#l526" class="line" id="l526">    526</a> 	})
+<a href="#l527" class="line" id="l527">    527</a> 
+<a href="#l528" class="line" id="l528">    528</a> 	// Getting the last register in the list
+<a href="#l529" class="line" id="l529">    529</a> 	lastReg := regs[len(regs)-1]
+<a href="#l530" class="line" id="l530">    530</a> 
+<a href="#l531" class="line" id="l531">    531</a> 	// Getting the register number
+<a href="#l532" class="line" id="l532">    532</a> 	regNum, _ := strconv.Atoi(lastReg[1:])
+<a href="#l533" class="line" id="l533">    533</a> 
+<a href="#l534" class="line" id="l534">    534</a> 	// To store up to the last register, we need regNum+1 registers
+<a href="#l535" class="line" id="l535">    535</a> 	myArch.R = uint8(Needed_bits(regNum + 1))
+<a href="#l536" class="line" id="l536">    536</a> 
+<a href="#l537" class="line" id="l537">    537</a> 	// If the length of the register list is different from the number of registers, emit a warning
+<a href="#l538" class="line" id="l538">    538</a> 	if len(regs) != regNum+1 {
+<a href="#l539" class="line" id="l539">    539</a> 		bi.Warning(&quot;Register list is not complete, some registers are missing. This is not an error provided you know what you are doing.&quot;)
+<a href="#l540" class="line" id="l540">    540</a> 	}
+<a href="#l541" class="line" id="l541">    541</a> 
+<a href="#l542" class="line" id="l542">    542</a> 	ins := make([]string, 0)
+<a href="#l543" class="line" id="l543">    543</a> 
+<a href="#l544" class="line" id="l544">    544</a> 	// Getting the Input requirements on the ROM code
+<a href="#l545" class="line" id="l545">    545</a> 	if romCode != &quot;&quot; {
+<a href="#l546" class="line" id="l546">    546</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;inputs&quot;, Op: bmreqs.OpGet})
+<a href="#l547" class="line" id="l547">    547</a> 		if resp.Error == nil {
+<a href="#l548" class="line" id="l548">    548</a> 			ins = strings.Split(resp.Value, &quot;,&quot;)
+<a href="#l549" class="line" id="l549">    549</a> 		}
+<a href="#l550" class="line" id="l550">    550</a> 	}
+<a href="#l551" class="line" id="l551">    551</a> 	// Getting the Input requirements on the RAM code, appending to the previous list
+<a href="#l552" class="line" id="l552">    552</a> 	if ramCode != &quot;&quot; {
+<a href="#l553" class="line" id="l553">    553</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;inputs&quot;, Op: bmreqs.OpGet})
+<a href="#l554" class="line" id="l554">    554</a> 		if resp.Error == nil {
+<a href="#l555" class="line" id="l555">    555</a> 			for _, in := range strings.Split(resp.Value, &quot;,&quot;) {
+<a href="#l556" class="line" id="l556">    556</a> 				if !stringInSlice(in, ins) {
+<a href="#l557" class="line" id="l557">    557</a> 					ins = append(ins, in)
+<a href="#l558" class="line" id="l558">    558</a> 				}
+<a href="#l559" class="line" id="l559">    559</a> 			}
+<a href="#l560" class="line" id="l560">    560</a> 		}
+<a href="#l561" class="line" id="l561">    561</a> 	}
+<a href="#l562" class="line" id="l562">    562</a> 
+<a href="#l563" class="line" id="l563">    563</a> 	if len(ins) == 0 {
+<a href="#l564" class="line" id="l564">    564</a> 		fmt.Println(tabs + &quot; - &quot; + purple(&quot;warning:&quot;) + &quot; No inputs found on ROM/RAM code, assuming 0&quot;)
+<a href="#l565" class="line" id="l565">    565</a> 		myArch.N = uint8(0)
+<a href="#l566" class="line" id="l566">    566</a> 	} else {
+<a href="#l567" class="line" id="l567">    567</a> 		// Sorting the inputs list (ordering using the compareStrings function)
+<a href="#l568" class="line" id="l568">    568</a> 		sort.Slice(ins, func(i, j int) bool {
+<a href="#l569" class="line" id="l569">    569</a> 			return compareStrings(ins[i], ins[j])
+<a href="#l570" class="line" id="l570">    570</a> 		})
+<a href="#l571" class="line" id="l571">    571</a> 
+<a href="#l572" class="line" id="l572">    572</a> 		// Getting the last input in the list
+<a href="#l573" class="line" id="l573">    573</a> 		lastIn := ins[len(ins)-1]
+<a href="#l574" class="line" id="l574">    574</a> 
+<a href="#l575" class="line" id="l575">    575</a> 		// Getting the input number
+<a href="#l576" class="line" id="l576">    576</a> 		inNum, _ := strconv.Atoi(lastIn[1:])
+<a href="#l577" class="line" id="l577">    577</a> 		// To store up to the last input, we need inNum+1 inputs
+<a href="#l578" class="line" id="l578">    578</a> 		myArch.N = uint8(inNum + 1)
+<a href="#l579" class="line" id="l579">    579</a> 
+<a href="#l580" class="line" id="l580">    580</a> 		if len(ins) != inNum+1 {
+<a href="#l581" class="line" id="l581">    581</a> 			fmt.Println(tabs + &quot; - &quot; + purple(&quot;warning:&quot;) + &quot;Input list is not complete, some inputs are missing. This is not an error, but you are wasting resources.&quot;)
+<a href="#l582" class="line" id="l582">    582</a> 		}
+<a href="#l583" class="line" id="l583">    583</a> 	}
+<a href="#l584" class="line" id="l584">    584</a> 
+<a href="#l585" class="line" id="l585">    585</a> 	outs := make([]string, 0)
+<a href="#l586" class="line" id="l586">    586</a> 
+<a href="#l587" class="line" id="l587">    587</a> 	// Getting the Output requirements on the ROM code
+<a href="#l588" class="line" id="l588">    588</a> 	if romCode != &quot;&quot; {
+<a href="#l589" class="line" id="l589">    589</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;outputs&quot;, Op: bmreqs.OpGet})
+<a href="#l590" class="line" id="l590">    590</a> 		if resp.Error == nil {
+<a href="#l591" class="line" id="l591">    591</a> 			outs = strings.Split(resp.Value, &quot;,&quot;)
+<a href="#l592" class="line" id="l592">    592</a> 		}
+<a href="#l593" class="line" id="l593">    593</a> 	}
+<a href="#l594" class="line" id="l594">    594</a> 
+<a href="#l595" class="line" id="l595">    595</a> 	// Getting the Output requirements on the RAM code, appending to the previous list
+<a href="#l596" class="line" id="l596">    596</a> 	if ramCode != &quot;&quot; {
+<a href="#l597" class="line" id="l597">    597</a> 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;outputs&quot;, Op: bmreqs.OpGet})
+<a href="#l598" class="line" id="l598">    598</a> 		if resp.Error == nil {
+<a href="#l599" class="line" id="l599">    599</a> 			for _, out := range strings.Split(resp.Value, &quot;,&quot;) {
+<a href="#l600" class="line" id="l600">    600</a> 				if !stringInSlice(out, outs) {
+<a href="#l601" class="line" id="l601">    601</a> 					outs = append(outs, out)
+<a href="#l602" class="line" id="l602">    602</a> 				}
+<a href="#l603" class="line" id="l603">    603</a> 			}
+<a href="#l604" class="line" id="l604">    604</a> 		}
+<a href="#l605" class="line" id="l605">    605</a> 	}
+<a href="#l606" class="line" id="l606">    606</a> 
+<a href="#l607" class="line" id="l607">    607</a> 	if len(outs) == 0 {
+<a href="#l608" class="line" id="l608">    608</a> 		fmt.Println(tabs + &quot; - &quot; + purple(&quot;warning:&quot;) + &quot; No outputs found on ROM/RAM code, assuming 0&quot;)
+<a href="#l609" class="line" id="l609">    609</a> 		myArch.M = uint8(0)
+<a href="#l610" class="line" id="l610">    610</a> 	} else {
+<a href="#l611" class="line" id="l611">    611</a> 		// Sorting the outputs list (ordering using the compareStrings function)
+<a href="#l612" class="line" id="l612">    612</a> 		sort.Slice(outs, func(i, j int) bool {
+<a href="#l613" class="line" id="l613">    613</a> 			return compareStrings(outs[i], outs[j])
+<a href="#l614" class="line" id="l614">    614</a> 		})
+<a href="#l615" class="line" id="l615">    615</a> 
+<a href="#l616" class="line" id="l616">    616</a> 		// Getting the last output in the list
+<a href="#l617" class="line" id="l617">    617</a> 		lastOut := outs[len(outs)-1]
+<a href="#l618" class="line" id="l618">    618</a> 
+<a href="#l619" class="line" id="l619">    619</a> 		// Getting the output number
+<a href="#l620" class="line" id="l620">    620</a> 		outNum, _ := strconv.Atoi(lastOut[1:])
+<a href="#l621" class="line" id="l621">    621</a> 		// To store up to the last output, we need outNum+1 outputs
+<a href="#l622" class="line" id="l622">    622</a> 		myArch.M = uint8(outNum + 1)
+<a href="#l623" class="line" id="l623">    623</a> 
+<a href="#l624" class="line" id="l624">    624</a> 		if len(outs) != outNum+1 {
+<a href="#l625" class="line" id="l625">    625</a> 			fmt.Println(tabs + &quot; - &quot; + purple(&quot;warning:&quot;) + &quot;Output list is not complete, some outputs are missing. This is not an error, but you are wasting resources.&quot;)
+<a href="#l626" class="line" id="l626">    626</a> 		}
+<a href="#l627" class="line" id="l627">    627</a> 	}
+<a href="#l628" class="line" id="l628">    628</a> 
+<a href="#l629" class="line" id="l629">    629</a> 	// Here start the mess with the RAM/ROM size, word size, etc.
+<a href="#l630" class="line" id="l630">    630</a> 	// Compute the word size and the RAM/ROM size, check the eventual cp options
+<a href="#l631" class="line" id="l631">    631</a> 
+<a href="#l632" class="line" id="l632">    632</a> 	// This is the sequence of check in order of priority (valid both for ROM and RAM):
+<a href="#l633" class="line" id="l633">    633</a> 	// - Check if there is a cp option for the word size and use it overriding the other options. In the case of missing resources, the assembler will fail
+<a href="#l634" class="line" id="l634">    634</a> 	// - TODO: Check requirements
+<a href="#l635" class="line" id="l635">    635</a> 	//   - TODO From the direct opcodes
+<a href="#l636" class="line" id="l636">    636</a> 	//   - TODO From the indirect opcodes
+<a href="#l637" class="line" id="l637">    637</a> 	// - Check the ROM code size and use it (eventually adding the data section size).
+<a href="#l638" class="line" id="l638">    638</a> 
+<a href="#l639" class="line" id="l639">    639</a> 	romCodeContrib := 0
+<a href="#l640" class="line" id="l640">    640</a> 	if cp.GetMeta(&quot;romsize&quot;) != &quot;&quot; {
+<a href="#l641" class="line" id="l641">    641</a> 		if val, err := strconv.Atoi(cp.GetMeta(&quot;romsize&quot;)); err == nil {
+<a href="#l642" class="line" id="l642">    642</a> 			romCodeContrib = 2 ^ val
+<a href="#l643" class="line" id="l643">    643</a> 			myArch.O = uint8(val)
+<a href="#l644" class="line" id="l644">    644</a> 			if bi.debug {
+<a href="#l645" class="line" id="l645">    645</a> 				fmt.Println(tabs + &quot; - &quot; + green(&quot;romsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;romsize&quot;)))
+<a href="#l646" class="line" id="l646">    646</a> 			}
+<a href="#l647" class="line" id="l647">    647</a> 		} else {
+<a href="#l648" class="line" id="l648">    648</a> 			return nil, err
+<a href="#l649" class="line" id="l649">    649</a> 		}
+<a href="#l650" class="line" id="l650">    650</a> 	} else if romCode != &quot;&quot; {
+<a href="#l651" class="line" id="l651">    651</a> 		romCodeContrib = len(bi.sections[romCode].sectionBody.Lines)
+<a href="#l652" class="line" id="l652">    652</a> 		myArch.O = uint8(Needed_bits(romCodeContrib))
+<a href="#l653" class="line" id="l653">    653</a> 		if bi.debug {
+<a href="#l654" class="line" id="l654">    654</a> 			fmt.Println(tabs + &quot; - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))))
+<a href="#l655" class="line" id="l655">    655</a> 		}
+<a href="#l656" class="line" id="l656">    656</a> 	} else {
+<a href="#l657" class="line" id="l657">    657</a> 		romCodeContrib = 0
+<a href="#l658" class="line" id="l658">    658</a> 		myArch.O = uint8(0)
+<a href="#l659" class="line" id="l659">    659</a> 		if bi.debug {
+<a href="#l660" class="line" id="l660">    660</a> 			fmt.Println(tabs + &quot; - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+<a href="#l661" class="line" id="l661">    661</a> 		}
+<a href="#l662" class="line" id="l662">    662</a> 	}
+<a href="#l663" class="line" id="l663">    663</a> 
+<a href="#l664" class="line" id="l664">    664</a> 	ramCodeContrib := 0
+<a href="#l665" class="line" id="l665">    665</a> 
+<a href="#l666" class="line" id="l666">    666</a> 	if cp.GetMeta(&quot;ramsize&quot;) != &quot;&quot; {
+<a href="#l667" class="line" id="l667">    667</a> 		if val, err := strconv.Atoi(cp.GetMeta(&quot;ramsize&quot;)); err == nil {
+<a href="#l668" class="line" id="l668">    668</a> 			ramCodeContrib = 2 ^ val
+<a href="#l669" class="line" id="l669">    669</a> 			myArch.L = uint8(val)
+<a href="#l670" class="line" id="l670">    670</a> 			if bi.debug {
+<a href="#l671" class="line" id="l671">    671</a> 				fmt.Println(tabs + &quot; - &quot; + green(&quot;ramsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;ramsize&quot;)))
+<a href="#l672" class="line" id="l672">    672</a> 			}
+<a href="#l673" class="line" id="l673">    673</a> 		} else {
+<a href="#l674" class="line" id="l674">    674</a> 			return nil, err
+<a href="#l675" class="line" id="l675">    675</a> 		}
+<a href="#l676" class="line" id="l676">    676</a> 
+<a href="#l677" class="line" id="l677">    677</a> 	} else if ramCode != &quot;&quot; {
+<a href="#l678" class="line" id="l678">    678</a> 		ramCodeContrib = len(bi.sections[ramCode].sectionBody.Lines)
+<a href="#l679" class="line" id="l679">    679</a> 		myArch.L = uint8(Needed_bits(ramCodeContrib))
+<a href="#l680" class="line" id="l680">    680</a> 		if bi.debug {
+<a href="#l681" class="line" id="l681">    681</a> 			fmt.Println(tabs + &quot; - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines)))))
+<a href="#l682" class="line" id="l682">    682</a> 		}
+<a href="#l683" class="line" id="l683">    683</a> 	} else {
+<a href="#l684" class="line" id="l684">    684</a> 		myArch.L = uint8(0)
+<a href="#l685" class="line" id="l685">    685</a> 		ramCodeContrib = 0
+<a href="#l686" class="line" id="l686">    686</a> 		if bi.debug {
+<a href="#l687" class="line" id="l687">    687</a> 			fmt.Println(tabs + &quot; - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+<a href="#l688" class="line" id="l688">    688</a> 		}
+<a href="#l689" class="line" id="l689">    689</a> 	}
+<a href="#l690" class="line" id="l690">    690</a> 
+<a href="#l691" class="line" id="l691">    691</a> 	// The shared constrains will be populated later from the basm metadata
+<a href="#l692" class="line" id="l692">    692</a> 	myArch.Shared_constraints = &quot;&quot;
+<a href="#l693" class="line" id="l693">    693</a> 
+<a href="#l694" class="line" id="l694">    694</a> 	// This comports that program will be assembled later, after the bondmachine is created. Eventually, this will be done
+<a href="#l695" class="line" id="l695">    695</a> 	// prog := &quot;&quot;
+<a href="#l696" class="line" id="l696">    696</a> 
+<a href="#l697" class="line" id="l697">    697</a> 	// for _, line := range bi.sections[romCode].sectionBody.Lines {
+<a href="#l698" class="line" id="l698">    698</a> 	// 	prog += line.Operation.GetValue()
+<a href="#l699" class="line" id="l699">    699</a> 	// 	for _, arg := range line.Elements {
+<a href="#l700" class="line" id="l700">    700</a> 	// 		prog += &quot; &quot; + arg.GetValue()
+<a href="#l701" class="line" id="l701">    701</a> 	// 	}
+<a href="#l702" class="line" id="l702">    702</a> 	// 	prog += &quot;\n&quot;
+<a href="#l703" class="line" id="l703">    703</a> 	// }
+<a href="#l704" class="line" id="l704">    704</a> 
+<a href="#l705" class="line" id="l705">    705</a> 	// if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+<a href="#l706" class="line" id="l706">    706</a> 	// 	myMachine.Program = prog
+<a href="#l707" class="line" id="l707">    707</a> 	// } else {
+<a href="#l708" class="line" id="l708">    708</a> 	// 	return nil, err
+<a href="#l709" class="line" id="l709">    709</a> 	// }
+<a href="#l710" class="line" id="l710">    710</a> 
+<a href="#l711" class="line" id="l711">    711</a> 	// If there is a data section, we need to add it to the machine and update the myArch.O field prior to assembling
+<a href="#l712" class="line" id="l712">    712</a> 	if romData != &quot;&quot; {
+<a href="#l713" class="line" id="l713">    713</a> 		wordSize := myMachine.Max_word()
+<a href="#l714" class="line" id="l714">    714</a> 		// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#l715" class="line" id="l715">    715</a> 		if wordSize &lt; 8 {
+<a href="#l716" class="line" id="l716">    716</a> 			return nil, errors.New(&quot;word size is too small&quot;)
+<a href="#l717" class="line" id="l717">    717</a> 		}
+<a href="#l718" class="line" id="l718">    718</a> 
+<a href="#l719" class="line" id="l719">    719</a> 		data := make([]string, 0)
+<a href="#l720" class="line" id="l720">    720</a> 
+<a href="#l721" class="line" id="l721">    721</a> 		for _, line := range bi.sections[romData].sectionBody.Lines {
+<a href="#l722" class="line" id="l722">    722</a> 			for _, arg := range line.Elements {
+<a href="#l723" class="line" id="l723">    723</a> 				hexVal := arg.GetValue()
+<a href="#l724" class="line" id="l724">    724</a> 				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#l725" class="line" id="l725">    725</a> 					nS, _ := n.ExportBinaryNBits(int(wordSize))
+<a href="#l726" class="line" id="l726">    726</a> 					data = append(data, nS)
+<a href="#l727" class="line" id="l727">    727</a> 				} else {
+<a href="#l728" class="line" id="l728">    728</a> 					return nil, err
+<a href="#l729" class="line" id="l729">    729</a> 				}
+<a href="#l730" class="line" id="l730">    730</a> 			}
+<a href="#l731" class="line" id="l731">    731</a> 		}
+<a href="#l732" class="line" id="l732">    732</a> 
+<a href="#l733" class="line" id="l733">    733</a> 		myArch.O = uint8(Needed_bits(romCodeContrib + len(data)))
+<a href="#l734" class="line" id="l734">    734</a> 	}
+<a href="#l735" class="line" id="l735">    735</a> 
+<a href="#l736" class="line" id="l736">    736</a> 	if ramData != &quot;&quot; {
+<a href="#l737" class="line" id="l737">    737</a> 		rSize := myArch.Rsize
+<a href="#l738" class="line" id="l738">    738</a> 		if rSize &lt; 8 {
+<a href="#l739" class="line" id="l739">    739</a> 			return nil, errors.New(&quot;register size is too small&quot;)
+<a href="#l740" class="line" id="l740">    740</a> 		}
+<a href="#l741" class="line" id="l741">    741</a> 
+<a href="#l742" class="line" id="l742">    742</a> 		data := make([]string, 0)
+<a href="#l743" class="line" id="l743">    743</a> 
+<a href="#l744" class="line" id="l744">    744</a> 		for _, line := range bi.sections[ramData].sectionBody.Lines {
+<a href="#l745" class="line" id="l745">    745</a> 			for _, arg := range line.Elements {
+<a href="#l746" class="line" id="l746">    746</a> 				hexVal := arg.GetValue()
+<a href="#l747" class="line" id="l747">    747</a> 				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#l748" class="line" id="l748">    748</a> 					nS, _ := n.ExportBinaryNBits(int(rSize))
+<a href="#l749" class="line" id="l749">    749</a> 					data = append(data, nS)
+<a href="#l750" class="line" id="l750">    750</a> 				} else {
+<a href="#l751" class="line" id="l751">    751</a> 					return nil, err
+<a href="#l752" class="line" id="l752">    752</a> 				}
+<a href="#l753" class="line" id="l753">    753</a> 			}
+<a href="#l754" class="line" id="l754">    754</a> 		}
+<a href="#l755" class="line" id="l755">    755</a> 
+<a href="#l756" class="line" id="l756">    756</a> 		myArch.L = uint8(Needed_bits(ramCodeContrib + len(data)))
+<a href="#l757" class="line" id="l757">    757</a> 	}
+<a href="#l758" class="line" id="l758">    758</a> 
+<a href="#l759" class="line" id="l759">    759</a> 	return myMachine, nil
+<a href="#l760" class="line" id="l760">    760</a> }
+<a href="#l761" class="line" id="l761">    761</a> 
+<a href="#l762" class="line" id="l762">    762</a> func (bi *BasmInstance) GetBondMachine() *bondmachine.Bondmachine {
+<a href="#l763" class="line" id="l763">    763</a> 	return bi.result
+<a href="#l764" class="line" id="l764">    764</a> }
+<a href="#l765" class="line" id="l765">    765</a> 
+<a href="#l766" class="line" id="l766">    766</a> type choiceParams struct {
+<a href="#l767" class="line" id="l767">    767</a> 	wordSize  int
+<a href="#l768" class="line" id="l768">    768</a> 	groupName string
+<a href="#l769" class="line" id="l769">    769</a> }
+<a href="#l770" class="line" id="l770">    770</a> 
+<a href="#l771" class="line" id="l771">    771</a> func (bi *BasmInstance) CodeChoice(rSize uint8, i int, sh string) error {
+<a href="#l772" class="line" id="l772">    772</a> 	if i &gt;= len(bi.cps) || i &lt; 0 {
+<a href="#l773" class="line" id="l773">    773</a> 		return errors.New(&quot;index out of range&quot;)
+<a href="#l774" class="line" id="l774">    774</a> 	}
+<a href="#l775" class="line" id="l775">    775</a> 
+<a href="#l776" class="line" id="l776">    776</a> 	cp := bi.cps[i]
+<a href="#l777" class="line" id="l777">    777</a> 
+<a href="#l778" class="line" id="l778">    778</a> 	if cp.GetMeta(&quot;romalternatives&quot;) != &quot;&quot; || cp.GetMeta(&quot;ramalternatives&quot;) != &quot;&quot; {
+<a href="#l779" class="line" id="l779">    779</a> 		execMode := cp.GetMeta(&quot;execmode&quot;)
+<a href="#l780" class="line" id="l780">    780</a> 		if execMode == &quot;&quot; {
+<a href="#l781" class="line" id="l781">    781</a> 			execMode = bi.global.GetMeta(&quot;defaultexecmode&quot;)
+<a href="#l782" class="line" id="l782">    782</a> 		}
+<a href="#l783" class="line" id="l783">    783</a> 		if execMode == &quot;&quot; {
+<a href="#l784" class="line" id="l784">    784</a> 			execMode = &quot;ha&quot;
+<a href="#l785" class="line" id="l785">    785</a> 		}
+<a href="#l786" class="line" id="l786">    786</a> 		romAlts := strings.Split(cp.GetMeta(&quot;romalternatives&quot;), &quot;:&quot;)
+<a href="#l787" class="line" id="l787">    787</a> 		ramAlts := strings.Split(cp.GetMeta(&quot;ramalternatives&quot;), &quot;:&quot;)
+<a href="#l788" class="line" id="l788">    788</a> 		if len(romAlts) == 0 {
+<a href="#l789" class="line" id="l789">    789</a> 			romAlts = []string{&quot;&quot;}
+<a href="#l790" class="line" id="l790">    790</a> 		}
+<a href="#l791" class="line" id="l791">    791</a> 		if len(ramAlts) == 0 {
+<a href="#l792" class="line" id="l792">    792</a> 			ramAlts = []string{&quot;&quot;}
+<a href="#l793" class="line" id="l793">    793</a> 		}
+<a href="#l794" class="line" id="l794">    794</a> 
+<a href="#l795" class="line" id="l795">    795</a> 		romData := cp.GetMeta(&quot;romdata&quot;)
+<a href="#l796" class="line" id="l796">    796</a> 		ramData := cp.GetMeta(&quot;ramdata&quot;)
+<a href="#l797" class="line" id="l797">    797</a> 		romDataAlts := strings.Split(cp.GetMeta(&quot;romdataalternatives&quot;), &quot;:&quot;)
+<a href="#l798" class="line" id="l798">    798</a> 		ramDataAlts := strings.Split(cp.GetMeta(&quot;ramdataalternatives&quot;), &quot;:&quot;)
+<a href="#l799" class="line" id="l799">    799</a> 
+<a href="#l800" class="line" id="l800">    800</a> 		params := make([]choiceParams, len(romAlts)*len(ramAlts))
+<a href="#l801" class="line" id="l801">    801</a> 
+<a href="#l802" class="line" id="l802">    802</a> 		if bi.debug {
+<a href="#l803" class="line" id="l803">    803</a> 
+<a href="#l804" class="line" id="l804">    804</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;ROM data: &quot;) + yellow(romData))
+<a href="#l805" class="line" id="l805">    805</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;RAM data: &quot;) + yellow(ramData))
+<a href="#l806" class="line" id="l806">    806</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;ROM alternatives: &quot;) + yellow(strings.Join(romAlts, &quot;, &quot;)))
+<a href="#l807" class="line" id="l807">    807</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;RAM alternatives: &quot;) + yellow(strings.Join(ramAlts, &quot;, &quot;)))
+<a href="#l808" class="line" id="l808">    808</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;ROM data alternatives: &quot;) + yellow(strings.Join(romDataAlts, &quot;, &quot;)))
+<a href="#l809" class="line" id="l809">    809</a> 			fmt.Println(&quot;\t\t - &quot; + green(&quot;RAM data alternatives: &quot;) + yellow(strings.Join(ramDataAlts, &quot;, &quot;)))
+<a href="#l810" class="line" id="l810">    810</a> 		}
+<a href="#l811" class="line" id="l811">    811</a> 
+<a href="#l812" class="line" id="l812">    812</a> 		for ii, romAlt := range romAlts {
+<a href="#l813" class="line" id="l813">    813</a> 			for jj, ramAlt := range ramAlts {
+<a href="#l814" class="line" id="l814">    814</a> 
+<a href="#l815" class="line" id="l815">    815</a> 				if bi.debug {
+<a href="#l816" class="line" id="l816">    816</a> 					fmt.Println(&quot;\t\t - &quot; + green(&quot;evaluating alternatives: &quot;) + yellow(romAlt) + green(&quot; - &quot;) + yellow(ramAlt))
+<a href="#l817" class="line" id="l817">    817</a> 				}
+<a href="#l818" class="line" id="l818">    818</a> 
+<a href="#l819" class="line" id="l819">    819</a> 				// Find the eventual common name
+<a href="#l820" class="line" id="l820">    820</a> 				groupName := &quot;&quot;
+<a href="#l821" class="line" id="l821">    821</a> 				if strings.HasPrefix(romAlt, &quot;romcode&quot;) {
+<a href="#l822" class="line" id="l822">    822</a> 					groupName = romAlt[7:]
+<a href="#l823" class="line" id="l823">    823</a> 				} else if strings.HasPrefix(ramAlt, &quot;ramcode&quot;) {
+<a href="#l824" class="line" id="l824">    824</a> 					if groupName != ramAlt[7:] {
+<a href="#l825" class="line" id="l825">    825</a> 						groupName = &quot;&quot;
+<a href="#l826" class="line" id="l826">    826</a> 					}
+<a href="#l827" class="line" id="l827">    827</a> 				} else {
+<a href="#l828" class="line" id="l828">    828</a> 					groupName = &quot;&quot;
+<a href="#l829" class="line" id="l829">    829</a> 				}
+<a href="#l830" class="line" id="l830">    830</a> 
+<a href="#l831" class="line" id="l831">    831</a> 				if bi.debug {
+<a href="#l832" class="line" id="l832">    832</a> 					if groupName == &quot;&quot; {
+<a href="#l833" class="line" id="l833">    833</a> 						fmt.Println(&quot;\t\t\t - &quot; + green(&quot;no common group name&quot;))
+<a href="#l834" class="line" id="l834">    834</a> 					} else {
+<a href="#l835" class="line" id="l835">    835</a> 						fmt.Println(&quot;\t\t\t - &quot; + green(&quot;group name: &quot;) + yellow(groupName))
+<a href="#l836" class="line" id="l836">    836</a> 					}
+<a href="#l837" class="line" id="l837">    837</a> 				}
+<a href="#l838" class="line" id="l838">    838</a> 
+<a href="#l839" class="line" id="l839">    839</a> 				if groupName != &quot;&quot; {
+<a href="#l840" class="line" id="l840">    840</a> 					params[ii*len(ramAlts)+jj].groupName = groupName
+<a href="#l841" class="line" id="l841">    841</a> 				}
+<a href="#l842" class="line" id="l842">    842</a> 
+<a href="#l843" class="line" id="l843">    843</a> 				romDataAlt := romData
+<a href="#l844" class="line" id="l844">    844</a> 				ramDataAlt := ramData
+<a href="#l845" class="line" id="l845">    845</a> 
+<a href="#l846" class="line" id="l846">    846</a> 				if groupName != &quot;&quot; &amp;&amp; len(romDataAlts) &gt; 0 {
+<a href="#l847" class="line" id="l847">    847</a> 					for _, rda := range romDataAlts {
+<a href="#l848" class="line" id="l848">    848</a> 						if strings.HasSuffix(rda, groupName) {
+<a href="#l849" class="line" id="l849">    849</a> 							romDataAlt = rda
+<a href="#l850" class="line" id="l850">    850</a> 							break
+<a href="#l851" class="line" id="l851">    851</a> 						}
+<a href="#l852" class="line" id="l852">    852</a> 					}
+<a href="#l853" class="line" id="l853">    853</a> 				}
+<a href="#l854" class="line" id="l854">    854</a> 
+<a href="#l855" class="line" id="l855">    855</a> 				if groupName != &quot;&quot; &amp;&amp; len(ramDataAlts) &gt; 0 {
+<a href="#l856" class="line" id="l856">    856</a> 					for _, rda := range ramDataAlts {
+<a href="#l857" class="line" id="l857">    857</a> 						if strings.HasSuffix(rda, groupName) {
+<a href="#l858" class="line" id="l858">    858</a> 							ramDataAlt = rda
+<a href="#l859" class="line" id="l859">    859</a> 							break
+<a href="#l860" class="line" id="l860">    860</a> 						}
+<a href="#l861" class="line" id="l861">    861</a> 					}
+<a href="#l862" class="line" id="l862">    862</a> 				}
+<a href="#l863" class="line" id="l863">    863</a> 
+<a href="#l864" class="line" id="l864">    864</a> 				bi.extra = &quot;\t\t\t&quot;
+<a href="#l865" class="line" id="l865">    865</a> 				tempCP, err := bi.CreateConnectingProcessor(rSize, cp, i, romAlt, romDataAlt, ramAlt, ramDataAlt, execMode)
+<a href="#l866" class="line" id="l866">    866</a> 				bi.extra = &quot;&quot;
+<a href="#l867" class="line" id="l867">    867</a> 
+<a href="#l868" class="line" id="l868">    868</a> 				if err != nil {
+<a href="#l869" class="line" id="l869">    869</a> 					return err
+<a href="#l870" class="line" id="l870">    870</a> 				}
+<a href="#l871" class="line" id="l871">    871</a> 
+<a href="#l872" class="line" id="l872">    872</a> 				tempCP.Shared_constraints = sh
+<a href="#l873" class="line" id="l873">    873</a> 				myArch := tempCP.Arch
+<a href="#l874" class="line" id="l874">    874</a> 
+<a href="#l875" class="line" id="l875">    875</a> 				prog := &quot;&quot;
+<a href="#l876" class="line" id="l876">    876</a> 
+<a href="#l877" class="line" id="l877">    877</a> 				romAltContrib := 0
+<a href="#l878" class="line" id="l878">    878</a> 
+<a href="#l879" class="line" id="l879">    879</a> 				params[ii*len(ramAlts)+jj].wordSize = myArch.Max_word()
+<a href="#l880" class="line" id="l880">    880</a> 
+<a href="#l881" class="line" id="l881">    881</a> 				if romAlt != &quot;&quot; {
+<a href="#l882" class="line" id="l882">    882</a> 					for _, line := range bi.sections[romAlt].sectionBody.Lines {
+<a href="#l883" class="line" id="l883">    883</a> 						prog += line.Operation.GetValue()
+<a href="#l884" class="line" id="l884">    884</a> 						for _, arg := range line.Elements {
+<a href="#l885" class="line" id="l885">    885</a> 							prog += &quot; &quot; + arg.GetValue()
+<a href="#l886" class="line" id="l886">    886</a> 						}
+<a href="#l887" class="line" id="l887">    887</a> 						prog += &quot;\n&quot;
+<a href="#l888" class="line" id="l888">    888</a> 					}
+<a href="#l889" class="line" id="l889">    889</a> 
+<a href="#l890" class="line" id="l890">    890</a> 					if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+<a href="#l891" class="line" id="l891">    891</a> 						tempCP.Program = prog
+<a href="#l892" class="line" id="l892">    892</a> 					} else {
+<a href="#l893" class="line" id="l893">    893</a> 						return err
+<a href="#l894" class="line" id="l894">    894</a> 					}
+<a href="#l895" class="line" id="l895">    895</a> 
+<a href="#l896" class="line" id="l896">    896</a> 					romAltContrib = len(bi.sections[romAlt].sectionBody.Lines)
+<a href="#l897" class="line" id="l897">    897</a> 				}
+<a href="#l898" class="line" id="l898">    898</a> 
+<a href="#l899" class="line" id="l899">    899</a> 				if romData != &quot;&quot; {
+<a href="#l900" class="line" id="l900">    900</a> 					wordSize := myArch.Max_word()
+<a href="#l901" class="line" id="l901">    901</a> 
+<a href="#l902" class="line" id="l902">    902</a> 					// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#l903" class="line" id="l903">    903</a> 					if wordSize &lt; 8 {
+<a href="#l904" class="line" id="l904">    904</a> 						return errors.New(&quot;word size is too small&quot;)
+<a href="#l905" class="line" id="l905">    905</a> 					}
+<a href="#l906" class="line" id="l906">    906</a> 
+<a href="#l907" class="line" id="l907">    907</a> 					data := make([]string, 0)
+<a href="#l908" class="line" id="l908">    908</a> 
+<a href="#l909" class="line" id="l909">    909</a> 					for _, line := range bi.sections[romData].sectionBody.Lines {
+<a href="#l910" class="line" id="l910">    910</a> 						for _, arg := range line.Elements {
+<a href="#l911" class="line" id="l911">    911</a> 							hexVal := arg.GetValue()
+<a href="#l912" class="line" id="l912">    912</a> 							if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#l913" class="line" id="l913">    913</a> 								nS, _ := n.ExportBinaryNBits(int(wordSize))
+<a href="#l914" class="line" id="l914">    914</a> 								data = append(data, nS)
+<a href="#l915" class="line" id="l915">    915</a> 							} else {
+<a href="#l916" class="line" id="l916">    916</a> 								return err
+<a href="#l917" class="line" id="l917">    917</a> 							}
+<a href="#l918" class="line" id="l918">    918</a> 						}
+<a href="#l919" class="line" id="l919">    919</a> 					}
+<a href="#l920" class="line" id="l920">    920</a> 
+<a href="#l921" class="line" id="l921">    921</a> 					myArch.O = uint8(Needed_bits(romAltContrib + len(data)))
+<a href="#l922" class="line" id="l922">    922</a> 					tempCP.Data.Vars = data
+<a href="#l923" class="line" id="l923">    923</a> 
+<a href="#l924" class="line" id="l924">    924</a> 				}
+<a href="#l925" class="line" id="l925">    925</a> 			}
+<a href="#l926" class="line" id="l926">    926</a> 		}
+<a href="#l927" class="line" id="l927">    927</a> 
+<a href="#l928" class="line" id="l928">    928</a> 		// Choice of the sections
+<a href="#l929" class="line" id="l929">    929</a> 		if bi.IsActive(bmconfig.ChooserMinWordSize) {
+<a href="#l930" class="line" id="l930">    930</a> 			if bi.debug {
+<a href="#l931" class="line" id="l931">    931</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;Choosing the code with the minimum word size&quot;))
+<a href="#l932" class="line" id="l932">    932</a> 			}
+<a href="#l933" class="line" id="l933">    933</a> 			var ci string
+<a href="#l934" class="line" id="l934">    934</a> 			var cj string
+<a href="#l935" class="line" id="l935">    935</a> 			minSize := 1024
+<a href="#l936" class="line" id="l936">    936</a> 			for ii, romAlt := range romAlts {
+<a href="#l937" class="line" id="l937">    937</a> 				iiGuessedName := &quot;&quot;
+<a href="#l938" class="line" id="l938">    938</a> 				if strings.HasPrefix(romAlt, &quot;romcode&quot;) {
+<a href="#l939" class="line" id="l939">    939</a> 					iiGuessedName = romAlt[7:]
+<a href="#l940" class="line" id="l940">    940</a> 				}
+<a href="#l941" class="line" id="l941">    941</a> 				for jj, ramAlt := range ramAlts {
+<a href="#l942" class="line" id="l942">    942</a> 					jjGuessedName := &quot;&quot;
+<a href="#l943" class="line" id="l943">    943</a> 					if strings.HasPrefix(ramAlt, &quot;ramcode&quot;) {
+<a href="#l944" class="line" id="l944">    944</a> 						jjGuessedName = ramAlt[7:]
+<a href="#l945" class="line" id="l945">    945</a> 					}
+<a href="#l946" class="line" id="l946">    946</a> 					if bi.IsActive(bmconfig.ChooserForceSameName) {
+<a href="#l947" class="line" id="l947">    947</a> 						if iiGuessedName != &quot;&quot; &amp;&amp; jjGuessedName != &quot;&quot; &amp;&amp; iiGuessedName != jjGuessedName {
+<a href="#l948" class="line" id="l948">    948</a> 							continue
+<a href="#l949" class="line" id="l949">    949</a> 						}
+<a href="#l950" class="line" id="l950">    950</a> 					}
+<a href="#l951" class="line" id="l951">    951</a> 					if params[ii*len(ramAlts)+jj].wordSize &lt; minSize {
+<a href="#l952" class="line" id="l952">    952</a> 						minSize = params[ii*len(ramAlts)+jj].wordSize
+<a href="#l953" class="line" id="l953">    953</a> 						ci = romAlt
+<a href="#l954" class="line" id="l954">    954</a> 						cj = ramAlt
+<a href="#l955" class="line" id="l955">    955</a> 					}
+<a href="#l956" class="line" id="l956">    956</a> 				}
+<a href="#l957" class="line" id="l957">    957</a> 			}
+<a href="#l958" class="line" id="l958">    958</a> 
+<a href="#l959" class="line" id="l959">    959</a> 			if bi.debug {
+<a href="#l960" class="line" id="l960">    960</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;Chosen code: &quot;) + yellow(ci) + green(&quot; - &quot;) + yellow(cj))
+<a href="#l961" class="line" id="l961">    961</a> 			}
+<a href="#l962" class="line" id="l962">    962</a> 
+<a href="#l963" class="line" id="l963">    963</a> 			romGroupName := &quot;&quot;
+<a href="#l964" class="line" id="l964">    964</a> 
+<a href="#l965" class="line" id="l965">    965</a> 			if ci != &quot;&quot; {
+<a href="#l966" class="line" id="l966">    966</a> 				cp.SetMeta(&quot;romcode&quot;, ci)
+<a href="#l967" class="line" id="l967">    967</a> 				if strings.HasPrefix(ci, &quot;romcode&quot;) {
+<a href="#l968" class="line" id="l968">    968</a> 					romGroupName = ci[7:]
+<a href="#l969" class="line" id="l969">    969</a> 				}
+<a href="#l970" class="line" id="l970">    970</a> 			}
+<a href="#l971" class="line" id="l971">    971</a> 
+<a href="#l972" class="line" id="l972">    972</a> 			ramGroupName := &quot;&quot;
+<a href="#l973" class="line" id="l973">    973</a> 
+<a href="#l974" class="line" id="l974">    974</a> 			if cj != &quot;&quot; {
+<a href="#l975" class="line" id="l975">    975</a> 				cp.SetMeta(&quot;ramcode&quot;, cj)
+<a href="#l976" class="line" id="l976">    976</a> 				if strings.HasPrefix(cj, &quot;ramcode&quot;) {
+<a href="#l977" class="line" id="l977">    977</a> 					ramGroupName = cj[7:]
+<a href="#l978" class="line" id="l978">    978</a> 				}
+<a href="#l979" class="line" id="l979">    979</a> 			}
+<a href="#l980" class="line" id="l980">    980</a> 
+<a href="#l981" class="line" id="l981">    981</a> 			if cp.GetMeta(&quot;romdata&quot;) == &quot;&quot; {
+<a href="#l982" class="line" id="l982">    982</a> 				chk := false
+<a href="#l983" class="line" id="l983">    983</a> 				if romGroupName != &quot;&quot; {
+<a href="#l984" class="line" id="l984">    984</a> 					if stringInSlice(&quot;romdata&quot;+romGroupName, romDataAlts) {
+<a href="#l985" class="line" id="l985">    985</a> 						cp.SetMeta(&quot;romdata&quot;, &quot;romdata&quot;+romGroupName)
+<a href="#l986" class="line" id="l986">    986</a> 						cp.RmMeta(&quot;romdataalternatives&quot;)
+<a href="#l987" class="line" id="l987">    987</a> 						chk = true
+<a href="#l988" class="line" id="l988">    988</a> 					}
+<a href="#l989" class="line" id="l989">    989</a> 				}
+<a href="#l990" class="line" id="l990">    990</a> 				if !chk &amp;&amp; ramGroupName != &quot;&quot; {
+<a href="#l991" class="line" id="l991">    991</a> 					if stringInSlice(&quot;romdata&quot;+ramGroupName, romDataAlts) {
+<a href="#l992" class="line" id="l992">    992</a> 						cp.SetMeta(&quot;romdata&quot;, &quot;romdata&quot;+ramGroupName)
+<a href="#l993" class="line" id="l993">    993</a> 						cp.RmMeta(&quot;romdataalternatives&quot;)
+<a href="#l994" class="line" id="l994">    994</a> 					}
+<a href="#l995" class="line" id="l995">    995</a> 				}
+<a href="#l996" class="line" id="l996">    996</a> 			}
+<a href="#l997" class="line" id="l997">    997</a> 
+<a href="#l998" class="line" id="l998">    998</a> 			if cp.GetMeta(&quot;ramdata&quot;) == &quot;&quot; {
+<a href="#l999" class="line" id="l999">    999</a> 				chk := false
+<a href="#l1000" class="line" id="l1000">   1000</a> 				if ramGroupName != &quot;&quot; {
+<a href="#l1001" class="line" id="l1001">   1001</a> 					if stringInSlice(&quot;ramdata&quot;+ramGroupName, ramDataAlts) {
+<a href="#l1002" class="line" id="l1002">   1002</a> 						cp.SetMeta(&quot;ramdata&quot;, &quot;ramdata&quot;+ramGroupName)
+<a href="#l1003" class="line" id="l1003">   1003</a> 						cp.RmMeta(&quot;ramdataalternatives&quot;)
+<a href="#l1004" class="line" id="l1004">   1004</a> 						chk = true
+<a href="#l1005" class="line" id="l1005">   1005</a> 					}
+<a href="#l1006" class="line" id="l1006">   1006</a> 				}
+<a href="#l1007" class="line" id="l1007">   1007</a> 				if !chk &amp;&amp; romGroupName != &quot;&quot; {
+<a href="#l1008" class="line" id="l1008">   1008</a> 					if stringInSlice(&quot;ramdata&quot;+romGroupName, ramDataAlts) {
+<a href="#l1009" class="line" id="l1009">   1009</a> 						cp.SetMeta(&quot;ramdata&quot;, &quot;ramdata&quot;+romGroupName)
+<a href="#l1010" class="line" id="l1010">   1010</a> 						cp.RmMeta(&quot;ramdataalternatives&quot;)
+<a href="#l1011" class="line" id="l1011">   1011</a> 					}
+<a href="#l1012" class="line" id="l1012">   1012</a> 				}
+<a href="#l1013" class="line" id="l1013">   1013</a> 			}
+<a href="#l1014" class="line" id="l1014">   1014</a> 
+<a href="#l1015" class="line" id="l1015">   1015</a> 			cp.RmMeta(&quot;romalternatives&quot;)
+<a href="#l1016" class="line" id="l1016">   1016</a> 			cp.RmMeta(&quot;ramalternatives&quot;)
+<a href="#l1017" class="line" id="l1017">   1017</a> 			return nil
+<a href="#l1018" class="line" id="l1018">   1018</a> 		}
+<a href="#l1019" class="line" id="l1019">   1019</a> 
+<a href="#l1020" class="line" id="l1020">   1020</a> 		return errors.New(&quot;unable to choose the code among the alternatives, a criteria is needed&quot;)
+<a href="#l1021" class="line" id="l1021">   1021</a> 
+<a href="#l1022" class="line" id="l1022">   1022</a> 	}
+<a href="#l1023" class="line" id="l1023">   1023</a> 
+<a href="#l1024" class="line" id="l1024">   1024</a> 	return nil
+<a href="#l1025" class="line" id="l1025">   1025</a> }
+<a href="#l1026" class="line" id="l1026">   1026</a> 
+<a href="#l1027" class="line" id="l1027">   1027</a> func (bi *BasmInstance) sharedPrecompute() ([]string, error) {
+<a href="#l1028" class="line" id="l1028">   1028</a> 
+<a href="#l1029" class="line" id="l1029">   1029</a> 	result := make([]string, len(bi.cps))
+<a href="#l1030" class="line" id="l1030">   1030</a> 
+<a href="#l1031" class="line" id="l1031">   1031</a> 	// Insert the Shared Objects into the BM and compose and hash of name,constraint
+<a href="#l1032" class="line" id="l1032">   1032</a> 	constrains := make(map[string]string)
+<a href="#l1033" class="line" id="l1033">   1033</a> 	soIndexes := make(map[string]string)
+<a href="#l1034" class="line" id="l1034">   1034</a> 	for i, so := range bi.sos {
+<a href="#l1035" class="line" id="l1035">   1035</a> 		if bi.debug {
+<a href="#l1036" class="line" id="l1036">   1036</a> 			fmt.Print(&quot;\t\t&quot; + green(&quot;SO: &quot;) + yellow(so.GetValue()))
+<a href="#l1037" class="line" id="l1037">   1037</a> 		}
+<a href="#l1038" class="line" id="l1038">   1038</a> 		constraint := so.GetMeta(&quot;constraint&quot;)
+<a href="#l1039" class="line" id="l1039">   1039</a> 		if bi.debug {
+<a href="#l1040" class="line" id="l1040">   1040</a> 			fmt.Println(&quot; - &quot; + green(&quot;constraint: &quot;) + yellow(constraint))
+<a href="#l1041" class="line" id="l1041">   1041</a> 		}
+<a href="#l1042" class="line" id="l1042">   1042</a> 		constrains[so.GetValue()] = constraint
+<a href="#l1043" class="line" id="l1043">   1043</a> 		soIndexes[so.GetValue()] = strconv.Itoa(i)
+<a href="#l1044" class="line" id="l1044">   1044</a> 	}
+<a href="#l1045" class="line" id="l1045">   1045</a> 
+<a href="#l1046" class="line" id="l1046">   1046</a> 	// Will keep track of the processed attach
+<a href="#l1047" class="line" id="l1047">   1047</a> 	soattDone := make([]bool, len(bi.soAttach))
+<a href="#l1048" class="line" id="l1048">   1048</a> 
+<a href="#l1049" class="line" id="l1049">   1049</a> 	// Process every CP
+<a href="#l1050" class="line" id="l1050">   1050</a> 	for i, cp := range bi.cps {
+<a href="#l1051" class="line" id="l1051">   1051</a> 		cpName := cp.GetValue()
+<a href="#l1052" class="line" id="l1052">   1052</a> 		expectedIndex := 0
+<a href="#l1053" class="line" id="l1053">   1053</a> 		expectedIndexS := &quot;0&quot;
+<a href="#l1054" class="line" id="l1054">   1054</a> 		cpConstraints := make([]string, 0)
+<a href="#l1055" class="line" id="l1055">   1055</a> 		for {
+<a href="#l1056" class="line" id="l1056">   1056</a> 			indexFound := false
+<a href="#l1057" class="line" id="l1057">   1057</a> 			// Process every SO attach searching for the couple CP index
+<a href="#l1058" class="line" id="l1058">   1058</a> 			for j, soatt := range bi.soAttach {
+<a href="#l1059" class="line" id="l1059">   1059</a> 				if soatt.GetMeta(&quot;cp&quot;) == cpName &amp;&amp; soatt.GetMeta(&quot;index&quot;) == expectedIndexS {
+<a href="#l1060" class="line" id="l1060">   1060</a> 					endpoints := make([]string, 2)
+<a href="#l1061" class="line" id="l1061">   1061</a> 					endpoints[0] = strconv.Itoa(i)
+<a href="#l1062" class="line" id="l1062">   1062</a> 					endpoints[1] = soIndexes[soatt.GetValue()]
+<a href="#l1063" class="line" id="l1063">   1063</a> 					indexFound = true
+<a href="#l1064" class="line" id="l1064">   1064</a> 					soattDone[j] = true
+<a href="#l1065" class="line" id="l1065">   1065</a> 					cpConstraints = append(cpConstraints, constrains[soatt.GetValue()])
+<a href="#l1066" class="line" id="l1066">   1066</a> 					break
+<a href="#l1067" class="line" id="l1067">   1067</a> 				}
+<a href="#l1068" class="line" id="l1068">   1068</a> 			}
+<a href="#l1069" class="line" id="l1069">   1069</a> 			if indexFound {
+<a href="#l1070" class="line" id="l1070">   1070</a> 				expectedIndex += 1
+<a href="#l1071" class="line" id="l1071">   1071</a> 				expectedIndexS = strconv.Itoa(expectedIndex)
+<a href="#l1072" class="line" id="l1072">   1072</a> 			} else {
+<a href="#l1073" class="line" id="l1073">   1073</a> 				break
+<a href="#l1074" class="line" id="l1074">   1074</a> 			}
+<a href="#l1075" class="line" id="l1075">   1075</a> 		}
+<a href="#l1076" class="line" id="l1076">   1076</a> 		// compose the Shared constraint of every processor
+<a href="#l1077" class="line" id="l1077">   1077</a> 		result[i] = strings.Join(cpConstraints, &quot;,&quot;)
+<a href="#l1078" class="line" id="l1078">   1078</a> 	}
+<a href="#l1079" class="line" id="l1079">   1079</a> 
+<a href="#l1080" class="line" id="l1080">   1080</a> 	for _, val := range soattDone {
+<a href="#l1081" class="line" id="l1081">   1081</a> 		if !val {
+<a href="#l1082" class="line" id="l1082">   1082</a> 			return nil, errors.New(&quot;processor SO index inconsistent&quot;)
+<a href="#l1083" class="line" id="l1083">   1083</a> 		}
+<a href="#l1084" class="line" id="l1084">   1084</a> 	}
+<a href="#l1085" class="line" id="l1085">   1085</a> 
+<a href="#l1086" class="line" id="l1086">   1086</a> 	return result, nil
+<a href="#l1087" class="line" id="l1087">   1087</a> }
+</pre>
+</div>
+</body>
+</html>

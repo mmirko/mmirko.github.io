@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Go simulation with &lt;=64 bits - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/646dde8d0b5994b45d0d33b3e667cbcaa9ad1eb6.html">646dde8d0b5994b45d0d33b3e667cbcaa9ad1eb6</a>
+<b>parent</b> <a href="../commit/63513f3c094a4af843fca0ccdaafe5fc363a5048.html">63513f3c094a4af843fca0ccdaafe5fc363a5048</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 12 May 2023 23:21:06 +0200
+
+Go simulation with &lt;=64 bits
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmnumbers/dyntype_flopoco.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmnumbers/dyntype_linear_quantizer.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmnumbers/import.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmnumbers/type_bin.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bmnumbers/type_float16.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bmnumbers/type_float32.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/bmnumbers/type_hex.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/bmnumbers/type_signed.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/bmnumbers/type_unsigned.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">143</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h14">pkg/procbuilder/vm.go</a></td><td> | </td><td class="num">70</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+</table></pre><pre>15 files changed, 141 insertions(+), 156 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -953,7 +953,8 @@ func main() {
+</a> 					if v := bmnumbers.GetType(nType); v == nil {
+ 						log.Fatal(&quot;Error: Unknown type&quot;)
+ 					} else {
+<a href="#h0-0-3" id="h0-0-3" class="d">-						if number, err := bmnumbers.ImportUint(*srep.Showables[k]); err != nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+						bits := v.GetSize()
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+						if number, err := bmnumbers.ImportUint(*srep.Showables[k], bits); err != nil {
+</a> 							log.Fatal(err)
+ 						} else {
+ 							if err := bmnumbers.CastType(number, v); err != nil {
+<a href="#h0-1" id="h0-1" class="h">@@ -1023,7 +1024,8 @@ func main() {
+</a> 						if v := bmnumbers.GetType(nType); v == nil {
+ 							log.Fatal(&quot;Error: Unknown type&quot;)
+ 						} else {
+<a href="#h0-1-3" id="h0-1-3" class="d">-							if number, err := bmnumbers.ImportUint(*srep.Reportables[k]); err != nil {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+							bits := v.GetSize()
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+							if number, err := bmnumbers.ImportUint(*srep.Reportables[k], bits); err != nil {
+</a> 								log.Fatal(err)
+ 							} else {
+ 								if err := bmnumbers.CastType(number, v); err != nil {
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -11,7 +11,7 @@ type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+</a> type BMNumberType interface {
+ 	GetName() string
+ 	getInfo() string
+<a href="#h1-0-3" id="h1-0-3" class="d">-	getSize() int
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	GetSize() int
+</a> 	importMatchers() map[string]ImportFunc
+ 	Convert(*BMNumber) error
+ 	ExportString(*BMNumber) (string, error)
+<a href="#h1-1" id="h1-1" class="h">@@ -81,7 +81,7 @@ func CastType(n *BMNumber, t BMNumberType) error {
+</a> 		return errors.New(&quot;Cannot cast type of nil number&quot;)
+ 	}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if t.getSize() != -1 &amp;&amp; t.getSize() != n.bits {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if t.GetSize() != -1 &amp;&amp; t.GetSize() != n.bits {
+</a> 		return errors.New(&quot;Cannot cast number of type &quot; + n.nType.GetName() + &quot; with type &quot; + t.GetName() + &quot; because they have different sizes&quot;)
+ 	}
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/bmnumbers/dyntype_flopoco.go.html">pkg/bmnumbers/dyntype_flopoco.go</a> b/<a href="../file/pkg/bmnumbers/dyntype_flopoco.go.html">pkg/bmnumbers/dyntype_flopoco.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -24,7 +24,7 @@ func (d FloPoCo) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-func (d FloPoCo) getSize() int {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+func (d FloPoCo) GetSize() int {
+</a> 	return d.e + d.f + 3
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a> b/<a href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -23,7 +23,7 @@ func (d LinearQuantizer) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-func (d LinearQuantizer) getSize() int {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+func (d LinearQuantizer) GetSize() int {
+</a> 	return d.s
+ }
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a> b/<a href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -23,7 +23,7 @@ func ImportString(input string) (*BMNumber, error) {
+</a> 	return nil, errors.New(&quot;unknown number format &quot; + input)
+ }
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-func ImportUint(input interface{}) (*BMNumber, error) {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+func ImportUint(input interface{}, optionalBits int) (*BMNumber, error) {
+</a> 	result := new(BMNumber)
+ 	result.nType = Unsigned{}
+ 	switch input.(type) {
+<a href="#h4-1" id="h4-1" class="h">@@ -57,6 +57,10 @@ func ImportUint(input interface{}) (*BMNumber, error) {
+</a> 	default:
+ 		return nil, errors.New(&quot;unknown uint type&quot;)
+ 	}
+<a href="#h4-1-3" id="h4-1-3" class="i">+	if optionalBits &gt; 0 {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+		// TODO: Finish this
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+		result.bits = optionalBits
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+	}
+</a> 	return result, nil
+ }
+ 
+<b>diff --git a/<a id="h5" href="../file/pkg/bmnumbers/type_bin.go.html">pkg/bmnumbers/type_bin.go</a> b/<a href="../file/pkg/bmnumbers/type_bin.go.html">pkg/bmnumbers/type_bin.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -16,7 +16,7 @@ func (d Bin) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="d">-func (d Bin) getSize() int {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+func (d Bin) GetSize() int {
+</a> 	return -1 // Any size
+ }
+ 
+<b>diff --git a/<a id="h6" href="../file/pkg/bmnumbers/type_float16.go.html">pkg/bmnumbers/type_float16.go</a> b/<a href="../file/pkg/bmnumbers/type_float16.go.html">pkg/bmnumbers/type_float16.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -18,7 +18,7 @@ func (d Float16) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-func (d Float16) getSize() int {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+func (d Float16) GetSize() int {
+</a> 	return 16
+ }
+ 
+<b>diff --git a/<a id="h7" href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a> b/<a href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -17,7 +17,7 @@ func (d Float32) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h7-0-3" id="h7-0-3" class="d">-func (d Float32) getSize() int {
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+func (d Float32) GetSize() int {
+</a> 	return 32
+ }
+ 
+<b>diff --git a/<a id="h8" href="../file/pkg/bmnumbers/type_hex.go.html">pkg/bmnumbers/type_hex.go</a> b/<a href="../file/pkg/bmnumbers/type_hex.go.html">pkg/bmnumbers/type_hex.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -17,7 +17,7 @@ func (d Hex) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-func (d Hex) getSize() int {
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+func (d Hex) GetSize() int {
+</a> 	return -1 // Any size
+ }
+ 
+<b>diff --git a/<a id="h9" href="../file/pkg/bmnumbers/type_signed.go.html">pkg/bmnumbers/type_signed.go</a> b/<a href="../file/pkg/bmnumbers/type_signed.go.html">pkg/bmnumbers/type_signed.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -16,7 +16,7 @@ func (d Signed) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h9-0-3" id="h9-0-3" class="d">-func (d Signed) getSize() int {
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+func (d Signed) GetSize() int {
+</a> 	return -1 // Any size
+ }
+ 
+<b>diff --git a/<a id="h10" href="../file/pkg/bmnumbers/type_unsigned.go.html">pkg/bmnumbers/type_unsigned.go</a> b/<a href="../file/pkg/bmnumbers/type_unsigned.go.html">pkg/bmnumbers/type_unsigned.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -16,7 +16,7 @@ func (d Unsigned) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h10-0-3" id="h10-0-3" class="d">-func (d Unsigned) getSize() int {
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+func (d Unsigned) GetSize() int {
+</a> 	return -1 // Any size
+ }
+ 
+<b>diff --git a/<a id="h11" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -128,8 +128,7 @@ func (vm *VM) Init() error {
+</a> 		vm.result_chans[i] = make(chan string)
+ 	}
+ 
+<a href="#h11-0-3" id="h11-0-3" class="d">-	switch vm.Bmach.Rsize {
+</a><a href="#h11-0-4" id="h11-0-4" class="d">-	case 8:
+</a><a href="#h11-0-5" id="h11-0-5" class="i">+	if vm.Bmach.Rsize &lt;= 8 {
+</a> 		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+ 			vm.Inputs_regs[i] = uint8(0)
+ 		}
+<a href="#h11-1" id="h11-1" class="h">@@ -142,7 +141,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+ 			vm.Internal_outputs_regs[i] = uint8(0)
+ 		}
+<a href="#h11-1-3" id="h11-1-3" class="d">-	case 16:
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+	} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+ 			vm.Inputs_regs[i] = uint16(0)
+ 		}
+<a href="#h11-2" id="h11-2" class="h">@@ -155,7 +154,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+ 			vm.Internal_outputs_regs[i] = uint16(0)
+ 		}
+<a href="#h11-2-3" id="h11-2-3" class="d">-	case 32:
+</a><a href="#h11-2-4" id="h11-2-4" class="i">+	} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+ 			vm.Inputs_regs[i] = uint32(0)
+ 		}
+<a href="#h11-3" id="h11-3" class="h">@@ -168,7 +167,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+ 			vm.Internal_outputs_regs[i] = uint32(0)
+ 		}
+<a href="#h11-3-3" id="h11-3-3" class="d">-	case 64:
+</a><a href="#h11-3-4" id="h11-3-4" class="i">+	} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+ 			vm.Inputs_regs[i] = uint64(0)
+ 		}
+<a href="#h11-4" id="h11-4" class="h">@@ -181,8 +180,8 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+ 			vm.Internal_outputs_regs[i] = uint64(0)
+ 		}
+<a href="#h11-4-3" id="h11-4-3" class="d">-	default:
+</a><a href="#h11-4-4" id="h11-4-4" class="d">-		return errors.New(&quot;invalid register size, must be 8, 16, 32 or 64&quot;)
+</a><a href="#h11-4-5" id="h11-4-5" class="i">+	} else {
+</a><a href="#h11-4-6" id="h11-4-6" class="i">+		return errors.New(&quot;invalid register size, must smaller or equal to 64 bits&quot;)
+</a> 	}
+ 	//	// Set the initial state of the internal outputs registers
+ 	//	for i, bond := range vm.Bmach.Internal_outputs {
+<a href="#h11-5" id="h11-5" class="h">@@ -329,31 +328,29 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> func (vm *VM) DumpIO() string {
+ 	result := &quot;&quot;
+ 	for i, reg := range vm.Inputs_regs {
+<a href="#h11-5-3" id="h11-5-3" class="d">-		switch vm.Bmach.Rsize {
+</a><a href="#h11-5-4" id="h11-5-4" class="d">-		case 8:
+</a><a href="#h11-5-5" id="h11-5-5" class="i">+		if vm.Bmach.Rsize &lt;= 8 {
+</a> 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint8)))) + &quot; &quot;
+<a href="#h11-5-7" id="h11-5-7" class="d">-		case 16:
+</a><a href="#h11-5-8" id="h11-5-8" class="i">+		} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint16)))) + &quot; &quot;
+<a href="#h11-5-10" id="h11-5-10" class="d">-		case 32:
+</a><a href="#h11-5-11" id="h11-5-11" class="i">+		} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint32)))) + &quot; &quot;
+<a href="#h11-5-13" id="h11-5-13" class="d">-		case 64:
+</a><a href="#h11-5-14" id="h11-5-14" class="i">+		} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint64)))) + &quot; &quot;
+<a href="#h11-5-16" id="h11-5-16" class="d">-		default:
+</a><a href="#h11-5-17" id="h11-5-17" class="d">-			result = result + &quot;ERROR, Rsize not supported, only 8, 16, 32, 64\n&quot;
+</a><a href="#h11-5-18" id="h11-5-18" class="i">+		} else {
+</a><a href="#h11-5-19" id="h11-5-19" class="i">+			result = result + &quot;ERROR, Rsize not supported, only &lt;= 64 bits&quot;
+</a> 		}
+ 	}
+ 	for i, reg := range vm.Outputs_regs {
+<a href="#h11-5-23" id="h11-5-23" class="d">-		switch vm.Bmach.Rsize {
+</a><a href="#h11-5-24" id="h11-5-24" class="d">-		case 8:
+</a><a href="#h11-5-25" id="h11-5-25" class="i">+		if vm.Bmach.Rsize &lt;= 8 {
+</a> 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint8)))) + &quot; &quot;
+<a href="#h11-5-27" id="h11-5-27" class="d">-		case 16:
+</a><a href="#h11-5-28" id="h11-5-28" class="i">+		} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint16)))) + &quot; &quot;
+<a href="#h11-5-30" id="h11-5-30" class="d">-		case 32:
+</a><a href="#h11-5-31" id="h11-5-31" class="i">+		} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint32)))) + &quot; &quot;
+<a href="#h11-5-33" id="h11-5-33" class="d">-		case 64:
+</a><a href="#h11-5-34" id="h11-5-34" class="i">+		} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint64)))) + &quot; &quot;
+<a href="#h11-5-36" id="h11-5-36" class="d">-		default:
+</a><a href="#h11-5-37" id="h11-5-37" class="d">-			result = result + &quot;ERROR, Rsize not supported, only 8, 16, 32, 64&quot;
+</a><a href="#h11-5-38" id="h11-5-38" class="i">+		} else {
+</a><a href="#h11-5-39" id="h11-5-39" class="i">+			result = result + &quot;ERROR, Rsize not supported, only &lt;= 64 bits&quot;
+</a> 		}
+ 	}
+ 	return result
+<a href="#h11-6" id="h11-6" class="h">@@ -481,31 +478,29 @@ func (sd *Sim_drive) Init(c *Config, s *simbox.Simbox, vm *VM) error {
+</a> 					}
+ 
+ 					if actOnTick, ok := absset[rule.Tick]; ok {
+<a href="#h11-6-3" id="h11-6-3" class="d">-						switch vm.Bmach.Rsize {
+</a><a href="#h11-6-4" id="h11-6-4" class="d">-						case 8:
+</a><a href="#h11-6-5" id="h11-6-5" class="i">+						if vm.Bmach.Rsize &lt;= 8 {
+</a> 							actOnTick[ipos] = uint8(val)
+<a href="#h11-6-7" id="h11-6-7" class="d">-						case 16:
+</a><a href="#h11-6-8" id="h11-6-8" class="i">+						} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 							actOnTick[ipos] = uint16(val)
+<a href="#h11-6-10" id="h11-6-10" class="d">-						case 32:
+</a><a href="#h11-6-11" id="h11-6-11" class="i">+						} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 							actOnTick[ipos] = uint32(val)
+<a href="#h11-6-13" id="h11-6-13" class="d">-						case 64:
+</a><a href="#h11-6-14" id="h11-6-14" class="i">+						} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 							actOnTick[ipos] = uint64(val)
+<a href="#h11-6-16" id="h11-6-16" class="d">-						default:
+</a><a href="#h11-6-17" id="h11-6-17" class="d">-							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-6-18" id="h11-6-18" class="i">+						} else {
+</a><a href="#h11-6-19" id="h11-6-19" class="i">+							return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 						}
+ 					} else {
+ 						actOnTick := make(map[int]interface{})
+<a href="#h11-6-23" id="h11-6-23" class="d">-						switch vm.Bmach.Rsize {
+</a><a href="#h11-6-24" id="h11-6-24" class="d">-						case 8:
+</a><a href="#h11-6-25" id="h11-6-25" class="i">+						if vm.Bmach.Rsize &lt;= 8 {
+</a> 							actOnTick[ipos] = uint8(val)
+<a href="#h11-6-27" id="h11-6-27" class="d">-						case 16:
+</a><a href="#h11-6-28" id="h11-6-28" class="i">+						} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 							actOnTick[ipos] = uint16(val)
+<a href="#h11-6-30" id="h11-6-30" class="d">-						case 32:
+</a><a href="#h11-6-31" id="h11-6-31" class="i">+						} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 							actOnTick[ipos] = uint32(val)
+<a href="#h11-6-33" id="h11-6-33" class="d">-						case 64:
+</a><a href="#h11-6-34" id="h11-6-34" class="i">+						} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 							actOnTick[ipos] = uint64(val)
+<a href="#h11-6-36" id="h11-6-36" class="d">-						default:
+</a><a href="#h11-6-37" id="h11-6-37" class="d">-							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-6-38" id="h11-6-38" class="i">+						} else {
+</a><a href="#h11-6-39" id="h11-6-39" class="i">+							return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 						}
+ 						absset[rule.Tick] = actOnTick
+ 					}
+<a href="#h11-7" id="h11-7" class="h">@@ -533,31 +528,29 @@ func (sd *Sim_drive) Init(c *Config, s *simbox.Simbox, vm *VM) error {
+</a> 					}
+ 
+ 					if actOnTick, ok := perset[rule.Tick]; ok {
+<a href="#h11-7-3" id="h11-7-3" class="d">-						switch vm.Bmach.Rsize {
+</a><a href="#h11-7-4" id="h11-7-4" class="d">-						case 8:
+</a><a href="#h11-7-5" id="h11-7-5" class="i">+						if vm.Bmach.Rsize &lt;= 8 {
+</a> 							actOnTick[ipos] = uint8(val)
+<a href="#h11-7-7" id="h11-7-7" class="d">-						case 16:
+</a><a href="#h11-7-8" id="h11-7-8" class="i">+						} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 							actOnTick[ipos] = uint16(val)
+<a href="#h11-7-10" id="h11-7-10" class="d">-						case 32:
+</a><a href="#h11-7-11" id="h11-7-11" class="i">+						} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 							actOnTick[ipos] = uint32(val)
+<a href="#h11-7-13" id="h11-7-13" class="d">-						case 64:
+</a><a href="#h11-7-14" id="h11-7-14" class="i">+						} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 							actOnTick[ipos] = uint64(val)
+<a href="#h11-7-16" id="h11-7-16" class="d">-						default:
+</a><a href="#h11-7-17" id="h11-7-17" class="d">-							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-7-18" id="h11-7-18" class="i">+						} else {
+</a><a href="#h11-7-19" id="h11-7-19" class="i">+							return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 						}
+ 					} else {
+ 						actOnTick := make(map[int]interface{})
+<a href="#h11-7-23" id="h11-7-23" class="d">-						switch vm.Bmach.Rsize {
+</a><a href="#h11-7-24" id="h11-7-24" class="d">-						case 8:
+</a><a href="#h11-7-25" id="h11-7-25" class="i">+						if vm.Bmach.Rsize &lt;= 8 {
+</a> 							actOnTick[ipos] = uint8(val)
+<a href="#h11-7-27" id="h11-7-27" class="d">-						case 16:
+</a><a href="#h11-7-28" id="h11-7-28" class="i">+						} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 							actOnTick[ipos] = uint16(val)
+<a href="#h11-7-30" id="h11-7-30" class="d">-						case 32:
+</a><a href="#h11-7-31" id="h11-7-31" class="i">+						} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 							actOnTick[ipos] = uint32(val)
+<a href="#h11-7-33" id="h11-7-33" class="d">-						case 64:
+</a><a href="#h11-7-34" id="h11-7-34" class="i">+						} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 							actOnTick[ipos] = uint64(val)
+<a href="#h11-7-36" id="h11-7-36" class="d">-						default:
+</a><a href="#h11-7-37" id="h11-7-37" class="d">-							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-7-38" id="h11-7-38" class="i">+						} else {
+</a><a href="#h11-7-39" id="h11-7-39" class="i">+							return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 						}
+ 						perset[rule.Tick] = actOnTick
+ 					}
+<a href="#h11-8" id="h11-8" class="h">@@ -658,31 +651,29 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				}
+ 
+ 				if strOnTick, ok := absget[rule.Tick]; ok {
+<a href="#h11-8-3" id="h11-8-3" class="d">-					switch vm.Bmach.Rsize {
+</a><a href="#h11-8-4" id="h11-8-4" class="d">-					case 8:
+</a><a href="#h11-8-5" id="h11-8-5" class="i">+					if vm.Bmach.Rsize &lt;= 8 {
+</a> 						strOnTick[ipos] = uint8(0)
+<a href="#h11-8-7" id="h11-8-7" class="d">-					case 16:
+</a><a href="#h11-8-8" id="h11-8-8" class="i">+					} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 						strOnTick[ipos] = uint16(0)
+<a href="#h11-8-10" id="h11-8-10" class="d">-					case 32:
+</a><a href="#h11-8-11" id="h11-8-11" class="i">+					} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 						strOnTick[ipos] = uint32(0)
+<a href="#h11-8-13" id="h11-8-13" class="d">-					case 64:
+</a><a href="#h11-8-14" id="h11-8-14" class="i">+					} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 						strOnTick[ipos] = uint64(0)
+<a href="#h11-8-16" id="h11-8-16" class="d">-					default:
+</a><a href="#h11-8-17" id="h11-8-17" class="d">-						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-8-18" id="h11-8-18" class="i">+					} else {
+</a><a href="#h11-8-19" id="h11-8-19" class="i">+						return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 					}
+ 				} else {
+ 					strOnTick := make(map[int]interface{})
+<a href="#h11-8-23" id="h11-8-23" class="d">-					switch vm.Bmach.Rsize {
+</a><a href="#h11-8-24" id="h11-8-24" class="d">-					case 8:
+</a><a href="#h11-8-25" id="h11-8-25" class="i">+					if vm.Bmach.Rsize &lt;= 8 {
+</a> 						strOnTick[ipos] = uint8(0)
+<a href="#h11-8-27" id="h11-8-27" class="d">-					case 16:
+</a><a href="#h11-8-28" id="h11-8-28" class="i">+					} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 						strOnTick[ipos] = uint16(0)
+<a href="#h11-8-30" id="h11-8-30" class="d">-					case 32:
+</a><a href="#h11-8-31" id="h11-8-31" class="i">+					} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 						strOnTick[ipos] = uint32(0)
+<a href="#h11-8-33" id="h11-8-33" class="d">-					case 64:
+</a><a href="#h11-8-34" id="h11-8-34" class="i">+					} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 						strOnTick[ipos] = uint64(0)
+<a href="#h11-8-36" id="h11-8-36" class="d">-					default:
+</a><a href="#h11-8-37" id="h11-8-37" class="d">-						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-8-38" id="h11-8-38" class="i">+					} else {
+</a><a href="#h11-8-39" id="h11-8-39" class="i">+						return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 					}
+ 					absget[rule.Tick] = strOnTick
+ 				}
+<a href="#h11-9" id="h11-9" class="h">@@ -712,31 +703,29 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				}
+ 
+ 				if strOnTick, ok := perget[rule.Tick]; ok {
+<a href="#h11-9-3" id="h11-9-3" class="d">-					switch vm.Bmach.Rsize {
+</a><a href="#h11-9-4" id="h11-9-4" class="d">-					case 8:
+</a><a href="#h11-9-5" id="h11-9-5" class="i">+					if vm.Bmach.Rsize &lt;= 8 {
+</a> 						strOnTick[ipos] = uint8(0)
+<a href="#h11-9-7" id="h11-9-7" class="d">-					case 16:
+</a><a href="#h11-9-8" id="h11-9-8" class="i">+					} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 						strOnTick[ipos] = uint16(0)
+<a href="#h11-9-10" id="h11-9-10" class="d">-					case 32:
+</a><a href="#h11-9-11" id="h11-9-11" class="i">+					} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 						strOnTick[ipos] = uint32(0)
+<a href="#h11-9-13" id="h11-9-13" class="d">-					case 64:
+</a><a href="#h11-9-14" id="h11-9-14" class="i">+					} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 						strOnTick[ipos] = uint64(0)
+<a href="#h11-9-16" id="h11-9-16" class="d">-					default:
+</a><a href="#h11-9-17" id="h11-9-17" class="d">-						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-9-18" id="h11-9-18" class="i">+					} else {
+</a><a href="#h11-9-19" id="h11-9-19" class="i">+						return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 					}
+ 				} else {
+ 					strOnTick := make(map[int]interface{})
+<a href="#h11-9-23" id="h11-9-23" class="d">-					switch vm.Bmach.Rsize {
+</a><a href="#h11-9-24" id="h11-9-24" class="d">-					case 8:
+</a><a href="#h11-9-25" id="h11-9-25" class="i">+					if vm.Bmach.Rsize &lt;= 8 {
+</a> 						strOnTick[ipos] = uint8(0)
+<a href="#h11-9-27" id="h11-9-27" class="d">-					case 16:
+</a><a href="#h11-9-28" id="h11-9-28" class="i">+					} else if vm.Bmach.Rsize &lt;= 16 {
+</a> 						strOnTick[ipos] = uint16(0)
+<a href="#h11-9-30" id="h11-9-30" class="d">-					case 32:
+</a><a href="#h11-9-31" id="h11-9-31" class="i">+					} else if vm.Bmach.Rsize &lt;= 32 {
+</a> 						strOnTick[ipos] = uint32(0)
+<a href="#h11-9-33" id="h11-9-33" class="d">-					case 64:
+</a><a href="#h11-9-34" id="h11-9-34" class="i">+					} else if vm.Bmach.Rsize &lt;= 64 {
+</a> 						strOnTick[ipos] = uint64(0)
+<a href="#h11-9-36" id="h11-9-36" class="d">-					default:
+</a><a href="#h11-9-37" id="h11-9-37" class="d">-						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a><a href="#h11-9-38" id="h11-9-38" class="i">+					} else {
+</a><a href="#h11-9-39" id="h11-9-39" class="i">+						return errors.New(&quot;unsupported register size, &lt;= 64 are supported&quot;)
+</a> 					}
+ 					perget[rule.Tick] = strOnTick
+ 				}
+<b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -240,43 +240,40 @@ func (op LinearQuantizer) Simulate(vm *VM, instr string) error {
+</a> 	case LQGET:
+ 		switch op.opType {
+ 		case LQADD:
+<a href="#h12-0-3" id="h12-0-3" class="d">-			switch vm.Mach.Rsize {
+</a><a href="#h12-0-4" id="h12-0-4" class="d">-			case 8:
+</a><a href="#h12-0-5" id="h12-0-5" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a> 				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) + Int8FromBits(vm.Registers[regSrc].(uint8)))
+<a href="#h12-0-7" id="h12-0-7" class="d">-			case 16:
+</a><a href="#h12-0-8" id="h12-0-8" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a> 				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) + Int16FromBits(vm.Registers[regSrc].(uint16)))
+<a href="#h12-0-10" id="h12-0-10" class="d">-			case 32:
+</a><a href="#h12-0-11" id="h12-0-11" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a> 				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) + Int32FromBits(vm.Registers[regSrc].(uint32)))
+<a href="#h12-0-13" id="h12-0-13" class="d">-			case 64:
+</a><a href="#h12-0-14" id="h12-0-14" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a> 				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) + Int64FromBits(vm.Registers[regSrc].(uint64)))
+<a href="#h12-0-16" id="h12-0-16" class="d">-			default:
+</a><a href="#h12-0-17" id="h12-0-17" class="d">-				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a><a href="#h12-0-18" id="h12-0-18" class="i">+			} else {
+</a><a href="#h12-0-19" id="h12-0-19" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a> 			}
+ 		case LQMULT:
+<a href="#h12-0-22" id="h12-0-22" class="d">-			switch vm.Mach.Rsize {
+</a><a href="#h12-0-23" id="h12-0-23" class="d">-			case 8:
+</a><a href="#h12-0-24" id="h12-0-24" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a> 				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * Int8FromBits(vm.Registers[regSrc].(uint8)) / int8(s))
+<a href="#h12-0-26" id="h12-0-26" class="d">-			case 16:
+</a><a href="#h12-0-27" id="h12-0-27" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a> 				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * Int16FromBits(vm.Registers[regSrc].(uint16)) / int16(s))
+<a href="#h12-0-29" id="h12-0-29" class="d">-			case 32:
+</a><a href="#h12-0-30" id="h12-0-30" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a> 				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * Int32FromBits(vm.Registers[regSrc].(uint32)) / int32(s))
+<a href="#h12-0-32" id="h12-0-32" class="d">-			case 64:
+</a><a href="#h12-0-33" id="h12-0-33" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a> 				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * Int64FromBits(vm.Registers[regSrc].(uint64)) / int64(s))
+<a href="#h12-0-35" id="h12-0-35" class="d">-			default:
+</a><a href="#h12-0-36" id="h12-0-36" class="d">-				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a><a href="#h12-0-37" id="h12-0-37" class="i">+			} else {
+</a><a href="#h12-0-38" id="h12-0-38" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a> 			}
+ 		case LQDIV:
+<a href="#h12-0-41" id="h12-0-41" class="d">-			switch vm.Mach.Rsize {
+</a><a href="#h12-0-42" id="h12-0-42" class="d">-			case 8:
+</a><a href="#h12-0-43" id="h12-0-43" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a> 				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * int8(s) / Int8FromBits(vm.Registers[regSrc].(uint8)))
+<a href="#h12-0-45" id="h12-0-45" class="d">-			case 16:
+</a><a href="#h12-0-46" id="h12-0-46" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a> 				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * int16(s) / Int16FromBits(vm.Registers[regSrc].(uint16)))
+<a href="#h12-0-48" id="h12-0-48" class="d">-			case 32:
+</a><a href="#h12-0-49" id="h12-0-49" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a> 				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * int32(s) / Int32FromBits(vm.Registers[regSrc].(uint32)))
+<a href="#h12-0-51" id="h12-0-51" class="d">-			case 64:
+</a><a href="#h12-0-52" id="h12-0-52" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a> 				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * int64(s) / Int64FromBits(vm.Registers[regSrc].(uint64)))
+<a href="#h12-0-54" id="h12-0-54" class="d">-			default:
+</a><a href="#h12-0-55" id="h12-0-55" class="d">-				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a><a href="#h12-0-56" id="h12-0-56" class="i">+			} else {
+</a><a href="#h12-0-57" id="h12-0-57" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a> 			}
+ 		}
+ 		vm.Pc = vm.Pc + 1
+<b>diff --git a/<a id="h13" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -118,17 +118,16 @@ func (op Rset) Simulate(vm *VM, instr string) error {
+</a> 	reg_bits := vm.Mach.R
+ 	reg := get_id(instr[:reg_bits])
+ 	memVal := get_id(instr[reg_bits : reg_bits+vm.Mach.Rsize])
+<a href="#h13-0-3" id="h13-0-3" class="d">-	switch vm.Mach.Rsize {
+</a><a href="#h13-0-4" id="h13-0-4" class="d">-	case 8:
+</a><a href="#h13-0-5" id="h13-0-5" class="i">+	if vm.Mach.Rsize &lt;= 8 {
+</a> 		vm.Registers[reg] = uint8(memVal)
+<a href="#h13-0-7" id="h13-0-7" class="d">-	case 16:
+</a><a href="#h13-0-8" id="h13-0-8" class="i">+	} else if vm.Mach.Rsize &lt;= 16 {
+</a> 		vm.Registers[reg] = uint16(memVal)
+<a href="#h13-0-10" id="h13-0-10" class="d">-	case 32:
+</a><a href="#h13-0-11" id="h13-0-11" class="i">+	} else if vm.Mach.Rsize &lt;= 32 {
+</a> 		vm.Registers[reg] = uint32(memVal)
+<a href="#h13-0-13" id="h13-0-13" class="d">-	case 64:
+</a><a href="#h13-0-14" id="h13-0-14" class="i">+	} else if vm.Mach.Rsize &lt;= 64 {
+</a> 		vm.Registers[reg] = uint64(memVal)
+<a href="#h13-0-16" id="h13-0-16" class="d">-	default:
+</a><a href="#h13-0-17" id="h13-0-17" class="d">-		return errors.New(&quot;go simulation only works on 8,16,32 or 64 bits registers&quot;)
+</a><a href="#h13-0-18" id="h13-0-18" class="i">+	} else {
+</a><a href="#h13-0-19" id="h13-0-19" class="i">+		return errors.New(&quot;go simulation only works for Rsize &lt;= 64&quot;)
+</a> 	}
+ 	vm.Pc = vm.Pc + 1
+ 	return nil
+<b>diff --git a/<a id="h14" href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a> b/<a href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a></b>
+<a href="#h14-0" id="h14-0" class="h">@@ -82,8 +82,7 @@ func (vm *VM) Init() error {
+</a> 	vm.Outputs = make([]interface{}, vm.Mach.M)
+ 	vm.Pc = 0
+ 
+<a href="#h14-0-3" id="h14-0-3" class="d">-	switch vm.Mach.Rsize {
+</a><a href="#h14-0-4" id="h14-0-4" class="d">-	case 8:
+</a><a href="#h14-0-5" id="h14-0-5" class="i">+	if vm.Mach.Rsize &lt;= 8 {
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			vm.Registers[i] = uint8(0)
+ 		}
+<a href="#h14-1" id="h14-1" class="h">@@ -96,7 +95,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; int(vm.Mach.M); i++ {
+ 			vm.Outputs[i] = uint8(0)
+ 		}
+<a href="#h14-1-3" id="h14-1-3" class="d">-	case 16:
+</a><a href="#h14-1-4" id="h14-1-4" class="i">+	} else if vm.Mach.Rsize &lt;= 16 {
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			vm.Registers[i] = uint16(0)
+ 		}
+<a href="#h14-2" id="h14-2" class="h">@@ -109,7 +108,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; int(vm.Mach.M); i++ {
+ 			vm.Outputs[i] = uint16(0)
+ 		}
+<a href="#h14-2-3" id="h14-2-3" class="d">-	case 32:
+</a><a href="#h14-2-4" id="h14-2-4" class="i">+	} else if vm.Mach.Rsize &lt;= 32 {
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			vm.Registers[i] = uint32(0)
+ 		}
+<a href="#h14-3" id="h14-3" class="h">@@ -122,7 +121,7 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; int(vm.Mach.M); i++ {
+ 			vm.Outputs[i] = uint32(0)
+ 		}
+<a href="#h14-3-3" id="h14-3-3" class="d">-	case 64:
+</a><a href="#h14-3-4" id="h14-3-4" class="i">+	} else if vm.Mach.Rsize &lt;= 64 {
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			vm.Registers[i] = uint64(0)
+ 		}
+<a href="#h14-4" id="h14-4" class="h">@@ -135,8 +134,8 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; int(vm.Mach.M); i++ {
+ 			vm.Outputs[i] = uint64(0)
+ 		}
+<a href="#h14-4-3" id="h14-4-3" class="d">-	default:
+</a><a href="#h14-4-4" id="h14-4-4" class="d">-		return errors.New(&quot;invalid register size for simulation, must be 8, 16, 32 or 64&quot;)
+</a><a href="#h14-4-5" id="h14-4-5" class="i">+	} else {
+</a><a href="#h14-4-6" id="h14-4-6" class="i">+		return Prerror{&quot;Cannot initialize a machine with a register size greater than 64&quot;}
+</a> 	}
+ 
+ 	vm.Extra_states = make(map[string]interface{})
+<a href="#h14-5" id="h14-5" class="h">@@ -219,17 +218,16 @@ func (vm *VM) Step(psc *Sim_config) (string, error) {
+</a> func (vm *VM) DumpRegisters() string {
+ 	result := &quot;&quot;
+ 	for i, reg := range vm.Registers {
+<a href="#h14-5-3" id="h14-5-3" class="d">-		switch vm.Mach.Rsize {
+</a><a href="#h14-5-4" id="h14-5-4" class="d">-		case 8:
+</a><a href="#h14-5-5" id="h14-5-5" class="i">+		if vm.Mach.Rsize &lt;= 8 {
+</a> 			result = result + Get_register_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Mach.Rsize), get_binary(int(reg.(uint8)))) + &quot; &quot;
+<a href="#h14-5-7" id="h14-5-7" class="d">-		case 16:
+</a><a href="#h14-5-8" id="h14-5-8" class="i">+		} else if vm.Mach.Rsize &lt;= 16 {
+</a> 			result = result + Get_register_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Mach.Rsize), get_binary(int(reg.(uint16)))) + &quot; &quot;
+<a href="#h14-5-10" id="h14-5-10" class="d">-		case 32:
+</a><a href="#h14-5-11" id="h14-5-11" class="i">+		} else if vm.Mach.Rsize &lt;= 32 {
+</a> 			result = result + Get_register_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Mach.Rsize), get_binary(int(reg.(uint32)))) + &quot; &quot;
+<a href="#h14-5-13" id="h14-5-13" class="d">-		case 64:
+</a><a href="#h14-5-14" id="h14-5-14" class="i">+		} else if vm.Mach.Rsize &lt;= 64 {
+</a> 			result = result + Get_register_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Mach.Rsize), get_binary(int(reg.(uint64)))) + &quot; &quot;
+<a href="#h14-5-16" id="h14-5-16" class="d">-		default:
+</a><a href="#h14-5-17" id="h14-5-17" class="d">-			result = &quot;unsupported register size&quot;
+</a><a href="#h14-5-18" id="h14-5-18" class="i">+		} else {
+</a><a href="#h14-5-19" id="h14-5-19" class="i">+			result = &quot;Cannot dump registers for a machine with a register size greater than 64&quot;
+</a> 		}
+ 	}
+ 	return result
+<a href="#h14-6" id="h14-6" class="h">@@ -335,30 +333,28 @@ func (sd *Sim_drive) Init(s *simbox.Simbox, vm *VM) error {
+</a> 						}
+ 
+ 						if act_on_tick, ok := act[rule.Tick]; ok {
+<a href="#h14-6-3" id="h14-6-3" class="d">-							switch vm.Mach.Rsize {
+</a><a href="#h14-6-4" id="h14-6-4" class="d">-							case 8:
+</a><a href="#h14-6-5" id="h14-6-5" class="i">+							if vm.Mach.Rsize &lt;= 8 {
+</a> 								act_on_tick[ipos] = uint8(val)
+<a href="#h14-6-7" id="h14-6-7" class="d">-							case 16:
+</a><a href="#h14-6-8" id="h14-6-8" class="i">+							} else if vm.Mach.Rsize &lt;= 16 {
+</a> 								act_on_tick[ipos] = uint16(val)
+<a href="#h14-6-10" id="h14-6-10" class="d">-							case 32:
+</a><a href="#h14-6-11" id="h14-6-11" class="i">+							} else if vm.Mach.Rsize &lt;= 32 {
+</a> 								act_on_tick[ipos] = uint32(val)
+<a href="#h14-6-13" id="h14-6-13" class="d">-							case 64:
+</a><a href="#h14-6-14" id="h14-6-14" class="i">+							} else if vm.Mach.Rsize &lt;= 64 {
+</a> 								act_on_tick[ipos] = uint64(val)
+<a href="#h14-6-16" id="h14-6-16" class="d">-							default:
+</a><a href="#h14-6-17" id="h14-6-17" class="i">+							} else {
+</a> 								return errors.New(&quot;unsupported register size&quot;)
+ 							}
+ 						} else {
+ 							act_on_tick := make(map[int]interface{})
+<a href="#h14-6-22" id="h14-6-22" class="d">-							switch vm.Mach.Rsize {
+</a><a href="#h14-6-23" id="h14-6-23" class="d">-							case 8:
+</a><a href="#h14-6-24" id="h14-6-24" class="i">+							if vm.Mach.Rsize &lt;= 8 {
+</a> 								act_on_tick[ipos] = uint8(val)
+<a href="#h14-6-26" id="h14-6-26" class="d">-							case 16:
+</a><a href="#h14-6-27" id="h14-6-27" class="i">+							} else if vm.Mach.Rsize &lt;= 16 {
+</a> 								act_on_tick[ipos] = uint16(val)
+<a href="#h14-6-29" id="h14-6-29" class="d">-							case 32:
+</a><a href="#h14-6-30" id="h14-6-30" class="i">+							} else if vm.Mach.Rsize &lt;= 32 {
+</a> 								act_on_tick[ipos] = uint32(val)
+<a href="#h14-6-32" id="h14-6-32" class="d">-							case 64:
+</a><a href="#h14-6-33" id="h14-6-33" class="i">+							} else if vm.Mach.Rsize &lt;= 64 {
+</a> 								act_on_tick[ipos] = uint64(val)
+<a href="#h14-6-35" id="h14-6-35" class="d">-							default:
+</a><a href="#h14-6-36" id="h14-6-36" class="i">+							} else {
+</a> 								return errors.New(&quot;unsupported register size&quot;)
+ 
+ 							}
+<a href="#h14-7" id="h14-7" class="h">@@ -405,30 +401,28 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					}
+ 
+ 					if str_on_tick, ok := str[rule.Tick]; ok {
+<a href="#h14-7-3" id="h14-7-3" class="d">-						switch vm.Mach.Rsize {
+</a><a href="#h14-7-4" id="h14-7-4" class="d">-						case 8:
+</a><a href="#h14-7-5" id="h14-7-5" class="i">+						if vm.Mach.Rsize &lt;= 8 {
+</a> 							str_on_tick[ipos] = uint8(0)
+<a href="#h14-7-7" id="h14-7-7" class="d">-						case 16:
+</a><a href="#h14-7-8" id="h14-7-8" class="i">+						} else if vm.Mach.Rsize &lt;= 16 {
+</a> 							str_on_tick[ipos] = uint16(0)
+<a href="#h14-7-10" id="h14-7-10" class="d">-						case 32:
+</a><a href="#h14-7-11" id="h14-7-11" class="i">+						} else if vm.Mach.Rsize &lt;= 32 {
+</a> 							str_on_tick[ipos] = uint32(0)
+<a href="#h14-7-13" id="h14-7-13" class="d">-						case 64:
+</a><a href="#h14-7-14" id="h14-7-14" class="i">+						} else if vm.Mach.Rsize &lt;= 64 {
+</a> 							str_on_tick[ipos] = uint64(0)
+<a href="#h14-7-16" id="h14-7-16" class="d">-						default:
+</a><a href="#h14-7-17" id="h14-7-17" class="i">+						} else {
+</a> 							return errors.New(&quot;unsupported register size&quot;)
+ 						}
+ 					} else {
+ 						str_on_tick := make(map[int]interface{})
+<a href="#h14-7-22" id="h14-7-22" class="d">-						switch vm.Mach.Rsize {
+</a><a href="#h14-7-23" id="h14-7-23" class="d">-						case 8:
+</a><a href="#h14-7-24" id="h14-7-24" class="i">+						if vm.Mach.Rsize &lt;= 8 {
+</a> 							str_on_tick[ipos] = uint8(0)
+<a href="#h14-7-26" id="h14-7-26" class="d">-						case 16:
+</a><a href="#h14-7-27" id="h14-7-27" class="i">+						} else if vm.Mach.Rsize &lt;= 16 {
+</a> 							str_on_tick[ipos] = uint16(0)
+<a href="#h14-7-29" id="h14-7-29" class="d">-						case 32:
+</a><a href="#h14-7-30" id="h14-7-30" class="i">+						} else if vm.Mach.Rsize &lt;= 32 {
+</a> 							str_on_tick[ipos] = uint32(0)
+<a href="#h14-7-32" id="h14-7-32" class="d">-						case 64:
+</a><a href="#h14-7-33" id="h14-7-33" class="i">+						} else if vm.Mach.Rsize &lt;= 64 {
+</a> 							str_on_tick[ipos] = uint64(0)
+<a href="#h14-7-35" id="h14-7-35" class="d">-						default:
+</a><a href="#h14-7-36" id="h14-7-36" class="i">+						} else {
+</a> 							return errors.New(&quot;unsupported register size&quot;)
+ 						}
+ 						str[rule.Tick] = str_on_tick
+</pre>
+</div>
+</body>
+</html>

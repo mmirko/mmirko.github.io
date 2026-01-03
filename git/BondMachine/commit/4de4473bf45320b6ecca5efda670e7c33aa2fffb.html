@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quantized softmax - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4de4473bf45320b6ecca5efda670e7c33aa2fffb.html">4de4473bf45320b6ecca5efda670e7c33aa2fffb</a>
+<b>parent</b> <a href="../commit/bd92e36daff7b1efc6c6e9fa1153261a0c617c37.html">bd92e36daff7b1efc6c6e9fa1153261a0c617c37</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  9 May 2023 13:49:02 +0200
+
+Quantized softmax
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">library/neurons/frag-softmaxq.basm</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">library/neurons/softmaxq.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 29 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/neurons/frag-softmaxq.basm.html">library/neurons/frag-softmaxq.basm</a> b/<a href="../file/library/neurons/frag-softmaxq.basm.html">library/neurons/frag-softmaxq.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,26 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+%fragment softmaxq iomode:sync template:true resout:r3
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+%meta literal resin {{ with $last := adds &quot;4&quot; .Params.inputs }}{{range $y := intRange &quot;4&quot; $last }}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+{{ with $last := adds &quot;4&quot; .Params.inputs }}
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+{{range $y := intRange &quot;4&quot; $last}}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+{{printf &quot;mov r1,r%d\n&quot; $y}}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+        mov     r0, {{$.Params.typeprefix}}6.0
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+        mov     r2, {{$.Params.typeprefix}}6.0
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+        {{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{{$.Params.addop}}    r0, r2
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	mov     r2, {{$.Params.typeprefix}}3.0
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	{{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	{{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	{{$.Params.addop}}    r0, r2
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	mov     r2, {{$.Params.typeprefix}}1.0
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	{{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	{{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	{{$.Params.multop}}   r2, r1
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	{{$.Params.addop}}    r0, r2
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+{{$zs := adds &quot;4&quot; $.Params.pos}}
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+{{$z := atoi $zs}}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+{{if eq $y $z}} 
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	mov	r3, r0
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+{{end}}
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+{{end}}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+{{end}}
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+%endfragment
+</a><b>diff --git a/<a id="h1" href="../file/library/neurons/softmaxq.nb.html">library/neurons/softmaxq.nb</a> b/<a href="../file/library/neurons/softmaxq.nb.html">library/neurons/softmaxq.nb</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+{
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;pos&quot;, &quot;expprec&quot;, &quot;addop&quot;, &quot;divop&quot;, &quot;multop&quot;, &quot;typeprefix&quot;]
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

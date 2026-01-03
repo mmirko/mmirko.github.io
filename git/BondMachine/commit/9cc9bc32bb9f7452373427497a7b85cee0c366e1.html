@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>graph topology - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9cc9bc32bb9f7452373427497a7b85cee0c366e1.html">9cc9bc32bb9f7452373427497a7b85cee0c366e1</a>
+<b>parent</b> <a href="../commit/ecfedaaa77a7ff293d91226db5c6f0b7c2eeacd1.html">ecfedaaa77a7ff293d91226db5c6f0b7c2eeacd1</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 23 Dec 2023 10:54:50 +0100
+
+graph topology
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">31</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 25 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a> b/<a href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -39,20 +39,39 @@ func (g *Graph) WriteBasm() (string, error) {
+</a> 		return &quot;&quot;, errors.New(&quot;Graph is nil&quot;)
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	result := &quot;&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> 	// Find out all the vertices
+ 	vertices := make(map[string]*cgraph.Node)
+<a href="#h0-0-7" id="h0-0-7" class="i">+	verticesInputs := make(map[string]int)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	verticesOutputs := make(map[string]int)
+</a> 	for n := g.FirstNode(); n != nil; n = g.NextNode(n) {
+ 		vertices[n.Name()] = n
+<a href="#h0-0-11" id="h0-0-11" class="d">-		fmt.Println(n.Name())
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		verticesInputs[n.Name()] = 0
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		verticesOutputs[n.Name()] = 0
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		// result += &quot;%meta fidef &quot; + n.Name() + &quot; fragment:&quot; + n.Name() + &quot;\n&quot;
+</a> 	}
+ 
+<a href="#h0-0-17" id="h0-0-17" class="d">-	for vn, v := range vertices {
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		fmt.Println(vn)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	for _, v := range vertices {
+</a> 		for e := g.FirstEdge(v); e != nil; e = g.NextEdge(e, v) {
+<a href="#h0-0-21" id="h0-0-21" class="d">-			dest := e.Node()
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-			fmt.Println(v.Name(), dest.Name(), e.Name())
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+			if e.Name() != &quot;&quot; {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+				dest := e.Node().Name()
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				src := v.Name()
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+				result += &quot;%meta filinkdef &quot; + src + &quot;_&quot; + dest + &quot; type:fl\n&quot;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+				destIdx := verticesInputs[dest]
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+				srcIdx := verticesOutputs[src]
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + src + &quot; type:output, index:&quot; + fmt.Sprintf(&quot;%d&quot;, srcIdx) + &quot;\n&quot;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + dest + &quot; type:input, index:&quot; + fmt.Sprintf(&quot;%d&quot;, destIdx) + &quot;\n&quot;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+				verticesInputs[dest]++
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+				verticesOutputs[src]++
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			}
+</a> 		}
+ 	}
+ 
+<a href="#h0-0-38" id="h0-0-38" class="d">-	return &quot;&quot;, nil
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	for _, v := range vertices {
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+		result += &quot;%meta fidef &quot; + v.Name() + &quot; fragment:&quot; + v.Name() + &quot; inputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesInputs[v.Name()]) + &quot; outputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesOutputs[v.Name()]) + &quot;\n&quot;
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	}
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	return result, nil
+</a> }
+</pre>
+</div>
+</body>
+</html>

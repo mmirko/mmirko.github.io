@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmgraph - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ff426f838c977169afb1f4d19ee8a12776a7c7ce.html">ff426f838c977169afb1f4d19ee8a12776a7c7ce</a>
+<b>parent</b> <a href="../commit/9c0637ff9bdf3c0f637610572ab5b5bc1e0a33df.html">9c0637ff9bdf3c0f637610572ab5b5bc1e0a33df</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 22 Dec 2023 11:49:05 +0100
+
+bmgraph
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 34 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a> b/<a href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -107,7 +107,7 @@ func main() {
+</a> 	if *neuronLibPath != &quot;&quot; {
+ 		config.NeuronLibPath = *neuronLibPath
+ 	} else {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		panic(&quot;No neuron library path specified&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		// panic(&quot;No neuron library path specified&quot;)
+</a> 	}
+ 
+ 	if *dataType != &quot;&quot; {
+<a href="#h0-1" id="h0-1" class="h">@@ -152,13 +152,16 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	// if *saveBasm != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	// 	if basmFile, err := net.WriteBasm(); err == nil {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	// 		os.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	// 	} else {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	// 		panic(err)
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	// 	}
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	// }
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	bg := new(bmgraph.Graph)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	bg.Graph = graph
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if *saveBasm != &quot;&quot; {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		if basmFile, err := bg.WriteBasm(); err == nil {
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+			os.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		} else {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			panic(err)
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	}
+</a> 
+ 	if *bmInfoFile != &quot;&quot; {
+ 		// Write the info file
+<b>diff --git a/<a id="h1" href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a> b/<a href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +1,11 @@
+</a> package bmgraph
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;github.com/goccy/go-graphviz/cgraph&quot;
+</a> )
+ 
+ const (
+<a href="#h1-1" id="h1-1" class="h">@@ -25,3 +29,22 @@ type Config struct {
+</a> type Neuron struct {
+ 	Params []string
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+type Graph struct {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	*cgraph.Graph
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+}
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+func (g *Graph) WriteBasm() (string, error) {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	if g == nil {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+		return &quot;&quot;, errors.New(&quot;Graph is nil&quot;)
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	}
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	// Find out all the vertices
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	vertices := make(map[string]*cgraph.Node)
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	for n := g.FirstNode(); n != nil; n = g.NextNode(n) {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		vertices[n.Name()] = n
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		fmt.Println(n.Name())
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	return &quot;&quot;, nil
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

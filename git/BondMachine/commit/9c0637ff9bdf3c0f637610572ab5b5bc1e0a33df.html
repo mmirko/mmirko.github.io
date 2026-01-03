@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmgraph - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9c0637ff9bdf3c0f637610572ab5b5bc1e0a33df.html">9c0637ff9bdf3c0f637610572ab5b5bc1e0a33df</a>
+<b>parent</b> <a href="../commit/b80fb6845ee28591e18763879e9c57e462d7cb8b.html">b80fb6845ee28591e18763879e9c57e462d7cb8b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 21 Dec 2023 14:27:25 +0100
+
+bmgraph
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">163</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 187 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/Makefile.html">cmd/Makefile</a> b/<a href="../file/cmd/Makefile.html">cmd/Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,4 @@
+</a> .PHONY: installall
+ installall:
+<a href="#h0-0-2" id="h0-0-2" class="d">-	@for i in `ls | grep -v Makefile` ; do cd ./$$i ; pwd ; if [[ $$i == &quot;brvgasdl&quot; ]]; then go install ; else CGO_ENABLED=0 go install ; fi ; cd .. ; done
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	@for i in `ls | grep -v Makefile` ; do cd ./$$i ; pwd ; if [[ $$i == &quot;brvgasdl&quot; || $$i == &quot;bmgraph&quot; || $$i == &quot;bmdssim&quot; ]]; then go install ; else CGO_ENABLED=0 go install ; fi ; cd .. ; done
+</a> 
+<b>diff --git a/<a id="h1" href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a> b/<a href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,44 +1,183 @@
+</a> package main
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;encoding/json&quot;
+</a> 	&quot;flag&quot;
+ 	&quot;log&quot;
+ 	&quot;os&quot;
+ 
+<a href="#h1-0-8" id="h1-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmgraph&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a> 	graphviz &quot;github.com/goccy/go-graphviz&quot;
+ )
+ 
+<a href="#h1-0-14" id="h1-0-14" class="d">-var debug = flag.Bool(&quot;d&quot;, false, &quot;Debug&quot;)
+</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#h1-0-16" id="h1-0-16" class="i">+var debug = flag.Bool(&quot;d&quot;, false, &quot;Debug&quot;)
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+var registerSize = flag.Int(&quot;register-size&quot;, 32, &quot;Number of bits per register (n-bit)&quot;)
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+var dataType = flag.String(&quot;data-type&quot;, &quot;float32&quot;, &quot;bmnumbers data types&quot;)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+var saveBasm = flag.String(&quot;save-basm&quot;, &quot;&quot;, &quot;Create a basm file&quot;)
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+var neuronLibPath = flag.String(&quot;neuron-lib-path&quot;, &quot;&quot;, &quot;Path to the neuron library to use&quot;)
+</a> 
+ var graphFile = flag.String(&quot;graph-file&quot;, &quot;&quot;, &quot;Graph (DOT)&quot;)
+<a href="#h1-0-26" id="h1-0-26" class="i">+var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net configuration&quot;)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;JSON description of the BondMachine abstraction&quot;)
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+var iomode = flag.String(&quot;io-mode&quot;, &quot;async&quot;, &quot;IO mode: async, sync&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h1-0-33" id="h1-0-33" class="i">+	if *saveBasm == &quot;&quot; {
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+		*saveBasm = &quot;out.basm&quot;
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	}
+</a> }
+ 
+ func main() {
+ 	g := graphviz.New()
+ 
+<a href="#h1-0-41" id="h1-0-41" class="i">+	var data []byte
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+
+</a> 	// Load a graph from a file
+ 	if *graphFile != &quot;&quot; {
+<a href="#h1-0-45" id="h1-0-45" class="d">-		data, err := os.ReadFile(*graphFile)
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+		var err error
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+		data, err = os.ReadFile(*graphFile)
+</a> 		if err != nil {
+<a href="#h1-0-49" id="h1-0-49" class="d">-			log.Fatal(err)
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+			panic(err)
+</a> 		}
+<a href="#h1-0-52" id="h1-0-52" class="i">+	} else {
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		log.Fatalln(&quot;No graph file specified&quot;)
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+	}
+</a> 
+<a href="#h1-0-56" id="h1-0-56" class="d">-		graph, err := graphviz.ParseBytes(data)
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-		if err != nil {
+</a><a href="#h1-0-58" id="h1-0-58" class="d">-			log.Fatal(err)
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	graph, err := graphviz.ParseBytes(data)
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+	if err != nil {
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+		panic(err)
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	}
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+	defer func() {
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+		if err := graph.Close(); err != nil {
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+			panic(err)
+</a> 		}
+<a href="#h1-0-68" id="h1-0-68" class="i">+		g.Close()
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+	}()
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	// Create the config struct
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	config := new(bmgraph.Config)
+</a> 
+<a href="#h1-0-74" id="h1-0-74" class="d">-		defer func() {
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-			if err := graph.Close(); err != nil {
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-				log.Fatal(err)
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	// Load net from a JSON file the configuration
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+		if netFileJSON, err := os.ReadFile(*configFile); err == nil {
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+			if err := json.Unmarshal(netFileJSON, config); err != nil {
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+				panic(err)
+</a> 			}
+<a href="#h1-0-83" id="h1-0-83" class="d">-			g.Close()
+</a><a href="#h1-0-84" id="h1-0-84" class="d">-		}()
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+		} else {
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+			panic(err)
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+		}
+</a> 	} else {
+<a href="#h1-0-89" id="h1-0-89" class="d">-		log.Fatalln(&quot;No graph file specified&quot;)
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+		config.Debug = *debug
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+		config.Verbose = *verbose
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+		config.Params = make(map[string]string)
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	}
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+	// Load or create the Info file
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+	config.BMinfo = new(bminfo.BMinfo)
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+			if err := json.Unmarshal(bmInfoJSON, config.BMinfo); err != nil {
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+				panic(err)
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+			}
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+		} else {
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+			panic(err)
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+		}
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+	}
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+	if config.Params == nil {
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+		config.Params = make(map[string]string)
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+	}
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+	if config.List == nil {
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+		config.List = make(map[string]string)
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+	}
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+	if config.Pruned == nil {
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+		config.Pruned = make([]string, 0)
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+	}
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+	if *neuronLibPath != &quot;&quot; {
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+		config.NeuronLibPath = *neuronLibPath
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+	} else {
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+		panic(&quot;No neuron library path specified&quot;)
+</a> 	}
+<a href="#h1-0-123" id="h1-0-123" class="i">+
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+	if *dataType != &quot;&quot; {
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+		found := false
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+		for _, tpy := range bmnumbers.AllTypes {
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+			if tpy.GetName() == *dataType {
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+				for opType, opName := range tpy.ShowInstructions() {
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+					config.Params[opType] = opName
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+				}
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+				config.DataType = *dataType
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+				config.TypePrefix = tpy.ShowPrefix()
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+				config.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+				found = true
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+				break
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+			}
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+		}
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+		if !found {
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+			if created, err := bmnumbers.EventuallyCreateType(*dataType, nil); err == nil {
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+				if created {
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+					for _, tpy := range bmnumbers.AllTypes {
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+						if tpy.GetName() == *dataType {
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+							for opType, opName := range tpy.ShowInstructions() {
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+								config.Params[opType] = opName
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+							}
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+							config.DataType = *dataType
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+							config.TypePrefix = tpy.ShowPrefix()
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+							config.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+							break
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+						}
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+					}
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+				} else {
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+					panic(&quot;Unknown data type&quot;)
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+				}
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+			} else {
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+				panic(err)
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+			}
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+		}
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+	} else {
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+		if config.DataType == &quot;&quot; {
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+			panic(&quot;No data type specified&quot;)
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+		}
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+	}
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+	// if *saveBasm != &quot;&quot; {
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+	// 	if basmFile, err := net.WriteBasm(); err == nil {
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+	// 		os.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+	// 	} else {
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+	// 		panic(err)
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+	// 	}
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+	// }
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+		// Write the info file
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+		if bmInfoFileJSON, err := json.MarshalIndent(config.BMinfo, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+			os.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+		} else {
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+			panic(err)
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+		}
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+	}
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+	// Remove the info file from the config prior to saving it
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+	config.BMinfo = nil
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+		// Write the eventually updated config file
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+		if configFileJSON, err := json.MarshalIndent(config, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+			os.WriteFile(*configFile, configFileJSON, 0644)
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+		} else {
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+			panic(err)
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+		}
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+	}
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+
+</a> }
+<b>diff --git a/<a id="h2" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;encoding/json&quot;
+ 	&quot;flag&quot;
+ 	&quot;io/ioutil&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;os&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -11,7 +12,7 @@ import (
+</a> )
+ 
+ var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#h2-1-3" id="h2-1-3" class="d">-var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+var debug = flag.Bool(&quot;d&quot;, false, &quot;Debug&quot;)
+</a> 
+ var registerSize = flag.Int(&quot;register-size&quot;, 32, &quot;Number of bits per register (n-bit)&quot;)
+ var dataType = flag.String(&quot;data-type&quot;, &quot;float32&quot;, &quot;bmnumbers data types&quot;)
+<a href="#h2-2" id="h2-2" class="h">@@ -61,11 +62,12 @@ func main() {
+</a> 		panic(&quot;Unknown operating mode&quot;)
+ 	}
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+	// Create the config struct
+</a> 	config := new(neuralbond.Config)
+ 
+ 	// Load net from a JSON file the configuration
+ 	if *configFile != &quot;&quot; {
+<a href="#h2-2-8" id="h2-2-8" class="d">-		if netFileJSON, err := ioutil.ReadFile(*configFile); err == nil {
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+		if netFileJSON, err := os.ReadFile(*configFile); err == nil {
+</a> 			if err := json.Unmarshal(netFileJSON, config); err != nil {
+ 				panic(err)
+ 			}
+<a href="#h2-3" id="h2-3" class="h">@@ -82,7 +84,7 @@ func main() {
+</a> 	config.BMinfo = new(bminfo.BMinfo)
+ 
+ 	if *bmInfoFile != &quot;&quot; {
+<a href="#h2-3-3" id="h2-3-3" class="d">-		if bmInfoJSON, err := ioutil.ReadFile(*bmInfoFile); err == nil {
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+</a> 			if err := json.Unmarshal(bmInfoJSON, config.BMinfo); err != nil {
+ 				panic(err)
+ 			}
+<a href="#h2-4" id="h2-4" class="h">@@ -166,7 +168,7 @@ func main() {
+</a> 
+ 	if *saveBasm != &quot;&quot; {
+ 		if basmFile, err := net.WriteBasm(); err == nil {
+<a href="#h2-4-3" id="h2-4-3" class="d">-			ioutil.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+			os.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a> 		} else {
+ 			panic(err)
+ 		}
+<a href="#h2-5" id="h2-5" class="h">@@ -175,7 +177,7 @@ func main() {
+</a> 	if *bmInfoFile != &quot;&quot; {
+ 		// Write the info file
+ 		if bmInfoFileJSON, err := json.MarshalIndent(config.BMinfo, &quot;&quot;, &quot;  &quot;); err == nil {
+<a href="#h2-5-3" id="h2-5-3" class="d">-			ioutil.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+			os.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a> 		} else {
+ 			panic(err)
+ 		}
+<a href="#h2-6" id="h2-6" class="h">@@ -186,7 +188,7 @@ func main() {
+</a> 	if *configFile != &quot;&quot; {
+ 		// Write the eventually updated config file
+ 		if configFileJSON, err := json.MarshalIndent(config, &quot;&quot;, &quot;  &quot;); err == nil {
+<a href="#h2-6-3" id="h2-6-3" class="d">-			ioutil.WriteFile(*configFile, configFileJSON, 0644)
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+			os.WriteFile(*configFile, configFileJSON, 0644)
+</a> 		} else {
+ 			panic(err)
+ 		}
+<b>diff --git a/<a id="h3" href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a> b/<a href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,27 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmgraph
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+const (
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	ASYNC = uint8(0) + iota
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	SYNC
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+)
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+type Group []string
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+type Config struct {
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	DataType      string
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	TypePrefix    string
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	Params        map[string]string
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	Pruned        []string
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	Collapsed     []Group
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	Debug         bool
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	Verbose       bool
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+	NeuronLibPath string
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	*bminfo.BMinfo
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+}
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+type Neuron struct {
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	Params []string
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

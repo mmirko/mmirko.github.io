@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Direct mem write via symbol - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d502b7f93070a295bc70c2c08173f72793e304be.html">d502b7f93070a295bc70c2c08173f72793e304be</a>
+<b>parent</b> <a href="../commit/4c49e18263728b9693ae783836fbf7948303ce50.html">4c49e18263728b9693ae783836fbf7948303ce50</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 11 Nov 2023 10:47:58 +0100
+
+Direct mem write via symbol
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">77</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 54 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -125,7 +125,7 @@ func (op R2m) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> func (op R2m) Assembler(arch *Arch, words []string) (string, error) {
+ 	opbits := arch.Opcodes_bits()
+ 	rom_word := arch.Max_word()
+<a href="#h0-0-3" id="h0-0-3" class="d">-	ramdepth := int(arch.L)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	ramDepth := int(arch.L)
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -146,12 +146,12 @@ func (op R2m) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if partial, err := Process_number(words[1]); err == nil {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		result += zeros_prefix(ramdepth, partial)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		result += zeros_prefix(ramDepth, partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h0-1-9" id="h0-1-9" class="d">-	for i := opbits + int(arch.R) + ramdepth; i &lt; rom_word; i++ {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	for i := opbits + int(arch.R) + ramDepth; i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -159,10 +159,10 @@ func (op R2m) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op R2m) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	ramdepth := int(arch.L)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	ramDepth := int(arch.L)
+</a> 	reg_id := get_id(instr[:arch.R])
+ 	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+<a href="#h0-2-7" id="h0-2-7" class="d">-	value := get_id(instr[arch.R : int(arch.R)+ramdepth])
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	value := get_id(instr[arch.R : int(arch.R)+ramDepth])
+</a> 	result += strconv.Itoa(value)
+ 	return result, nil
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -226,7 +226,9 @@ func (Op R2m) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> func (Op R2m) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 0)
+ 	result = append(result, &quot;r2m::*--type=reg::*--type=ram--ramaddressing=immediate&quot;)
+<a href="#h0-3-3" id="h0-3-3" class="i">+	result = append(result, &quot;r2m::*--type=reg::*--type=ram--ramaddressing=symbol&quot;)
+</a> 	result = append(result, &quot;mov::*--type=ram--ramaddressing=immediate::*--type=reg&quot;)
+<a href="#h0-3-5" id="h0-3-5" class="i">+	result = append(result, &quot;mov::*--type=ram--ramaddressing=symbol::*--type=reg&quot;)
+</a> 	return result
+ }
+ func (Op R2m) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+<a href="#h0-4" id="h0-4" class="h">@@ -237,24 +239,53 @@ func (Op R2m) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 		return line, nil
+ 	case &quot;mov&quot;:
+ 		regVal := line.Elements[1].GetValue()
+<a href="#h0-4-3" id="h0-4-3" class="d">-		location := line.Elements[0].GetMeta(&quot;location&quot;)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		if regVal != &quot;&quot; &amp;&amp; location != &quot;&quot; {
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-			newLine := new(bmline.BasmLine)
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-			newOp := new(bmline.BasmElement)
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-			newOp.SetValue(&quot;r2m&quot;)
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-			newLine.Operation = newOp
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-			newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-			newArg0 := new(bmline.BasmElement)
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-			newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-			newArg0.SetValue(regVal)
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-			newArgs[0] = newArg0
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-			newArg1 := new(bmline.BasmElement)
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-			newArg1.SetValue(location)
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-			newArgs[1] = newArg1
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-			newLine.Elements = newArgs
+</a><a href="#h0-4-20" id="h0-4-20" class="d">-			return newLine, nil
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+		addressing := line.Elements[0].GetMeta(&quot;ramaddressing&quot;)
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+		switch addressing {
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+		case &quot;immediate&quot;:
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+			location := line.Elements[0].GetMeta(&quot;location&quot;)
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+			rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+			if regVal != &quot;&quot; &amp;&amp; location != &quot;&quot; {
+</a><a href="#h0-4-27" id="h0-4-27" class="i">+				newLine := new(bmline.BasmLine)
+</a><a href="#h0-4-28" id="h0-4-28" class="i">+				newOp := new(bmline.BasmElement)
+</a><a href="#h0-4-29" id="h0-4-29" class="i">+				newOp.SetValue(&quot;r2m&quot;)
+</a><a href="#h0-4-30" id="h0-4-30" class="i">+				newLine.Operation = newOp
+</a><a href="#h0-4-31" id="h0-4-31" class="i">+				newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h0-4-32" id="h0-4-32" class="i">+				newArg0 := new(bmline.BasmElement)
+</a><a href="#h0-4-33" id="h0-4-33" class="i">+				newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h0-4-34" id="h0-4-34" class="i">+				newArg0.SetValue(regVal)
+</a><a href="#h0-4-35" id="h0-4-35" class="i">+				newArgs[0] = newArg0
+</a><a href="#h0-4-36" id="h0-4-36" class="i">+				newArg1 := new(bmline.BasmElement)
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+				newArg1.SetValue(location)
+</a><a href="#h0-4-38" id="h0-4-38" class="i">+				newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h0-4-39" id="h0-4-39" class="i">+				newArgs[1] = newArg1
+</a><a href="#h0-4-40" id="h0-4-40" class="i">+				newLine.Elements = newArgs
+</a><a href="#h0-4-41" id="h0-4-41" class="i">+				return newLine, nil
+</a><a href="#h0-4-42" id="h0-4-42" class="i">+			}
+</a><a href="#h0-4-43" id="h0-4-43" class="i">+		case &quot;symbol&quot;:
+</a><a href="#h0-4-44" id="h0-4-44" class="i">+			// The mov is a r2m, the symbol is kept unchanged because it will be resolved by the symbol resolver
+</a><a href="#h0-4-45" id="h0-4-45" class="i">+			symbol := line.Elements[0].GetMeta(&quot;symbol&quot;)
+</a><a href="#h0-4-46" id="h0-4-46" class="i">+			rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h0-4-47" id="h0-4-47" class="i">+			if regVal != &quot;&quot; &amp;&amp; symbol != &quot;&quot; {
+</a><a href="#h0-4-48" id="h0-4-48" class="i">+				newLine := new(bmline.BasmLine)
+</a><a href="#h0-4-49" id="h0-4-49" class="i">+				newOp := new(bmline.BasmElement)
+</a><a href="#h0-4-50" id="h0-4-50" class="i">+				newOp.SetValue(&quot;r2m&quot;)
+</a><a href="#h0-4-51" id="h0-4-51" class="i">+				newLine.Operation = newOp
+</a><a href="#h0-4-52" id="h0-4-52" class="i">+				newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h0-4-53" id="h0-4-53" class="i">+				newArg0 := new(bmline.BasmElement)
+</a><a href="#h0-4-54" id="h0-4-54" class="i">+				newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h0-4-55" id="h0-4-55" class="i">+				newArg0.SetValue(regVal)
+</a><a href="#h0-4-56" id="h0-4-56" class="i">+				newArgs[0] = newArg0
+</a><a href="#h0-4-57" id="h0-4-57" class="i">+				newArg1 := new(bmline.BasmElement)
+</a><a href="#h0-4-58" id="h0-4-58" class="i">+				newArg1.SetValue(symbol)
+</a><a href="#h0-4-59" id="h0-4-59" class="i">+				newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;ram&quot;)
+</a><a href="#h0-4-60" id="h0-4-60" class="i">+				newArg1.BasmMeta = newArg1.SetMeta(&quot;ramaddressing&quot;, &quot;symbol&quot;)
+</a><a href="#h0-4-61" id="h0-4-61" class="i">+				newArg1.BasmMeta = newArg1.SetMeta(&quot;symbol&quot;, symbol)
+</a><a href="#h0-4-62" id="h0-4-62" class="i">+				newArgs[1] = newArg1
+</a><a href="#h0-4-63" id="h0-4-63" class="i">+				newLine.Elements = newArgs
+</a><a href="#h0-4-64" id="h0-4-64" class="i">+				return newLine, nil
+</a><a href="#h0-4-65" id="h0-4-65" class="i">+			}
+</a><a href="#h0-4-66" id="h0-4-66" class="i">+		default:
+</a><a href="#h0-4-67" id="h0-4-67" class="i">+			return nil, errors.New(&quot;unknown addressing mode&quot;)
+</a> 		}
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</pre>
+</div>
+</body>
+</html>

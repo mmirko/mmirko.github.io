@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>added bmanalysis template - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/62821e5eb928cc5775ab3961f5494bd3b4858fb9.html">62821e5eb928cc5775ab3961f5494bd3b4858fb9</a>
+<b>parent</b> <a href="../commit/f94e14c4b570f5faedef971e5542690d1bf998e6.html">f94e14c4b570f5faedef971e5542690d1bf998e6</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Thu, 16 Mar 2023 15:06:22 +0100
+
+added bmanalysis template
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmanalysis/bmanalysis.go</a></td><td> | </td><td class="num">113</td><td><span class="i">+++++++</span><span class="d">------------------------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 104 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmanalysis/bmanalysis.go.html">cmd/bmanalysis/bmanalysis.go</a> b/<a href="../file/cmd/bmanalysis/bmanalysis.go.html">cmd/bmanalysis/bmanalysis.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,87 +3,32 @@ package main
+</a> import (
+ 	&quot;flag&quot;
+ 	&quot;log&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;math/rand&quot;
+</a> 	&quot;os&quot;
+<a href="#h0-0-5" id="h0-0-5" class="d">-	&quot;strconv&quot;
+</a> 	&quot;strings&quot;
+<a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmstack&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmanalysis&quot;
+</a> )
+ 
+<a href="#h0-0-12" id="h0-0-12" class="d">-var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-var typeR = flag.String(&quot;memory-type&quot;, &quot;queue&quot;, &quot;Memory type, either stack or queue&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-var dataWidth = flag.Int(&quot;data-width&quot;, 32, &quot;Width of the data bus&quot;)
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-var depth = flag.Int(&quot;depth&quot;, 8, &quot;Depth of the stack/queue&quot;)
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-var senders = flag.String(&quot;senders&quot;, &quot;&quot;, &quot;Comma separated list of names of signal tags that will send data to the stack/queue&quot;)
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-var receivers = flag.String(&quot;receivers&quot;, &quot;&quot;, &quot;Comma separated list of names of signal tags that will receive data from the stack/queue&quot;)
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+var projectLists = flag.String(&quot;projectLists&quot;, &quot;&quot;, &quot;Comma separeted lists of projects&quot;)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+var hdlFile = flag.String(&quot;ipynb-file&quot;, &quot;analysis.ipynb&quot;, &quot;Name of the file to write the Python&quot;)
+</a> 
+<a href="#h0-0-24" id="h0-0-24" class="d">-var hdlFile = flag.String(&quot;hdl-file&quot;, &quot;stack.v&quot;, &quot;Name of the file to write the HDL to (default: stack.v, empty string to disable)&quot;)
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-var tbFile = flag.String(&quot;tb-file&quot;, &quot;&quot;, &quot;Name of the file to write the testbench to (default: empty, empty string to disable)&quot;)
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-var stimulusFile = flag.String(&quot;stimulus-file&quot;, &quot;&quot;, &quot;Name of the JSON file to load the stimulus from (default: empty, empty string to disable)&quot;)
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-var randomStimulus = flag.Int(&quot;random-stimulus&quot;, 0, &quot;Generate random stimulus including N pushes and pops for every agent (default: 0, 0 to disable)&quot;)
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-var simLength = flag.Int(&quot;sim-length&quot;, 1000, &quot;Length of the simulation in clock cycles (default: 1000)&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+ }
+ 
+ func main() {
+<a href="#h0-0-36" id="h0-0-36" class="d">-	bmStack := bmstack.CreateBasicStack()
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	switch *typeR {
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-	case &quot;stack&quot;:
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-		bmStack.MemType = &quot;LIFO&quot;
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-	case &quot;queue&quot;:
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-		bmStack.MemType = &quot;FIFO&quot;
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-	default:
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-		log.Fatal(&quot;Invalid memory type&quot;)
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-	}
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-	if *dataWidth &lt; 1 &amp;&amp; *dataWidth &gt; 128 {
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-		log.Fatal(&quot;Invalid data width&quot;)
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-	}
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-	bmStack.DataSize = *dataWidth
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-	if *depth &lt; 1 {
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-		log.Fatal(&quot;Invalid depth&quot;)
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-	}
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-	bmStack.Depth = *depth
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	bmanalysis := bmanalysis.CreateAnalysisTemplate()
+</a> 
+<a href="#h0-0-58" id="h0-0-58" class="d">-	allAgents := make(map[string]struct{})
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-	if *senders != &quot;&quot; {
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-		for _, sender := range strings.Split(*senders, &quot;,&quot;) {
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-			if _, ok := allAgents[sender]; !ok {
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-				bmStack.Senders = append(bmStack.Senders, sender)
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-				allAgents[sender] = struct{}{}
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-			} else {
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-				log.Fatal(&quot;Duplicate agent name &quot; + sender)
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-			}
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-		}
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	} else {
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-		log.Fatal(&quot;No senders specified&quot;)
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-	}
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-	if *receivers != &quot;&quot; {
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-		for _, receiver := range strings.Split(*receivers, &quot;,&quot;) {
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-			if _, ok := allAgents[receiver]; !ok {
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-				bmStack.Receivers = append(bmStack.Receivers, receiver)
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-				allAgents[receiver] = struct{}{}
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-			} else {
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-				log.Fatal(&quot;Duplicate agent name &quot; + receiver)
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-			}
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	if *projectLists != &quot;&quot; {
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+		for _, project := range strings.Split(*projectLists, &quot;,&quot;) {
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+			bmanalysis.ProjectLists = append(bmanalysis.ProjectLists, project)
+</a> 		}
+ 	} else {
+<a href="#h0-0-86" id="h0-0-86" class="d">-		log.Fatal(&quot;No receivers specified&quot;)
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+		log.Fatal(&quot;No project lists specified&quot;)
+</a> 	}
+ 
+ 	if *hdlFile != &quot;&quot; {
+<a href="#h0-0-91" id="h0-0-91" class="d">-		hdl, err := bmStack.WriteHDL()
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+		hdl, err := bmanalysis.WritePython()
+</a> 		if err != nil {
+ 			log.Fatal(err)
+ 		}
+<a href="#h0-1" id="h0-1" class="h">@@ -100,44 +45,4 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if *stimulusFile != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		err := bmStack.LoadJSON(*stimulusFile)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		if err != nil {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			log.Fatal(err)
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		}
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	}
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	if *randomStimulus &gt; 0 {
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		for i := 0; i &lt; *randomStimulus; i++ {
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-			for _, sender := range bmStack.Senders {
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-				tick := rand.Intn(*simLength)
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-				value := rand.Intn(10)
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-				valueS := strconv.Itoa(value)
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-				bmStack.Pushes = append(bmStack.Pushes, bmstack.Push{Agent: sender, Tick: uint64(tick), Value: valueS})
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-			}
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			for _, receiver := range bmStack.Receivers {
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-				tick := rand.Intn(*simLength)
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-				bmStack.Pops = append(bmStack.Pops, bmstack.Pop{Agent: receiver, Tick: uint64(tick)})
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-			}
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-		}
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-	}
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-	if *tbFile != &quot;&quot; {
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-		tb, err := bmStack.WriteTestBench()
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-		if err != nil {
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-			log.Fatal(err)
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-		}
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-		f, err := os.Create(*tbFile)
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-		if err != nil {
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-			log.Fatal(err)
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-		}
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-		defer f.Close()
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-
+</a><a href="#h0-1-37" id="h0-1-37" class="d">-		_, err = f.WriteString(tb)
+</a><a href="#h0-1-38" id="h0-1-38" class="d">-		if err != nil {
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-			log.Fatal(err)
+</a><a href="#h0-1-40" id="h0-1-40" class="d">-		}
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-	}
+</a><a href="#h0-1-42" id="h0-1-42" class="d">-
+</a> }
+</pre>
+</div>
+</body>
+</html>

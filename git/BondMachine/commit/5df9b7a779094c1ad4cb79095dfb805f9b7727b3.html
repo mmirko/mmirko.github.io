@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>More matrices - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5df9b7a779094c1ad4cb79095dfb805f9b7727b3.html">5df9b7a779094c1ad4cb79095dfb805f9b7727b3</a>
+<b>parent</b> <a href="../commit/9e873363e6b7e34d8d757d9af514cc5406cbc0ef.html">9e873363e6b7e34d8d757d9af514cc5406cbc0ef</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 25 Feb 2024 16:40:15 +0000
+
+More matrices
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmmatrix/static2x2.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmmatrix/static4x4.go</a></td><td> | </td><td class="num">124</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">32</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmqsim/files_pythonpynq_real.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>4 files changed, 171 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmmatrix/static2x2.go.html">pkg/bmmatrix/static2x2.go</a> b/<a href="../file/pkg/bmmatrix/static2x2.go.html">pkg/bmmatrix/static2x2.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -51,3 +51,20 @@ func PauliZ() *BmMatrixSquareComplex {
+</a> func Z() *BmMatrixSquareComplex {
+ 	return PauliZ()
+ }
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+func S() *BmMatrixSquareComplex {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	m.Data[1][1] = Complex32{0.0, 1.0}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	return m
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+func P() *BmMatrixSquareComplex {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	return S()
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+func Phase() *BmMatrixSquareComplex {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	return S()
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmmatrix/static4x4.go.html">pkg/bmmatrix/static4x4.go</a> b/<a href="../file/pkg/bmmatrix/static4x4.go.html">pkg/bmmatrix/static4x4.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -20,3 +20,127 @@ func CNot() *BmMatrixSquareComplex {
+</a> 	m.Data[3][3] = Complex32{0.0, 0.0}
+ 	return m
+ }
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func CX() *BmMatrixSquareComplex {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	return CNot()
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+}
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+func XOR() *BmMatrixSquareComplex {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	return CNot()
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+func XNor() *BmMatrixSquareComplex {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	m := NewBmMatrixSquareComplex(4)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	m.Data[0][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	m.Data[0][1] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	m.Data[0][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	m.Data[0][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	m.Data[1][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	m.Data[1][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	m.Data[1][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	m.Data[1][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	m.Data[2][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	m.Data[2][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	m.Data[2][2] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	m.Data[2][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	m.Data[3][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	m.Data[3][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	m.Data[3][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	m.Data[3][3] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	return m
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+}
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+func CZ() *BmMatrixSquareComplex {
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	m := NewBmMatrixSquareComplex(4)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	m.Data[0][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	m.Data[0][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	m.Data[1][1] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+	m.Data[1][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	m.Data[1][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	m.Data[2][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	m.Data[2][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	m.Data[2][2] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	m.Data[2][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	m.Data[3][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	m.Data[3][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	m.Data[3][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+	m.Data[3][3] = Complex32{-1.0, 0.0}
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	return m
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+}
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+func CPF() *BmMatrixSquareComplex {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+	return CZ()
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+}
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+func CSign() *BmMatrixSquareComplex {
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	return CZ()
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+func Cphase() *BmMatrixSquareComplex {
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	return CZ()
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+}
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+func Dcnot() *BmMatrixSquareComplex {
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+	m := NewBmMatrixSquareComplex(4)
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+	m.Data[0][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+	m.Data[0][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	m.Data[1][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+	m.Data[1][2] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+	m.Data[1][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+	m.Data[2][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+	m.Data[2][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	m.Data[2][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	m.Data[2][3] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+	m.Data[3][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+	m.Data[3][1] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+	m.Data[3][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+	m.Data[3][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+	return m
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+}
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+func Swap() *BmMatrixSquareComplex {
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+	m := NewBmMatrixSquareComplex(4)
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+	m.Data[0][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+	m.Data[0][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	m.Data[1][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+	m.Data[1][2] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+	m.Data[1][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+	m.Data[2][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+	m.Data[2][1] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+	m.Data[2][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+	m.Data[2][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+	m.Data[3][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+	m.Data[3][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+	m.Data[3][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+	m.Data[3][3] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+	return m
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+}
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+func Iswap() *BmMatrixSquareComplex {
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+	m := NewBmMatrixSquareComplex(4)
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+	m.Data[0][0] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+	m.Data[0][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+	m.Data[0][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+	m.Data[1][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+	m.Data[1][2] = Complex32{0.0, 1.0}
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+	m.Data[1][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+	m.Data[2][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+	m.Data[2][1] = Complex32{0.0, 1.0}
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+	m.Data[2][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+	m.Data[2][3] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+	m.Data[3][0] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+	m.Data[3][1] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+	m.Data[3][2] = Complex32{0.0, 0.0}
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+	m.Data[3][3] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	return m
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -214,7 +214,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 			if argNumQBits == 1 {
+ 				// Single qbit operation
+ 				// Create the matrix
+<a href="#h2-0-3" id="h2-0-3" class="d">-				if matrix, err := sim.MatrixFromOp(op[fundLine].Operation.GetValue()); err != nil {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+				if matrix, err := sim.MatrixFromOp(op[fundLine]); err != nil {
+</a> 					return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+ 				} else {
+ 					if result == nil {
+<a href="#h2-1" id="h2-1" class="h">@@ -264,7 +264,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 				}
+ 
+ 				// Create the matrix
+<a href="#h2-1-3" id="h2-1-3" class="d">-				if matrix, err := sim.MatrixFromOp(op[fundLine].Operation.GetValue()); err != nil {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+				if matrix, err := sim.MatrixFromOp(op[fundLine]); err != nil {
+</a> 					return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+ 				} else {
+ 					if result == nil {
+<a href="#h2-2" id="h2-2" class="h">@@ -323,19 +323,33 @@ func swaps2baseSwaps(s swap, n int) []swap {
+</a> 	return result
+ }
+ 
+<a href="#h2-2-3" id="h2-2-3" class="d">-func (sim *BmQSimulator) MatrixFromOp(op string) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+	op := line.Operation.GetValue()
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+	op = strings.ToLower(op)
+</a> 	switch op {
+<a href="#h2-2-8" id="h2-2-8" class="d">-	case &quot;h&quot;, &quot;H&quot;:
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+	case &quot;h&quot;, &quot;hadamard&quot;:
+</a> 		return bmmatrix.Hadamard(), nil
+<a href="#h2-2-11" id="h2-2-11" class="d">-	case &quot;x&quot;, &quot;X&quot;:
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+	case &quot;x&quot;, &quot;paulix&quot;:
+</a> 		return bmmatrix.PauliX(), nil
+<a href="#h2-2-14" id="h2-2-14" class="d">-	case &quot;y&quot;, &quot;Y&quot;:
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+	case &quot;y&quot;, &quot;pauliy&quot;:
+</a> 		return bmmatrix.PauliY(), nil
+<a href="#h2-2-17" id="h2-2-17" class="d">-	case &quot;z&quot;, &quot;Z&quot;:
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+	case &quot;z&quot;, &quot;pauliz&quot;:
+</a> 		return bmmatrix.PauliZ(), nil
+<a href="#h2-2-20" id="h2-2-20" class="d">-	case &quot;cx&quot;, &quot;CX&quot;:
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+	case &quot;cx&quot;, &quot;cnot&quot;, &quot;xor&quot;:
+</a> 		return bmmatrix.CNot(), nil
+<a href="#h2-2-23" id="h2-2-23" class="d">-	case &quot;zero&quot;, &quot;ZERO&quot;:
+</a><a href="#h2-2-24" id="h2-2-24" class="i">+	case &quot;s&quot;, &quot;p&quot;, &quot;phase&quot;:
+</a><a href="#h2-2-25" id="h2-2-25" class="i">+		return bmmatrix.S(), nil
+</a><a href="#h2-2-26" id="h2-2-26" class="i">+	case &quot;xnor&quot;:
+</a><a href="#h2-2-27" id="h2-2-27" class="i">+		return bmmatrix.XNor(), nil
+</a><a href="#h2-2-28" id="h2-2-28" class="i">+	case &quot;cz&quot;, &quot;cphase&quot;, &quot;csign&quot;, &quot;cpf&quot;:
+</a><a href="#h2-2-29" id="h2-2-29" class="i">+		return bmmatrix.Cphase(), nil
+</a><a href="#h2-2-30" id="h2-2-30" class="i">+	case &quot;dcnot&quot;:
+</a><a href="#h2-2-31" id="h2-2-31" class="i">+		return bmmatrix.Dcnot(), nil
+</a><a href="#h2-2-32" id="h2-2-32" class="i">+	case &quot;swap&quot;:
+</a><a href="#h2-2-33" id="h2-2-33" class="i">+		return bmmatrix.Swap(), nil
+</a><a href="#h2-2-34" id="h2-2-34" class="i">+	case &quot;iswap&quot;:
+</a><a href="#h2-2-35" id="h2-2-35" class="i">+		return bmmatrix.Iswap(), nil
+</a><a href="#h2-2-36" id="h2-2-36" class="i">+	case &quot;zero&quot;:
+</a> 	// Ignore the zero operation
+ 	default:
+ 		return nil, fmt.Errorf(&quot;unknown operation %s&quot;, op)
+<b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/files_pythonpynq_real.go.html">pkg/bmqsim/files_pythonpynq_real.go</a> b/<a href="../file/pkg/bmqsim/files_pythonpynq_real.go.html">pkg/bmqsim/files_pythonpynq_real.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -53,8 +53,8 @@ const (
+</a>     &quot;#SAMPLES = len(X_test)\n&quot;,
+     &quot; \n&quot;,
+     &quot;BATCH_SIZE = 16  # SIZE OF THE BATCH TO SEND\n&quot;,
+<a href="#h3-0-3" id="h3-0-3" class="d">-    &quot;BM_INPUTS  = 2   # N. OF INPUTS OF THE BONDMACHINE MODULE \n&quot;,
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-    &quot;BM_OUTPUTS = 2   # N. OF OUTPUTS OF THE BONDMACHINE MODULE\n&quot;,
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+    &quot;BM_INPUTS  = {{ .MatrixRows }}   # N. OF INPUTS OF THE BONDMACHINE MODULE \n&quot;,
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+    &quot;BM_OUTPUTS = {{ .MatrixRows }}   # N. OF OUTPUTS OF THE BONDMACHINE MODULE\n&quot;,
+</a>     &quot;PRECISION  = 32\n&quot;,
+     &quot;\n&quot;,
+     &quot;INPUT_SHAPE  = (BATCH_SIZE, BM_INPUTS)\n&quot;,
+<a href="#h3-1" id="h3-1" class="h">@@ -77,7 +77,10 @@ const (
+</a>    &quot;metadata&quot;: {},
+    &quot;outputs&quot;: [],
+    &quot;source&quot;: [
+<a href="#h3-1-3" id="h3-1-3" class="d">-    &quot;random_array = np.random.randint(low=0, high=100, size=(16, 2))&quot;
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+    &quot;input_array = np.zeros(shape=INPUT_SHAPE, dtype=np.float32)\n&quot;,
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+    &quot;# Set the zero state&quot;,
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+    &quot;input_array[0] = [1. {{- range $i := n 0 (dec .MatrixRows) }} ,0. {{ end }}]&quot;
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+
+</a>    ]
+   },
+   {
+<a href="#h3-2" id="h3-2" class="h">@@ -123,7 +126,7 @@ const (
+</a>    &quot;metadata&quot;: {},
+    &quot;outputs&quot;: [],
+    &quot;source&quot;: [
+<a href="#h3-2-3" id="h3-2-3" class="d">-    &quot;output_buffer&quot;
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+    &quot;output_buffer[0]&quot;
+</a>    ]
+   },
+   {
+</pre>
+</div>
+</body>
+</html>

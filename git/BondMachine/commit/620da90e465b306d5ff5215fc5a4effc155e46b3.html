@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Graphics improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/620da90e465b306d5ff5215fc5a4effc155e46b3.html">620da90e465b306d5ff5215fc5a4effc155e46b3</a>
+<b>parent</b> <a href="../commit/347f65fed3a023a4bea4b9a48bb4d3f78aae29db.html">347f65fed3a023a4bea4b9a48bb4d3f78aae29db</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 20 Feb 2024 18:17:56 +0100
+
+Graphics improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">133</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bmqsim/program.bmq</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">cmd/bmqsim/utils.go</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">go.mod</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">go.sum</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmmatrix/bmmatrix.go</a></td><td> | </td><td class="num">48</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/bmmatrix/utils.go</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">pkg/bmqsim/utils.go</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>9 files changed, 292 insertions(+), 68 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;fmt&quot;
+ 	&quot;log&quot;
+ 	&quot;path/filepath&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strconv&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmbuilder&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -19,11 +20,25 @@ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a> 
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+// Build modes
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+// 1
+</a> var buildMatrixSeqHardcoded = flag.String(&quot;build-matrix-seq-hardcoded&quot;, &quot;&quot;, &quot;Build a matrix sequence BM with hardcoded quantum circuit&quot;)
+<a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+// 2
+</a> var buildMatrixSeq = flag.String(&quot;build-matrix-seq&quot;, &quot;&quot;, &quot;Build a matrix sequence BM with a loadable quantum circuit file&quot;)
+ var buildMatrixSeqCompiled = flag.String(&quot;build-matrix-seq-compiled&quot;, &quot;&quot;, &quot;Build a binary for a matrix sequence BM&quot;)
+<a href="#h0-1-11" id="h0-1-11" class="i">+
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+// 3
+</a> var buildFullHardwareHardcoded = flag.String(&quot;build-full-hw-hardcoded&quot;, &quot;&quot;, &quot;Build a full hardware BM with hardcoded quantum circuit&quot;)
+ 
+<a href="#h0-1-15" id="h0-1-15" class="i">+var hardwareFlavor = flag.String(&quot;hw-flavor&quot;, &quot;&quot;, &quot;Hardware flavor for the selected operating mode&quot;)
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+var hardwareFlavorList = flag.Bool(&quot;hw-flavor-list&quot;, false, &quot;List of available hardware flavors&quot;)
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+// Other options
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+var showMatrices = flag.Bool(&quot;show-matrices&quot;, false, &quot;Show the matrices&quot;)
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+var showCircuitMatrix = flag.Bool(&quot;show-circuit-matrix&quot;, false, &quot;Show the circuit matrix&quot;)
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+
+</a> func init() {
+ 	flag.Parse()
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -31,6 +46,24 @@ func init() {
+</a> 	// 	fmt.Println(&quot;basm init&quot;)
+ 	// }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	numOp := 0
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if *buildFullHardwareHardcoded != &quot;&quot; {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		numOp++
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	}
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	if *buildMatrixSeqHardcoded != &quot;&quot; {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+		numOp++
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	if *buildMatrixSeq != &quot;&quot; {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		numOp++
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+	if numOp &gt; 1 {
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		log.Fatal(&quot;Only one build mode can be selected among: build-full-hw-hardcoded, build-matrix-seq, build-matrix-seq-hardcoded&quot;)
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	if *buildMatrixSeqCompiled != &quot;&quot; &amp;&amp; numOp == 1 &amp;&amp; *buildMatrixSeq == &quot;&quot; {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		log.Fatal(&quot;A loadable quantum circuit file must be used alone or in combination with build-matrix-seq option&quot;)
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+	}
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+
+</a> 	if *linearDataRange != &quot;&quot; {
+ 		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+ 			log.Fatal(err)
+<a href="#h0-3" id="h0-3" class="h">@@ -70,11 +103,11 @@ func main() {
+</a> 		sim.SetVerbose()
+ 	}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	startAssembling := false
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	startBuilding := false
+</a> 
+ 	for _, bmqFile := range flag.Args() {
+ 
+<a href="#h0-3-8" id="h0-3-8" class="d">-		startAssembling = true
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		startBuilding = true
+</a> 
+ 		// Get the file extension
+ 		ext := filepath.Ext(bmqFile)
+<a href="#h0-4" id="h0-4" class="h">@@ -96,12 +129,13 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if !startAssembling {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if !startBuilding {
+</a> 		return
+ 	}
+ 
+ 	if *buildFullHardwareHardcoded != &quot;&quot; {
+<a href="#h0-4-9" id="h0-4-9" class="d">-		// Build a full hardware BM with hardcoded quantum circuit this is a special case uncompatible with the rest of the modes
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+		// Build a full hardware BM with hardcoded quantum circuit this is a special case incompatible with the rest of the modes
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+		// Matrices won&#39;t be generated, the hardware will be built directly
+</a> 
+ 		// Run the builder with the full set of passes
+ 		if err := bld.RunBuilder(); err != nil {
+<a href="#h0-5" id="h0-5" class="h">@@ -109,11 +143,11 @@ func main() {
+</a> 			return
+ 		}
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+		// TODO: Finish this
+</a> 		fmt.Println(&quot;Under construction&quot;)
+<a href="#h0-5-5" id="h0-5-5" class="d">-
+</a> 	} else {
+<a href="#h0-5-7" id="h0-5-7" class="d">-
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-		// Run the builder with a minimal set of passes
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+		// All the other modes run the builder with a minimal set of passes only to parse the quantum circuit
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		// and generate the matrices
+</a> 
+ 		bld.UnsetActive(&quot;generatorsexec&quot;)
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -122,50 +156,91 @@ func main() {
+</a> 			return
+ 		}
+ 
+<a href="#h0-6-3" id="h0-6-3" class="i">+		if *debug {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			fmt.Println(purple(&quot;BmBuilder completed&quot;))
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		}
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+
+</a> 		var body *bmline.BasmBody
+ 
+<a href="#h0-6-9" id="h0-6-9" class="i">+		if *debug {
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+			fmt.Println(purple(&quot;Exporting circuit&quot;))
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+		}
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+
+</a> 		// Export the BasmBody to generate the matrices
+ 		if v, err := bld.ExportBasmBody(); err != nil {
+<a href="#h0-6-15" id="h0-6-15" class="d">-			if *buildFullHardwareHardcoded != &quot;&quot; {
+</a><a href="#h0-6-16" id="h0-6-16" class="d">-				// Build a full hardware BM with hardcoded quantum circuit
+</a><a href="#h0-6-17" id="h0-6-17" class="d">-				fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-6-18" id="h0-6-18" class="d">-			}
+</a><a href="#h0-6-19" id="h0-6-19" class="d">-
+</a> 			bld.Alert(err)
+ 			return
+ 		} else {
+ 			body = v
+ 		}
+ 
+<a href="#h0-6-26" id="h0-6-26" class="d">-		fmt.Println(&quot;Quantum circuit:&quot;)
+</a><a href="#h0-6-27" id="h0-6-27" class="d">-		fmt.Println(body)
+</a><a href="#h0-6-28" id="h0-6-28" class="d">-
+</a><a href="#h0-6-29" id="h0-6-29" class="d">-		var mtx []*bmmatrix.BmMatrixSquareComplex
+</a><a href="#h0-6-30" id="h0-6-30" class="d">-
+</a><a href="#h0-6-31" id="h0-6-31" class="i">+		if *debug {
+</a><a href="#h0-6-32" id="h0-6-32" class="i">+			fmt.Println(purple(&quot;Processing circuit to matrices&quot;))
+</a><a href="#h0-6-33" id="h0-6-33" class="i">+		}
+</a> 		// Get the circuit matrices from the BasmBody
+ 		if matrices, err := sim.QasmToBmMatrices(body); err != nil {
+ 			bld.Alert(err)
+ 			return
+ 		} else {
+<a href="#h0-6-39" id="h0-6-39" class="d">-			mtx = make([]*bmmatrix.BmMatrixSquareComplex, len(matrices))
+</a><a href="#h0-6-40" id="h0-6-40" class="d">-			copy(mtx, matrices)
+</a><a href="#h0-6-41" id="h0-6-41" class="i">+			sim.Mtx = make([]*bmmatrix.BmMatrixSquareComplex, len(matrices))
+</a><a href="#h0-6-42" id="h0-6-42" class="i">+			copy(sim.Mtx, matrices)
+</a><a href="#h0-6-43" id="h0-6-43" class="i">+		}
+</a><a href="#h0-6-44" id="h0-6-44" class="i">+	}
+</a><a href="#h0-6-45" id="h0-6-45" class="i">+
+</a><a href="#h0-6-46" id="h0-6-46" class="i">+	if *showMatrices {
+</a><a href="#h0-6-47" id="h0-6-47" class="i">+		if sim.Mtx == nil {
+</a><a href="#h0-6-48" id="h0-6-48" class="i">+			bld.Alert(&quot;No matrices to show&quot;)
+</a><a href="#h0-6-49" id="h0-6-49" class="i">+			return
+</a><a href="#h0-6-50" id="h0-6-50" class="i">+		} else {
+</a><a href="#h0-6-51" id="h0-6-51" class="i">+			for i, m := range sim.Mtx {
+</a><a href="#h0-6-52" id="h0-6-52" class="i">+				fmt.Println(green(&quot;Matrix:&quot;), yellow(strconv.Itoa(i)))
+</a><a href="#h0-6-53" id="h0-6-53" class="i">+				fmt.Println(m.StringColor(green))
+</a><a href="#h0-6-54" id="h0-6-54" class="i">+			}
+</a><a href="#h0-6-55" id="h0-6-55" class="i">+		}
+</a><a href="#h0-6-56" id="h0-6-56" class="i">+	}
+</a><a href="#h0-6-57" id="h0-6-57" class="i">+
+</a><a href="#h0-6-58" id="h0-6-58" class="i">+	if *showCircuitMatrix {
+</a><a href="#h0-6-59" id="h0-6-59" class="i">+		mm := sim.Mtx[len(sim.Mtx)-1]
+</a><a href="#h0-6-60" id="h0-6-60" class="i">+		for i := len(sim.Mtx) - 2; i &gt;= 0; i-- {
+</a><a href="#h0-6-61" id="h0-6-61" class="i">+			mm = bmmatrix.MatrixProductComplex(mm, sim.Mtx[i])
+</a> 		}
+<a href="#h0-6-63" id="h0-6-63" class="i">+		fmt.Println(green(&quot;Whole circuit matrix:&quot;))
+</a><a href="#h0-6-64" id="h0-6-64" class="i">+		fmt.Println(mm.StringColor(green))
+</a><a href="#h0-6-65" id="h0-6-65" class="i">+	}
+</a> 
+<a href="#h0-6-67" id="h0-6-67" class="d">-		fmt.Println(mtx)
+</a><a href="#h0-6-68" id="h0-6-68" class="i">+	if *buildMatrixSeqHardcoded != &quot;&quot; {
+</a><a href="#h0-6-69" id="h0-6-69" class="i">+		// Build a matrix sequence BM with hardcoded quantum circuit
+</a><a href="#h0-6-70" id="h0-6-70" class="i">+		fmt.Println(&quot;Under construction&quot;)
+</a> 
+<a href="#h0-6-72" id="h0-6-72" class="d">-		if *buildMatrixSeqHardcoded != &quot;&quot; {
+</a><a href="#h0-6-73" id="h0-6-73" class="d">-			// Build a matrix sequence BM with hardcoded quantum circuit
+</a><a href="#h0-6-74" id="h0-6-74" class="d">-			fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-6-75" id="h0-6-75" class="i">+		if *hardwareFlavorList {
+</a><a href="#h0-6-76" id="h0-6-76" class="i">+			// List of available hardware flavors for the selected operating mode
+</a><a href="#h0-6-77" id="h0-6-77" class="i">+		} else if *hardwareFlavor != &quot;&quot; {
+</a><a href="#h0-6-78" id="h0-6-78" class="i">+		} else {
+</a><a href="#h0-6-79" id="h0-6-79" class="i">+			bld.Alert(&quot;Hardware flavor must be selected&quot;)
+</a> 		}
+<a href="#h0-6-81" id="h0-6-81" class="i">+	}
+</a><a href="#h0-6-82" id="h0-6-82" class="i">+
+</a><a href="#h0-6-83" id="h0-6-83" class="i">+	if *buildMatrixSeq != &quot;&quot; {
+</a><a href="#h0-6-84" id="h0-6-84" class="i">+		// Build a matrix sequence BM with a loadable quantum circuit file
+</a><a href="#h0-6-85" id="h0-6-85" class="i">+		fmt.Println(&quot;Under construction&quot;)
+</a> 
+<a href="#h0-6-87" id="h0-6-87" class="d">-		if *buildMatrixSeq != &quot;&quot; {
+</a><a href="#h0-6-88" id="h0-6-88" class="d">-			// Build a matrix sequence BM with a loadable quantum circuit file
+</a><a href="#h0-6-89" id="h0-6-89" class="d">-			fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-6-90" id="h0-6-90" class="i">+		if *hardwareFlavorList {
+</a><a href="#h0-6-91" id="h0-6-91" class="i">+			// List of available hardware flavors for the selected operating mode
+</a><a href="#h0-6-92" id="h0-6-92" class="i">+		} else if *hardwareFlavor != &quot;&quot; {
+</a><a href="#h0-6-93" id="h0-6-93" class="i">+		} else {
+</a><a href="#h0-6-94" id="h0-6-94" class="i">+			bld.Alert(&quot;Hardware flavor must be selected&quot;)
+</a> 		}
+<a href="#h0-6-96" id="h0-6-96" class="i">+	}
+</a> 
+<a href="#h0-6-98" id="h0-6-98" class="d">-		if *buildMatrixSeqCompiled != &quot;&quot; {
+</a><a href="#h0-6-99" id="h0-6-99" class="d">-			// Build a binary for a matrix sequence BM
+</a><a href="#h0-6-100" id="h0-6-100" class="d">-			fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-6-101" id="h0-6-101" class="i">+	if *buildMatrixSeqCompiled != &quot;&quot; {
+</a><a href="#h0-6-102" id="h0-6-102" class="i">+		// Build a binary for a matrix sequence BM
+</a><a href="#h0-6-103" id="h0-6-103" class="i">+		fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-6-104" id="h0-6-104" class="i">+
+</a><a href="#h0-6-105" id="h0-6-105" class="i">+		if *hardwareFlavorList {
+</a><a href="#h0-6-106" id="h0-6-106" class="i">+			// List of available hardware flavors for the selected operating mode
+</a><a href="#h0-6-107" id="h0-6-107" class="i">+		} else if *hardwareFlavor != &quot;&quot; {
+</a><a href="#h0-6-108" id="h0-6-108" class="i">+		} else {
+</a><a href="#h0-6-109" id="h0-6-109" class="i">+			bld.Alert(&quot;Hardware flavor must be selected&quot;)
+</a> 		}
+ 	}
+ }
+<b>diff --git a/<a id="h1" href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a> b/<a href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,9 +1,9 @@
+</a> %block code1 .sequential
+         qbits   q0, q1
+<a href="#h1-0-2" id="h1-0-2" class="d">-;        zero    q0, q1, q2
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-;        h       q1
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-         cx      q1, q0
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-;        cx      q0, q1
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+        zero    q0, q1
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	h	q0
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+        cx      q0, q1
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+        cx      q1, q0
+</a> %endblock
+ 
+ %meta bmdef global main:code1
+<b>diff --git a/<a id="h2" href="../file/cmd/bmqsim/utils.go.html">cmd/bmqsim/utils.go</a> b/<a href="../file/cmd/bmqsim/utils.go.html">cmd/bmqsim/utils.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,36 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package main
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import &quot;fmt&quot;
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+func purple(in ...interface{}) string {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	return &quot;\033[35m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+func green(in ...interface{}) string {
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	return &quot;\033[32m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+func yellow(in ...interface{}) string {
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	return &quot;\033[33m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+func blue(in ...interface{}) string {
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	return &quot;\033[34m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+}
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+func red(in ...interface{}) string {
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	return &quot;\033[31m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+}
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+func cyan(in ...interface{}) string {
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	return &quot;\033[36m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+}
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+func gray(in ...interface{}) string {
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	return &quot;\033[37m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+}
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+func white(in ...interface{}) string {
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	return &quot;\033[97m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/go.mod.html">go.mod</a> b/<a href="../file/go.mod.html">go.mod</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,11 +4,13 @@ go 1.21
+</a> 
+ require (
+ 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
+<a href="#h3-0-3" id="h3-0-3" class="i">+	github.com/goccy/go-graphviz v0.1.1
+</a> 	github.com/llir/llvm v0.3.6
+ 	github.com/mdlayher/raw v0.1.0
+ 	github.com/mmirko/mel v0.0.0-20230427110356-1b80cc6e2435
+ 	github.com/tfriedel6/canvas v0.12.1
+ 	github.com/x448/float16 v0.8.4
+<a href="#h3-0-9" id="h3-0-9" class="i">+	github.com/yuin/gopher-lua v1.1.1
+</a> 	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb
+ 	google.golang.org/protobuf v1.31.0
+ )
+<a href="#h3-1" id="h3-1" class="h">@@ -16,7 +18,6 @@ require (
+</a> require (
+ 	github.com/fogleman/gg v1.3.0 // indirect
+ 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
+<a href="#h3-1-3" id="h3-1-3" class="d">-	github.com/goccy/go-graphviz v0.1.1 // indirect
+</a> 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+ 	github.com/josharian/native v1.1.0 // indirect
+ 	github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c // indirect
+<a href="#h3-2" id="h3-2" class="h">@@ -25,7 +26,6 @@ require (
+</a> 	github.com/mewmew/float v0.0.0-20211212214546-4fe539893335 // indirect
+ 	github.com/pkg/errors v0.9.1 // indirect
+ 	github.com/veandco/go-sdl2 v0.4.36 // indirect
+<a href="#h3-2-3" id="h3-2-3" class="d">-	github.com/yuin/gopher-lua v1.1.1 // indirect
+</a> 	golang.org/x/image v0.14.0 // indirect
+ 	golang.org/x/mod v0.14.0 // indirect
+ 	golang.org/x/net v0.19.0 // indirect
+<b>diff --git a/<a id="h4" href="../file/go.sum.html">go.sum</a> b/<a href="../file/go.sum.html">go.sum</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,9 +1,10 @@
+</a> github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 h1:yL7+Jz0jTC6yykIK/Wh74gnTJnrGr5AyrNMXuA0gves=
+ github.com/antlr/antlr4/runtime/Go/antlr v1.4.10/go.mod h1:F7bn7fEU90QkQ3tnmaTx3LTKLEDqnwWODIYppRQ5hnY=
+<a href="#h4-0-2" id="h4-0-2" class="i">+github.com/corona10/goimagehash v1.0.2 h1:pUfB0LnsJASMPGEZLj7tGY251vF+qLGqOgEP4rUs6kA=
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+github.com/corona10/goimagehash v1.0.2/go.mod h1:/l9umBhvcHQXVtQO1V6Gp1yD20STawkhRnnX0D1bvVI=
+</a> github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+ github.com/fogleman/gg v1.3.0 h1:/7zJX8F6AaYQc57WQCyN9cAIz+4bCJGO9B+dyW29am8=
+ github.com/fogleman/gg v1.3.0/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
+<a href="#h4-0-7" id="h4-0-7" class="d">-github.com/go-gl/gl v0.0.0-20181026044259-55b76b7df9d2 h1:78Hza2KHn2PX1jdydQnffaU2A/xM0g3Nx1xmMdep9Gk=
+</a> github.com/go-gl/gl v0.0.0-20181026044259-55b76b7df9d2/go.mod h1:482civXOzJJCPzJ4ZOX/pwvXBWSnzD4OKMdH4ClKGbk=
+ github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 h1:5BVwOaUSBTlVZowGO6VZGw2H/zl9nrd3eCZfYV+NfQA=
+ github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71/go.mod h1:9YTyiznxEY1fVinfM7RvRcjRHbw2xLBJ3AAGIT0I4Nw=
+<a href="#h4-1" id="h4-1" class="h">@@ -15,8 +16,8 @@ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGw
+</a> github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
+ github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
+ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+<a href="#h4-1-3" id="h4-1-3" class="d">-github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+</a> github.com/josharian/native v1.1.0 h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtLA=
+ github.com/josharian/native v1.1.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
+ github.com/kr/pretty v0.2.0/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
+<a href="#h4-2" id="h4-2" class="h">@@ -27,27 +28,23 @@ github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c h1:UwtWiaR7Zg/IItv2hEN1EAT
+</a> github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c/go.mod h1:2F+W9dmrXLYy3UZXnii5UM7QDRiVsz4QkMpC0vaBU7M=
+ github.com/llir/llvm v0.3.6 h1:Zh9vd8EOMDgwRAg43+VkOwnXISXIPyTzoNH89LLX5eM=
+ github.com/llir/llvm v0.3.6/go.mod h1:2vIck7uj3cIuZqx5cLXxB9lD6bT2JtgXcMD0u3WbfOo=
+<a href="#h4-2-3" id="h4-2-3" class="d">-github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93 h1:elUwhY+HQaIV9kMgmsU9zOF413pDKoo2uFNypgP5SxM=
+</a><a href="#h4-2-4" id="h4-2-4" class="d">-github.com/mdlayher/packet v0.0.0-20220221164757-67998ac0ff93/go.mod h1:K9sWKMgN6wa78BbuJL+dT1ZZdiAfhkc2fb6XXLjHulk=
+</a> github.com/mdlayher/packet v1.1.2 h1:3Up1NG6LZrsgDVn6X4L9Ge/iyRyxFEFD9o6Pr3Q1nQY=
+ github.com/mdlayher/packet v1.1.2/go.mod h1:GEu1+n9sG5VtiRE4SydOmX5GTwyyYlteZiFU+x0kew4=
+ github.com/mdlayher/raw v0.1.0 h1:K4PFMVy+AFsp0Zdlrts7yNhxc/uXoPVHi9RzRvtZF2Y=
+ github.com/mdlayher/raw v0.1.0/go.mod h1:yXnxvs6c0XoF/aK52/H5PjsVHmWBCFfZUfoh/Y5s9Sg=
+<a href="#h4-2-9" id="h4-2-9" class="d">-github.com/mdlayher/socket v0.2.1 h1:F2aaOwb53VsBE+ebRS9bLd7yPOfYUMC8lOODdCBDY6w=
+</a><a href="#h4-2-10" id="h4-2-10" class="d">-github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
+</a> github.com/mdlayher/socket v0.5.0 h1:ilICZmJcQz70vrWVes1MFera4jGiWNocSkykwwoy3XI=
+ github.com/mdlayher/socket v0.5.0/go.mod h1:WkcBFfvyG8QENs5+hfQPl1X6Jpd2yeLIYgrGFmJiJxI=
+<a href="#h4-2-13" id="h4-2-13" class="d">-github.com/mewmew/float v0.0.0-20201204173432-505706aa38fa h1:R27wrYHe8Zik4z/EV8xxfoH3cwMJw3qI4xsI3yYkGDQ=
+</a> github.com/mewmew/float v0.0.0-20201204173432-505706aa38fa/go.mod h1:O+xb+8ycBNHzJicFVs7GRWtruD4tVZI0huVnw5TM01E=
+ github.com/mewmew/float v0.0.0-20211212214546-4fe539893335 h1:OqHfAQbfCSBjMCYfM+cV5Ub5GfuIkJSO6Z1QihhzBBM=
+ github.com/mewmew/float v0.0.0-20211212214546-4fe539893335/go.mod h1:O+xb+8ycBNHzJicFVs7GRWtruD4tVZI0huVnw5TM01E=
+ github.com/mmirko/mel v0.0.0-20230427110356-1b80cc6e2435 h1:qeHwMp9n8OnPC1ueIcBJ54e+y9TCAl3+F2NxGPvQRl4=
+ github.com/mmirko/mel v0.0.0-20230427110356-1b80cc6e2435/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+<a href="#h4-2-19" id="h4-2-19" class="i">+github.com/nfnt/resize v0.0.0-20160724205520-891127d8d1b5 h1:BvoENQQU+fZ9uukda/RzCAL/191HHwJA5b13R6diVlY=
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+github.com/nfnt/resize v0.0.0-20160724205520-891127d8d1b5/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
+</a> github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+ github.com/tfriedel6/canvas v0.12.1 h1:Oc4gww+cOtix69IaYo8TmRbwpbTl6D1jza2mBM4ZOPo=
+ github.com/tfriedel6/canvas v0.12.1/go.mod h1:WIe1YgsQiKA1awmU6tSs8e5DkceDHC5MHgV5vQQZr/0=
+<a href="#h4-2-25" id="h4-2-25" class="d">-github.com/veandco/go-sdl2 v0.4.0 h1:l9q6K+Dvpd/VlZdw2ufApKnWhAQqx9UL8Zrvbjtm3Lw=
+</a> github.com/veandco/go-sdl2 v0.4.0/go.mod h1:FB+kTpX9YTE+urhYiClnRzpOXbiWgaU3+5F2AB78DPg=
+ github.com/veandco/go-sdl2 v0.4.36 h1:Ltydev536rRQodmIrTWFZ3dRp5A+/6t5CYvbi4Kvia0=
+ github.com/veandco/go-sdl2 v0.4.36/go.mod h1:OROqMhHD43nT4/i9crJukyVecjPNYYuCofep6SNiAjY=
+<a href="#h4-3" id="h4-3" class="h">@@ -59,11 +56,8 @@ github.com/yuin/gopher-lua v1.1.1/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7
+</a> golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+ golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/exp v0.0.0-20181106170214-d68db9428509/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
+<a href="#h4-3-3" id="h4-3-3" class="d">-golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa h1:FRnLl4eNAQl8hwxVVC17teOw8kdjVDVAiFMtgUdTSRQ=
+</a><a href="#h4-3-4" id="h4-3-4" class="d">-golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa/go.mod h1:zk2irFbV9DP96SEBUUAy67IdHUaZuSnrz1n472HUCLE=
+</a> golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb h1:c0vyKkb6yr3KR7jEfJaOSv4lG7xPkbN6r52aJz1d8a8=
+ golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb/go.mod h1:iRJReGqOEeBhDZGkGbynYwcHlctCvnjTYIamk7uXpHI=
+<a href="#h4-3-7" id="h4-3-7" class="d">-golang.org/x/image v0.0.0-20200119044424-58c23975cae1 h1:5h3ngYt7+vXCDZCup/HkCQgW5XwmSvR/nA2JmJ0RErg=
+</a> golang.org/x/image v0.0.0-20200119044424-58c23975cae1/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
+ golang.org/x/image v0.14.0 h1:tNgSxAFe3jC4uYqvZdTr84SZoM1KfwdC9SKIFrLjFn4=
+ golang.org/x/image v0.14.0/go.mod h1:HUYqC05R2ZcZ3ejNQsIHQDQiwWM4JBqmm6MKANTp4LE=
+<a href="#h4-4" id="h4-4" class="h">@@ -74,8 +68,6 @@ golang.org/x/mod v0.14.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
+</a> golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4/go.mod h1:p54w0d4576C0XHj96bSt6lcn1PtDYWL6XObtHCRCNQM=
+<a href="#h4-4-3" id="h4-4-3" class="d">-golang.org/x/net v0.18.0 h1:mIYleuAkSbHh0tCv7RvjL3F6ZVbLjq4+R7zbOn3Kokg=
+</a><a href="#h4-4-4" id="h4-4-4" class="d">-golang.org/x/net v0.18.0/go.mod h1:/czyP5RqHAH4odGYxBJ1qz0+CE5WZ+2j1YgoEo8F2jQ=
+</a> golang.org/x/net v0.19.0 h1:zTwKpTd2XuCqf8huc7Fo2iSy+4RHPd10s4KzeTnVr1c=
+ golang.org/x/net v0.19.0/go.mod h1:CfAk/cbD4CthTvqiEl8NpboMuiuOYsAr/7NOjZJtv1U=
+ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+<a href="#h4-5" id="h4-5" class="h">@@ -88,8 +80,6 @@ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7w
+</a> golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20210330210617-4fbd30eecc44/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20210510120138-977fb7262007/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+<a href="#h4-5-3" id="h4-5-3" class="d">-golang.org/x/sys v0.14.0 h1:Vz7Qs629MkJkGyHxUlRHizWJRG2j8fbQKjELVSNhy7Q=
+</a><a href="#h4-5-4" id="h4-5-4" class="d">-golang.org/x/sys v0.14.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+</a> golang.org/x/sys v0.15.0 h1:h48lPFYpsTvQJZF4EKyI4aLHaev3CxivZmv7yZig9pc=
+ golang.org/x/sys v0.15.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+ golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+<a href="#h4-6" id="h4-6" class="h">@@ -98,8 +88,6 @@ golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+</a> golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+ golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
+ golang.org/x/tools v0.1.4/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
+<a href="#h4-6-3" id="h4-6-3" class="d">-golang.org/x/tools v0.15.0 h1:zdAyfUGbYmuVokhzVmghFl2ZJh5QhcfebBgmVPFYA+8=
+</a><a href="#h4-6-4" id="h4-6-4" class="d">-golang.org/x/tools v0.15.0/go.mod h1:hpksKq4dtpQWS1uQ61JkdqWM3LscIS6Slf+VVkm+wQk=
+</a> golang.org/x/tools v0.16.0 h1:GO788SKMRunPIBCXiQyo2AaexLstOrVhuAL5YwsckQM=
+ golang.org/x/tools v0.16.0/go.mod h1:kYVVN6I1mBNoB1OX+noeBjbRk4IUEPa7JJ+TJMEooJ0=
+ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+<b>diff --git a/<a id="h5" href="../file/pkg/bmmatrix/bmmatrix.go.html">pkg/bmmatrix/bmmatrix.go</a> b/<a href="../file/pkg/bmmatrix/bmmatrix.go.html">pkg/bmmatrix/bmmatrix.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -28,6 +28,7 @@ type BmMatrixSquareComplex struct {
+</a> }
+ 
+ func (m *BmMatrixSquareReal) String() string {
+<a href="#h5-0-3" id="h5-0-3" class="i">+	// TODO: implement a color function
+</a> 	str := &quot;&quot;
+ 	for i := 0; i &lt; m.N; i++ {
+ 		substr := &quot;&quot;
+<a href="#h5-1" id="h5-1" class="h">@@ -47,27 +48,38 @@ func (m *BmMatrixSquareReal) String() string {
+</a> 	return str
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-func (m *BmMatrixSquareComplex) String() string {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+func (m *BmMatrixSquareComplex) StringColor(color func(...interface{}) string) string {
+</a> 	str := &quot;&quot;
+ 	for i := 0; i &lt; m.N; i++ {
+ 		substr := &quot;&quot;
+<a href="#h5-1-8" id="h5-1-8" class="i">+		leng := 0
+</a> 		for j := 0; j &lt; m.N; j++ {
+<a href="#h5-1-10" id="h5-1-10" class="d">-			substr += fmt.Sprintf(&quot;| %f + %fi &quot;, m.Data[i][j].Real, m.Data[i][j].Imag)
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+			sub := fmt.Sprintf(&quot; %3.4f + %3.4fi &quot;, m.Data[i][j].Real, m.Data[i][j].Imag)
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+			leng = leng + len(sub) + 1
+</a><a href="#h5-1-13" id="h5-1-13" class="i">+			substr += color(&quot;|&quot;) + sub
+</a><a href="#h5-1-14" id="h5-1-14" class="i">+
+</a> 		}
+ 		sep := &quot;&quot;
+<a href="#h5-1-17" id="h5-1-17" class="d">-		for j := 0; j &lt; len(substr)+1; j++ {
+</a><a href="#h5-1-18" id="h5-1-18" class="i">+		for j := 0; j &lt; leng+1; j++ {
+</a> 			sep += &quot;-&quot;
+ 		}
+<a href="#h5-1-21" id="h5-1-21" class="d">-		str += sep + &quot;\n&quot;
+</a><a href="#h5-1-22" id="h5-1-22" class="d">-		str += substr + &quot;|\n&quot;
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+		str += color(sep) + &quot;\n&quot;
+</a><a href="#h5-1-24" id="h5-1-24" class="i">+		str += substr + color(&quot;|&quot;) + &quot;\n&quot;
+</a> 		if i == m.N-1 {
+<a href="#h5-1-26" id="h5-1-26" class="d">-			str += sep + &quot;\n&quot;
+</a><a href="#h5-1-27" id="h5-1-27" class="i">+			str += color(sep) + &quot;\n&quot;
+</a> 		}
+ 	}
+ 
+ 	return str
+ }
+ 
+<a href="#h5-1-34" id="h5-1-34" class="i">+func (m *BmMatrixSquareComplex) String() string {
+</a><a href="#h5-1-35" id="h5-1-35" class="i">+	f := func(in ...interface{}) string {
+</a><a href="#h5-1-36" id="h5-1-36" class="i">+		return fmt.Sprint(in...)
+</a><a href="#h5-1-37" id="h5-1-37" class="i">+	}
+</a><a href="#h5-1-38" id="h5-1-38" class="i">+	return m.StringColor(f)
+</a><a href="#h5-1-39" id="h5-1-39" class="i">+}
+</a><a href="#h5-1-40" id="h5-1-40" class="i">+
+</a> // NewBmMatrixSquare creates a new BmMatrixSquared with the given size
+ func NewBmMatrixSquareReal(n int) *BmMatrixSquareReal {
+ 	data := make([][]float32, n)
+<a href="#h5-2" id="h5-2" class="h">@@ -175,3 +187,27 @@ func SwapRowsColsComplex(a *BmMatrixSquareComplex, x, y int) *BmMatrixSquareComp
+</a> 
+ 	return c
+ }
+<a href="#h5-2-3" id="h5-2-3" class="i">+
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+func MatrixProductReal(a, b *BmMatrixSquareReal) *BmMatrixSquareReal {
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+	c := NewBmMatrixSquareReal(a.N)
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+	for i := 0; i &lt; a.N; i++ {
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+		for j := 0; j &lt; a.N; j++ {
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+			for k := 0; k &lt; a.N; k++ {
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+				c.Data[i][j] += a.Data[i][k] * b.Data[k][j]
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+			}
+</a><a href="#h5-2-11" id="h5-2-11" class="i">+		}
+</a><a href="#h5-2-12" id="h5-2-12" class="i">+	}
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+	return c
+</a><a href="#h5-2-14" id="h5-2-14" class="i">+}
+</a><a href="#h5-2-15" id="h5-2-15" class="i">+
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+func MatrixProductComplex(a, b *BmMatrixSquareComplex) *BmMatrixSquareComplex {
+</a><a href="#h5-2-17" id="h5-2-17" class="i">+	c := NewBmMatrixSquareComplex(a.N)
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+	for i := 0; i &lt; a.N; i++ {
+</a><a href="#h5-2-19" id="h5-2-19" class="i">+		for j := 0; j &lt; a.N; j++ {
+</a><a href="#h5-2-20" id="h5-2-20" class="i">+			for k := 0; k &lt; a.N; k++ {
+</a><a href="#h5-2-21" id="h5-2-21" class="i">+				c.Data[i][j] = Complex32Add(c.Data[i][j], Complex32Mul(a.Data[i][k], b.Data[k][j]))
+</a><a href="#h5-2-22" id="h5-2-22" class="i">+			}
+</a><a href="#h5-2-23" id="h5-2-23" class="i">+		}
+</a><a href="#h5-2-24" id="h5-2-24" class="i">+	}
+</a><a href="#h5-2-25" id="h5-2-25" class="i">+	return c
+</a><a href="#h5-2-26" id="h5-2-26" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/bmmatrix/utils.go.html">pkg/bmmatrix/utils.go</a> b/<a href="../file/pkg/bmmatrix/utils.go.html">pkg/bmmatrix/utils.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,38 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package bmmatrix
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+import (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+)
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+func purple(in ...interface{}) string {
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+	return &quot;\033[35m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+}
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+func green(in ...interface{}) string {
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+	return &quot;\033[32m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+}
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+func yellow(in ...interface{}) string {
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+	return &quot;\033[33m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+}
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+func blue(in ...interface{}) string {
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+	return &quot;\033[34m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+}
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+func red(in ...interface{}) string {
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+	return &quot;\033[31m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+}
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+func cyan(in ...interface{}) string {
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+	return &quot;\033[36m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+}
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+func gray(in ...interface{}) string {
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+	return &quot;\033[37m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+}
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+func white(in ...interface{}) string {
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+	return &quot;\033[97m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -13,6 +13,7 @@ type BmQSimulator struct {
+</a> 	debug    bool
+ 	qbits    []string
+ 	qbitsNum map[string]int
+<a href="#h7-0-3" id="h7-0-3" class="i">+	Mtx      []*bmmatrix.BmMatrixSquareComplex
+</a> }
+ 
+ // BmQSimulatorInit initializes the BmQSimulator
+<a href="#h7-1" id="h7-1" class="h">@@ -62,10 +63,6 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 	for i, line := range qasm.Lines {
+ 		op := line.Operation.GetValue()
+ 
+<a href="#h7-1-3" id="h7-1-3" class="d">-		if sim.debug {
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-			fmt.Printf(&quot;Processing line %d: %s\n&quot;, i, line.String())
+</a><a href="#h7-1-5" id="h7-1-5" class="d">-		}
+</a><a href="#h7-1-6" id="h7-1-6" class="d">-
+</a> 		// Check if the operation is ready to form a matrix
+ 		nextOp := false
+ 
+<a href="#h7-2" id="h7-2" class="h">@@ -103,6 +100,11 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 
+ 		// If the operation is ready to form a matrix, create the matrix
+ 		if nextOp {
+<a href="#h7-2-3" id="h7-2-3" class="i">+
+</a><a href="#h7-2-4" id="h7-2-4" class="i">+			if sim.debug {
+</a><a href="#h7-2-5" id="h7-2-5" class="i">+				fmt.Println(red(&quot;\tNew operation&quot;) + &quot; (ready to form a matrix)&quot;)
+</a><a href="#h7-2-6" id="h7-2-6" class="i">+			}
+</a><a href="#h7-2-7" id="h7-2-7" class="i">+
+</a> 			// Create the matrix
+ 			if len(curOp) &gt; 0 {
+ 				// Create the matrix
+<a href="#h7-3" id="h7-3" class="h">@@ -123,6 +125,12 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 		// If the last line is not already been added to the last matrix, lets put it alone in a new matrix
+ 		// Otherwise (not the last or already done) we will put it in the current operations list and set the involved qbits into the currQbits map
+ 		if singleLast {
+<a href="#h7-3-3" id="h7-3-3" class="i">+
+</a><a href="#h7-3-4" id="h7-3-4" class="i">+			if sim.debug {
+</a><a href="#h7-3-5" id="h7-3-5" class="i">+				fmt.Printf(&quot;\tProcessing line %d: %s\n&quot;, i, line.String())
+</a><a href="#h7-3-6" id="h7-3-6" class="i">+				fmt.Println(red(&quot;\tNew operation&quot;) + &quot; (ready to form a matrix)&quot;)
+</a><a href="#h7-3-7" id="h7-3-7" class="i">+			}
+</a><a href="#h7-3-8" id="h7-3-8" class="i">+
+</a> 			curOp = append(curOp, line)
+ 			// Create the matrix
+ 			if m, err := sim.BmMatrixFromOperation(curOp); err != nil {
+<a href="#h7-4" id="h7-4" class="h">@@ -134,6 +142,10 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 			}
+ 
+ 		} else {
+<a href="#h7-4-3" id="h7-4-3" class="i">+			if sim.debug {
+</a><a href="#h7-4-4" id="h7-4-4" class="i">+				fmt.Printf(&quot;\tProcessing line %d: %s\n&quot;, i, line.String())
+</a><a href="#h7-4-5" id="h7-4-5" class="i">+			}
+</a><a href="#h7-4-6" id="h7-4-6" class="i">+
+</a> 			curOp = append(curOp, line)
+ 
+ 			// Include the qbits in the operation to the currQbits map
+<a href="#h7-5" id="h7-5" class="h">@@ -147,6 +159,7 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 			}
+ 
+ 		}
+<a href="#h7-5-3" id="h7-5-3" class="i">+
+</a> 	}
+ 	return result, nil
+ }
+<a href="#h7-6" id="h7-6" class="h">@@ -221,7 +234,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 					localOrder[i] = sim.qbitsNum[argName]
+ 				}
+ 
+<a href="#h7-6-3" id="h7-6-3" class="d">-				fmt.Println(localOrder, q)
+</a><a href="#h7-6-4" id="h7-6-4" class="i">+				//fmt.Println(localOrder, q)
+</a> 
+ 				for i, lq := range localOrder {
+ 					if lq != q {
+<a href="#h7-7" id="h7-7" class="h">@@ -230,7 +243,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 						// Add the swap to the list
+ 						swaps = append(swaps, swap{q, lq})
+ 						if sim.debug {
+<a href="#h7-7-3" id="h7-7-3" class="d">-							fmt.Printf(&quot;Swapping qbits %d and %d\n&quot;, q, lq)
+</a><a href="#h7-7-4" id="h7-7-4" class="i">+							//fmt.Printf(&quot;Swapping qbits %d and %d\n&quot;, q, lq)
+</a> 						}
+ 						// Swap the localOrder if needed
+ 						for j, lq2 := range localOrder {
+<a href="#h7-8" id="h7-8" class="h">@@ -241,7 +254,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 							}
+ 						}
+ 						if sim.debug {
+<a href="#h7-8-3" id="h7-8-3" class="d">-							fmt.Println(&quot;newLocalOrder:&quot;, localOrder)
+</a><a href="#h7-8-4" id="h7-8-4" class="i">+							//fmt.Println(&quot;newLocalOrder:&quot;, localOrder)
+</a> 						}
+ 
+ 					}
+<a href="#h7-9" id="h7-9" class="h">@@ -265,7 +278,7 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 	}
+ 
+ 	if sim.debug {
+<a href="#h7-9-3" id="h7-9-3" class="d">-		fmt.Println(&quot;swaps:&quot;, swaps)
+</a><a href="#h7-9-4" id="h7-9-4" class="i">+		//fmt.Println(&quot;swaps:&quot;, swaps)
+</a> 	}
+ 
+ 	for _, s := range swaps {
+<a href="#h7-10" id="h7-10" class="h">@@ -295,7 +308,7 @@ func swaps2baseSwaps(s swap, n int) []swap {
+</a> 	// fmt.Println(&quot;pos2:&quot;, pos2)
+ 
+ 	for i := uint64(0); i &lt; baseNum; i++ {
+<a href="#h7-10-3" id="h7-10-3" class="d">-		fmt.Println(i, int2bin(int(i), n), i&amp;pos1&gt;&gt;s1, i&amp;pos2&gt;&gt;s2)
+</a><a href="#h7-10-4" id="h7-10-4" class="i">+		//fmt.Println(i, int2bin(int(i), n), i&amp;pos1&gt;&gt;s1, i&amp;pos2&gt;&gt;s2)
+</a> 		if _, ok := iDone[i]; !ok {
+ 			if i&amp;pos1&gt;&gt;s1 != i&amp;pos2&gt;&gt;s2 {
+ 				num1 := i
+<b>diff --git a/<a id="h8" href="../file/pkg/bmqsim/utils.go.html">pkg/bmqsim/utils.go</a> b/<a href="../file/pkg/bmqsim/utils.go.html">pkg/bmqsim/utils.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,38 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+package bmqsim
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+import (
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+)
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+func purple(in ...interface{}) string {
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+	return &quot;\033[35m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+}
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+func green(in ...interface{}) string {
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+	return &quot;\033[32m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+}
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+func yellow(in ...interface{}) string {
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+	return &quot;\033[33m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+}
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+func blue(in ...interface{}) string {
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+	return &quot;\033[34m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+}
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+func red(in ...interface{}) string {
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+	return &quot;\033[31m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+}
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+func cyan(in ...interface{}) string {
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+	return &quot;\033[36m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+}
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+func gray(in ...interface{}) string {
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+	return &quot;\033[37m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+}
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+func white(in ...interface{}) string {
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+	return &quot;\033[97m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

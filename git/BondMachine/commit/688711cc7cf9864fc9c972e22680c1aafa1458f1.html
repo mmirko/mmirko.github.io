@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROM and RAM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/688711cc7cf9864fc9c972e22680c1aafa1458f1.html">688711cc7cf9864fc9c972e22680c1aafa1458f1</a>
+<b>parent</b> <a href="../commit/de080f129622dc59577434c0140a50fb1138a073.html">de080f129622dc59577434c0140a50fb1138a073</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  1 Aug 2023 17:44:30 +0200
+
+ROM and RAM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">60</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">139</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">102</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">124</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_r2vri.go</a></td><td> | </td><td class="num">12</td><td><span class="i">+</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/utils.go</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 269 insertions(+), 188 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -35,7 +35,9 @@ func (op M2r) Op_get_instruction_len(arch *Arch) int {
+</a> func (op M2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+ 	result += &quot;\t//Internal Reg Wire for M2R opcode\n&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	result += &quot;\treg state_read_mem;\n&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		result += &quot;\treg state_read_mem;\n&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	}
+</a> 	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_m2r;\n&quot;
+ 	result += &quot;\n&quot;
+ 	return result
+<a href="#h0-1" id="h0-1" class="h">@@ -75,6 +77,12 @@ func (Op M2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) s
+</a> 	return result
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+func (Op M2r) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	result := &quot;&quot;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	result += &quot;\t\t\t\tstate_read_mem &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	return result
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a> func (op M2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	result := &quot;&quot;
+ 	result += &quot;					M2R: begin\n&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -84,31 +92,43 @@ func (op M2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> }
+ 
+ func (op M2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	result := &quot;&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h0-2-8" id="h0-2-8" class="d">-	result := &quot;&quot;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-	result += &quot;\t//logic code to control the address to read RAM\n&quot;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	result += &quot;\tassign addr_ram_m2r = rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.L)) + &quot;];\n&quot;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	setflag := true
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-	for _, currop := range arch.Op {
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		if currop.Op_get_name() == &quot;r2m&quot; {
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-			setflag = false
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-			break
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		} else if currop.Op_get_name() == &quot;m2r&quot; {
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-			break
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-		}
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	// The ram is enabled if any of the opcodes is active
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+<a href="#h0-2-24" id="h0-2-24" class="d">-	if setflag {
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	// The ram write signals
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a> 		result += &quot;\tassign ram_din = ram_din_i;\n&quot;
+<a href="#h0-2-29" id="h0-2-29" class="d">-		result += &quot;\tassign ram_addr = (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : addr_ram_r2m;\n&quot;
+</a> 		result += &quot;\tassign ram_wren = wr_int_ram;\n&quot;
+<a href="#h0-2-31" id="h0-2-31" class="d">-		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+ 
+<a href="#h0-2-34" id="h0-2-34" class="d">-	return result
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+	ramAddr := &quot;&quot;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+	if arch.HasAny([]string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+		ramAddr += &quot;addr_ram_to_mem&quot;
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+	}
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+	if arch.HasOp(&quot;m2r&quot;) {
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : &quot; + ramAddr
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+	}
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+	if arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+	}
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+	}
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+	result += &quot;\t//logic code to control the address to read RAM\n&quot;
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+	result += &quot;\tassign addr_ram_m2r = rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.L)) + &quot;];\n&quot;
+</a> 
+<a href="#h0-2-55" id="h0-2-55" class="i">+	return result
+</a> }
+ 
+ func (op M2r) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h0-3" id="h0-3" class="h">@@ -184,12 +204,6 @@ func (op M2r) Forbidden_modes() (bool, []string) {
+</a> 	return false, []string{}
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-func (Op M2r) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	result := &quot;&quot;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	result += &quot;\t\t\t\tstate_read_mem &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	return result
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-}
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-
+</a> func (Op M2r) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -32,79 +32,114 @@ func (op M2rri) Op_get_instruction_len(arch *Arch) int {
+</a> }
+ 
+ func (op M2rri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-
+</a> 	result := &quot;&quot;
+<a href="#h1-0-5" id="h1-0-5" class="i">+	result += &quot;\t//Internal Reg Wire for M2R opcode\n&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		result += &quot;\treg state_read_mem;\n&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	}
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_m2rri;\n&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	result += &quot;\n&quot;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	return result
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+}
+</a> 
+<a href="#h1-0-14" id="h1-0-14" class="d">-	// Check if the romread facility has already been included
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-	romreadflag := conf.Runinfo.Check(&quot;romread&quot;)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+func (Op M2rri) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	result += &quot;\t\t\tstate_read_mem &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	return result
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+}
+</a> 
+<a href="#h1-0-22" id="h1-0-22" class="d">-	// If not, include it
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-	if romreadflag {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+func (Op M2rri) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	opbits := arch.Opcodes_bits()
+</a> 
+<a href="#h1-0-28" id="h1-0-28" class="d">-		romWord := arch.Max_word()
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a> 
+<a href="#h1-0-31" id="h1-0-31" class="d">-		result += &quot;\twire [&quot; + strconv.Itoa(int(romWord-1)) + &quot;:0] romread_value;\n&quot;
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] romread_bus;\n&quot;
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-		result += &quot;\treg romread_ready;\n&quot;
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-		result += &quot;\n&quot;
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-		result += &quot;\t&quot; + pname + &quot;rom romread_instance(romread_bus,romread_value);\n&quot;
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	result += &quot;\t\t\tif(state_read_mem) begin\n&quot;
+</a> 
+<a href="#h1-0-39" id="h1-0-39" class="i">+	if arch.R == 1 {
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+		result += &quot;				case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	} else {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+		result += &quot;				case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+		result += &quot;					&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+		result += &quot;						_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 ram_dout;\n&quot;
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+		result += &quot;						state_read_mem &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+		result += &quot;						$display(\&quot;M2RRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+		result += &quot;					end\n&quot;
+</a> 	}
+<a href="#h1-0-51" id="h1-0-51" class="i">+	result += &quot;				endcase\n&quot;
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+	result += &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+	result += &quot;\t\t\tend\n&quot;
+</a> 
+ 	return result
+ }
+ 
+<a href="#h1-0-58" id="h1-0-58" class="i">+func (Op M2rri) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	return &quot;&quot;
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+}
+</a> func (op M2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	romWord := arch.Max_word()
+<a href="#h1-0-63" id="h1-0-63" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-0-64" id="h1-0-64" class="d">-
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+	opBits := arch.Opcodes_bits()
+</a> 	regNum := 1 &lt;&lt; arch.R
+ 
+ 	result := &quot;&quot;
+ 	result += &quot;					M2RRI: begin\n&quot;
+<a href="#h1-0-70" id="h1-0-70" class="i">+	result += &quot;						state_read_mem &lt;= #1 1&#39;b1;\n&quot;
+</a> 	if arch.R == 1 {
+<a href="#h1-0-72" id="h1-0-72" class="d">-		result += &quot;						case (rom_value[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h1-0-75" id="h1-0-75" class="d">-		result += &quot;						case (rom_value[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+<a href="#h1-0-78" id="h1-0-78" class="i">+
+</a> 	for i := 0; i &lt; regNum; i++ {
+<a href="#h1-0-80" id="h1-0-80" class="d">-		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+		result += &quot;\t\t					&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+		result += &quot;\t\t						addr_ram_m2rri &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+		result += &quot;\t\t						$display(\&quot;M2RRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+		result += &quot;\t\t					end\n&quot;
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+	}
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+	result += &quot;\t					endcase\n&quot;
+</a> 
+<a href="#h1-0-88" id="h1-0-88" class="d">-		if arch.R == 1 {
+</a><a href="#h1-0-89" id="h1-0-89" class="d">-			result += &quot;							case (rom_value[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h1-0-90" id="h1-0-90" class="d">-		} else {
+</a><a href="#h1-0-91" id="h1-0-91" class="d">-			result += &quot;							case (rom_value[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-0-92" id="h1-0-92" class="d">-		}
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+	return result
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+}
+</a> 
+<a href="#h1-0-97" id="h1-0-97" class="d">-		for j := 0; j &lt; regNum; j++ {
+</a><a href="#h1-0-98" id="h1-0-98" class="d">-			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+func (op M2rri) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+	result := &quot;&quot;
+</a> 
+<a href="#h1-0-102" id="h1-0-102" class="d">-			result += &quot;								if (romread_ready == 1&#39;b1) begin\n&quot;
+</a><a href="#h1-0-103" id="h1-0-103" class="d">-			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:0];\n&quot;
+</a><a href="#h1-0-104" id="h1-0-104" class="d">-			result += &quot;									romread_ready &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h1-0-105" id="h1-0-105" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-0-106" id="h1-0-106" class="d">-			result += &quot;								end\n&quot;
+</a><a href="#h1-0-107" id="h1-0-107" class="d">-			result += &quot;								else begin\n&quot;
+</a><a href="#h1-0-108" id="h1-0-108" class="d">-			result += &quot;									romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h1-0-109" id="h1-0-109" class="d">-			result += &quot;									romread_ready &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h1-0-110" id="h1-0-110" class="d">-			result += &quot;								end\n&quot;
+</a><a href="#h1-0-111" id="h1-0-111" class="d">-			result += &quot;								$display(\&quot;M2RRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+	opbits := arch.Opcodes_bits()
+</a> 
+<a href="#h1-0-115" id="h1-0-115" class="d">-			result += &quot;							end\n&quot;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+	// The ram is enabled if any of the opcodes is active
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+	}
+</a> 
+<a href="#h1-0-121" id="h1-0-121" class="d">-		}
+</a><a href="#h1-0-122" id="h1-0-122" class="d">-		result += &quot;							endcase\n&quot;
+</a><a href="#h1-0-123" id="h1-0-123" class="d">-		result += &quot;						end\n&quot;
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+	// The ram write signals
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+		result += &quot;\tassign ram_din = ram_din_i;\n&quot;
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+		result += &quot;\tassign ram_wren = wr_int_ram;\n&quot;
+</a> 	}
+<a href="#h1-0-129" id="h1-0-129" class="d">-	result += &quot;						endcase\n&quot;
+</a><a href="#h1-0-130" id="h1-0-130" class="d">-	result += &quot;					end\n&quot;
+</a><a href="#h1-0-131" id="h1-0-131" class="d">-	return result
+</a> 
+<a href="#h1-0-133" id="h1-0-133" class="d">-}
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+	ramAddr := &quot;&quot;
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+	if arch.HasAny([]string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+		ramAddr += &quot;addr_ram_to_mem&quot;
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+	}
+</a> 
+<a href="#h1-0-139" id="h1-0-139" class="d">-func (op M2rri) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h1-0-140" id="h1-0-140" class="d">-	// TODO
+</a><a href="#h1-0-141" id="h1-0-141" class="d">-	return &quot;&quot;
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+	if arch.HasOp(&quot;m2r&quot;) {
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : &quot; + ramAddr
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+	}
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+	if arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+	}
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+	}
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+	return result
+</a> }
+ 
+ func (op M2rri) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h1-1" id="h1-1" class="h">@@ -215,22 +250,6 @@ func (op M2rri) Forbidden_modes() (bool, []string) {
+</a> 	return false, []string{}
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-func (op M2rri) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	return &quot;&quot;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-}
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-func (Op M2rri) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-	return &quot;&quot;
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-}
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-func (Op M2rri) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-	return &quot;&quot;
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-}
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-func (Op M2rri) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-	return &quot;&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-}
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-
+</a> func (Op M2rri) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -10,7 +10,6 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-// The R2m opcode is both a basic instruction and a template for other instructions.
+</a> type R2m struct{}
+ 
+ func (op R2m) Op_get_name() string {
+<a href="#h2-1" id="h2-1" class="h">@@ -34,16 +33,18 @@ func (op R2m) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op R2m) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_r2m;\n&quot;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] ram_din_i;\n&quot;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	result += &quot;\treg wr_int_ram;\n&quot;
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2m&quot;, &quot;r2mri&quot;}) {
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_to_mem;\n&quot;
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] ram_din_i;\n&quot;
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+		result += &quot;\treg wr_int_ram;\n&quot;
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+	}
+</a> 	return result
+ }
+ 
+ func (Op R2m) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+ 	result := &quot;&quot;
+ 	//result += &quot;\t\t\twr_int_ram &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h2-1-17" id="h2-1-17" class="d">-	//result += &quot;\t\t\taddr_ram_r2m &lt;= #1 &#39;b0;\n&quot;
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+	//result += &quot;\t\t\taddr_ram_to_mem &lt;= #1 &#39;b0;\n&quot;
+</a> 	//result += &quot;\t\t\tram_din_i &lt;= #1 &#39;b0;\n&quot;
+ 	return result
+ }
+<a href="#h2-2" id="h2-2" class="h">@@ -56,20 +57,6 @@ func (op R2m) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					R2M: begin\n&quot;
+<a href="#h2-2-3" id="h2-2-3" class="d">-	/*if arch.R == 1 {
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h2-2-5" id="h2-2-5" class="d">-	} else {
+</a><a href="#h2-2-6" id="h2-2-6" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h2-2-7" id="h2-2-7" class="d">-	}
+</a><a href="#h2-2-8" id="h2-2-8" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h2-2-9" id="h2-2-9" class="d">-		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h2-2-10" id="h2-2-10" class="d">-		result += &quot;							wr_int_ram &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h2-2-11" id="h2-2-11" class="d">-		result += &quot;							addr_ram_r2m &lt;= #1 rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.Rsize)) + &quot;];\n&quot;
+</a><a href="#h2-2-12" id="h2-2-12" class="d">-		result += &quot;							ram_din_i &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h2-2-13" id="h2-2-13" class="d">-		result += &quot;							$display(\&quot;R2M &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h2-2-14" id="h2-2-14" class="d">-		result += &quot;						end\n&quot;
+</a><a href="#h2-2-15" id="h2-2-15" class="d">-	}
+</a><a href="#h2-2-16" id="h2-2-16" class="d">-	result += &quot;						endcase\n&quot;*/
+</a> 	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+ 	result += &quot;					end\n&quot;
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -82,38 +69,60 @@ func (op R2m) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h2-3-3" id="h2-3-3" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-	setflag := true
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-	for _, currop := range arch.Op {
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-		if currop.Op_get_name() == &quot;m2r&quot; {
+</a><a href="#h2-3-8" id="h2-3-8" class="d">-			setflag = false
+</a><a href="#h2-3-9" id="h2-3-9" class="d">-			break
+</a><a href="#h2-3-10" id="h2-3-10" class="d">-		} else if currop.Op_get_name() == &quot;r2m&quot; {
+</a><a href="#h2-3-11" id="h2-3-11" class="d">-			break
+</a><a href="#h2-3-12" id="h2-3-12" class="d">-		}
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+	// The ram is enabled if any of the opcodes is active
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+<a href="#h2-3-17" id="h2-3-17" class="d">-	if setflag {
+</a><a href="#h2-3-18" id="h2-3-18" class="i">+
+</a><a href="#h2-3-19" id="h2-3-19" class="i">+	// The ram write signals
+</a><a href="#h2-3-20" id="h2-3-20" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a> 		result += &quot;\tassign ram_din = ram_din_i;\n&quot;
+<a href="#h2-3-22" id="h2-3-22" class="d">-		result += &quot;\tassign ram_addr = (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : addr_ram_r2m;\n&quot;
+</a> 		result += &quot;\tassign ram_wren = wr_int_ram;\n&quot;
+<a href="#h2-3-24" id="h2-3-24" class="d">-		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+ 
+<a href="#h2-3-27" id="h2-3-27" class="d">-	result += &quot;\talways @(rom_value&quot;
+</a><a href="#h2-3-28" id="h2-3-28" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h2-3-29" id="h2-3-29" class="d">-		result += &quot;,_&quot; + strings.ToLower(Get_register_name(i))
+</a><a href="#h2-3-30" id="h2-3-30" class="i">+	ramAddr := &quot;&quot;
+</a><a href="#h2-3-31" id="h2-3-31" class="i">+	if arch.HasAny([]string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a><a href="#h2-3-32" id="h2-3-32" class="i">+		ramAddr += &quot;addr_ram_to_mem&quot;
+</a><a href="#h2-3-33" id="h2-3-33" class="i">+	}
+</a><a href="#h2-3-34" id="h2-3-34" class="i">+
+</a><a href="#h2-3-35" id="h2-3-35" class="i">+	if arch.HasOp(&quot;m2r&quot;) {
+</a><a href="#h2-3-36" id="h2-3-36" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : &quot; + ramAddr
+</a> 	}
+<a href="#h2-3-38" id="h2-3-38" class="d">-	result += &quot;)\n&quot;
+</a> 
+<a href="#h2-3-40" id="h2-3-40" class="d">-	result += &quot;\tbegin\n&quot;
+</a><a href="#h2-3-41" id="h2-3-41" class="i">+	if arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h2-3-42" id="h2-3-42" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+</a><a href="#h2-3-43" id="h2-3-43" class="i">+	}
+</a> 
+<a href="#h2-3-45" id="h2-3-45" class="d">-	if opbits == 1 {
+</a><a href="#h2-3-46" id="h2-3-46" class="d">-		result += &quot;		if(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;] == R2M) begin\n&quot;
+</a><a href="#h2-3-47" id="h2-3-47" class="d">-	} else {
+</a><a href="#h2-3-48" id="h2-3-48" class="d">-		result += &quot;		if(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;] == R2M) begin\n&quot;
+</a><a href="#h2-3-49" id="h2-3-49" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h2-3-50" id="h2-3-50" class="i">+		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+</a> 	}
+ 
+<a href="#h2-3-53" id="h2-3-53" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h2-3-54" id="h2-3-54" class="i">+
+</a><a href="#h2-3-55" id="h2-3-55" class="i">+	// This is always the first module if present
+</a><a href="#h2-3-56" id="h2-3-56" class="i">+	firstModule := true
+</a><a href="#h2-3-57" id="h2-3-57" class="i">+	lastModule := true
+</a><a href="#h2-3-58" id="h2-3-58" class="i">+
+</a><a href="#h2-3-59" id="h2-3-59" class="i">+	// If r2mri is also present, that will be the last opcode
+</a><a href="#h2-3-60" id="h2-3-60" class="i">+	for _, currOp := range arch.Op {
+</a><a href="#h2-3-61" id="h2-3-61" class="i">+		if currOp.Op_get_name() == &quot;r2mri&quot; {
+</a><a href="#h2-3-62" id="h2-3-62" class="i">+			lastModule = false
+</a><a href="#h2-3-63" id="h2-3-63" class="i">+			break
+</a><a href="#h2-3-64" id="h2-3-64" class="i">+		}
+</a><a href="#h2-3-65" id="h2-3-65" class="i">+	}
+</a><a href="#h2-3-66" id="h2-3-66" class="i">+
+</a><a href="#h2-3-67" id="h2-3-67" class="i">+	if firstModule {
+</a><a href="#h2-3-68" id="h2-3-68" class="i">+		result += &quot;\talways @(posedge clock_signal)\n&quot;
+</a><a href="#h2-3-69" id="h2-3-69" class="i">+		result += &quot;\tbegin\n&quot;
+</a><a href="#h2-3-70" id="h2-3-70" class="i">+		if opbits == 1 {
+</a><a href="#h2-3-71" id="h2-3-71" class="i">+			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+</a><a href="#h2-3-72" id="h2-3-72" class="i">+		} else {
+</a><a href="#h2-3-73" id="h2-3-73" class="i">+			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+</a><a href="#h2-3-74" id="h2-3-74" class="i">+		}
+</a><a href="#h2-3-75" id="h2-3-75" class="i">+	}
+</a><a href="#h2-3-76" id="h2-3-76" class="i">+
+</a><a href="#h2-3-77" id="h2-3-77" class="i">+	result += &quot;		R2M: begin\n&quot;
+</a><a href="#h2-3-78" id="h2-3-78" class="i">+
+</a> 	if arch.R == 1 {
+ 		result += &quot;			case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+ 	} else {
+<a href="#h2-4" id="h2-4" class="h">@@ -122,16 +131,19 @@ func (op R2m) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;				&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;					wr_int_ram &lt;= 1&#39;b1;\n&quot;
+<a href="#h2-4-3" id="h2-4-3" class="d">-		result += &quot;					addr_ram_r2m &lt;= rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.L)) + &quot;];\n&quot;
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+		result += &quot;					addr_ram_to_mem &lt;= rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.L)) + &quot;];\n&quot;
+</a> 		result += &quot;					ram_din_i &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+ 		result += &quot;					$display(\&quot;R2M &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;				end\n&quot;
+ 	}
+ 	result += &quot;			endcase\n&quot;
+ 	result += &quot;\t	end\n&quot;
+<a href="#h2-4-11" id="h2-4-11" class="d">-	result += &quot;\t	else\n&quot;
+</a><a href="#h2-4-12" id="h2-4-12" class="d">-	result += &quot;			wr_int_ram &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h2-4-13" id="h2-4-13" class="d">-	result += &quot;\tend\n&quot;
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+	if lastModule {
+</a><a href="#h2-4-15" id="h2-4-15" class="i">+		result += &quot;\t	default:\n&quot;
+</a><a href="#h2-4-16" id="h2-4-16" class="i">+		result += &quot;			wr_int_ram &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h2-4-17" id="h2-4-17" class="i">+		result += &quot;\t	endcase\n&quot;
+</a><a href="#h2-4-18" id="h2-4-18" class="i">+		result += &quot;\tend\n&quot;
+</a><a href="#h2-4-19" id="h2-4-19" class="i">+	}
+</a> 
+ 	return result
+ }
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -18,7 +18,7 @@ func (op R2mri) Op_get_name() string {
+</a> }
+ 
+ func (op R2mri) Op_get_desc() string {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	return &quot;Copy a register value to the ram&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	return &quot;Register indirect copy to RAM&quot;
+</a> }
+ 
+ func (op R2mri) Op_show_assembler(arch *Arch) string {
+<a href="#h3-1" id="h3-1" class="h">@@ -34,16 +34,18 @@ func (op R2mri) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op R2mri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+<a href="#h3-1-3" id="h3-1-3" class="d">-	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_r2mri;\n&quot;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] ram_din_i;\n&quot;
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-	result += &quot;\treg wr_int_ram;\n&quot;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2m&quot;, &quot;r2mri&quot;}) {
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] addr_ram_to_mem;\n&quot;
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] ram_din_i;\n&quot;
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+		result += &quot;\treg wr_int_ram;\n&quot;
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+	}
+</a> 	return result
+ }
+ 
+ func (Op R2mri) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+ 	result := &quot;&quot;
+ 	//result += &quot;\t\t\twr_int_ram &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h3-1-17" id="h3-1-17" class="d">-	//result += &quot;\t\t\taddr_ram_r2mri &lt;= #1 &#39;b0;\n&quot;
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+	//result += &quot;\t\t\taddr_ram_to_mem &lt;= #1 &#39;b0;\n&quot;
+</a> 	//result += &quot;\t\t\tram_din_i &lt;= #1 &#39;b0;\n&quot;
+ 	return result
+ }
+<a href="#h3-2" id="h3-2" class="h">@@ -56,20 +58,6 @@ func (op R2mri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					R2MRI: begin\n&quot;
+<a href="#h3-2-3" id="h3-2-3" class="d">-	/*if arch.R == 1 {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-	} else {
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-		result += &quot;					case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-	}
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-		result += &quot;							wr_int_ram &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h3-2-11" id="h3-2-11" class="d">-		result += &quot;							addr_ram_r2mri &lt;= #1 rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.Rsize)) + &quot;];\n&quot;
+</a><a href="#h3-2-12" id="h3-2-12" class="d">-		result += &quot;							ram_din_i &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h3-2-13" id="h3-2-13" class="d">-		result += &quot;							$display(\&quot;R2MRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h3-2-14" id="h3-2-14" class="d">-		result += &quot;						end\n&quot;
+</a><a href="#h3-2-15" id="h3-2-15" class="d">-	}
+</a><a href="#h3-2-16" id="h3-2-16" class="d">-	result += &quot;						endcase\n&quot;*/
+</a> 	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+ 	result += &quot;					end\n&quot;
+ 
+<a href="#h3-3" id="h3-3" class="h">@@ -82,39 +70,60 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h3-3-3" id="h3-3-3" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-	setflag := true
+</a><a href="#h3-3-6" id="h3-3-6" class="d">-	for _, currop := range arch.Op {
+</a><a href="#h3-3-7" id="h3-3-7" class="d">-		if currop.Op_get_name() == &quot;m2r&quot; {
+</a><a href="#h3-3-8" id="h3-3-8" class="d">-			setflag = false
+</a><a href="#h3-3-9" id="h3-3-9" class="d">-			break
+</a><a href="#h3-3-10" id="h3-3-10" class="d">-		} else if currop.Op_get_name() == &quot;r2mri&quot; {
+</a><a href="#h3-3-11" id="h3-3-11" class="d">-			break
+</a><a href="#h3-3-12" id="h3-3-12" class="d">-		}
+</a><a href="#h3-3-13" id="h3-3-13" class="i">+	// The ram is enabled if any of the opcodes is active
+</a><a href="#h3-3-14" id="h3-3-14" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h3-3-15" id="h3-3-15" class="i">+		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+<a href="#h3-3-17" id="h3-3-17" class="d">-	if setflag {
+</a><a href="#h3-3-18" id="h3-3-18" class="i">+
+</a><a href="#h3-3-19" id="h3-3-19" class="i">+	// The ram write signals
+</a><a href="#h3-3-20" id="h3-3-20" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a> 		result += &quot;\tassign ram_din = ram_din_i;\n&quot;
+<a href="#h3-3-22" id="h3-3-22" class="d">-		// TODO Finish this
+</a><a href="#h3-3-23" id="h3-3-23" class="d">-		result += &quot;\tassign ram_addr = (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==R2MRI) ? addr_ram_m2r : addr_ram_r2mri;\n&quot;
+</a> 		result += &quot;\tassign ram_wren = wr_int_ram;\n&quot;
+<a href="#h3-3-25" id="h3-3-25" class="d">-		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+</a> 	}
+ 
+<a href="#h3-3-28" id="h3-3-28" class="d">-	result += &quot;\talways @(rom_value&quot;
+</a><a href="#h3-3-29" id="h3-3-29" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-3-30" id="h3-3-30" class="d">-		result += &quot;,_&quot; + strings.ToLower(Get_register_name(i))
+</a><a href="#h3-3-31" id="h3-3-31" class="i">+	ramAddr := &quot;&quot;
+</a><a href="#h3-3-32" id="h3-3-32" class="i">+	if arch.HasAny([]string{&quot;r2mri&quot;, &quot;r2m&quot;}) {
+</a><a href="#h3-3-33" id="h3-3-33" class="i">+		ramAddr += &quot;addr_ram_to_mem&quot;
+</a> 	}
+<a href="#h3-3-35" id="h3-3-35" class="d">-	result += &quot;)\n&quot;
+</a> 
+<a href="#h3-3-37" id="h3-3-37" class="d">-	result += &quot;\tbegin\n&quot;
+</a><a href="#h3-3-38" id="h3-3-38" class="i">+	if arch.HasOp(&quot;m2r&quot;) {
+</a><a href="#h3-3-39" id="h3-3-39" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : &quot; + ramAddr
+</a><a href="#h3-3-40" id="h3-3-40" class="i">+	}
+</a> 
+<a href="#h3-3-42" id="h3-3-42" class="d">-	if opbits == 1 {
+</a><a href="#h3-3-43" id="h3-3-43" class="d">-		result += &quot;		if(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;] == R2MRI) begin\n&quot;
+</a><a href="#h3-3-44" id="h3-3-44" class="d">-	} else {
+</a><a href="#h3-3-45" id="h3-3-45" class="d">-		result += &quot;		if(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;] == R2MRI) begin\n&quot;
+</a><a href="#h3-3-46" id="h3-3-46" class="i">+	if arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h3-3-47" id="h3-3-47" class="i">+		ramAddr = &quot; (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+</a><a href="#h3-3-48" id="h3-3-48" class="i">+	}
+</a><a href="#h3-3-49" id="h3-3-49" class="i">+
+</a><a href="#h3-3-50" id="h3-3-50" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+</a><a href="#h3-3-51" id="h3-3-51" class="i">+		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+</a> 	}
+ 
+<a href="#h3-3-54" id="h3-3-54" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h3-3-55" id="h3-3-55" class="i">+
+</a><a href="#h3-3-56" id="h3-3-56" class="i">+	// This is always the last module if present
+</a><a href="#h3-3-57" id="h3-3-57" class="i">+	firstModule := true
+</a><a href="#h3-3-58" id="h3-3-58" class="i">+	lastModule := true
+</a><a href="#h3-3-59" id="h3-3-59" class="i">+
+</a><a href="#h3-3-60" id="h3-3-60" class="i">+	// If r2m is also present, that will be the first opcode
+</a><a href="#h3-3-61" id="h3-3-61" class="i">+	for _, currOp := range arch.Op {
+</a><a href="#h3-3-62" id="h3-3-62" class="i">+		if currOp.Op_get_name() == &quot;r2m&quot; {
+</a><a href="#h3-3-63" id="h3-3-63" class="i">+			firstModule = false
+</a><a href="#h3-3-64" id="h3-3-64" class="i">+			break
+</a><a href="#h3-3-65" id="h3-3-65" class="i">+		}
+</a><a href="#h3-3-66" id="h3-3-66" class="i">+	}
+</a><a href="#h3-3-67" id="h3-3-67" class="i">+
+</a><a href="#h3-3-68" id="h3-3-68" class="i">+	if firstModule {
+</a><a href="#h3-3-69" id="h3-3-69" class="i">+		result += &quot;\talways @(posedge clock_signal)\n&quot;
+</a><a href="#h3-3-70" id="h3-3-70" class="i">+		result += &quot;\tbegin\n&quot;
+</a><a href="#h3-3-71" id="h3-3-71" class="i">+		if opbits == 1 {
+</a><a href="#h3-3-72" id="h3-3-72" class="i">+			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+</a><a href="#h3-3-73" id="h3-3-73" class="i">+		} else {
+</a><a href="#h3-3-74" id="h3-3-74" class="i">+			result += &quot;\t\tcase (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+</a><a href="#h3-3-75" id="h3-3-75" class="i">+		}
+</a><a href="#h3-3-76" id="h3-3-76" class="i">+	}
+</a><a href="#h3-3-77" id="h3-3-77" class="i">+
+</a><a href="#h3-3-78" id="h3-3-78" class="i">+	result += &quot;		R2MRI: begin\n&quot;
+</a><a href="#h3-3-79" id="h3-3-79" class="i">+
+</a> 	if arch.R == 1 {
+ 		result += &quot;			case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+ 	} else {
+<a href="#h3-4" id="h3-4" class="h">@@ -122,17 +131,34 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;				&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+<a href="#h3-4-3" id="h3-4-3" class="d">-		result += &quot;					wr_int_ram &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-		result += &quot;					addr_ram_r2mri &lt;= rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.L)) + &quot;];\n&quot;
+</a><a href="#h3-4-5" id="h3-4-5" class="d">-		result += &quot;					ram_din_i &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h3-4-6" id="h3-4-6" class="d">-		result += &quot;					$display(\&quot;R2MRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h3-4-7" id="h3-4-7" class="i">+
+</a><a href="#h3-4-8" id="h3-4-8" class="i">+		if arch.R == 1 {
+</a><a href="#h3-4-9" id="h3-4-9" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h3-4-10" id="h3-4-10" class="i">+		} else {
+</a><a href="#h3-4-11" id="h3-4-11" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h3-4-12" id="h3-4-12" class="i">+		}
+</a><a href="#h3-4-13" id="h3-4-13" class="i">+
+</a><a href="#h3-4-14" id="h3-4-14" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h3-4-15" id="h3-4-15" class="i">+			result += &quot;						&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h3-4-16" id="h3-4-16" class="i">+			result += &quot;							wr_int_ram &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h3-4-17" id="h3-4-17" class="i">+			result += &quot;							addr_ram_to_mem &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h3-4-18" id="h3-4-18" class="i">+			result += &quot;							ram_din_i &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h3-4-19" id="h3-4-19" class="i">+			result += &quot;							$display(\&quot;R2MRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+</a><a href="#h3-4-20" id="h3-4-20" class="i">+			result += &quot;						end\n&quot;
+</a><a href="#h3-4-21" id="h3-4-21" class="i">+
+</a><a href="#h3-4-22" id="h3-4-22" class="i">+		}
+</a><a href="#h3-4-23" id="h3-4-23" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h3-4-24" id="h3-4-24" class="i">+
+</a> 		result += &quot;				end\n&quot;
+ 	}
+ 	result += &quot;			endcase\n&quot;
+ 	result += &quot;\t	end\n&quot;
+<a href="#h3-4-29" id="h3-4-29" class="d">-	result += &quot;\t	else\n&quot;
+</a><a href="#h3-4-30" id="h3-4-30" class="d">-	result += &quot;			wr_int_ram &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h3-4-31" id="h3-4-31" class="d">-	result += &quot;\tend\n&quot;
+</a><a href="#h3-4-32" id="h3-4-32" class="i">+	if lastModule {
+</a><a href="#h3-4-33" id="h3-4-33" class="i">+		result += &quot;\t	default:\n&quot;
+</a><a href="#h3-4-34" id="h3-4-34" class="i">+		result += &quot;			wr_int_ram &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h3-4-35" id="h3-4-35" class="i">+		result += &quot;\t	endcase\n&quot;
+</a><a href="#h3-4-36" id="h3-4-36" class="i">+		result += &quot;\tend\n&quot;
+</a><a href="#h3-4-37" id="h3-4-37" class="i">+	}
+</a> 
+ 	return result
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a> b/<a href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -88,17 +88,7 @@ func (op R2vri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 			break
+ 		}
+ 	}
+<a href="#h4-0-3" id="h4-0-3" class="d">-	//	result += &quot;\tassign vram_din = vram_din_i;\n&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	//	result += &quot;\tassign vram_addr = addr_vram_r2v;\n&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-	//	result += &quot;\tassign vram_wren = wr_int_vram;\n&quot;
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-	//	result += &quot;\tassign vram_en = 1&#39;b1;\n&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-	// Check for differences
+</a><a href="#h4-0-9" id="h4-0-9" class="d">-	//	result += &quot;\talways @(rom_value&quot;
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-	//	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-	//		result += &quot;,_&quot; + strings.ToLower(Get_register_name(i))
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-	//}
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-	//result += &quot;)\n&quot;
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+
+</a> 	if firstModule {
+ 		result += &quot;\talways @(posedge clock_signal)\n&quot;
+ 		result += &quot;\tbegin\n&quot;
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a> b/<a href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -249,6 +249,26 @@ func (arch *Arch) OnlyOne(curOp string, ops []string) bool {
+</a> 	return false
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="i">+func (arch *Arch) HasOp(curOp string) bool {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	for _, op := range arch.Conproc.Op {
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+		if op.Op_get_name() == curOp {
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+			return true
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+		}
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+	}
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+	return false
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+}
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+func (arch *Arch) HasAny(ops []string) bool {
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	for _, op := range ops {
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+		for _, op2 := range arch.Conproc.Op {
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+			if op2.Op_get_name() == op {
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+				return true
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+			}
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+		}
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+	}
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+	return false
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+}
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+
+</a> func Int8bits(f int8) uint8 {
+ 	return *(*uint8)(unsafe.Pointer(&amp;f))
+ }
+</pre>
+</div>
+</body>
+</html>

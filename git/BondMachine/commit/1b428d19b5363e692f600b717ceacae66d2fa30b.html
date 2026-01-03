@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Slices comparison - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1b428d19b5363e692f600b717ceacae66d2fa30b.html">1b428d19b5363e692f600b717ceacae66d2fa30b</a>
+<b>parent</b> <a href="../commit/23cfdfd55f2565fb7d96ca233bde75f658c00b8e.html">23cfdfd55f2565fb7d96ca233bde75f658c00b8e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 13 Aug 2023 15:56:55 +0200
+
+Slices comparison
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/utils.go</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 29 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a> b/<a href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -186,3 +186,32 @@ func nextRes(res string) string {
+</a> 	num, _ := strconv.Atoi(res[1:])
+ 	return string(ty) + strconv.Itoa(num+1)
+ }
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+func compareStrings(str1, str2 string) bool {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	// Extract the numbers from the strings
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	num1, err1 := extractNumber(str1)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	num2, err2 := extractNumber(str2)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	// If both strings contain numbers, compare them as numbers
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	if err1 == nil &amp;&amp; err2 == nil {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		return num1 &lt; num2
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	// Otherwise, compare them as strings
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	return str1 &lt; str2
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+func extractNumber(str string) (int, error) {
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	// Find the index of the first digit
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	tokens := strings.FieldsFunc(str, func(r rune) bool {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		return !(&#39;0&#39; &lt;= r &amp;&amp; r &lt;= &#39;9&#39;)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	})
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	// If no numeric tokens were found, return an error
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	if len(tokens) == 0 {
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		return 0, fmt.Errorf(&quot;No numeric tokens found in %s&quot;, str)
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	}
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	// Otherwise, return the last token as an integer
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	return strconv.Atoi(tokens[len(tokens)-1])
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

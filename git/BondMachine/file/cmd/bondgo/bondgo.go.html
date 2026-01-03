@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bondgo.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> bondgo.go (18615B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package main
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;bufio&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;encoding/json&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;flag&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;fmt&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;go/ast&quot;
+<a href="#l9" class="line" id="l9">      9</a> 	&quot;go/parser&quot;
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;go/token&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;log&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;os&quot;
+<a href="#l13" class="line" id="l13">     13</a> 	&quot;strconv&quot;
+<a href="#l14" class="line" id="l14">     14</a> 
+<a href="#l15" class="line" id="l15">     15</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondgo&quot;
+<a href="#l16" class="line" id="l16">     16</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/etherbond&quot;
+<a href="#l17" class="line" id="l17">     17</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/udpbond&quot;
+<a href="#l18" class="line" id="l18">     18</a> )
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#l21" class="line" id="l21">     21</a> var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+<a href="#l22" class="line" id="l22">     22</a> 
+<a href="#l23" class="line" id="l23">     23</a> var registerSize = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-bit)&quot;)
+<a href="#l24" class="line" id="l24">     24</a> 
+<a href="#l25" class="line" id="l25">     25</a> var mpm = flag.Bool(&quot;mpm&quot;, false, &quot;Use the multi processor mode&quot;)
+<a href="#l26" class="line" id="l26">     26</a> var cascading_io = flag.Bool(&quot;cascading-io&quot;, false, &quot;Connect the processors in cascading io&quot;)
+<a href="#l27" class="line" id="l27">     27</a> 
+<a href="#l28" class="line" id="l28">     28</a> var o = flag.Int(&quot;O&quot;, 0, &quot;Optimization level&quot;)
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> var showRequirements = flag.Bool(&quot;show-requirements&quot;, false, &quot;Show bondmachine requirements&quot;)
+<a href="#l31" class="line" id="l31">     31</a> 
+<a href="#l32" class="line" id="l32">     32</a> var input_file = flag.String(&quot;input-file&quot;, &quot;&quot;, &quot;Go input file&quot;)
+<a href="#l33" class="line" id="l33">     33</a> 
+<a href="#l34" class="line" id="l34">     34</a> var multiAbstractAssemblyInput = flag.Bool(&quot;multi-abstract-assembly-input&quot;, false, &quot;Input from a multi abstract assembly JSON file&quot;)
+<a href="#l35" class="line" id="l35">     35</a> var abstractAssemblyInput = flag.Bool(&quot;abstract-assembly-input&quot;, false, &quot;Input from abstract assembly&quot;)
+<a href="#l36" class="line" id="l36">     36</a> var assemblyInput = flag.Bool(&quot;assembly-input&quot;, false, &quot;Input from assembly&quot;)
+<a href="#l37" class="line" id="l37">     37</a> var goInput = flag.Bool(&quot;go-input&quot;, true, &quot;Input from Go file&quot;)
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> // Compiler modes:
+<a href="#l40" class="line" id="l40">     40</a> //
+<a href="#l41" class="line" id="l41">     41</a> //	standard: produce assembly files
+<a href="#l42" class="line" id="l42">     42</a> //	checking: produce assembly files and check if the given machine/bondmachine is suitable for the code execution
+<a href="#l43" class="line" id="l43">     43</a> //	enforcing: the produced assembly has to run on the given machine/bondmachine
+<a href="#l44" class="line" id="l44">     44</a> //	optimizing: the optimized machine/bondmachine is created.
+<a href="#l45" class="line" id="l45">     45</a> var compiler_mode = flag.String(&quot;compiler-mode&quot;, &quot;standard&quot;, &quot;Compiler mode: standard, checking, enforcing, optimizing&quot;)
+<a href="#l46" class="line" id="l46">     46</a> 
+<a href="#l47" class="line" id="l47">     47</a> // Loaded things
+<a href="#l48" class="line" id="l48">     48</a> // For checking,enforcing
+<a href="#l49" class="line" id="l49">     49</a> var loadBondmachine = flag.String(&quot;load-bondmachine&quot;, &quot;&quot;, &quot;Filename of the bondmachine to load&quot;)
+<a href="#l50" class="line" id="l50">     50</a> var loadMachine = flag.String(&quot;load-machine&quot;, &quot;&quot;, &quot;Filename of the machine&quot;)
+<a href="#l51" class="line" id="l51">     51</a> 
+<a href="#l52" class="line" id="l52">     52</a> // Saved things
+<a href="#l53" class="line" id="l53">     53</a> // For optimizing mandatory, optional for the others
+<a href="#l54" class="line" id="l54">     54</a> var saveMachine = flag.String(&quot;save-machine&quot;, &quot;&quot;, &quot;Create a machine JSON file&quot;)
+<a href="#l55" class="line" id="l55">     55</a> var saveBondmachine = flag.String(&quot;save-bondmachine&quot;, &quot;&quot;, &quot;Create a bondmachine JSON file&quot;)
+<a href="#l56" class="line" id="l56">     56</a> 
+<a href="#l57" class="line" id="l57">     57</a> // For standard, checking, enforcing
+<a href="#l58" class="line" id="l58">     58</a> var saveAssembly = flag.String(&quot;save-assembly&quot;, &quot;&quot;, &quot;Machine or bondmachine (numbered per domain) assembly output file&quot;)
+<a href="#l59" class="line" id="l59">     59</a> 
+<a href="#l60" class="line" id="l60">     60</a> var useEtherbond = flag.Bool(&quot;use-etherbond&quot;, false, &quot;Build including etherbond support&quot;)
+<a href="#l61" class="line" id="l61">     61</a> var etherbond_external = flag.String(&quot;etherbond-external&quot;, &quot;&quot;, &quot;Etherbond external peers description file&quot;)
+<a href="#l62" class="line" id="l62">     62</a> var save_etherbond_cluster = flag.String(&quot;save-etherbond-cluster&quot;, &quot;ebcluster&quot;, &quot;Create several BM files and the cluster file with the given prefix&quot;)
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> var use_udpbond = flag.Bool(&quot;use-udpbond&quot;, false, &quot;Build including udpbond support&quot;)
+<a href="#l65" class="line" id="l65">     65</a> var udpbond_external = flag.String(&quot;udpbond-external&quot;, &quot;&quot;, &quot;Udobond external peers description file&quot;)
+<a href="#l66" class="line" id="l66">     66</a> var save_udpbond_cluster = flag.String(&quot;save-udpbond-cluster&quot;, &quot;ebcluster&quot;, &quot;Create several BM files and the cluster file with the given prefix&quot;)
+<a href="#l67" class="line" id="l67">     67</a> 
+<a href="#l68" class="line" id="l68">     68</a> var save_redeployer_file = flag.String(&quot;save-redeployer-file&quot;, &quot;&quot;, &quot;Create a redeployer file out of the cluster&quot;)
+<a href="#l69" class="line" id="l69">     69</a> 
+<a href="#l70" class="line" id="l70">     70</a> func check(e error) {
+<a href="#l71" class="line" id="l71">     71</a> 	if e != nil {
+<a href="#l72" class="line" id="l72">     72</a> 		panic(e)
+<a href="#l73" class="line" id="l73">     73</a> 	}
+<a href="#l74" class="line" id="l74">     74</a> }
+<a href="#l75" class="line" id="l75">     75</a> 
+<a href="#l76" class="line" id="l76">     76</a> func init() {
+<a href="#l77" class="line" id="l77">     77</a> 	flag.Parse()
+<a href="#l78" class="line" id="l78">     78</a> 	if *saveAssembly == &quot;&quot; {
+<a href="#l79" class="line" id="l79">     79</a> 		if *mpm {
+<a href="#l80" class="line" id="l80">     80</a> 			if *saveBondmachine == &quot;&quot; {
+<a href="#l81" class="line" id="l81">     81</a> 				*saveAssembly = &quot;a.out.asm&quot;
+<a href="#l82" class="line" id="l82">     82</a> 			}
+<a href="#l83" class="line" id="l83">     83</a> 		} else {
+<a href="#l84" class="line" id="l84">     84</a> 			if *saveMachine == &quot;&quot; {
+<a href="#l85" class="line" id="l85">     85</a> 				*saveAssembly = &quot;a.out.asm&quot;
+<a href="#l86" class="line" id="l86">     86</a> 			}
+<a href="#l87" class="line" id="l87">     87</a> 		}
+<a href="#l88" class="line" id="l88">     88</a> 	}
+<a href="#l89" class="line" id="l89">     89</a> 
+<a href="#l90" class="line" id="l90">     90</a> 	if *abstractAssemblyInput || *multiAbstractAssemblyInput {
+<a href="#l91" class="line" id="l91">     91</a> 		*goInput = false
+<a href="#l92" class="line" id="l92">     92</a> 	}
+<a href="#l93" class="line" id="l93">     93</a> }
+<a href="#l94" class="line" id="l94">     94</a> 
+<a href="#l95" class="line" id="l95">     95</a> func main() {
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> 	fset := token.NewFileSet()
+<a href="#l98" class="line" id="l98">     98</a> 
+<a href="#l99" class="line" id="l99">     99</a> 	// Setting the global compiler option that will be exported everywhere
+<a href="#l100" class="line" id="l100">    100</a> 	config := new(bondgo.BondgoConfig)
+<a href="#l101" class="line" id="l101">    101</a> 	config.Debug = *debug
+<a href="#l102" class="line" id="l102">    102</a> 	config.Verbose = *verbose
+<a href="#l103" class="line" id="l103">    103</a> 	if *mpm {
+<a href="#l104" class="line" id="l104">    104</a> 		config.Mpm = true
+<a href="#l105" class="line" id="l105">    105</a> 	} else {
+<a href="#l106" class="line" id="l106">    106</a> 		config.Mpm = false
+<a href="#l107" class="line" id="l107">    107</a> 	}
+<a href="#l108" class="line" id="l108">    108</a> 
+<a href="#l109" class="line" id="l109">    109</a> 	if *cascading_io {
+<a href="#l110" class="line" id="l110">    110</a> 		config.Cascading_io = true
+<a href="#l111" class="line" id="l111">    111</a> 	} else {
+<a href="#l112" class="line" id="l112">    112</a> 		config.Cascading_io = false
+<a href="#l113" class="line" id="l113">    113</a> 	}
+<a href="#l114" class="line" id="l114">    114</a> 
+<a href="#l115" class="line" id="l115">    115</a> 	switch *registerSize {
+<a href="#l116" class="line" id="l116">    116</a> 	case 8:
+<a href="#l117" class="line" id="l117">    117</a> 		config.Rsize = uint8(8)
+<a href="#l118" class="line" id="l118">    118</a> 		config.Basic_type = &quot;uint8&quot;
+<a href="#l119" class="line" id="l119">    119</a> 		config.Basic_chantype = &quot;chan uint8&quot;
+<a href="#l120" class="line" id="l120">    120</a> 	case 16:
+<a href="#l121" class="line" id="l121">    121</a> 		config.Rsize = uint8(16)
+<a href="#l122" class="line" id="l122">    122</a> 		config.Basic_type = &quot;uint16&quot;
+<a href="#l123" class="line" id="l123">    123</a> 		config.Basic_chantype = &quot;chan uint16&quot;
+<a href="#l124" class="line" id="l124">    124</a> 	case 32:
+<a href="#l125" class="line" id="l125">    125</a> 		config.Rsize = uint8(32)
+<a href="#l126" class="line" id="l126">    126</a> 		config.Basic_type = &quot;uint32&quot;
+<a href="#l127" class="line" id="l127">    127</a> 		config.Basic_chantype = &quot;chan uint32&quot;
+<a href="#l128" class="line" id="l128">    128</a> 	case 64:
+<a href="#l129" class="line" id="l129">    129</a> 		config.Rsize = uint8(64)
+<a href="#l130" class="line" id="l130">    130</a> 		config.Basic_type = &quot;uint64&quot;
+<a href="#l131" class="line" id="l131">    131</a> 		config.Basic_chantype = &quot;chan uint64&quot;
+<a href="#l132" class="line" id="l132">    132</a> 	default:
+<a href="#l133" class="line" id="l133">    133</a> 		fmt.Println(&quot;The specified register_size is not usable, defaulting to 8&quot;)
+<a href="#l134" class="line" id="l134">    134</a> 		config.Rsize = uint8(8)
+<a href="#l135" class="line" id="l135">    135</a> 		config.Basic_type = &quot;uint8&quot;
+<a href="#l136" class="line" id="l136">    136</a> 		config.Basic_chantype = &quot;chan uint8&quot;
+<a href="#l137" class="line" id="l137">    137</a> 	}
+<a href="#l138" class="line" id="l138">    138</a> 
+<a href="#l139" class="line" id="l139">    139</a> 	if *input_file != &quot;&quot; {
+<a href="#l140" class="line" id="l140">    140</a> 		if *goInput {
+<a href="#l141" class="line" id="l141">    141</a> 			f, err := parser.ParseFile(fset, *input_file, nil, 0)
+<a href="#l142" class="line" id="l142">    142</a> 			if err != nil {
+<a href="#l143" class="line" id="l143">    143</a> 				fmt.Println(err)
+<a href="#l144" class="line" id="l144">    144</a> 				return
+<a href="#l145" class="line" id="l145">    145</a> 			}
+<a href="#l146" class="line" id="l146">    146</a> 
+<a href="#l147" class="line" id="l147">    147</a> 			usagedone := make(chan bool)
+<a href="#l148" class="line" id="l148">    148</a> 			assignerdone := make(chan bool)
+<a href="#l149" class="line" id="l149">    149</a> 
+<a href="#l150" class="line" id="l150">    150</a> 			results := new(bondgo.BondgoResults) // Results go in here
+<a href="#l151" class="line" id="l151">    151</a> 			results.Init_Results(config)
+<a href="#l152" class="line" id="l152">    152</a> 
+<a href="#l153" class="line" id="l153">    153</a> 			messages := new(bondgo.BondgoMessages) // Compiler logs and errors
+<a href="#l154" class="line" id="l154">    154</a> 			messages.Init_Messages(config)
+<a href="#l155" class="line" id="l155">    155</a> 
+<a href="#l156" class="line" id="l156">    156</a> 			reqmnts := new(bondgo.BondgoRequirements) // The pointer to the requirements struct
+<a href="#l157" class="line" id="l157">    157</a> 			reqmnts.Init_Requirements(config)
+<a href="#l158" class="line" id="l158">    158</a> 
+<a href="#l159" class="line" id="l159">    159</a> 			usagenotify := make(chan bondgo.UsageNotify) // Used to notify the used resource
+<a href="#l160" class="line" id="l160">    160</a> 
+<a href="#l161" class="line" id="l161">    161</a> 			go reqmnts.Usage_Monitor(usagenotify, usagedone) // Spawn the usage monitor
+<a href="#l162" class="line" id="l162">    162</a> 
+<a href="#l163" class="line" id="l163">    163</a> 			run := new(bondgo.BondgoRuninfo) // Running data
+<a href="#l164" class="line" id="l164">    164</a> 			run.Init_Runinfo(config)
+<a href="#l165" class="line" id="l165">    165</a> 
+<a href="#l166" class="line" id="l166">    166</a> 			varreq := make(chan bondgo.VarReq) // Variable request
+<a href="#l167" class="line" id="l167">    167</a> 			varans := make(chan bondgo.VarAns) // Variable response
+<a href="#l168" class="line" id="l168">    168</a> 
+<a href="#l169" class="line" id="l169">    169</a> 			go run.Var_assigner(varreq, varans, usagenotify, assignerdone) // Spawn the variable allocator
+<a href="#l170" class="line" id="l170">    170</a> 
+<a href="#l171" class="line" id="l171">    171</a> 			functs := new(bondgo.BondgoFunctions) // Functions
+<a href="#l172" class="line" id="l172">    172</a> 			functs.Init_Functions(config, messages)
+<a href="#l173" class="line" id="l173">    173</a> 
+<a href="#l174" class="line" id="l174">    174</a> 			vars := make(map[string]bondgo.VarCell)
+<a href="#l175" class="line" id="l175">    175</a> 			returns := make([]bondgo.VarCell, 0)
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a> 			bgmain := &amp;bondgo.BondgoCheck{results, config, reqmnts, run, messages, functs, usagenotify, varreq, varans, nil, nil, vars, returns, &quot;&quot;, &quot;&quot;, &quot;device_0&quot;, 0}
+<a href="#l178" class="line" id="l178">    178</a> 
+<a href="#l179" class="line" id="l179">    179</a> 			bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, 0, bondgo.C_DEVICE, bgmain.CurrentDevice, bondgo.I_NIL}
+<a href="#l180" class="line" id="l180">    180</a> 
+<a href="#l181" class="line" id="l181">    181</a> 			if config.Debug {
+<a href="#l182" class="line" id="l182">    182</a> 				ast.Print(fset, f)
+<a href="#l183" class="line" id="l183">    183</a> 			}
+<a href="#l184" class="line" id="l184">    184</a> 
+<a href="#l185" class="line" id="l185">    185</a> 			// Load all the functions
+<a href="#l186" class="line" id="l186">    186</a> 			ast.Walk(functs, f)
+<a href="#l187" class="line" id="l187">    187</a> 
+<a href="#l188" class="line" id="l188">    188</a> 			if !bgmain.Is_faulty() {
+<a href="#l189" class="line" id="l189">    189</a> 
+<a href="#l190" class="line" id="l190">    190</a> 				// Start the main function
+<a href="#l191" class="line" id="l191">    191</a> 				executable := false
+<a href="#l192" class="line" id="l192">    192</a> 				for ifuncname, ifunc := range functs.Functions {
+<a href="#l193" class="line" id="l193">    193</a> 					if ifuncname == &quot;main&quot; {
+<a href="#l194" class="line" id="l194">    194</a> 						start_ast := ifunc.Body
+<a href="#l195" class="line" id="l195">    195</a> 						ast.Walk(bgmain, start_ast)
+<a href="#l196" class="line" id="l196">    196</a> 						executable = true
+<a href="#l197" class="line" id="l197">    197</a> 						break
+<a href="#l198" class="line" id="l198">    198</a> 					}
+<a href="#l199" class="line" id="l199">    199</a> 				}
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> 				if !executable {
+<a href="#l202" class="line" id="l202">    202</a> 					bgmain.Set_faulty(&quot;main function not found.&quot;)
+<a href="#l203" class="line" id="l203">    203</a> 				}
+<a href="#l204" class="line" id="l204">    204</a> 
+<a href="#l205" class="line" id="l205">    205</a> 				for procid, _ := range bgmain.Program {
+<a href="#l206" class="line" id="l206">    206</a> 					// Add io connections
+<a href="#l207" class="line" id="l207">    207</a> 					if bgmain.Cascading_io {
+<a href="#l208" class="line" id="l208">    208</a> 						bgmain.WriteLine(procid, &quot;i2r r0 i0&quot;)
+<a href="#l209" class="line" id="l209">    209</a> 						bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_OPCODE, &quot;i2r&quot;, bondgo.I_NIL}
+<a href="#l210" class="line" id="l210">    210</a> 						bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_INPUT, bondgo.S_NIL, 1}
+<a href="#l211" class="line" id="l211">    211</a> 						bgmain.WriteLine(procid, &quot;r2o r0 o0&quot;)
+<a href="#l212" class="line" id="l212">    212</a> 						bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_OPCODE, &quot;r2o&quot;, bondgo.I_NIL}
+<a href="#l213" class="line" id="l213">    213</a> 						bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_OUTPUT, bondgo.S_NIL, 1}
+<a href="#l214" class="line" id="l214">    214</a> 					}
+<a href="#l215" class="line" id="l215">    215</a> 				}
+<a href="#l216" class="line" id="l216">    216</a> 
+<a href="#l217" class="line" id="l217">    217</a> 				for procid, rout := range bgmain.Program {
+<a href="#l218" class="line" id="l218">    218</a> 					// TODO Recheck
+<a href="#l219" class="line" id="l219">    219</a> 					linesn := len(rout.Lines)
+<a href="#l220" class="line" id="l220">    220</a> 					bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_ROMSIZE, bondgo.S_NIL, linesn}
+<a href="#l221" class="line" id="l221">    221</a> 				}
+<a href="#l222" class="line" id="l222">    222</a> 
+<a href="#l223" class="line" id="l223">    223</a> 				bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_EXIT, 0, 0, bondgo.S_NIL, bondgo.I_NIL}
+<a href="#l224" class="line" id="l224">    224</a> 				&lt;-usagedone
+<a href="#l225" class="line" id="l225">    225</a> 
+<a href="#l226" class="line" id="l226">    226</a> 				gent, _ := bondgo.Type_from_string(bgmain.Basic_type)
+<a href="#l227" class="line" id="l227">    227</a> 				bgmain.Reqs &lt;- bondgo.VarReq{bondgo.REQ_EXIT, 0, bondgo.VarCell{gent, 0, 0, 0, 0, 0, 0, 0}}
+<a href="#l228" class="line" id="l228">    228</a> 				&lt;-assignerdone
+<a href="#l229" class="line" id="l229">    229</a> 			}
+<a href="#l230" class="line" id="l230">    230</a> 
+<a href="#l231" class="line" id="l231">    231</a> 			fmt.Print(bgmain.Dump_log())
+<a href="#l232" class="line" id="l232">    232</a> 
+<a href="#l233" class="line" id="l233">    233</a> 			if !bgmain.Is_faulty() {
+<a href="#l234" class="line" id="l234">    234</a> 
+<a href="#l235" class="line" id="l235">    235</a> 				if *showRequirements {
+<a href="#l236" class="line" id="l236">    236</a> 					fmt.Print(bgmain.Dump_Requirements())
+<a href="#l237" class="line" id="l237">    237</a> 				}
+<a href="#l238" class="line" id="l238">    238</a> 
+<a href="#l239" class="line" id="l239">    239</a> 				switch *compiler_mode {
+<a href="#l240" class="line" id="l240">    240</a> 				case &quot;standard&quot;:
+<a href="#l241" class="line" id="l241">    241</a> 
+<a href="#l242" class="line" id="l242">    242</a> 					var machine_to_save string
+<a href="#l243" class="line" id="l243">    243</a> 					savedsomething := false
+<a href="#l244" class="line" id="l244">    244</a> 
+<a href="#l245" class="line" id="l245">    245</a> 					if *mpm {
+<a href="#l246" class="line" id="l246">    246</a> 						machine_to_save = *saveBondmachine
+<a href="#l247" class="line" id="l247">    247</a> 					} else {
+<a href="#l248" class="line" id="l248">    248</a> 						machine_to_save = *saveMachine
+<a href="#l249" class="line" id="l249">    249</a> 					}
+<a href="#l250" class="line" id="l250">    250</a> 
+<a href="#l251" class="line" id="l251">    251</a> 					if *saveAssembly != &quot;&quot; {
+<a href="#l252" class="line" id="l252">    252</a> 						savedsomething = true
+<a href="#l253" class="line" id="l253">    253</a> 						if *mpm || *useEtherbond || *use_udpbond {
+<a href="#l254" class="line" id="l254">    254</a> 							for i, _ := range bgmain.Program {
+<a href="#l255" class="line" id="l255">    255</a> 								if _, err := os.Stat(*saveAssembly + &quot;_&quot; + strconv.Itoa(i)); os.IsNotExist(err) {
+<a href="#l256" class="line" id="l256">    256</a> 									f, err := os.Create(*saveAssembly + &quot;_&quot; + strconv.Itoa(i))
+<a href="#l257" class="line" id="l257">    257</a> 									check(err)
+<a href="#l258" class="line" id="l258">    258</a> 									defer f.Close()
+<a href="#l259" class="line" id="l259">    259</a> 									f.WriteString(bgmain.Write_assembly(i))
+<a href="#l260" class="line" id="l260">    260</a> 								}
+<a href="#l261" class="line" id="l261">    261</a> 							}
+<a href="#l262" class="line" id="l262">    262</a> 						} else {
+<a href="#l263" class="line" id="l263">    263</a> 							if _, err := os.Stat(*saveAssembly); os.IsNotExist(err) {
+<a href="#l264" class="line" id="l264">    264</a> 								f, err := os.Create(*saveAssembly)
+<a href="#l265" class="line" id="l265">    265</a> 								check(err)
+<a href="#l266" class="line" id="l266">    266</a> 								defer f.Close()
+<a href="#l267" class="line" id="l267">    267</a> 								f.WriteString(bgmain.Write_assembly(0))
+<a href="#l268" class="line" id="l268">    268</a> 							}
+<a href="#l269" class="line" id="l269">    269</a> 						}
+<a href="#l270" class="line" id="l270">    270</a> 					}
+<a href="#l271" class="line" id="l271">    271</a> 
+<a href="#l272" class="line" id="l272">    272</a> 					if *useEtherbond {
+<a href="#l273" class="line" id="l273">    273</a> 						if *save_etherbond_cluster != &quot;&quot; {
+<a href="#l274" class="line" id="l274">    274</a> 
+<a href="#l275" class="line" id="l275">    275</a> 							var external_cluster *etherbond.Cluster
+<a href="#l276" class="line" id="l276">    276</a> 
+<a href="#l277" class="line" id="l277">    277</a> 							if *etherbond_external != &quot;&quot; {
+<a href="#l278" class="line" id="l278">    278</a> 
+<a href="#l279" class="line" id="l279">    279</a> 								ebconfig := new(etherbond.Config)
+<a href="#l280" class="line" id="l280">    280</a> 								ebconfig.Rsize = uint8(*registerSize)
+<a href="#l281" class="line" id="l281">    281</a> 
+<a href="#l282" class="line" id="l282">    282</a> 								if *debug {
+<a href="#l283" class="line" id="l283">    283</a> 									ebconfig.Debug = true
+<a href="#l284" class="line" id="l284">    284</a> 								}
+<a href="#l285" class="line" id="l285">    285</a> 
+<a href="#l286" class="line" id="l286">    286</a> 								if external_cluster_t, err := etherbond.UnmarshallCluster(ebconfig, *etherbond_external); err != nil {
+<a href="#l287" class="line" id="l287">    287</a> 									panic(err)
+<a href="#l288" class="line" id="l288">    288</a> 								} else {
+<a href="#l289" class="line" id="l289">    289</a> 									external_cluster = external_cluster_t
+<a href="#l290" class="line" id="l290">    290</a> 								}
+<a href="#l291" class="line" id="l291">    291</a> 							}
+<a href="#l292" class="line" id="l292">    292</a> 
+<a href="#l293" class="line" id="l293">    293</a> 							mycluster, peerids, mymachines, myethio, myres, err := bgmain.Create_Etherbond_Cluster(*registerSize, external_cluster)
+<a href="#l294" class="line" id="l294">    294</a> 							check(err)
+<a href="#l295" class="line" id="l295">    295</a> 							//fmt.Println(mycluster, peerids, mymachines, myethio, myres)
+<a href="#l296" class="line" id="l296">    296</a> 
+<a href="#l297" class="line" id="l297">    297</a> 							if _, err := os.Stat(*save_etherbond_cluster + &quot;.json&quot;); os.IsNotExist(err) {
+<a href="#l298" class="line" id="l298">    298</a> 								f, err := os.Create(*save_etherbond_cluster + &quot;.json&quot;)
+<a href="#l299" class="line" id="l299">    299</a> 								check(err)
+<a href="#l300" class="line" id="l300">    300</a> 								b, errj := json.Marshal(mycluster)
+<a href="#l301" class="line" id="l301">    301</a> 								check(errj)
+<a href="#l302" class="line" id="l302">    302</a> 								_, err = f.WriteString(string(b))
+<a href="#l303" class="line" id="l303">    303</a> 								check(err)
+<a href="#l304" class="line" id="l304">    304</a> 								f.Close()
+<a href="#l305" class="line" id="l305">    305</a> 							}
+<a href="#l306" class="line" id="l306">    306</a> 
+<a href="#l307" class="line" id="l307">    307</a> 							for i, peerid := range peerids {
+<a href="#l308" class="line" id="l308">    308</a> 								machine_to_save := *save_etherbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_bm.json&quot;
+<a href="#l309" class="line" id="l309">    309</a> 								if _, err := os.Stat(machine_to_save); os.IsNotExist(err) {
+<a href="#l310" class="line" id="l310">    310</a> 									f, err := os.Create(machine_to_save)
+<a href="#l311" class="line" id="l311">    311</a> 									check(err)
+<a href="#l312" class="line" id="l312">    312</a> 									b, errj := json.Marshal(mymachines[i].Jsoner())
+<a href="#l313" class="line" id="l313">    313</a> 									check(errj)
+<a href="#l314" class="line" id="l314">    314</a> 									_, err = f.WriteString(string(b))
+<a href="#l315" class="line" id="l315">    315</a> 									check(err)
+<a href="#l316" class="line" id="l316">    316</a> 									defer f.Close()
+<a href="#l317" class="line" id="l317">    317</a> 								}
+<a href="#l318" class="line" id="l318">    318</a> 								io_to_save := *save_etherbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_io.json&quot;
+<a href="#l319" class="line" id="l319">    319</a> 								if _, err := os.Stat(io_to_save); os.IsNotExist(err) {
+<a href="#l320" class="line" id="l320">    320</a> 									f, err := os.Create(io_to_save)
+<a href="#l321" class="line" id="l321">    321</a> 									check(err)
+<a href="#l322" class="line" id="l322">    322</a> 									b, errj := json.Marshal(myethio[i])
+<a href="#l323" class="line" id="l323">    323</a> 									check(errj)
+<a href="#l324" class="line" id="l324">    324</a> 									_, err = f.WriteString(string(b))
+<a href="#l325" class="line" id="l325">    325</a> 									check(err)
+<a href="#l326" class="line" id="l326">    326</a> 									defer f.Close()
+<a href="#l327" class="line" id="l327">    327</a> 								}
+<a href="#l328" class="line" id="l328">    328</a> 								residual_to_save := *save_etherbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_residual.json&quot;
+<a href="#l329" class="line" id="l329">    329</a> 								if _, err := os.Stat(residual_to_save); os.IsNotExist(err) {
+<a href="#l330" class="line" id="l330">    330</a> 									f, err := os.Create(residual_to_save)
+<a href="#l331" class="line" id="l331">    331</a> 									check(err)
+<a href="#l332" class="line" id="l332">    332</a> 									b, errj := json.Marshal(myres[i])
+<a href="#l333" class="line" id="l333">    333</a> 									check(errj)
+<a href="#l334" class="line" id="l334">    334</a> 									_, err = f.WriteString(string(b))
+<a href="#l335" class="line" id="l335">    335</a> 									check(err)
+<a href="#l336" class="line" id="l336">    336</a> 									defer f.Close()
+<a href="#l337" class="line" id="l337">    337</a> 								}
+<a href="#l338" class="line" id="l338">    338</a> 							}
+<a href="#l339" class="line" id="l339">    339</a> 
+<a href="#l340" class="line" id="l340">    340</a> 						} else {
+<a href="#l341" class="line" id="l341">    341</a> 							fmt.Println(&quot;Missing output file name&quot;)
+<a href="#l342" class="line" id="l342">    342</a> 						}
+<a href="#l343" class="line" id="l343">    343</a> 
+<a href="#l344" class="line" id="l344">    344</a> 					} else if *use_udpbond {
+<a href="#l345" class="line" id="l345">    345</a> 						if *save_udpbond_cluster != &quot;&quot; {
+<a href="#l346" class="line" id="l346">    346</a> 
+<a href="#l347" class="line" id="l347">    347</a> 							var external_cluster *udpbond.Cluster
+<a href="#l348" class="line" id="l348">    348</a> 
+<a href="#l349" class="line" id="l349">    349</a> 							if *udpbond_external != &quot;&quot; {
+<a href="#l350" class="line" id="l350">    350</a> 
+<a href="#l351" class="line" id="l351">    351</a> 								ebconfig := new(udpbond.Config)
+<a href="#l352" class="line" id="l352">    352</a> 								ebconfig.Rsize = uint8(*registerSize)
+<a href="#l353" class="line" id="l353">    353</a> 
+<a href="#l354" class="line" id="l354">    354</a> 								if *debug {
+<a href="#l355" class="line" id="l355">    355</a> 									ebconfig.Debug = true
+<a href="#l356" class="line" id="l356">    356</a> 								}
+<a href="#l357" class="line" id="l357">    357</a> 
+<a href="#l358" class="line" id="l358">    358</a> 								if external_cluster_t, err := udpbond.UnmarshallCluster(ebconfig, *udpbond_external); err != nil {
+<a href="#l359" class="line" id="l359">    359</a> 									panic(err)
+<a href="#l360" class="line" id="l360">    360</a> 								} else {
+<a href="#l361" class="line" id="l361">    361</a> 									external_cluster = external_cluster_t
+<a href="#l362" class="line" id="l362">    362</a> 								}
+<a href="#l363" class="line" id="l363">    363</a> 							}
+<a href="#l364" class="line" id="l364">    364</a> 
+<a href="#l365" class="line" id="l365">    365</a> 							mycluster, peerids, mymachines, myethio, myres, err := bgmain.Create_Udpbond_Cluster(*registerSize, external_cluster)
+<a href="#l366" class="line" id="l366">    366</a> 							check(err)
+<a href="#l367" class="line" id="l367">    367</a> 							//fmt.Println(mycluster, peerids, mymachines, myethio, myres)
+<a href="#l368" class="line" id="l368">    368</a> 
+<a href="#l369" class="line" id="l369">    369</a> 							if _, err := os.Stat(*save_udpbond_cluster + &quot;.json&quot;); os.IsNotExist(err) {
+<a href="#l370" class="line" id="l370">    370</a> 								f, err := os.Create(*save_udpbond_cluster + &quot;.json&quot;)
+<a href="#l371" class="line" id="l371">    371</a> 								check(err)
+<a href="#l372" class="line" id="l372">    372</a> 								b, errj := json.Marshal(mycluster)
+<a href="#l373" class="line" id="l373">    373</a> 								check(errj)
+<a href="#l374" class="line" id="l374">    374</a> 								_, err = f.WriteString(string(b))
+<a href="#l375" class="line" id="l375">    375</a> 								check(err)
+<a href="#l376" class="line" id="l376">    376</a> 								f.Close()
+<a href="#l377" class="line" id="l377">    377</a> 							}
+<a href="#l378" class="line" id="l378">    378</a> 
+<a href="#l379" class="line" id="l379">    379</a> 							for i, peerid := range peerids {
+<a href="#l380" class="line" id="l380">    380</a> 								machine_to_save := *save_udpbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_bm.json&quot;
+<a href="#l381" class="line" id="l381">    381</a> 								if _, err := os.Stat(machine_to_save); os.IsNotExist(err) {
+<a href="#l382" class="line" id="l382">    382</a> 									f, err := os.Create(machine_to_save)
+<a href="#l383" class="line" id="l383">    383</a> 									check(err)
+<a href="#l384" class="line" id="l384">    384</a> 									b, errj := json.Marshal(mymachines[i].Jsoner())
+<a href="#l385" class="line" id="l385">    385</a> 									check(errj)
+<a href="#l386" class="line" id="l386">    386</a> 									_, err = f.WriteString(string(b))
+<a href="#l387" class="line" id="l387">    387</a> 									check(err)
+<a href="#l388" class="line" id="l388">    388</a> 									defer f.Close()
+<a href="#l389" class="line" id="l389">    389</a> 								}
+<a href="#l390" class="line" id="l390">    390</a> 								io_to_save := *save_udpbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_io.json&quot;
+<a href="#l391" class="line" id="l391">    391</a> 								if _, err := os.Stat(io_to_save); os.IsNotExist(err) {
+<a href="#l392" class="line" id="l392">    392</a> 									f, err := os.Create(io_to_save)
+<a href="#l393" class="line" id="l393">    393</a> 									check(err)
+<a href="#l394" class="line" id="l394">    394</a> 									b, errj := json.Marshal(myethio[i])
+<a href="#l395" class="line" id="l395">    395</a> 									check(errj)
+<a href="#l396" class="line" id="l396">    396</a> 									_, err = f.WriteString(string(b))
+<a href="#l397" class="line" id="l397">    397</a> 									check(err)
+<a href="#l398" class="line" id="l398">    398</a> 									defer f.Close()
+<a href="#l399" class="line" id="l399">    399</a> 								}
+<a href="#l400" class="line" id="l400">    400</a> 								residual_to_save := *save_udpbond_cluster + &quot;_peer_&quot; + strconv.Itoa(int(peerid)) + &quot;_residual.json&quot;
+<a href="#l401" class="line" id="l401">    401</a> 								if _, err := os.Stat(residual_to_save); os.IsNotExist(err) {
+<a href="#l402" class="line" id="l402">    402</a> 									f, err := os.Create(residual_to_save)
+<a href="#l403" class="line" id="l403">    403</a> 									check(err)
+<a href="#l404" class="line" id="l404">    404</a> 									b, errj := json.Marshal(myres[i])
+<a href="#l405" class="line" id="l405">    405</a> 									check(errj)
+<a href="#l406" class="line" id="l406">    406</a> 									_, err = f.WriteString(string(b))
+<a href="#l407" class="line" id="l407">    407</a> 									check(err)
+<a href="#l408" class="line" id="l408">    408</a> 									defer f.Close()
+<a href="#l409" class="line" id="l409">    409</a> 								}
+<a href="#l410" class="line" id="l410">    410</a> 							}
+<a href="#l411" class="line" id="l411">    411</a> 
+<a href="#l412" class="line" id="l412">    412</a> 						} else {
+<a href="#l413" class="line" id="l413">    413</a> 							fmt.Println(&quot;Missing output file name&quot;)
+<a href="#l414" class="line" id="l414">    414</a> 						}
+<a href="#l415" class="line" id="l415">    415</a> 
+<a href="#l416" class="line" id="l416">    416</a> 					} else {
+<a href="#l417" class="line" id="l417">    417</a> 						if machine_to_save != &quot;&quot; {
+<a href="#l418" class="line" id="l418">    418</a> 							savedsomething = true
+<a href="#l419" class="line" id="l419">    419</a> 							if *mpm {
+<a href="#l420" class="line" id="l420">    420</a> 								if mymachine, _, err := bgmain.Create_Bondmachine(*registerSize, &quot;device_0&quot;); err == nil {
+<a href="#l421" class="line" id="l421">    421</a> 									if _, err := os.Stat(machine_to_save); os.IsNotExist(err) {
+<a href="#l422" class="line" id="l422">    422</a> 										f, err := os.Create(machine_to_save)
+<a href="#l423" class="line" id="l423">    423</a> 										check(err)
+<a href="#l424" class="line" id="l424">    424</a> 										defer f.Close()
+<a href="#l425" class="line" id="l425">    425</a> 										b, errj := json.Marshal(mymachine.Jsoner())
+<a href="#l426" class="line" id="l426">    426</a> 										check(errj)
+<a href="#l427" class="line" id="l427">    427</a> 										_, err = f.WriteString(string(b))
+<a href="#l428" class="line" id="l428">    428</a> 										check(err)
+<a href="#l429" class="line" id="l429">    429</a> 									}
+<a href="#l430" class="line" id="l430">    430</a> 								} else {
+<a href="#l431" class="line" id="l431">    431</a> 									fmt.Println(&quot;Creating bondmachine failed&quot;)
+<a href="#l432" class="line" id="l432">    432</a> 								}
+<a href="#l433" class="line" id="l433">    433</a> 
+<a href="#l434" class="line" id="l434">    434</a> 							} else {
+<a href="#l435" class="line" id="l435">    435</a> 								if mymachine, ok := bgmain.Create_Connecting_Processor(*registerSize, 0); ok {
+<a href="#l436" class="line" id="l436">    436</a> 									if _, err := os.Stat(machine_to_save); os.IsNotExist(err) {
+<a href="#l437" class="line" id="l437">    437</a> 										f, err := os.Create(machine_to_save)
+<a href="#l438" class="line" id="l438">    438</a> 										check(err)
+<a href="#l439" class="line" id="l439">    439</a> 										defer f.Close()
+<a href="#l440" class="line" id="l440">    440</a> 										b, errj := json.Marshal(mymachine.Jsoner())
+<a href="#l441" class="line" id="l441">    441</a> 										check(errj)
+<a href="#l442" class="line" id="l442">    442</a> 										_, err = f.WriteString(string(b))
+<a href="#l443" class="line" id="l443">    443</a> 										check(err)
+<a href="#l444" class="line" id="l444">    444</a> 									}
+<a href="#l445" class="line" id="l445">    445</a> 								} else {
+<a href="#l446" class="line" id="l446">    446</a> 									fmt.Println(&quot;Creating processor failed&quot;)
+<a href="#l447" class="line" id="l447">    447</a> 								}
+<a href="#l448" class="line" id="l448">    448</a> 							}
+<a href="#l449" class="line" id="l449">    449</a> 						}
+<a href="#l450" class="line" id="l450">    450</a> 
+<a href="#l451" class="line" id="l451">    451</a> 						if !savedsomething {
+<a href="#l452" class="line" id="l452">    452</a> 							fmt.Println(&quot;Missing output file name&quot;)
+<a href="#l453" class="line" id="l453">    453</a> 						}
+<a href="#l454" class="line" id="l454">    454</a> 					}
+<a href="#l455" class="line" id="l455">    455</a> 				case &quot;checking&quot;:
+<a href="#l456" class="line" id="l456">    456</a> 					fmt.Println(&quot;TODO Uninplemented&quot;)
+<a href="#l457" class="line" id="l457">    457</a> 				case &quot;enforcing&quot;:
+<a href="#l458" class="line" id="l458">    458</a> 					fmt.Println(&quot;TODO Uninplemented&quot;)
+<a href="#l459" class="line" id="l459">    459</a> 				case &quot;optimizing&quot;:
+<a href="#l460" class="line" id="l460">    460</a> 					fmt.Println(&quot;TODO Uninplemented&quot;)
+<a href="#l461" class="line" id="l461">    461</a> 				default:
+<a href="#l462" class="line" id="l462">    462</a> 					fmt.Println(&quot;Unknown operating mode&quot;)
+<a href="#l463" class="line" id="l463">    463</a> 				}
+<a href="#l464" class="line" id="l464">    464</a> 			}
+<a href="#l465" class="line" id="l465">    465</a> 		} else if *assemblyInput {
+<a href="#l466" class="line" id="l466">    466</a> 			// Placeholder for the new assembly engine
+<a href="#l467" class="line" id="l467">    467</a> 		} else if *abstractAssemblyInput {
+<a href="#l468" class="line" id="l468">    468</a> 			usagedone := make(chan bool)
+<a href="#l469" class="line" id="l469">    469</a> 
+<a href="#l470" class="line" id="l470">    470</a> 			results := new(bondgo.BondgoResults) // Results go in here
+<a href="#l471" class="line" id="l471">    471</a> 			results.Init_Results(config)
+<a href="#l472" class="line" id="l472">    472</a> 
+<a href="#l473" class="line" id="l473">    473</a> 			messages := new(bondgo.BondgoMessages) // Compiler logs and errors
+<a href="#l474" class="line" id="l474">    474</a> 			messages.Init_Messages(config)
+<a href="#l475" class="line" id="l475">    475</a> 
+<a href="#l476" class="line" id="l476">    476</a> 			reqmnts := new(bondgo.BondgoRequirements) // The pointer to the requirements struct
+<a href="#l477" class="line" id="l477">    477</a> 			reqmnts.Init_Requirements(config)
+<a href="#l478" class="line" id="l478">    478</a> 
+<a href="#l479" class="line" id="l479">    479</a> 			usagenotify := make(chan bondgo.UsageNotify) // Used to notify the used resource
+<a href="#l480" class="line" id="l480">    480</a> 
+<a href="#l481" class="line" id="l481">    481</a> 			go reqmnts.Usage_Monitor(usagenotify, usagedone) // Spawn the usage monitor
+<a href="#l482" class="line" id="l482">    482</a> 
+<a href="#l483" class="line" id="l483">    483</a> 			run := new(bondgo.BondgoRuninfo) // Running data
+<a href="#l484" class="line" id="l484">    484</a> 			run.Init_Runinfo(config)
+<a href="#l485" class="line" id="l485">    485</a> 
+<a href="#l486" class="line" id="l486">    486</a> 			varreq := make(chan bondgo.VarReq) // Variable request
+<a href="#l487" class="line" id="l487">    487</a> 			varans := make(chan bondgo.VarAns) // Variable response
+<a href="#l488" class="line" id="l488">    488</a> 
+<a href="#l489" class="line" id="l489">    489</a> 			functs := new(bondgo.BondgoFunctions) // Functions
+<a href="#l490" class="line" id="l490">    490</a> 			functs.Init_Functions(config, messages)
+<a href="#l491" class="line" id="l491">    491</a> 
+<a href="#l492" class="line" id="l492">    492</a> 			vars := make(map[string]bondgo.VarCell)
+<a href="#l493" class="line" id="l493">    493</a> 			returns := make([]bondgo.VarCell, 0)
+<a href="#l494" class="line" id="l494">    494</a> 
+<a href="#l495" class="line" id="l495">    495</a> 			bgmain := &amp;bondgo.BondgoCheck{results, config, reqmnts, run, messages, functs, usagenotify, varreq, varans, nil, nil, vars, returns, &quot;&quot;, &quot;&quot;, &quot;device_0&quot;, 0}
+<a href="#l496" class="line" id="l496">    496</a> 
+<a href="#l497" class="line" id="l497">    497</a> 			// Establish the Device parameter for the next goroutine
+<a href="#l498" class="line" id="l498">    498</a> 			bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, 0, bondgo.C_DEVICE, bgmain.CurrentDevice, bondgo.I_NIL}
+<a href="#l499" class="line" id="l499">    499</a> 
+<a href="#l500" class="line" id="l500">    500</a> 			f, err := os.Open(*input_file)
+<a href="#l501" class="line" id="l501">    501</a> 			if err != nil {
+<a href="#l502" class="line" id="l502">    502</a> 				log.Fatal(err)
+<a href="#l503" class="line" id="l503">    503</a> 			}
+<a href="#l504" class="line" id="l504">    504</a> 			defer f.Close()
+<a href="#l505" class="line" id="l505">    505</a> 
+<a href="#l506" class="line" id="l506">    506</a> 			source_asm := make([]string, 0)
+<a href="#l507" class="line" id="l507">    507</a> 
+<a href="#l508" class="line" id="l508">    508</a> 			scanner := bufio.NewScanner(f)
+<a href="#l509" class="line" id="l509">    509</a> 			for scanner.Scan() {
+<a href="#l510" class="line" id="l510">    510</a> 				currline := scanner.Text()
+<a href="#l511" class="line" id="l511">    511</a> 				source_asm = append(source_asm, currline)
+<a href="#l512" class="line" id="l512">    512</a> 				bgmain.WriteLine(0, currline)
+<a href="#l513" class="line" id="l513">    513</a> 			}
+<a href="#l514" class="line" id="l514">    514</a> 
+<a href="#l515" class="line" id="l515">    515</a> 			if err := scanner.Err(); err != nil {
+<a href="#l516" class="line" id="l516">    516</a> 				log.Fatal(err)
+<a href="#l517" class="line" id="l517">    517</a> 			}
+<a href="#l518" class="line" id="l518">    518</a> 
+<a href="#l519" class="line" id="l519">    519</a> 			bgmain.Abstract_assembler(*registerSize, source_asm, usagenotify)
+<a href="#l520" class="line" id="l520">    520</a> 
+<a href="#l521" class="line" id="l521">    521</a> 			for procid, rout := range bgmain.Program {
+<a href="#l522" class="line" id="l522">    522</a> 				// TODO Recheck
+<a href="#l523" class="line" id="l523">    523</a> 				linesn := len(rout.Lines)
+<a href="#l524" class="line" id="l524">    524</a> 				bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_PROC, procid, bondgo.C_ROMSIZE, bondgo.S_NIL, linesn}
+<a href="#l525" class="line" id="l525">    525</a> 			}
+<a href="#l526" class="line" id="l526">    526</a> 
+<a href="#l527" class="line" id="l527">    527</a> 			bgmain.Used &lt;- bondgo.UsageNotify{bondgo.TR_EXIT, 0, 0, bondgo.S_NIL, bondgo.I_NIL}
+<a href="#l528" class="line" id="l528">    528</a> 			&lt;-usagedone
+<a href="#l529" class="line" id="l529">    529</a> 
+<a href="#l530" class="line" id="l530">    530</a> 			if *saveBondmachine != &quot;&quot; {
+<a href="#l531" class="line" id="l531">    531</a> 				if mymachine, _, err := bgmain.Create_Bondmachine(*registerSize, &quot;device_0&quot;); err == nil {
+<a href="#l532" class="line" id="l532">    532</a> 					if _, err := os.Stat(*saveBondmachine); os.IsNotExist(err) {
+<a href="#l533" class="line" id="l533">    533</a> 						f, err := os.Create(*saveBondmachine)
+<a href="#l534" class="line" id="l534">    534</a> 						check(err)
+<a href="#l535" class="line" id="l535">    535</a> 						defer f.Close()
+<a href="#l536" class="line" id="l536">    536</a> 						b, errj := json.Marshal(mymachine.Jsoner())
+<a href="#l537" class="line" id="l537">    537</a> 						check(errj)
+<a href="#l538" class="line" id="l538">    538</a> 						_, err = f.WriteString(string(b))
+<a href="#l539" class="line" id="l539">    539</a> 						check(err)
+<a href="#l540" class="line" id="l540">    540</a> 					}
+<a href="#l541" class="line" id="l541">    541</a> 				} else {
+<a href="#l542" class="line" id="l542">    542</a> 					fmt.Println(&quot;Creating processor failed&quot;)
+<a href="#l543" class="line" id="l543">    543</a> 				}
+<a href="#l544" class="line" id="l544">    544</a> 
+<a href="#l545" class="line" id="l545">    545</a> 			}
+<a href="#l546" class="line" id="l546">    546</a> 
+<a href="#l547" class="line" id="l547">    547</a> 			if *saveMachine != &quot;&quot; {
+<a href="#l548" class="line" id="l548">    548</a> 				if mymachine, ok := bgmain.Create_Connecting_Processor(*registerSize, 0); ok {
+<a href="#l549" class="line" id="l549">    549</a> 					if _, err := os.Stat(*saveMachine); os.IsNotExist(err) {
+<a href="#l550" class="line" id="l550">    550</a> 						f, err := os.Create(*saveMachine)
+<a href="#l551" class="line" id="l551">    551</a> 						check(err)
+<a href="#l552" class="line" id="l552">    552</a> 						defer f.Close()
+<a href="#l553" class="line" id="l553">    553</a> 						b, errj := json.Marshal(mymachine.Jsoner())
+<a href="#l554" class="line" id="l554">    554</a> 						check(errj)
+<a href="#l555" class="line" id="l555">    555</a> 						_, err = f.WriteString(string(b))
+<a href="#l556" class="line" id="l556">    556</a> 						check(err)
+<a href="#l557" class="line" id="l557">    557</a> 					}
+<a href="#l558" class="line" id="l558">    558</a> 				} else {
+<a href="#l559" class="line" id="l559">    559</a> 					fmt.Println(&quot;Creating processor failed&quot;)
+<a href="#l560" class="line" id="l560">    560</a> 				}
+<a href="#l561" class="line" id="l561">    561</a> 			}
+<a href="#l562" class="line" id="l562">    562</a> 		} else if *multiAbstractAssemblyInput {
+<a href="#l563" class="line" id="l563">    563</a> 
+<a href="#l564" class="line" id="l564">    564</a> 			aafile := new(bondgo.Abs_assembly)
+<a href="#l565" class="line" id="l565">    565</a> 
+<a href="#l566" class="line" id="l566">    566</a> 			if _, err := os.Stat(*input_file); err == nil {
+<a href="#l567" class="line" id="l567">    567</a> 				if jsonfile, err := os.ReadFile(*input_file); err == nil {
+<a href="#l568" class="line" id="l568">    568</a> 					if err := json.Unmarshal([]byte(jsonfile), aafile); err != nil {
+<a href="#l569" class="line" id="l569">    569</a> 						panic(err)
+<a href="#l570" class="line" id="l570">    570</a> 					}
+<a href="#l571" class="line" id="l571">    571</a> 				} else {
+<a href="#l572" class="line" id="l572">    572</a> 					panic(err)
+<a href="#l573" class="line" id="l573">    573</a> 				}
+<a href="#l574" class="line" id="l574">    574</a> 			} else {
+<a href="#l575" class="line" id="l575">    575</a> 				panic(err)
+<a href="#l576" class="line" id="l576">    576</a> 			}
+<a href="#l577" class="line" id="l577">    577</a> 
+<a href="#l578" class="line" id="l578">    578</a> 			if *saveBondmachine != &quot;&quot; {
+<a href="#l579" class="line" id="l579">    579</a> 				if mymachine, err := bondgo.MultiAsm2BondMachine(*registerSize, aafile); err == nil {
+<a href="#l580" class="line" id="l580">    580</a> 					if _, err := os.Stat(*saveBondmachine); os.IsNotExist(err) {
+<a href="#l581" class="line" id="l581">    581</a> 						f, err := os.Create(*saveBondmachine)
+<a href="#l582" class="line" id="l582">    582</a> 						check(err)
+<a href="#l583" class="line" id="l583">    583</a> 						defer f.Close()
+<a href="#l584" class="line" id="l584">    584</a> 						b, errj := json.Marshal(mymachine.Jsoner())
+<a href="#l585" class="line" id="l585">    585</a> 						check(errj)
+<a href="#l586" class="line" id="l586">    586</a> 						_, err = f.WriteString(string(b))
+<a href="#l587" class="line" id="l587">    587</a> 						check(err)
+<a href="#l588" class="line" id="l588">    588</a> 					}
+<a href="#l589" class="line" id="l589">    589</a> 				} else {
+<a href="#l590" class="line" id="l590">    590</a> 					fmt.Println(&quot;Creating processor failed&quot;)
+<a href="#l591" class="line" id="l591">    591</a> 				}
+<a href="#l592" class="line" id="l592">    592</a> 			}
+<a href="#l593" class="line" id="l593">    593</a> 		} else {
+<a href="#l594" class="line" id="l594">    594</a> 			fmt.Println(&quot;Missing input file type&quot;)
+<a href="#l595" class="line" id="l595">    595</a> 		}
+<a href="#l596" class="line" id="l596">    596</a> 	} else {
+<a href="#l597" class="line" id="l597">    597</a> 		fmt.Println(&quot;Missing input file&quot;)
+<a href="#l598" class="line" id="l598">    598</a> 	}
+<a href="#l599" class="line" id="l599">    599</a> }
+</pre>
+</div>
+</body>
+</html>

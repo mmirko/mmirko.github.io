@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>uart - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1c445bb664673518670537cab487b302870bbf25.html">1c445bb664673518670537cab487b302870bbf25</a>
+<b>parent</b> <a href="../commit/95f1108941532041b13800cd70ab0b90171dd675.html">95f1108941532041b13800cd70ab0b90171dd675</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 18 May 2023 18:04:09 +0200
+
+uart
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bondmachine/exmod_uart.go</a></td><td> | </td><td class="num">52</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/shr_uart.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 97 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -150,6 +150,9 @@ var bmapiDataType = flag.String(&quot;bmapi-data-type&quot;, &quot;float32&quot;, &quot;Data type for the
+</a> var board_slow = flag.Bool(&quot;board-slow&quot;, false, &quot;Board slow support&quot;)
+ var board_slow_factor = flag.Int(&quot;board-slow-factor&quot;, 1, &quot;Board slow factor&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+var uart = flag.Bool(&quot;uart&quot;, false, &quot;UART support&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var uartMapFile = flag.String(&quot;uart-mapfile&quot;, &quot;&quot;, &quot;UART mappings&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> var basys3_7segment = flag.Bool(&quot;basys3-7segment&quot;, false, &quot;Basys3 7 segments display support&quot;)
+ var basys3_7segment_map = flag.String(&quot;basys3-7segment-map&quot;, &quot;&quot;, &quot;Basys3 7 segments display mappings&quot;)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -560,6 +563,23 @@ func main() {
+</a> 
+ 			}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+			if *uart {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				uart := new(bondmachine.UartExtra)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				uartMap := new(bondmachine.IOmap)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				if *uartMapFile != &quot;&quot; {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+					if mapfileJSON, err := ioutil.ReadFile(*uartMapFile); err == nil {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+						if err := json.Unmarshal([]byte(mapfileJSON), uartMap); err != nil {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+							panic(err)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+						} else {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+							uart.Maps = uartMap
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+						}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+					} else {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+						panic(err)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+					}
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+				}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+				extramodules = append(extramodules, uart)
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a> 			if *basys3_7segment {
+ 				b37s := new(bondmachine.B37s)
+ 				b37s.Mapped_output = *basys3_7segment_map
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/exmod_uart.go.html">pkg/bondmachine/exmod_uart.go</a> b/<a href="../file/pkg/bondmachine/exmod_uart.go.html">pkg/bondmachine/exmod_uart.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,52 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bondmachine
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;errors&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+type UartExtra struct {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	Maps *IOmap
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+func (sl *UartExtra) Get_Name() string {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	return &quot;uart&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+func (sl *UartExtra) Get_Params() *ExtraParams {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	result := new(ExtraParams)
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	result.Params = make(map[string]string)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	for n, v := range sl.Maps.Assoc {
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		result.Params[n] = v
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	}
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	return result
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+}
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+func (sl *UartExtra) Import(inp string) error {
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	if err := json.Unmarshal([]byte(inp), sl); err != nil {
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		return errors.New(&quot;Unmarshalling failed&quot;)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	return nil
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+}
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+func (sl *UartExtra) Export() string {
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+	b, _ := json.Marshal(sl)
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	return string(b)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+func (sl *UartExtra) Check(bmach *Bondmachine) error {
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	// TODO check if the pins are valid
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	return nil
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+}
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+func (sl *UartExtra) Verilog_headers() string {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	return &quot;&quot;
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+func (sl *UartExtra) StaticVerilog() string {
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	return &quot;&quot;
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+}
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+func (sl *UartExtra) ExtraFiles() ([]string, []string) {
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	return []string{}, []string{}
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a> b/<a href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -195,6 +195,12 @@ func (sm Uart_instance) GetPerProcPortsHeader(bmach *Bondmachine, proc_id int, s
+</a> 
+ func (sm Uart_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+ 	result := &quot;&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		result += &quot;, &quot; + soname + &quot;_rx&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		result += &quot;, &quot; + soname + &quot;_tx&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	// TODO: Correct this (multiple processors)
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1408,6 +1408,9 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 	var ps2KeyboardParams map[string]string
+ 	ps2KeyboardMapped := &quot;&quot;
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	uartModule := false
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	var uartParams map[string]string
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+
+</a> 	vgatext800x600Module := false
+ 	var vgatext800x600Params map[string]string
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -1480,6 +1483,10 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 				// TODO proper error handling
+ 			}
+ 		}
+<a href="#h3-1-3" id="h3-1-3" class="i">+		if mod.Get_Name() == &quot;uart&quot; {
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			uartModule = true
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+			uartParams = mod.Get_Params().Params
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+		}
+</a> 		if mod.Get_Name() == &quot;vga800x600&quot; {
+ 			vgatext800x600Module = true
+ 			vgatext800x600Params = mod.Get_Params().Params
+<a href="#h3-2" id="h3-2" class="h">@@ -1591,6 +1598,18 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 		result += &quot;\toutput wifi_tx,\n&quot;
+ 	}
+ 
+<a href="#h3-2-3" id="h3-2-3" class="i">+	if uartModule {
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+		for name, value := range uartParams {
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+			fmt.Println(name[len(name)-3:])
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+			if name[len(name)-3:] == &quot;_rx&quot; {
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+				result += &quot;\tinput &quot; + value + &quot;,\n&quot;
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+			}
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+			if name[len(name)-3:] == &quot;_tx&quot; {
+</a><a href="#h3-2-10" id="h3-2-10" class="i">+				result += &quot;\toutput &quot; + value + &quot;,\n&quot;
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+			}
+</a><a href="#h3-2-12" id="h3-2-12" class="i">+		}
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+	}
+</a><a href="#h3-2-14" id="h3-2-14" class="i">+
+</a> 	if bmapiModule {
+ 		// TODO different flavors and transivers + include error handling
+ 		if bmapiFlavor, ok := bmapiParams[&quot;bmapi_flavor&quot;]; ok {
+</pre>
+</div>
+</body>
+</html>

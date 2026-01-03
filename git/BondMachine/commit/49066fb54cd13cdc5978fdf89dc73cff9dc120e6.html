@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>16 bit fix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/49066fb54cd13cdc5978fdf89dc73cff9dc120e6.html">49066fb54cd13cdc5978fdf89dc73cff9dc120e6</a>
+<b>parent</b> <a href="../commit/7ad8d770be73230e3315a3e9901626ad44ad484c.html">7ad8d770be73230e3315a3e9901626ad44ad484c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 28 Nov 2023 11:10:54 +0100
+
+16 bit fix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 16 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a> b/<a href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -27,6 +27,7 @@ var execution_model = flag.String(&quot;execution-model&quot;, &quot;ha&quot;, &quot;Execution model: vn 
+</a> var register_size = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-bit)&quot;)
+ 
+ var enabledOpcodes = flag.String(&quot;opcodes&quot;, &quot;nop&quot;, &quot;Enabled opcodes&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var listOpcodes = flag.Bool(&quot;list-opcodes&quot;, false, &quot;List all opcodes&quot;)
+</a> 
+ var rbit = flag.Int(&quot;registers&quot;, 3, &quot;Number of n-bit registers 2^&quot;)
+ var lbit = flag.Int(&quot;ram&quot;, 8, &quot;Number of n-bit RAM memory cells 2^&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -145,12 +146,18 @@ func main() {
+</a> 		//ep.Pars[&quot;procbuilder:n&quot;] = strconv.Itoa(*nbit)
+ 		//ep.Pars[&quot;procbuilder:o&quot;] = strconv.Itoa(*obit)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+		if *listOpcodes {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			for _, op := range procbuilder.Allopcodes {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				fmt.Println(op.Op_get_name())
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a> 		// Processing enabled opcodes
+ 		if *inputAssembly != &quot;&quot; &amp;&amp; *opcode_optimizer {
+ 			if _, err := os.Stat(*inputAssembly); err == nil {
+<a href="#h0-1-12" id="h0-1-12" class="d">-				if prog, err := ioutil.ReadFile(*inputAssembly); err == nil {
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				if prog, err := os.ReadFile(*inputAssembly); err == nil {
+</a> 
+<a href="#h0-1-15" id="h0-1-15" class="d">-					// TODO keep the opecodes ordered by name
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+					// TODO keep the opcodes ordered by name
+</a> 					opcodes := make([]procbuilder.Opcode, 0)
+ 
+ 					curLine := make([]byte, 256)
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_int.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_int.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -84,10 +84,15 @@ localparam integer LP_LOG_BURST_LEN      = $clog2(LP_AXI_BURST_LEN);
+</a> localparam integer LP_RD_MAX_OUTSTANDING = 3;
+ localparam integer LP_RD_FIFO_DEPTH      = LP_AXI_BURST_LEN*(LP_RD_MAX_OUTSTANDING + 1);
+ localparam integer LP_WR_FIFO_DEPTH      = LP_AXI_BURST_LEN;
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+localparam precision = {{ $.Rsize }} ; // precision bit
+</a> localparam samples = {{ .Samples }}; // number of samples that I expect from the client
+ localparam bminputs = {{ .InputNum }};  // number of bminputs for each sample (or bminputs)
+ localparam bmoutputs = {{ .OutputNum }}; // number of output for the classificationP
+ 
+<a href="#h1-0-9" id="h1-0-9" class="i">+localparam ctrl_len_input = (precision == 32) ?  samples * bminputs : (samples * bminputs)/2;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+localparam ctrl_len_output = (precision == 32) ?  samples * bmoutputs : (samples * bmoutputs)/2;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a> logic areset = 1&#39;b0;  
+ logic ap_start;
+ logic ap_start_pulse;
+<a href="#h1-1" id="h1-1" class="h">@@ -205,7 +210,7 @@ inst_axi_read_master (
+</a>   .ctrl_start     ( ap_start_pulse         ) ,
+   .ctrl_done      ( read_done              ) ,
+   .ctrl_offset    ( {a}                  ) , 
+<a href="#h1-1-3" id="h1-1-3" class="d">-  .ctrl_length    ( samples * bminputs ) ,
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+  .ctrl_length    ( ctrl_len_input ) ,
+</a>   .ctrl_prog_full ( ctrl_rd_fifo_prog_full ) ,
+ 
+   .arvalid        ( m_axi_gmem_ARVALID     ) ,
+<a href="#h1-2" id="h1-2" class="h">@@ -340,7 +345,7 @@ inst_axi_write_master (
+</a> 
+   .ctrl_start  ( ap_start_pulse     ) ,
+   .ctrl_offset ( b                  ) ,
+<a href="#h1-2-3" id="h1-2-3" class="d">-  .ctrl_length ( samples * bmoutputs ) ,
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+  .ctrl_length ( ctrl_len_output) ,
+</a>   .ctrl_done   ( ap_done            ) ,
+ 
+   .awvalid     ( m_axi_gmem_AWVALID ) ,
+</pre>
+</div>
+</body>
+</html>

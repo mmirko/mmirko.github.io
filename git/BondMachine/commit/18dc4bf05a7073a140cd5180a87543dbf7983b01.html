@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>datatype in template - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/18dc4bf05a7073a140cd5180a87543dbf7983b01.html">18dc4bf05a7073a140cd5180a87543dbf7983b01</a>
+<b>parent</b> <a href="../commit/3ed5e008637ee95037e89c329ef3c4e78b13dd90.html">3ed5e008637ee95037e89c329ef3c4e78b13dd90</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  6 Apr 2023 13:26:13 +0200
+
+datatype in template
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/bmapi.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/exmod_bmapi.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/files_aximm_pynq_example.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bondmachine/template.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 14 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -143,6 +143,7 @@ var bmapiAuxOutDir = flag.String(&quot;bmapi-auxoutdir&quot;, &quot;&quot;, &quot;Output directory for th
+</a> var bmapiPackageName = flag.String(&quot;bmapi-packagename&quot;, &quot;&quot;, &quot;GO package name.&quot;)
+ var bmapiModuleName = flag.String(&quot;bmapi-modulename&quot;, &quot;&quot;, &quot;GO module name.&quot;)
+ var bmapiGenerateExample = flag.String(&quot;bmapi-generate-example&quot;, &quot;&quot;, &quot;Generate an example program using the BMAPI.&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var bmapiDataType = flag.String(&quot;bmapi-data-type&quot;, &quot;float32&quot;, &quot;Data type for the BMAPI.&quot;)
+</a> 
+ var board_slow = flag.Bool(&quot;board-slow&quot;, false, &quot;Board slow support&quot;)
+ var board_slow_factor = flag.Int(&quot;board-slow-factor&quot;, 1, &quot;Board slow factor&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -510,6 +511,7 @@ func main() {
+</a> 				bmapi.ModuleName = *bmapiModuleName
+ 				bmapi.PackageName = *bmapiPackageName
+ 				bmapi.GenerateExample = *bmapiGenerateExample
+<a href="#h0-1-3" id="h0-1-3" class="i">+				bmapi.DataType = *bmapiDataType
+</a> 
+ 				bmAPIMap := new(bondmachine.IOmap)
+ 				if *bmapiMapfile != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a> b/<a href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -31,6 +31,7 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 	var bmapiPackageName string
+ 	var bmapiModuleName string
+ 	var bmapiGenerateExample string
+<a href="#h1-0-3" id="h1-0-3" class="i">+	var bmapiDataType string
+</a> 
+ 	var bmapiParams map[string]string
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -99,6 +100,12 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 				return errors.New(&quot;Missing bmapi generate example&quot;)
+ 			}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+			if val, ok := bmapiParams[&quot;bmapi_datatype&quot;]; ok {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+				bmapiDataType = val
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+			} else {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+				return errors.New(&quot;Missing bmapi datatype&quot;)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+			}
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+
+</a> 			break
+ 		}
+ 	}
+<a href="#h1-2" id="h1-2" class="h">@@ -433,6 +440,7 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 
+ 					// Compiling the data for the templates
+ 					bmapiExample := bmach.createBasicTemplateData()
+<a href="#h1-2-3" id="h1-2-3" class="i">+					bmapiExample.DataType = bmapiDataType
+</a> 
+ 					exFiles := make(map[string]string)
+ 					exFiles[bmapiGenerateExample] = aximmPynqExample
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a> b/<a href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -26,6 +26,7 @@ type BMAPIExtra struct {
+</a> 	PackageName     string
+ 	ModuleName      string
+ 	GenerateExample string
+<a href="#h2-0-3" id="h2-0-3" class="i">+	DataType        string
+</a> 	Rsize           uint8
+ }
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -47,6 +48,7 @@ func (sl *BMAPIExtra) Get_Params() *ExtraParams {
+</a> 	result.Params[&quot;bmapi_packagename&quot;] = sl.PackageName
+ 	result.Params[&quot;bmapi_modulename&quot;] = sl.ModuleName
+ 	result.Params[&quot;bmapi_generate_example&quot;] = sl.GenerateExample
+<a href="#h2-1-3" id="h2-1-3" class="i">+	result.Params[&quot;bmapi_datatype&quot;] = sl.DataType
+</a> 
+ 	result.Params[&quot;inputs&quot;] = &quot;&quot;
+ 	result.Params[&quot;outputs&quot;] = &quot;&quot;
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -33,7 +33,7 @@ const (
+</a> 		   &quot;n_output      = 2\n&quot;,
+ 		   &quot;benchcore     = True\n&quot;,
+ 		   &quot;precision_info = {\n&quot;,
+<a href="#h3-0-3" id="h3-0-3" class="d">-		   &quot;    \&quot;type\&quot;: \&quot;flpe4f9\&quot;,\n&quot;,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		   &quot;    \&quot;type\&quot;: \&quot;{{ .DataType }}\&quot;,\n&quot;,
+</a> 		   &quot;    \&quot;e\&quot;: 0,\n&quot;,
+ 		   &quot;    \&quot;f\&quot;: 0,\n&quot;,
+ 		   &quot;    \&quot;host\&quot;: \&quot;10.2.129.49\&quot;,\n&quot;,
+<b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/template.go.html">pkg/bondmachine/template.go</a> b/<a href="../file/pkg/bondmachine/template.go.html">pkg/bondmachine/template.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -26,6 +26,7 @@ type templateData struct {
+</a> 	funcmap     template.FuncMap
+ 	PackageName string
+ 	ModuleName  string
+<a href="#h4-0-3" id="h4-0-3" class="i">+	DataType    string
+</a> }
+ 
+ func (bmach *Bondmachine) createBasicTemplateData() *templateData {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ioutil removal - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/80188a867cda24fd21d91e62793fcd55589c7c59.html">80188a867cda24fd21d91e62793fcd55589c7c59</a>
+<b>parent</b> <a href="../commit/6f5376c7db223dd7cc22a8fb6a8614c62ecba3b0.html">6f5376c7db223dd7cc22a8fb6a8614c62ecba3b0</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 27 Feb 2024 14:39:57 +0100
+
+ioutil removal
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondgo/bondgo.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bcof/bcof.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 17 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondgo/bondgo.go.html">cmd/bondgo/bondgo.go</a> b/<a href="../file/cmd/bondgo/bondgo.go.html">cmd/bondgo/bondgo.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,7 +8,6 @@ import (
+</a> 	&quot;go/ast&quot;
+ 	&quot;go/parser&quot;
+ 	&quot;go/token&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;io/ioutil&quot;
+</a> 	&quot;log&quot;
+ 	&quot;os&quot;
+ 	&quot;strconv&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -565,7 +564,7 @@ func main() {
+</a> 			aafile := new(bondgo.Abs_assembly)
+ 
+ 			if _, err := os.Stat(*input_file); err == nil {
+<a href="#h0-1-3" id="h0-1-3" class="d">-				if jsonfile, err := ioutil.ReadFile(*input_file); err == nil {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				if jsonfile, err := os.ReadFile(*input_file); err == nil {
+</a> 					if err := json.Unmarshal([]byte(jsonfile), aafile); err != nil {
+ 						panic(err)
+ 					}
+<b>diff --git a/<a id="h1" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -7,7 +7,6 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;io/ioutil&quot;
+</a> 	&quot;log&quot;
+ 	&quot;math/rand&quot;
+ 	&quot;net&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -241,7 +240,6 @@ func main() {
+</a> 	conf.HwOptimizations = 0
+ 	conf.Dotdetail = uint8(*dot_detail)
+ 	conf.CommentedVerilog = *commentedVerilog
+<a href="#h1-1-3" id="h1-1-3" class="d">-
+</a> 	if *bcofInFile != &quot;&quot; {
+ 		conf.BCOFEntry = new(bcof.BCOFEntry)
+ 		bcofBytes, err := os.ReadFile(*bcofInFile)
+<a href="#h1-2" id="h1-2" class="h">@@ -266,7 +264,7 @@ func main() {
+</a> 	var bmach *bondmachine.Bondmachine
+ 
+ 	if *bmInfoFile != &quot;&quot; {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if bmInfoJSON, err := ioutil.ReadFile(*bmInfoFile); err == nil {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+</a> 			conf.BMinfo = new(bminfo.BMinfo)
+ 			if err := json.Unmarshal(bmInfoJSON, conf.BMinfo); err != nil {
+ 				panic(err)
+<a href="#h1-3" id="h1-3" class="h">@@ -277,7 +275,7 @@ func main() {
+</a> 	}
+ 
+ 	if *bmRequirementsFile != &quot;&quot; {
+<a href="#h1-3-3" id="h1-3-3" class="d">-		if bmRequirementsJSON, err := ioutil.ReadFile(*bmRequirementsFile); err == nil {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		if bmRequirementsJSON, err := os.ReadFile(*bmRequirementsFile); err == nil {
+</a> 			reqs := new(bmreqs.ExportedReqs)
+ 			if err := json.Unmarshal(bmRequirementsJSON, reqs); err != nil {
+ 				panic(err)
+<a href="#h1-4" id="h1-4" class="h">@@ -293,7 +291,7 @@ func main() {
+</a> 	if *bondmachine_file != &quot;&quot; {
+ 		if _, err := os.Stat(*bondmachine_file); err == nil {
+ 			// Open the bondmachine file is exists
+<a href="#h1-4-3" id="h1-4-3" class="d">-			if bondmachine_json, err := ioutil.ReadFile(*bondmachine_file); err == nil {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			if bondmachine_json, err := os.ReadFile(*bondmachine_file); err == nil {
+</a> 				var bmachj bondmachine.Bondmachine_json
+ 				if err := json.Unmarshal([]byte(bondmachine_json), &amp;bmachj); err == nil {
+ 					bmach = (&amp;bmachj).Dejsoner()
+<a href="#h1-5" id="h1-5" class="h">@@ -320,7 +318,7 @@ func main() {
+</a> 		if *create_verilog {
+ 			iomap := new(bondmachine.IOmap)
+ 			if *verilog_mapfile != &quot;&quot; {
+<a href="#h1-5-3" id="h1-5-3" class="d">-				if mapfile_json, err := ioutil.ReadFile(*verilog_mapfile); err == nil {
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+				if mapfile_json, err := os.ReadFile(*verilog_mapfile); err == nil {
+</a> 					if err := json.Unmarshal([]byte(mapfile_json), iomap); err != nil {
+ 						panic(err)
+ 					}
+<a href="#h1-6" id="h1-6" class="h">@@ -368,7 +366,7 @@ func main() {
+</a> 
+ 				ethiomap := new(bondmachine.IOmap)
+ 				if *etherbond_mapfile != &quot;&quot; {
+<a href="#h1-6-3" id="h1-6-3" class="d">-					if mapfile_json, err := ioutil.ReadFile(*etherbond_mapfile); err == nil {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+					if mapfile_json, err := os.ReadFile(*etherbond_mapfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-7" id="h1-7" class="h">@@ -382,7 +380,7 @@ func main() {
+</a> 
+ 				macmap := new(etherbond.Macs)
+ 				if *etherbond_macfile != &quot;&quot; {
+<a href="#h1-7-3" id="h1-7-3" class="d">-					if macfile_json, err := ioutil.ReadFile(*etherbond_macfile); err == nil {
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+					if macfile_json, err := os.ReadFile(*etherbond_macfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(macfile_json), macmap); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-8" id="h1-8" class="h">@@ -424,7 +422,7 @@ func main() {
+</a> 
+ 				ethiomap := new(bondmachine.IOmap)
+ 				if *udpbond_mapfile != &quot;&quot; {
+<a href="#h1-8-3" id="h1-8-3" class="d">-					if mapfile_json, err := ioutil.ReadFile(*udpbond_mapfile); err == nil {
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+					if mapfile_json, err := os.ReadFile(*udpbond_mapfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-9" id="h1-9" class="h">@@ -438,7 +436,7 @@ func main() {
+</a> 
+ 				macmap := new(udpbond.Ips)
+ 				if *udpbond_ipfile != &quot;&quot; {
+<a href="#h1-9-3" id="h1-9-3" class="d">-					if macfile_json, err := ioutil.ReadFile(*udpbond_ipfile); err == nil {
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+					if macfile_json, err := os.ReadFile(*udpbond_ipfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(macfile_json), macmap); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-10" id="h1-10" class="h">@@ -449,7 +447,7 @@ func main() {
+</a> 
+ 				netparams := new(bondmachine.NetParameters)
+ 				if *udpbond_netconfig != &quot;&quot; {
+<a href="#h1-10-3" id="h1-10-3" class="d">-					if netconfig_json, err := ioutil.ReadFile(*udpbond_netconfig); err == nil {
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+					if netconfig_json, err := os.ReadFile(*udpbond_netconfig); err == nil {
+</a> 						if err := json.Unmarshal([]byte(netconfig_json), netparams); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-11" id="h1-11" class="h">@@ -511,7 +509,7 @@ func main() {
+</a> 
+ 				//				ethiomap := new(bondmachine.IOmap)
+ 				//				if *udpbond_mapfile != &quot;&quot; {
+<a href="#h1-11-3" id="h1-11-3" class="d">-				//					if mapfile_json, err := ioutil.ReadFile(*udpbond_mapfile); err == nil {
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+				//					if mapfile_json, err := os.ReadFile(*udpbond_mapfile); err == nil {
+</a> 				//						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+ 				//							panic(err)
+ 				//						}
+<a href="#h1-12" id="h1-12" class="h">@@ -562,7 +560,7 @@ func main() {
+</a> 
+ 				bmAPIMap := new(bondmachine.IOmap)
+ 				if *bmapiMapfile != &quot;&quot; {
+<a href="#h1-12-3" id="h1-12-3" class="d">-					if mapfileJSON, err := ioutil.ReadFile(*bmapiMapfile); err == nil {
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+					if mapfileJSON, err := os.ReadFile(*bmapiMapfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(mapfileJSON), bmAPIMap); err != nil {
+ 							panic(err)
+ 						} else {
+<a href="#h1-13" id="h1-13" class="h">@@ -584,7 +582,7 @@ func main() {
+</a> 				uart := new(bondmachine.UartExtra)
+ 				uartMap := new(bondmachine.IOmap)
+ 				if *uartMapFile != &quot;&quot; {
+<a href="#h1-13-3" id="h1-13-3" class="d">-					if mapfileJSON, err := ioutil.ReadFile(*uartMapFile); err == nil {
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+					if mapfileJSON, err := os.ReadFile(*uartMapFile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(mapfileJSON), uartMap); err != nil {
+ 							panic(err)
+ 						} else {
+<a href="#h1-14" id="h1-14" class="h">@@ -643,7 +641,7 @@ func main() {
+</a> 					sbox = new(simbox.Simbox)
+ 					if _, err := os.Stat(*simbox_file); err == nil {
+ 						// Open the simbox file is exists
+<a href="#h1-14-3" id="h1-14-3" class="d">-						if simbox_json, err := ioutil.ReadFile(*simbox_file); err == nil {
+</a><a href="#h1-14-4" id="h1-14-4" class="i">+						if simbox_json, err := os.ReadFile(*simbox_file); err == nil {
+</a> 							if err := json.Unmarshal([]byte(simbox_json), sbox); err != nil {
+ 								panic(err)
+ 							}
+<a href="#h1-15" id="h1-15" class="h">@@ -670,7 +668,7 @@ func main() {
+</a> 		} else if &amp;add_domains != nil &amp;&amp; len(add_domains) != 0 {
+ 			for _, load_machine := range add_domains {
+ 				if _, err := os.Stat(load_machine); err == nil {
+<a href="#h1-15-3" id="h1-15-3" class="d">-					if jsonfile, err := ioutil.ReadFile(load_machine); err == nil {
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+					if jsonfile, err := os.ReadFile(load_machine); err == nil {
+</a> 						var machj procbuilder.Machine_json
+ 						if err := json.Unmarshal([]byte(jsonfile), &amp;machj); err == nil {
+ 							mymachine := (&amp;machj).Dejsoner()
+<a href="#h1-16" id="h1-16" class="h">@@ -848,7 +846,7 @@ func main() {
+</a> 				sbox = new(simbox.Simbox)
+ 				if _, err := os.Stat(*simbox_file); err == nil {
+ 					// Open the simbox file is exists
+<a href="#h1-16-3" id="h1-16-3" class="d">-					if simbox_json, err := ioutil.ReadFile(*simbox_file); err == nil {
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+					if simbox_json, err := os.ReadFile(*simbox_file); err == nil {
+</a> 						if err := json.Unmarshal([]byte(simbox_json), sbox); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h1-17" id="h1-17" class="h">@@ -1165,7 +1163,6 @@ func main() {
+</a> 
+ 			}
+ 		}
+<a href="#h1-17-3" id="h1-17-3" class="d">-
+</a> 		// Write the bondmachine file
+ 		f, err := os.Create(*bondmachine_file)
+ 		check(err)
+<b>diff --git a/<a id="h2" href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a> b/<a href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -58,7 +58,7 @@ func (b *BCOFEntry) AddData(data *BCOFData) {
+</a> 
+ func (b *BCOFEntry) SearchData(s string) *BCOFData {
+ 	for _, subEntry := range b.Data {
+<a href="#h2-0-3" id="h2-0-3" class="d">-		fmt.Println(&quot;subEntry: &quot;, subEntry)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		//fmt.Println(&quot;subEntry: &quot;, subEntry)
+</a> 		if d := subEntry.GetLeaf(); d != nil {
+ 			//TODO
+ 		}
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -36,7 +36,6 @@ func nth_assoc(assoc string, seq int) string {
+</a> 
+ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOmap, extramods []ExtraModule, sbox *simbox.Simbox) error {
+ 	if len(bmach.Domains) != 0 {
+<a href="#h3-0-3" id="h3-0-3" class="d">-
+</a> 		pConf := conf.ProcbuilderConfig()
+ 
+ 		// Check if the bmapi module is present, needed for the exclusion of the bondmachine_main module from the accelerators
+</pre>
+</div>
+</body>
+</html>

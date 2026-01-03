@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reqs to opcodes - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c71f14909fca193dc69c1cb44ca6ad0b29eee3f3.html">c71f14909fca193dc69c1cb44ca6ad0b29eee3f3</a>
+<b>parent</b> <a href="../commit/bc759adade7a29d47d19f1edf0084c615714b2ee.html">bc759adade7a29d47d19f1edf0084c615714b2ee</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 30 Mar 2023 17:18:45 +0200
+
+reqs to opcodes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynop_flopoco.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_adc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_add.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_addf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_addi.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_and.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_chc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_chw.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/op_cil.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/op_cilc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/op_cir.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/procbuilder/op_cirn.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h14">pkg/procbuilder/op_clc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h15">pkg/procbuilder/op_clr.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h16">pkg/procbuilder/op_cpy.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h17">pkg/procbuilder/op_cset.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h18">pkg/procbuilder/op_dec.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h19">pkg/procbuilder/op_div.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h20">pkg/procbuilder/op_divf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h21">pkg/procbuilder/op_dpc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h22">pkg/procbuilder/op_expf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h23">pkg/procbuilder/op_hit.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h24">pkg/procbuilder/op_hlt.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h25">pkg/procbuilder/op_i2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h26">pkg/procbuilder/op_i2rw.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h27">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h28">pkg/procbuilder/op_incc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h29">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h30">pkg/procbuilder/op_jc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h31">pkg/procbuilder/op_je.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h32">pkg/procbuilder/op_jgt0f.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h33">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h34">pkg/procbuilder/op_k2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h35">pkg/procbuilder/op_lfsr82r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h36">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h37">pkg/procbuilder/op_mod.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h38">pkg/procbuilder/op_mulc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h39">pkg/procbuilder/op_mult.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h40">pkg/procbuilder/op_multf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h41">pkg/procbuilder/op_nand.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h42">pkg/procbuilder/op_nop.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h43">pkg/procbuilder/op_nor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h44">pkg/procbuilder/op_not.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h45">pkg/procbuilder/op_or.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h46">pkg/procbuilder/op_q2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h47">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h48">pkg/procbuilder/op_r2o.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h49">pkg/procbuilder/op_r2owa.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h50">pkg/procbuilder/op_r2owaa.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h51">pkg/procbuilder/op_r2q.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h52">pkg/procbuilder/op_r2s.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h53">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h54">pkg/procbuilder/op_r2u.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h55">pkg/procbuilder/op_r2v.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h56">pkg/procbuilder/op_r2vri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h57">pkg/procbuilder/op_ro2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h58">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h59">pkg/procbuilder/op_rsc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h60">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h61">pkg/procbuilder/op_s2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h62">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h63">pkg/procbuilder/op_sbc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h64">pkg/procbuilder/op_sic.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h65">pkg/procbuilder/op_sub.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h66">pkg/procbuilder/op_t2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h67">pkg/procbuilder/op_u2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h68">pkg/procbuilder/op_wrd.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h69">pkg/procbuilder/op_wwr.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h70">pkg/procbuilder/op_xnor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h71">pkg/procbuilder/op_xor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h72">pkg/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>73 files changed, 76 insertions(+), 72 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -141,6 +141,7 @@ type EmuDriver interface {
+</a> 
+ func (c *Config) ProcbuilderConfig() *procbuilder.Config {
+ 	result := new(procbuilder.Config)
+<a href="#h0-0-3" id="h0-0-3" class="i">+	result.ReqRoot = c.ReqRoot
+</a> 	result.Commented_verilog = c.CommentedVerilog
+ 	return result
+ }
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,6 +6,8 @@ import (
+</a> 	&quot;os&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a> )
+ 
+ const (
+<a href="#h1-1" id="h1-1" class="h">@@ -23,6 +25,7 @@ type Conproc struct {
+</a> }
+ 
+ type Config struct {
+<a href="#h1-1-3" id="h1-1-3" class="i">+	*bmreqs.ReqRoot
+</a> 	Debug             bool
+ 	Commented_verilog bool
+ 	Runinfo           *RuntimeInfo
+<a href="#h1-2" id="h1-2" class="h">@@ -372,7 +375,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		if conf.Commented_verilog {
+ 			result += &quot;\n// Start of the component of the \&quot;state machine\&quot; for the opcode &quot; + op.Op_get_name() + &quot;\n\n&quot;
+ 		}
+<a href="#h1-2-3" id="h1-2-3" class="d">-		result += op.Op_instruction_verilog_state_machine(arch, flavor)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		result += op.Op_instruction_verilog_state_machine(arch, conf.ReqRoot, flavor)
+</a> 	}
+ 
+ 	result += &quot;					default : begin\n&quot;
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -69,7 +69,7 @@ func (op FloPoCo) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor st
+</a> 	return result
+ }
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-func (op FloPoCo) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+func (op FloPoCo) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a> b/<a href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -42,7 +42,7 @@ func (op Adc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-func (op Adc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+func (op Adc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a> b/<a href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -36,7 +36,7 @@ func (op Add) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-func (op Add) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+func (op Add) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a> b/<a href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -55,7 +55,7 @@ func (op Addf) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return result
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="d">-func (op Addf) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+func (op Addf) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a> b/<a href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -100,7 +100,7 @@ func (Op Addi) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-func (op Addi) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+func (op Addi) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a> b/<a href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -36,7 +36,7 @@ func (op And) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h7-0-3" id="h7-0-3" class="d">-func (op And) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+func (op And) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a> b/<a href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -122,7 +122,7 @@ func (Op Chc) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return result
+ }
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-func (op Chc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+func (op Chc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a> b/<a href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -119,7 +119,7 @@ func (Op Chw) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return result
+ }
+ 
+<a href="#h9-0-3" id="h9-0-3" class="d">-func (op Chw) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+func (op Chw) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 
+ 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a> b/<a href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -36,7 +36,7 @@ func (op Cil) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h10-0-3" id="h10-0-3" class="d">-func (op Cil) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+func (op Cil) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a> b/<a href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -55,7 +55,7 @@ func (Op Cilc) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h11-0-3" id="h11-0-3" class="d">-func (op Cilc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+func (op Cilc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a> b/<a href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -36,7 +36,7 @@ func (op Cir) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h12-0-3" id="h12-0-3" class="d">-func (op Cir) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h12-0-4" id="h12-0-4" class="i">+func (op Cir) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h13" href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a> b/<a href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -35,7 +35,7 @@ func (op Cirn) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h13-0-3" id="h13-0-3" class="d">-func (op Cirn) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h13-0-4" id="h13-0-4" class="i">+func (op Cirn) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h14" href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a> b/<a href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a></b>
+<a href="#h14-0" id="h14-0" class="h">@@ -50,7 +50,7 @@ func (Op Clc) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h14-0-3" id="h14-0-3" class="d">-func (op Clc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h14-0-4" id="h14-0-4" class="i">+func (op Clc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;					CLC: begin\n&quot;
+ 	result += &quot;						carryflag &lt;= #1 &#39;b0;\n&quot;
+<b>diff --git a/<a id="h15" href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a> b/<a href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a></b>
+<a href="#h15-0" id="h15-0" class="h">@@ -46,7 +46,7 @@ func (Op Clr) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h15-0-3" id="h15-0-3" class="d">-func (op Clr) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h15-0-4" id="h15-0-4" class="i">+func (op Clr) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h16" href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a> b/<a href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a></b>
+<a href="#h16-0" id="h16-0" class="h">@@ -34,7 +34,7 @@ func (op Cpy) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h16-0-3" id="h16-0-3" class="d">-func (op Cpy) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h16-0-4" id="h16-0-4" class="i">+func (op Cpy) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	romWord := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h17" href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a> b/<a href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a></b>
+<a href="#h17-0" id="h17-0" class="h">@@ -50,7 +50,7 @@ func (Op Cset) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h17-0-3" id="h17-0-3" class="d">-func (op Cset) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h17-0-4" id="h17-0-4" class="i">+func (op Cset) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;					CSET: begin\n&quot;
+ 	result += &quot;						carryflag &lt;= #1 &#39;b1;\n&quot;
+<b>diff --git a/<a id="h18" href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a> b/<a href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a></b>
+<a href="#h18-0" id="h18-0" class="h">@@ -47,7 +47,7 @@ func (Op Dec) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h18-0-3" id="h18-0-3" class="d">-func (op Dec) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h18-0-4" id="h18-0-4" class="i">+func (op Dec) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h19" href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a> b/<a href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a></b>
+<a href="#h19-0" id="h19-0" class="h">@@ -36,7 +36,7 @@ func (op Div) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h19-0-3" id="h19-0-3" class="d">-func (op Div) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h19-0-4" id="h19-0-4" class="i">+func (op Div) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h20" href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a> b/<a href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a></b>
+<a href="#h20-0" id="h20-0" class="h">@@ -55,7 +55,7 @@ func (op Divf) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return result
+ }
+ 
+<a href="#h20-0-3" id="h20-0-3" class="d">-func (op Divf) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h20-0-4" id="h20-0-4" class="i">+func (op Divf) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h21" href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a> b/<a href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a></b>
+<a href="#h21-0" id="h21-0" class="h">@@ -39,7 +39,7 @@ func (op Dpc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h21-0-3" id="h21-0-3" class="d">-func (op Dpc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h21-0-4" id="h21-0-4" class="i">+func (op Dpc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	// TODO
+ 	result := &quot;&quot;
+ 	result += &quot;				DPC: begin\n&quot;
+<b>diff --git a/<a id="h22" href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a> b/<a href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a></b>
+<a href="#h22-0" id="h22-0" class="h">@@ -49,7 +49,7 @@ func (Op Expf) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h22-0-3" id="h22-0-3" class="d">-func (op Expf) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h22-0-4" id="h22-0-4" class="i">+func (op Expf) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h23" href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a> b/<a href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a></b>
+<a href="#h23-0" id="h23-0" class="h">@@ -53,7 +53,7 @@ func (Op Hit) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h23-0-3" id="h23-0-3" class="d">-func (op Hit) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h23-0-4" id="h23-0-4" class="i">+func (op Hit) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	bar_num := arch.Shared_num(&quot;barrier&quot;)
+<b>diff --git a/<a id="h24" href="../file/pkg/procbuilder/op_hlt.go.html">pkg/procbuilder/op_hlt.go</a> b/<a href="../file/pkg/procbuilder/op_hlt.go.html">pkg/procbuilder/op_hlt.go</a></b>
+<a href="#h24-0" id="h24-0" class="h">@@ -46,7 +46,7 @@ func (Op Hlt) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h24-0-3" id="h24-0-3" class="d">-func (op Hlt) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h24-0-4" id="h24-0-4" class="i">+func (op Hlt) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;				HLT: begin\n&quot;
+ 	result += &quot;					$display(\&quot;HLT\&quot;);\n&quot;
+<b>diff --git a/<a id="h25" href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a> b/<a href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a></b>
+<a href="#h25-0" id="h25-0" class="h">@@ -90,7 +90,7 @@ func (op I2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h25-0-3" id="h25-0-3" class="d">-func (op I2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h25-0-4" id="h25-0-4" class="i">+func (op I2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	inpbits := arch.Inputs_bits()
+<b>diff --git a/<a id="h26" href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a> b/<a href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a></b>
+<a href="#h26-0" id="h26-0" class="h">@@ -102,7 +102,7 @@ func (op I2rw) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return result
+ }
+ 
+<a href="#h26-0-3" id="h26-0-3" class="d">-func (op I2rw) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h26-0-4" id="h26-0-4" class="i">+func (op I2rw) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	inpbits := arch.Inputs_bits()
+<b>diff --git a/<a id="h27" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h27-0" id="h27-0" class="h">@@ -48,7 +48,7 @@ func (Op Inc) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h27-0-3" id="h27-0-3" class="d">-func (op Inc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h27-0-4" id="h27-0-4" class="i">+func (op Inc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h28" href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a> b/<a href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a></b>
+<a href="#h28-0" id="h28-0" class="h">@@ -55,7 +55,7 @@ func (Op Incc) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h28-0-3" id="h28-0-3" class="d">-func (op Incc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h28-0-4" id="h28-0-4" class="i">+func (op Incc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h29" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h29-0" id="h29-0" class="h">@@ -48,7 +48,7 @@ func (Op J) Op_instruction_verilog_default_state(arch *Arch, flavor string) stri
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h29-0-3" id="h29-0-3" class="d">-func (op J) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h29-0-4" id="h29-0-4" class="i">+func (op J) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h30" href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a> b/<a href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a></b>
+<a href="#h30-0" id="h30-0" class="h">@@ -55,7 +55,7 @@ func (Op Jc) Op_instruction_verilog_default_state(arch *Arch, flavor string) str
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h30-0-3" id="h30-0-3" class="d">-func (op Jc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h30-0-4" id="h30-0-4" class="i">+func (op Jc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h31" href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a> b/<a href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a></b>
+<a href="#h31-0" id="h31-0" class="h">@@ -39,7 +39,7 @@ func (op Je) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string,
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h31-0-3" id="h31-0-3" class="d">-func (op Je) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h31-0-4" id="h31-0-4" class="i">+func (op Je) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	// TODO
+ 	result := &quot;&quot;
+ 	result += &quot;				JE: begin\n&quot;
+<b>diff --git a/<a id="h32" href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a> b/<a href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a></b>
+<a href="#h32-0" id="h32-0" class="h">@@ -39,7 +39,7 @@ func (op Jgt0f) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor stri
+</a> 	return result
+ }
+ 
+<a href="#h32-0-3" id="h32-0-3" class="d">-func (op Jgt0f) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h32-0-4" id="h32-0-4" class="i">+func (op Jgt0f) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+<b>diff --git a/<a id="h33" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h33-0" id="h33-0" class="h">@@ -38,7 +38,7 @@ func (op Jz) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string,
+</a> 	return result
+ }
+ 
+<a href="#h33-0-3" id="h33-0-3" class="d">-func (op Jz) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h33-0-4" id="h33-0-4" class="i">+func (op Jz) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+<b>diff --git a/<a id="h34" href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a> b/<a href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a></b>
+<a href="#h34-0" id="h34-0" class="h">@@ -67,7 +67,7 @@ func (Op K2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h34-0-3" id="h34-0-3" class="d">-func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h34-0-4" id="h34-0-4" class="i">+func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	kSo := Kbd{}
+ 	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+ 	kbdNum := arch.Shared_num(kSo.Shr_get_name())
+<b>diff --git a/<a id="h35" href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a> b/<a href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a></b>
+<a href="#h35-0" id="h35-0" class="h">@@ -53,7 +53,7 @@ func (Op Lfsr82r) Op_instruction_verilog_default_state(arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h35-0-3" id="h35-0-3" class="d">-func (op Lfsr82r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h35-0-4" id="h35-0-4" class="i">+func (op Lfsr82r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	lfsr8_num := arch.Shared_num(&quot;lfsr8&quot;)
+<b>diff --git a/<a id="h36" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h36-0" id="h36-0" class="h">@@ -74,7 +74,7 @@ func (Op M2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) s
+</a> 	return result
+ }
+ 
+<a href="#h36-0-3" id="h36-0-3" class="d">-func (op M2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h36-0-4" id="h36-0-4" class="i">+func (op M2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;					M2R: begin\n&quot;
+ 	result += &quot;						state_read_mem &lt;= #1 1&#39;b1;\n&quot;
+<b>diff --git a/<a id="h37" href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a> b/<a href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a></b>
+<a href="#h37-0" id="h37-0" class="h">@@ -36,7 +36,7 @@ func (op Mod) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h37-0-3" id="h37-0-3" class="d">-func (op Mod) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h37-0-4" id="h37-0-4" class="i">+func (op Mod) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h38" href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a> b/<a href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a></b>
+<a href="#h38-0" id="h38-0" class="h">@@ -42,7 +42,7 @@ func (op Mulc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return result
+ }
+ 
+<a href="#h38-0-3" id="h38-0-3" class="d">-func (op Mulc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h38-0-4" id="h38-0-4" class="i">+func (op Mulc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h39" href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a> b/<a href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a></b>
+<a href="#h39-0" id="h39-0" class="h">@@ -36,7 +36,7 @@ func (op Mult) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h39-0-3" id="h39-0-3" class="d">-func (op Mult) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h39-0-4" id="h39-0-4" class="i">+func (op Mult) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h40" href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a> b/<a href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a></b>
+<a href="#h40-0" id="h40-0" class="h">@@ -54,7 +54,7 @@ func (op Multf) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor stri
+</a> 	return result
+ }
+ 
+<a href="#h40-0-3" id="h40-0-3" class="d">-func (op Multf) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h40-0-4" id="h40-0-4" class="i">+func (op Multf) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h41" href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a> b/<a href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a></b>
+<a href="#h41-0" id="h41-0" class="h">@@ -36,7 +36,7 @@ func (op Nand) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h41-0-3" id="h41-0-3" class="d">-func (op Nand) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h41-0-4" id="h41-0-4" class="i">+func (op Nand) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h42" href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a> b/<a href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a></b>
+<a href="#h42-0" id="h42-0" class="h">@@ -46,7 +46,7 @@ func (Op Nop) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h42-0-3" id="h42-0-3" class="d">-func (op Nop) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h42-0-4" id="h42-0-4" class="i">+func (op Nop) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;					NOP: begin\n&quot;
+ 	result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<b>diff --git a/<a id="h43" href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a> b/<a href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a></b>
+<a href="#h43-0" id="h43-0" class="h">@@ -36,7 +36,7 @@ func (op Nor) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h43-0-3" id="h43-0-3" class="d">-func (op Nor) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h43-0-4" id="h43-0-4" class="i">+func (op Nor) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h44" href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a> b/<a href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a></b>
+<a href="#h44-0" id="h44-0" class="h">@@ -36,7 +36,7 @@ func (op Not) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h44-0-3" id="h44-0-3" class="d">-func (op Not) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h44-0-4" id="h44-0-4" class="i">+func (op Not) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h45" href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a> b/<a href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a></b>
+<a href="#h45-0" id="h45-0" class="h">@@ -36,7 +36,7 @@ func (op Or) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string,
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h45-0-3" id="h45-0-3" class="d">-func (op Or) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h45-0-4" id="h45-0-4" class="i">+func (op Or) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h46" href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a> b/<a href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a></b>
+<a href="#h46-0" id="h46-0" class="h">@@ -67,7 +67,7 @@ func (Op Q2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h46-0-3" id="h46-0-3" class="d">-func (op Q2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h46-0-4" id="h46-0-4" class="i">+func (op Q2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	qSo := Queue{}
+ 	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+ 	queueNum := arch.Shared_num(qSo.Shr_get_name())
+<b>diff --git a/<a id="h47" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h47-0" id="h47-0" class="h">@@ -47,7 +47,7 @@ func (Op R2m) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h47-0-3" id="h47-0-3" class="d">-func (op R2m) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h47-0-4" id="h47-0-4" class="i">+func (op R2m) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	//rom_word := arch.Max_word()
+ 	//opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h48" href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a> b/<a href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a></b>
+<a href="#h48-0" id="h48-0" class="h">@@ -97,7 +97,7 @@ func (op R2o) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h48-0-3" id="h48-0-3" class="d">-func (op R2o) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h48-0-4" id="h48-0-4" class="i">+func (op R2o) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	outbits := arch.Outputs_bits()
+<b>diff --git a/<a id="h49" href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a></b>
+<a href="#h49-0" id="h49-0" class="h">@@ -104,7 +104,7 @@ func (op R2owa) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor stri
+</a> 	return result
+ }
+ 
+<a href="#h49-0-3" id="h49-0-3" class="d">-func (op R2owa) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h49-0-4" id="h49-0-4" class="i">+func (op R2owa) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	outbits := arch.Outputs_bits()
+<b>diff --git a/<a id="h50" href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a></b>
+<a href="#h50-0" id="h50-0" class="h">@@ -104,7 +104,7 @@ func (op R2owaa) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor str
+</a> 	return result
+ }
+ 
+<a href="#h50-0-3" id="h50-0-3" class="d">-func (op R2owaa) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h50-0-4" id="h50-0-4" class="i">+func (op R2owaa) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	outbits := arch.Outputs_bits()
+<b>diff --git a/<a id="h51" href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a> b/<a href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a></b>
+<a href="#h51-0" id="h51-0" class="h">@@ -67,7 +67,7 @@ func (Op R2q) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h51-0-3" id="h51-0-3" class="d">-func (op R2q) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h51-0-4" id="h51-0-4" class="i">+func (op R2q) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	qSo := Queue{}
+ 	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+ 	queueNum := arch.Shared_num(qSo.Shr_get_name())
+<b>diff --git a/<a id="h52" href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a> b/<a href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a></b>
+<a href="#h52-0" id="h52-0" class="h">@@ -71,7 +71,7 @@ func (Op R2s) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return result
+ }
+ 
+<a href="#h52-0-3" id="h52-0-3" class="d">-func (op R2s) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h52-0-4" id="h52-0-4" class="i">+func (op R2s) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 
+ 	result := &quot;&quot;
+ 
+<b>diff --git a/<a id="h53" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h53-0" id="h53-0" class="h">@@ -67,7 +67,7 @@ func (Op R2t) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h53-0-3" id="h53-0-3" class="d">-func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h53-0-4" id="h53-0-4" class="i">+func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	stSo := Stack{}
+ 	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+ 	stackNum := arch.Shared_num(stSo.Shr_get_name())
+<b>diff --git a/<a id="h54" href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a> b/<a href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a></b>
+<a href="#h54-0" id="h54-0" class="h">@@ -67,7 +67,7 @@ func (Op R2u) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h54-0-3" id="h54-0-3" class="d">-func (op R2u) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h54-0-4" id="h54-0-4" class="i">+func (op R2u) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	uSo := Uart{}
+ 	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+ 	uartNum := arch.Shared_num(uSo.Shr_get_name())
+<b>diff --git a/<a id="h55" href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a> b/<a href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a></b>
+<a href="#h55-0" id="h55-0" class="h">@@ -47,7 +47,7 @@ func (Op R2v) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h55-0-3" id="h55-0-3" class="d">-func (op R2v) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h55-0-4" id="h55-0-4" class="i">+func (op R2v) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	//rom_word := arch.Max_word()
+ 	//opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h56" href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a> b/<a href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a></b>
+<a href="#h56-0" id="h56-0" class="h">@@ -40,7 +40,7 @@ func (Op R2vri) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h56-0-3" id="h56-0-3" class="d">-func (op R2vri) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h56-0-4" id="h56-0-4" class="i">+func (op R2vri) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	//rom_word := arch.Max_word()
+ 	//opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h57" href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a> b/<a href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a></b>
+<a href="#h57-0" id="h57-0" class="h">@@ -53,7 +53,7 @@ func (op Ro2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return result
+ }
+ 
+<a href="#h57-0-3" id="h57-0-3" class="d">-func (op Ro2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h57-0-4" id="h57-0-4" class="i">+func (op Ro2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	// TODO Incomplete
+ 	romWord := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+<b>diff --git a/<a id="h58" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h58-0" id="h58-0" class="h">@@ -53,7 +53,7 @@ func (op Ro2rri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor str
+</a> 	return result
+ }
+ 
+<a href="#h58-0-3" id="h58-0-3" class="d">-func (op Ro2rri) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h58-0-4" id="h58-0-4" class="i">+func (op Ro2rri) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	romWord := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h59" href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a> b/<a href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a></b>
+<a href="#h59-0" id="h59-0" class="h">@@ -42,7 +42,7 @@ func (op Rsc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h59-0-3" id="h59-0-3" class="d">-func (op Rsc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h59-0-4" id="h59-0-4" class="i">+func (op Rsc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h60" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h60-0" id="h60-0" class="h">@@ -40,7 +40,7 @@ func (op Rset) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h60-0-3" id="h60-0-3" class="d">-func (op Rset) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h60-0-4" id="h60-0-4" class="i">+func (op Rset) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h61" href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a> b/<a href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a></b>
+<a href="#h61-0" id="h61-0" class="h">@@ -83,7 +83,7 @@ func (Op S2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) s
+</a> 	return result
+ }
+ 
+<a href="#h61-0-3" id="h61-0-3" class="d">-func (op S2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h61-0-4" id="h61-0-4" class="i">+func (op S2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;					S2R: begin\n&quot;
+ 	result += &quot;						state_sh_read_mem &lt;= #1 1&#39;b1;\n&quot;
+<b>diff --git a/<a id="h62" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h62-0" id="h62-0" class="h">@@ -39,7 +39,7 @@ func (op Saj) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h62-0-3" id="h62-0-3" class="d">-func (op Saj) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h62-0-4" id="h62-0-4" class="i">+func (op Saj) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	// TODO
+ 	result := &quot;&quot;
+ 	result += &quot;				SAJ: begin\n&quot;
+<b>diff --git a/<a id="h63" href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a> b/<a href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a></b>
+<a href="#h63-0" id="h63-0" class="h">@@ -42,7 +42,7 @@ func (op Sbc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h63-0-3" id="h63-0-3" class="d">-func (op Sbc) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h63-0-4" id="h63-0-4" class="i">+func (op Sbc) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h64" href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a> b/<a href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a></b>
+<a href="#h64-0" id="h64-0" class="h">@@ -52,7 +52,7 @@ func (op Sic) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h64-0-3" id="h64-0-3" class="d">-func (op Sic) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h64-0-4" id="h64-0-4" class="i">+func (op Sic) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 	inpbits := arch.Inputs_bits()
+<b>diff --git a/<a id="h65" href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a> b/<a href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a></b>
+<a href="#h65-0" id="h65-0" class="h">@@ -35,7 +35,7 @@ func (op Sub) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h65-0-3" id="h65-0-3" class="d">-func (op Sub) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h65-0-4" id="h65-0-4" class="i">+func (op Sub) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h66" href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a> b/<a href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a></b>
+<a href="#h66-0" id="h66-0" class="h">@@ -67,7 +67,7 @@ func (Op T2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h66-0-3" id="h66-0-3" class="d">-func (op T2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h66-0-4" id="h66-0-4" class="i">+func (op T2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	stSo := Stack{}
+ 	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+ 	stackNum := arch.Shared_num(stSo.Shr_get_name())
+<b>diff --git a/<a id="h67" href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a> b/<a href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a></b>
+<a href="#h67-0" id="h67-0" class="h">@@ -67,7 +67,7 @@ func (Op U2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 	return result
+ }
+ 
+<a href="#h67-0-3" id="h67-0-3" class="d">-func (op U2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h67-0-4" id="h67-0-4" class="i">+func (op U2r) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	uSo := Uart{}
+ 	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+ 	uartNum := arch.Shared_num(uSo.Shr_get_name())
+<b>diff --git a/<a id="h68" href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a> b/<a href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a></b>
+<a href="#h68-0" id="h68-0" class="h">@@ -75,7 +75,7 @@ func (op Wrd) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return result
+ }
+ 
+<a href="#h68-0-3" id="h68-0-3" class="d">-func (op Wrd) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h68-0-4" id="h68-0-4" class="i">+func (op Wrd) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	opbits := arch.Opcodes_bits()
+ 	chso := Channel{}
+ 	chanbits := arch.Shared_bits(chso.Shr_get_name())
+<b>diff --git a/<a id="h69" href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a> b/<a href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a></b>
+<a href="#h69-0" id="h69-0" class="h">@@ -124,7 +124,7 @@ func (Op Wwr) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 	return result
+ }
+ 
+<a href="#h69-0-3" id="h69-0-3" class="d">-func (op Wwr) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h69-0-4" id="h69-0-4" class="i">+func (op Wwr) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	opbits := arch.Opcodes_bits()
+ 	chso := Channel{}
+ 	chanbits := arch.Shared_bits(chso.Shr_get_name())
+<b>diff --git a/<a id="h70" href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a> b/<a href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a></b>
+<a href="#h70-0" id="h70-0" class="h">@@ -36,7 +36,7 @@ func (op Xnor) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h70-0-3" id="h70-0-3" class="d">-func (op Xnor) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h70-0-4" id="h70-0-4" class="i">+func (op Xnor) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h71" href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a> b/<a href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a></b>
+<a href="#h71-0" id="h71-0" class="h">@@ -36,7 +36,7 @@ func (op Xor) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h71-0-3" id="h71-0-3" class="d">-func (op Xor) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h71-0-4" id="h71-0-4" class="i">+func (op Xor) Op_instruction_verilog_state_machine(arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<b>diff --git a/<a id="h72" href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a> b/<a href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a></b>
+<a href="#h72-0" id="h72-0" class="h">@@ -14,7 +14,7 @@ type Opcode interface {
+</a> 	Op_instruction_verilog_reset(*Arch, string) string
+ 	Op_instruction_verilog_internal_state(*Arch, string) string
+ 	Op_instruction_verilog_default_state(*Arch, string) string
+<a href="#h72-0-3" id="h72-0-3" class="d">-	Op_instruction_verilog_state_machine(*Arch, string) string
+</a><a href="#h72-0-4" id="h72-0-4" class="i">+	Op_instruction_verilog_state_machine(*Arch, *bmreqs.ReqRoot, string) string
+</a> 	Op_instruction_verilog_footer(*Arch, string) string
+ 	Op_instruction_verilog_extra_modules(*Arch, string) ([]string, []string)
+ 	Op_instruction_verilog_extra_block(*Arch, string, uint8, string, []string) string
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAM and ROM execution complete - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ef96ff1c8403e49a2aac6bef3fe8bd6122f95f28.html">ef96ff1c8403e49a2aac6bef3fe8bd6122f95f28</a>
+<b>parent</b> <a href="../commit/b1d6b5e0023f3916bb40f511e578333752e160e4.html">b1d6b5e0023f3916bb40f511e578333752e160e4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 20 Aug 2023 16:25:09 +0200
+
+RAM and ROM execution complete
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bcof/bcof.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmnumbers/export.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmnumbers/import.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bmreqs/engine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">103</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/ram.go</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>13 files changed, 228 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,6 +17,7 @@ import (
+</a> 	&quot;strings&quot;
+ 	&quot;time&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -26,6 +27,7 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/simbox&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/udpbond&quot;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	&quot;google.golang.org/protobuf/proto&quot;
+</a> )
+ 
+ type string_slice []string
+<a href="#h0-2" id="h0-2" class="h">@@ -49,6 +51,8 @@ var register_size = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n
+</a> 
+ var bondmachine_file = flag.String(&quot;bondmachine-file&quot;, &quot;&quot;, &quot;Filename of the bondmachine&quot;)
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+var bcofInFile = flag.String(&quot;bcof-file&quot;, &quot;&quot;, &quot;Use a BCOF file as input for RAM initialization&quot;)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a> // Verilog processing
+ var create_verilog = flag.Bool(&quot;create-verilog&quot;, false, &quot;Create default verilog files&quot;)
+ var verilog_flavor = flag.String(&quot;verilog-flavor&quot;, &quot;iverilog&quot;, &quot;Choose the type of verilog device. currently supported: iverilog,de10nano.&quot;)
+<a href="#h0-3" id="h0-3" class="h">@@ -236,6 +240,17 @@ func main() {
+</a> 	conf.Dotdetail = uint8(*dot_detail)
+ 	conf.CommentedVerilog = *commentedVerilog
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+	if *bcofInFile != &quot;&quot; {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		conf.BCOFEntry = new(bcof.BCOFEntry)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		bcofBytes, err := os.ReadFile(*bcofInFile)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		if err != nil {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+			panic(&quot;failed to read BCOF file&quot;)
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		}
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		if err := proto.Unmarshal(bcofBytes, conf.BCOFEntry); err != nil {
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			panic(&quot;failed to unmarshal BCOF&quot;)
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		}
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	}
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+
+</a> 	if *hwOptimizations != &quot;&quot; {
+ 		for _, opt := range strings.Split(*hwOptimizations, &quot;,&quot;) {
+ 			if id := procbuilder.HwOptimizationId(opt); id != 0 {
+<b>diff --git a/<a id="h1" href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a> b/<a href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -356,7 +356,7 @@ func main() {
+</a> 				f, err := os.Create(&quot;ram.v&quot;)
+ 				check(err)
+ 				defer f.Close()
+<a href="#h1-0-3" id="h1-0-3" class="d">-				_, err = f.WriteString(myarch.Ram.Write_verilog(mymachine, &quot;p0ram&quot;, *verilog_flavor))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+				_, err = f.WriteString(myarch.Ram.Write_verilog(nil, mymachine, &quot;p0ram&quot;, *verilog_flavor))
+</a> 				check(err)
+ 			}
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -399,7 +399,7 @@ func main() {
+</a> 					f, err := os.Create(*create_verilog_ram)
+ 					check(err)
+ 					defer f.Close()
+<a href="#h1-1-3" id="h1-1-3" class="d">-					_, err = f.WriteString(myarch.Ram.Write_verilog(mymachine, &quot;p0ram&quot;, *verilog_flavor))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+					_, err = f.WriteString(myarch.Ram.Write_verilog(nil, mymachine, &quot;p0ram&quot;, *verilog_flavor))
+</a> 					check(err)
+ 				}
+ 			}
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -619,26 +619,27 @@ outer:
+</a> 	// Getting the registers requirements on the ROM code
+ 	if romCode != &quot;&quot; {
+ 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+<a href="#h2-0-3" id="h2-0-3" class="d">-		if resp.Error != nil {
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-			return nil, resp.Error
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		if resp.Error == nil {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+			regs = strings.Split(resp.Value, &quot;,&quot;)
+</a> 		}
+<a href="#h2-0-8" id="h2-0-8" class="d">-
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-		regs = strings.Split(resp.Value, &quot;,&quot;)
+</a> 	}
+ 
+ 	// Getting the registers requirements on the RAM code, appending to the previous list
+ 	if ramCode != &quot;&quot; {
+ 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+<a href="#h2-0-15" id="h2-0-15" class="d">-		if resp.Error != nil {
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-			return nil, resp.Error
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-		}
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-		for _, reg := range strings.Split(resp.Value, &quot;,&quot;) {
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-			if !stringInSlice(reg, regs) {
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-				regs = append(regs, reg)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+		if resp.Error == nil {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+			for _, reg := range strings.Split(resp.Value, &quot;,&quot;) {
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+				if !stringInSlice(reg, regs) {
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+					regs = append(regs, reg)
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+				}
+</a> 			}
+ 		}
+ 	}
+ 
+<a href="#h2-0-30" id="h2-0-30" class="i">+	if len(regs) == 0 {
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+		return nil, errors.New(&quot;no registers found on ROM/RAM code&quot;)
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	}
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+
+</a> 	// Sorting the registers list (ordering using the compareStrings function)
+ 	sort.Slice(regs, func(i, j int) bool {
+ 		return compareStrings(regs[i], regs[j])
+<b>diff --git a/<a id="h3" href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a> b/<a href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -55,3 +55,19 @@ func (b *BCOFEntry) AddData(data *BCOFData) {
+</a> 	newSubEntry.Pl = bin
+ 	b.Data = append(b.Data, newSubEntry)
+ }
+<a href="#h3-0-3" id="h3-0-3" class="i">+
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+func (b *BCOFEntry) SearchData(s string) *BCOFData {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	for _, subEntry := range b.Data {
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+		fmt.Println(&quot;subEntry: &quot;, subEntry)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+		if d := subEntry.GetLeaf(); d != nil {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+			//TODO
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+		}
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		if d := subEntry.GetBinary(); d != nil {
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+			if d.Signature == s {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+				return d
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+			}
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+		}
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	}
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	return nil
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a> b/<a href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -58,3 +58,24 @@ func (n *BMNumber) ExportBinary(withSize bool) (string, error) {
+</a> 
+ 	return result, nil
+ }
+<a href="#h4-0-3" id="h4-0-3" class="i">+
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+func (n *BMNumber) ExportVerilogBinary() (string, error) {
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	if n == nil || n.number == nil {
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	}
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	result := &quot;&quot;
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	for _, number := range n.number {
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+		dataVal := &quot;00000000&quot; + strconv.FormatUint(uint64(number), 2)
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+		result = dataVal[len(dataVal)-8:] + result
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	}
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	for len(result) &gt; 1 &amp;&amp; result[0] == &#39;0&#39; {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+		result = result[1:]
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	}
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	result = strconv.Itoa(n.bits) + &quot;&#39;b&quot; + result
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	return result, nil
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a> b/<a href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;math&quot;
+ 	&quot;os&quot;
+ 	&quot;regexp&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;slices&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ )
+<a href="#h5-1" id="h5-1" class="h">@@ -23,6 +24,16 @@ func ImportString(input string) (*BMNumber, error) {
+</a> 	return nil, errors.New(&quot;unknown number format &quot; + input)
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="i">+func ImportBytes(input []byte, bits int) (*BMNumber, error) {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	result := new(BMNumber)
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	result.nType = Unsigned{}
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	result.bits = bits
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+	result.number = make([]byte, len(input))
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+	copy(result.number, input)
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+	slices.Reverse(result.number)
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+	return result, nil
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+}
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+
+</a> func ImportUint(input interface{}, optionalBits int) (*BMNumber, error) {
+ 	result := new(BMNumber)
+ 	result.nType = Unsigned{}
+<b>diff --git a/<a id="h6" href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a> b/<a href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -120,7 +120,7 @@ func (rg *ReqRoot) run() {
+</a> 					if reqSet, ok := node.getMap()[req.Name]; ok {
+ 						resp.Value = reqSet.getReqs()
+ 					} else {
+<a href="#h6-0-3" id="h6-0-3" class="d">-						resp.Error = errors.New(&quot;set of requirements not found&quot;)
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+						resp.Error = errors.New(&quot;set of requirements not found&quot; + req.Name)
+</a> 					}
+ 				} else {
+ 					resp.Error = errors.New(&quot;Node decoding failed: &quot; + fmt.Sprint(err))
+<b>diff --git a/<a id="h7" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h7-0-3" id="h7-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#h7-1" id="h7-1" class="h">@@ -59,6 +60,7 @@ type Bond struct {
+</a> type Config struct {
+ 	*bminfo.BMinfo
+ 	*bmreqs.ReqRoot
+<a href="#h7-1-3" id="h7-1-3" class="i">+	*bcof.BCOFEntry
+</a> 	procbuilder.HwOptimizations
+ 	Debug            bool
+ 	Dotdetail        uint8
+<a href="#h7-2" id="h7-2" class="h">@@ -151,6 +153,7 @@ type EmuDriver interface {
+</a> func (c *Config) ProcbuilderConfig() *procbuilder.Config {
+ 	result := new(procbuilder.Config)
+ 	result.ReqRoot = c.ReqRoot
+<a href="#h7-2-3" id="h7-2-3" class="i">+	result.BCOFEntry = c.BCOFEntry
+</a> 	result.HwOptimizations = c.HwOptimizations
+ 	result.Commented_verilog = c.CommentedVerilog
+ 	return result
+<b>diff --git a/<a id="h8" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -37,7 +37,7 @@ func nth_assoc(assoc string, seq int) string {
+</a> func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOmap, extramods []ExtraModule, sbox *simbox.Simbox) error {
+ 	if len(bmach.Domains) != 0 {
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-		pconf := conf.ProcbuilderConfig()
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+		pConf := conf.ProcbuilderConfig()
+</a> 
+ 		// Check if the bmapi module is present, needed for the exclusion of the bondmachine_main module from the accelerators
+ 		var bmapiModuleAXIStream bool
+<a href="#h8-1" id="h8-1" class="h">@@ -59,7 +59,7 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 			ri := new(procbuilder.RuntimeInfo)
+ 			ri.Init()
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-			pconf.Runinfo = ri
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+			pConf.Runinfo = ri
+</a> 			dom := bmach.Domains[dom_id]
+ 
+ 			sharedlist := &quot;&quot;
+<a href="#h8-2" id="h8-2" class="h">@@ -94,7 +94,7 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 				f, err := os.Create(arch_names[&quot;processor&quot;] + &quot;.v&quot;)
+ 				check(err)
+ 				//defer f.Close()
+<a href="#h8-2-3" id="h8-2-3" class="d">-				_, err = f.WriteString(dom.Arch.Conproc.Write_verilog(pconf, &amp;dom.Arch, arch_names[&quot;processor&quot;], flavor))
+</a><a href="#h8-2-4" id="h8-2-4" class="i">+				_, err = f.WriteString(dom.Arch.Conproc.Write_verilog(pConf, &amp;dom.Arch, arch_names[&quot;processor&quot;], flavor))
+</a> 				check(err)
+ 				f.Close()
+ 			}
+<a href="#h8-3" id="h8-3" class="h">@@ -112,7 +112,7 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 					f, err := os.Create(arch_names[&quot;ram&quot;] + &quot;.v&quot;)
+ 					check(err)
+ 					//defer f.Close()
+<a href="#h8-3-3" id="h8-3-3" class="d">-					_, err = f.WriteString(dom.Arch.Ram.Write_verilog(dom, arch_names[&quot;ram&quot;], flavor))
+</a><a href="#h8-3-4" id="h8-3-4" class="i">+					_, err = f.WriteString(dom.Arch.Ram.Write_verilog(pConf, dom, arch_names[&quot;ram&quot;], flavor))
+</a> 					check(err)
+ 					f.Close()
+ 				}
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h9-1" id="h9-1" class="h">@@ -26,6 +27,7 @@ type Conproc struct {
+</a> 
+ type Config struct {
+ 	*bmreqs.ReqRoot
+<a href="#h9-1-3" id="h9-1-3" class="i">+	*bcof.BCOFEntry
+</a> 	HwOptimizations
+ 	Debug             bool
+ 	Commented_verilog bool
+<a href="#h9-2" id="h9-2" class="h">@@ -347,7 +349,18 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	result += &quot;\n&quot;
+ 	result += &quot;	reg [&quot; + strconv.Itoa(regsize-1) + &quot;:0] _ram [0:&quot; + strconv.Itoa((1&lt;&lt;arch.L)-1) + &quot;];		// Internal processor RAM\n&quot;
+ 	result += &quot;\n&quot;
+<a href="#h9-2-3" id="h9-2-3" class="d">-	result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+</a><a href="#h9-2-4" id="h9-2-4" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-2-5" id="h9-2-5" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-2-6" id="h9-2-6" class="i">+		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+</a><a href="#h9-2-7" id="h9-2-7" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-2-8" id="h9-2-8" class="i">+		if arch.L &gt; arch.O {
+</a><a href="#h9-2-9" id="h9-2-9" class="i">+			result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+</a><a href="#h9-2-10" id="h9-2-10" class="i">+		} else {
+</a><a href="#h9-2-11" id="h9-2-11" class="i">+			result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+</a><a href="#h9-2-12" id="h9-2-12" class="i">+		}
+</a><a href="#h9-2-13" id="h9-2-13" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-2-14" id="h9-2-14" class="i">+		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(int(arch.L)-1) + &quot;:0] _pc;		// Program counter\n&quot;
+</a><a href="#h9-2-15" id="h9-2-15" class="i">+	}
+</a> 	result += &quot;\n&quot;
+ 	result += &quot;	// The number of registers are 2^R, two letters and an unserscore as identifier , maximum R=8 and 265 rigisters\n&quot;
+ 
+<a href="#h9-3" id="h9-3" class="h">@@ -401,10 +414,21 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	result += &quot;	begin\n&quot;
+ 	result += &quot;		if(reset_signal)\n&quot;
+ 	result += &quot;		begin\n&quot;
+<a href="#h9-3-3" id="h9-3-3" class="d">-	result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-4" id="h9-3-4" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-3-5" id="h9-3-5" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-3-6" id="h9-3-6" class="i">+		result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-7" id="h9-3-7" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-3-8" id="h9-3-8" class="i">+		if arch.L &gt; arch.O {
+</a><a href="#h9-3-9" id="h9-3-9" class="i">+			result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.L)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-10" id="h9-3-10" class="i">+		} else {
+</a><a href="#h9-3-11" id="h9-3-11" class="i">+			result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-12" id="h9-3-12" class="i">+		}
+</a><a href="#h9-3-13" id="h9-3-13" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-3-14" id="h9-3-14" class="i">+		result += &quot;			_pc &lt;= #1 &quot; + strconv.Itoa(int(arch.L)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-15" id="h9-3-15" class="i">+	}
+</a> 
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h9-3-18" id="h9-3-18" class="d">-		result += &quot;			_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + strconv.Itoa(int(arch.O)) + &quot;&#39;h0;\n&quot;
+</a><a href="#h9-3-19" id="h9-3-19" class="i">+		result += &quot;			_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + strconv.Itoa(int(arch.Rsize)) + &quot;&#39;h0;\n&quot;
+</a> 	}
+ 
+ 	for _, op := range proc.Op {
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -99,7 +99,7 @@ func (op J) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *b
+</a> 		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+ 	} else {
+ 		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(locationBits))+&quot;]&quot;)
+<a href="#h10-0-3" id="h10-0-3" class="d">-		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(locationBits)) + &quot;]);\n&quot;
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -13,26 +13,46 @@ import (
+</a> type Saj struct{}
+ 
+ func (op Saj) Op_get_name() string {
+<a href="#h11-0-3" id="h11-0-3" class="d">-	// TODO
+</a> 	return &quot;saj&quot;
+ }
+ 
+ func (op Saj) Op_get_desc() string {
+<a href="#h11-0-8" id="h11-0-8" class="d">-	// TODO
+</a><a href="#h11-0-9" id="h11-0-9" class="d">-	return &quot;No operation&quot;
+</a><a href="#h11-0-10" id="h11-0-10" class="i">+	return &quot;Change the execution mode and jump to the address specified in the instruction&quot;
+</a> }
+ 
+ func (op Saj) Op_show_assembler(arch *Arch) string {
+<a href="#h11-0-14" id="h11-0-14" class="d">-	// TODO
+</a> 	opbits := arch.Opcodes_bits()
+<a href="#h11-0-16" id="h11-0-16" class="d">-	result := &quot;saj [&quot; + strconv.Itoa(opbits) + &quot;]	// No operation [&quot; + strconv.Itoa(opbits) + &quot;]\n&quot;
+</a><a href="#h11-0-17" id="h11-0-17" class="i">+	result := &quot;&quot;
+</a><a href="#h11-0-18" id="h11-0-18" class="i">+	switch arch.Modes[0] {
+</a><a href="#h11-0-19" id="h11-0-19" class="i">+	case &quot;ha&quot;:
+</a><a href="#h11-0-20" id="h11-0-20" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Change and Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h11-0-21" id="h11-0-21" class="i">+	case &quot;vn&quot;:
+</a><a href="#h11-0-22" id="h11-0-22" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)]	// Change and Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.L)) + &quot;]\n&quot;
+</a><a href="#h11-0-23" id="h11-0-23" class="i">+	case &quot;hy&quot;:
+</a><a href="#h11-0-24" id="h11-0-24" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h11-0-25" id="h11-0-25" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Change and Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h11-0-26" id="h11-0-26" class="i">+		} else {
+</a><a href="#h11-0-27" id="h11-0-27" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)]	// Change and Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.L)) + &quot;]\n&quot;
+</a><a href="#h11-0-28" id="h11-0-28" class="i">+		}
+</a><a href="#h11-0-29" id="h11-0-29" class="i">+	}
+</a> 	return result
+ }
+ 
+ func (op Saj) Op_get_instruction_len(arch *Arch) int {
+<a href="#h11-0-34" id="h11-0-34" class="d">-	// TODO
+</a> 	opbits := arch.Opcodes_bits()
+<a href="#h11-0-36" id="h11-0-36" class="d">-	return opbits
+</a><a href="#h11-0-37" id="h11-0-37" class="i">+	switch arch.Modes[0] {
+</a><a href="#h11-0-38" id="h11-0-38" class="i">+	case &quot;ha&quot;:
+</a><a href="#h11-0-39" id="h11-0-39" class="i">+		return opbits + int(arch.O) // The bits for the opcode + bits for a location
+</a><a href="#h11-0-40" id="h11-0-40" class="i">+	case &quot;vn&quot;:
+</a><a href="#h11-0-41" id="h11-0-41" class="i">+		return opbits + int(arch.L) // The bits for the opcode + bits for a location
+</a><a href="#h11-0-42" id="h11-0-42" class="i">+	case &quot;hy&quot;:
+</a><a href="#h11-0-43" id="h11-0-43" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h11-0-44" id="h11-0-44" class="i">+			return opbits + int(arch.O) // The bits for the opcode + bits for a location
+</a><a href="#h11-0-45" id="h11-0-45" class="i">+		} else {
+</a><a href="#h11-0-46" id="h11-0-46" class="i">+			return opbits + int(arch.L) // The bits for the opcode + bits for a location
+</a><a href="#h11-0-47" id="h11-0-47" class="i">+		}
+</a><a href="#h11-0-48" id="h11-0-48" class="i">+	}
+</a><a href="#h11-0-49" id="h11-0-49" class="i">+	return 0
+</a> }
+ 
+ func (op Saj) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h11-1" id="h11-1" class="h">@@ -44,6 +64,21 @@ func (op Saj) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h11-1-3" id="h11-1-3" class="i">+	locationBits := arch.O
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+
+</a><a href="#h11-1-5" id="h11-1-5" class="i">+	switch arch.Modes[0] {
+</a><a href="#h11-1-6" id="h11-1-6" class="i">+	case &quot;ha&quot;:
+</a><a href="#h11-1-7" id="h11-1-7" class="i">+		locationBits = arch.O
+</a><a href="#h11-1-8" id="h11-1-8" class="i">+	case &quot;vn&quot;:
+</a><a href="#h11-1-9" id="h11-1-9" class="i">+		locationBits = arch.L
+</a><a href="#h11-1-10" id="h11-1-10" class="i">+	case &quot;hy&quot;:
+</a><a href="#h11-1-11" id="h11-1-11" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h11-1-12" id="h11-1-12" class="i">+			locationBits = arch.O
+</a><a href="#h11-1-13" id="h11-1-13" class="i">+		} else {
+</a><a href="#h11-1-14" id="h11-1-14" class="i">+			locationBits = arch.L
+</a><a href="#h11-1-15" id="h11-1-15" class="i">+		}
+</a><a href="#h11-1-16" id="h11-1-16" class="i">+	}
+</a><a href="#h11-1-17" id="h11-1-17" class="i">+
+</a> 	result := &quot;&quot;
+ 	result += &quot;					SAJ: begin\n&quot;
+ 	result += &quot;					if (exec_mode == 1&#39;b0) begin\n&quot;
+<a href="#h11-2" id="h11-2" class="h">@@ -52,12 +87,12 @@ func (op Saj) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;					end else begin\n&quot;
+ 	result += &quot;						exec_mode &lt;= 1&#39;b0;\n&quot;
+ 	result += &quot;					end\n&quot;
+<a href="#h11-2-3" id="h11-2-3" class="d">-	if arch.O == 1 {
+</a><a href="#h11-2-4" id="h11-2-4" class="i">+	if locationBits == 1 {
+</a> 		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;];\n&quot;
+ 		result += &quot;						$display(\&quot;SAJ \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+ 	} else {
+<a href="#h11-2-8" id="h11-2-8" class="d">-		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;];\n&quot;
+</a><a href="#h11-2-9" id="h11-2-9" class="d">-		result += &quot;						$display(\&quot;SAJ \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+</a><a href="#h11-2-10" id="h11-2-10" class="i">+		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(locationBits)) + &quot;];\n&quot;
+</a><a href="#h11-2-11" id="h11-2-11" class="i">+		result += &quot;						$display(\&quot;SAJ \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(locationBits)) + &quot;]);\n&quot;
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<a href="#h11-3" id="h11-3" class="h">@@ -69,18 +104,60 @@ func (op Saj) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op Saj) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h11-3-3" id="h11-3-3" class="d">-	// TODO
+</a> 	opbits := arch.Opcodes_bits()
+ 	rom_word := arch.Max_word()
+<a href="#h11-3-6" id="h11-3-6" class="i">+
+</a><a href="#h11-3-7" id="h11-3-7" class="i">+	locationBits := arch.O
+</a><a href="#h11-3-8" id="h11-3-8" class="i">+
+</a><a href="#h11-3-9" id="h11-3-9" class="i">+	switch arch.Modes[0] {
+</a><a href="#h11-3-10" id="h11-3-10" class="i">+	case &quot;ha&quot;:
+</a><a href="#h11-3-11" id="h11-3-11" class="i">+		locationBits = arch.O
+</a><a href="#h11-3-12" id="h11-3-12" class="i">+	case &quot;vn&quot;:
+</a><a href="#h11-3-13" id="h11-3-13" class="i">+		locationBits = arch.L
+</a><a href="#h11-3-14" id="h11-3-14" class="i">+	case &quot;hy&quot;:
+</a><a href="#h11-3-15" id="h11-3-15" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h11-3-16" id="h11-3-16" class="i">+			locationBits = arch.O
+</a><a href="#h11-3-17" id="h11-3-17" class="i">+		} else {
+</a><a href="#h11-3-18" id="h11-3-18" class="i">+			locationBits = arch.L
+</a><a href="#h11-3-19" id="h11-3-19" class="i">+		}
+</a><a href="#h11-3-20" id="h11-3-20" class="i">+	}
+</a><a href="#h11-3-21" id="h11-3-21" class="i">+
+</a><a href="#h11-3-22" id="h11-3-22" class="i">+	if len(words) != 1 {
+</a><a href="#h11-3-23" id="h11-3-23" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h11-3-24" id="h11-3-24" class="i">+	}
+</a><a href="#h11-3-25" id="h11-3-25" class="i">+
+</a> 	result := &quot;&quot;
+<a href="#h11-3-27" id="h11-3-27" class="d">-	for i := opbits; i &lt; rom_word; i++ {
+</a><a href="#h11-3-28" id="h11-3-28" class="i">+	if partial, err := Process_number(words[0]); err == nil {
+</a><a href="#h11-3-29" id="h11-3-29" class="i">+		result += zeros_prefix(int(locationBits), partial)
+</a><a href="#h11-3-30" id="h11-3-30" class="i">+	} else {
+</a><a href="#h11-3-31" id="h11-3-31" class="i">+		return &quot;&quot;, Prerror{err.Error()}
+</a><a href="#h11-3-32" id="h11-3-32" class="i">+	}
+</a><a href="#h11-3-33" id="h11-3-33" class="i">+
+</a><a href="#h11-3-34" id="h11-3-34" class="i">+	for i := opbits + int(locationBits); i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+<a href="#h11-3-37" id="h11-3-37" class="i">+
+</a> 	return result, nil
+ }
+ 
+ func (op Saj) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h11-3-42" id="h11-3-42" class="d">-	value := get_id(instr[:arch.O])
+</a><a href="#h11-3-43" id="h11-3-43" class="i">+
+</a><a href="#h11-3-44" id="h11-3-44" class="i">+	locationBits := arch.O
+</a><a href="#h11-3-45" id="h11-3-45" class="i">+
+</a><a href="#h11-3-46" id="h11-3-46" class="i">+	switch arch.Modes[0] {
+</a><a href="#h11-3-47" id="h11-3-47" class="i">+	case &quot;ha&quot;:
+</a><a href="#h11-3-48" id="h11-3-48" class="i">+		locationBits = arch.O
+</a><a href="#h11-3-49" id="h11-3-49" class="i">+	case &quot;vn&quot;:
+</a><a href="#h11-3-50" id="h11-3-50" class="i">+		locationBits = arch.L
+</a><a href="#h11-3-51" id="h11-3-51" class="i">+	case &quot;hy&quot;:
+</a><a href="#h11-3-52" id="h11-3-52" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h11-3-53" id="h11-3-53" class="i">+			locationBits = arch.O
+</a><a href="#h11-3-54" id="h11-3-54" class="i">+		} else {
+</a><a href="#h11-3-55" id="h11-3-55" class="i">+			locationBits = arch.L
+</a><a href="#h11-3-56" id="h11-3-56" class="i">+		}
+</a><a href="#h11-3-57" id="h11-3-57" class="i">+	}
+</a><a href="#h11-3-58" id="h11-3-58" class="i">+
+</a><a href="#h11-3-59" id="h11-3-59" class="i">+	value := get_id(instr[:locationBits])
+</a> 	result := strconv.Itoa(value)
+ 	return result, nil
+ }
+<b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/ram.go.html">pkg/procbuilder/ram.go</a> b/<a href="../file/pkg/procbuilder/ram.go.html">pkg/procbuilder/ram.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -2,6 +2,8 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;strconv&quot;
+<a href="#h12-0-3" id="h12-0-3" class="i">+
+</a><a href="#h12-0-4" id="h12-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a> )
+ 
+ // The Ram ,actually not used since the processor only have internal memory
+<a href="#h12-1" id="h12-1" class="h">@@ -9,11 +11,11 @@ type Ram struct {
+</a> 	L uint8 // Number of n-bit memory banks
+ }
+ 
+<a href="#h12-1-3" id="h12-1-3" class="d">-func (ram *Ram) Write_verilog(mach *Machine, ram_module_name string, flavor string) string {
+</a><a href="#h12-1-4" id="h12-1-4" class="i">+// TODO Error handling
+</a><a href="#h12-1-5" id="h12-1-5" class="i">+func (ram *Ram) Write_verilog(conf *Config, mach *Machine, ram_module_name string, flavor string) string {
+</a> 	ram_depth := 1 &lt;&lt; ram.L
+ 
+ 	result := &quot;&quot;
+<a href="#h12-1-9" id="h12-1-9" class="d">-
+</a> 	result += &quot;`timescale 1ns/1ps\n&quot;
+ 	result += &quot;module &quot; + ram_module_name + &quot;(clk, rst, din, dout, addr, wren, en);\n&quot;
+ 	result += &quot;\n&quot;
+<a href="#h12-2" id="h12-2" class="h">@@ -33,6 +35,28 @@ func (ram *Ram) Write_verilog(mach *Machine, ram_module_name string, flavor stri
+</a> 	result += &quot;\n&quot;
+ 	result += &quot;	reg [&quot; + strconv.Itoa(int(mach.Rsize)-1) + &quot;:0] dout_i;\n&quot;
+ 	result += &quot;\n&quot;
+<a href="#h12-2-3" id="h12-2-3" class="i">+	if conf.BCOFEntry != nil {
+</a><a href="#h12-2-4" id="h12-2-4" class="i">+		data := conf.BCOFEntry.SearchData(&quot;cp&quot; + mach.Arch.Tag)
+</a><a href="#h12-2-5" id="h12-2-5" class="i">+
+</a><a href="#h12-2-6" id="h12-2-6" class="i">+		// Compute the register size padded to 8 bit multiples (the BCOF format requires bytes)
+</a><a href="#h12-2-7" id="h12-2-7" class="i">+		expBytes := (int(mach.Rsize) + 7) / 8
+</a><a href="#h12-2-8" id="h12-2-8" class="i">+		expLines := len(data.Payload) / expBytes
+</a><a href="#h12-2-9" id="h12-2-9" class="i">+
+</a><a href="#h12-2-10" id="h12-2-10" class="i">+		buff := make([]byte, expBytes)
+</a><a href="#h12-2-11" id="h12-2-11" class="i">+
+</a><a href="#h12-2-12" id="h12-2-12" class="i">+		result += &quot;	initial begin\n&quot;
+</a><a href="#h12-2-13" id="h12-2-13" class="i">+
+</a><a href="#h12-2-14" id="h12-2-14" class="i">+		for line := 0; line &lt; expLines; line++ {
+</a><a href="#h12-2-15" id="h12-2-15" class="i">+			for b := 0; b &lt; expBytes; b++ {
+</a><a href="#h12-2-16" id="h12-2-16" class="i">+				buff[b] = data.Payload[line*expBytes+b]
+</a><a href="#h12-2-17" id="h12-2-17" class="i">+			}
+</a><a href="#h12-2-18" id="h12-2-18" class="i">+			num, _ := bmnumbers.ImportBytes(buff, int(mach.Rsize))
+</a><a href="#h12-2-19" id="h12-2-19" class="i">+			numV, _ := num.ExportVerilogBinary()
+</a><a href="#h12-2-20" id="h12-2-20" class="i">+			result += &quot;		mem[&quot; + strconv.Itoa(line) + &quot;] &lt;= &quot; + numV + &quot;;\n&quot;
+</a><a href="#h12-2-21" id="h12-2-21" class="i">+		}
+</a><a href="#h12-2-22" id="h12-2-22" class="i">+
+</a><a href="#h12-2-23" id="h12-2-23" class="i">+		result += &quot;	end\n&quot;
+</a><a href="#h12-2-24" id="h12-2-24" class="i">+	}
+</a> 	result += &quot;	// Memory Write Block  \n&quot;
+ 	result += &quot;	// Write Operation we = 1 \n&quot;
+ 	result += &quot;	always @ (posedge clk) \n&quot;
+</pre>
+</div>
+</body>
+</html>

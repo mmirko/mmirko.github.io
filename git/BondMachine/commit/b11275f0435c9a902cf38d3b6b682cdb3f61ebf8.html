@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>float16 - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b11275f0435c9a902cf38d3b6b682cdb3f61ebf8.html">b11275f0435c9a902cf38d3b6b682cdb3f61ebf8</a>
+<b>parent</b> <a href="../commit/4f3c8a78440e2e9751655707f569effef2e14eb7.html">4f3c8a78440e2e9751655707f569effef2e14eb7</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 28 Apr 2023 10:05:59 +0200
+
+float16
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">pkg/procbuilder/files_addf16.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/procbuilder/files_divf16.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/procbuilder/files_multf16.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_multf16.go</a></td><td> | </td><td class="num">283</td><td><span class="i">++++</span><span class="d">---------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/procbuilder/template.go</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 89 insertions(+), 271 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/files_addf16.go.html">pkg/procbuilder/files_addf16.go</a> b/<a href="../file/pkg/procbuilder/files_addf16.go.html">pkg/procbuilder/files_addf16.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,10 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package procbuilder
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+const (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	addf16 = `
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+module {{.ModuleName}} (
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+endmodule
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+`
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+)
+</a><b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/files_divf16.go.html">pkg/procbuilder/files_divf16.go</a> b/<a href="../file/pkg/procbuilder/files_divf16.go.html">pkg/procbuilder/files_divf16.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,10 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package procbuilder
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+const (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	divf16 = `
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+module {{.ModuleName}} (
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+endmodule
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+`
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+)
+</a><b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/files_multf16.go.html">pkg/procbuilder/files_multf16.go</a> b/<a href="../file/pkg/procbuilder/files_multf16.go.html">pkg/procbuilder/files_multf16.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,10 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package procbuilder
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	multf16 = `
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+module {{.ModuleName}} (
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+endmodule
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+`
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a> b/<a href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,9 +1,11 @@
+</a> package procbuilder
+ 
+ import (
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;bytes&quot;
+</a> 	&quot;errors&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h3-0-7" id="h3-0-7" class="i">+	&quot;text/template&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h3-1" id="h3-1" class="h">@@ -255,277 +257,16 @@ func (Op Multf16) Op_instruction_verilog_internal_state(arch *Arch, flavor strin
+</a> }
+ 
+ func (Op Multf16) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+<a href="#h3-1-3" id="h3-1-3" class="d">-	result := &quot;\n\n&quot;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-	result += &quot;//IEEE Floating Point Multiplier (Single Precision)\n&quot;
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-	result += &quot;//Copyright (C) Jonathan P Dawson 2013\n&quot;
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-	result += &quot;//2013-12-12\n&quot;
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-	result += &quot;module multiplier_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-	result += &quot;        input_a,\n&quot;
+</a><a href="#h3-1-10" id="h3-1-10" class="d">-	result += &quot;        input_b,\n&quot;
+</a><a href="#h3-1-11" id="h3-1-11" class="d">-	result += &quot;        input_a_stb,\n&quot;
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-	result += &quot;        input_b_stb,\n&quot;
+</a><a href="#h3-1-13" id="h3-1-13" class="d">-	result += &quot;        output_z_ack,\n&quot;
+</a><a href="#h3-1-14" id="h3-1-14" class="d">-	result += &quot;        clk,\n&quot;
+</a><a href="#h3-1-15" id="h3-1-15" class="d">-	result += &quot;        rst,\n&quot;
+</a><a href="#h3-1-16" id="h3-1-16" class="d">-	result += &quot;        output_z,\n&quot;
+</a><a href="#h3-1-17" id="h3-1-17" class="d">-	result += &quot;        output_z_stb,\n&quot;
+</a><a href="#h3-1-18" id="h3-1-18" class="d">-	result += &quot;        input_a_ack,\n&quot;
+</a><a href="#h3-1-19" id="h3-1-19" class="d">-	result += &quot;        input_b_ack);\n&quot;
+</a><a href="#h3-1-20" id="h3-1-20" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-21" id="h3-1-21" class="d">-	result += &quot;  input     clk;\n&quot;
+</a><a href="#h3-1-22" id="h3-1-22" class="d">-	result += &quot;  input     rst;\n&quot;
+</a><a href="#h3-1-23" id="h3-1-23" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-24" id="h3-1-24" class="d">-	result += &quot;  input     [31:0] input_a;\n&quot;
+</a><a href="#h3-1-25" id="h3-1-25" class="d">-	result += &quot;  input     input_a_stb;\n&quot;
+</a><a href="#h3-1-26" id="h3-1-26" class="d">-	result += &quot;  output    input_a_ack;\n&quot;
+</a><a href="#h3-1-27" id="h3-1-27" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-28" id="h3-1-28" class="d">-	result += &quot;  input     [31:0] input_b;\n&quot;
+</a><a href="#h3-1-29" id="h3-1-29" class="d">-	result += &quot;  input     input_b_stb;\n&quot;
+</a><a href="#h3-1-30" id="h3-1-30" class="d">-	result += &quot;  output    input_b_ack;\n&quot;
+</a><a href="#h3-1-31" id="h3-1-31" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-32" id="h3-1-32" class="d">-	result += &quot;  output    [31:0] output_z;\n&quot;
+</a><a href="#h3-1-33" id="h3-1-33" class="d">-	result += &quot;  output    output_z_stb;\n&quot;
+</a><a href="#h3-1-34" id="h3-1-34" class="d">-	result += &quot;  input     output_z_ack;\n&quot;
+</a><a href="#h3-1-35" id="h3-1-35" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-36" id="h3-1-36" class="d">-	result += &quot;  reg       s_output_z_stb;\n&quot;
+</a><a href="#h3-1-37" id="h3-1-37" class="d">-	result += &quot;  reg       [31:0] s_output_z;\n&quot;
+</a><a href="#h3-1-38" id="h3-1-38" class="d">-	result += &quot;  reg       s_input_a_ack;\n&quot;
+</a><a href="#h3-1-39" id="h3-1-39" class="d">-	result += &quot;  reg       s_input_b_ack;\n&quot;
+</a><a href="#h3-1-40" id="h3-1-40" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-41" id="h3-1-41" class="d">-	result += &quot;  reg       [3:0] state;\n&quot;
+</a><a href="#h3-1-42" id="h3-1-42" class="d">-	result += &quot;  parameter get_a         = 4&#39;d0,\n&quot;
+</a><a href="#h3-1-43" id="h3-1-43" class="d">-	result += &quot;            get_b         = 4&#39;d1,\n&quot;
+</a><a href="#h3-1-44" id="h3-1-44" class="d">-	result += &quot;            unpack        = 4&#39;d2,\n&quot;
+</a><a href="#h3-1-45" id="h3-1-45" class="d">-	result += &quot;            special_cases = 4&#39;d3,\n&quot;
+</a><a href="#h3-1-46" id="h3-1-46" class="d">-	result += &quot;            normalise_a   = 4&#39;d4,\n&quot;
+</a><a href="#h3-1-47" id="h3-1-47" class="d">-	result += &quot;            normalise_b   = 4&#39;d5,\n&quot;
+</a><a href="#h3-1-48" id="h3-1-48" class="d">-	result += &quot;            multiply_0    = 4&#39;d6,\n&quot;
+</a><a href="#h3-1-49" id="h3-1-49" class="d">-	result += &quot;            multiply_1    = 4&#39;d7,\n&quot;
+</a><a href="#h3-1-50" id="h3-1-50" class="d">-	result += &quot;            normalise_1   = 4&#39;d8,\n&quot;
+</a><a href="#h3-1-51" id="h3-1-51" class="d">-	result += &quot;            normalise_2   = 4&#39;d9,\n&quot;
+</a><a href="#h3-1-52" id="h3-1-52" class="d">-	result += &quot;            round         = 4&#39;d10,\n&quot;
+</a><a href="#h3-1-53" id="h3-1-53" class="d">-	result += &quot;            pack          = 4&#39;d11,\n&quot;
+</a><a href="#h3-1-54" id="h3-1-54" class="d">-	result += &quot;            put_z         = 4&#39;d12;\n&quot;
+</a><a href="#h3-1-55" id="h3-1-55" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-56" id="h3-1-56" class="d">-	result += &quot;  reg       [31:0] a, b, z;\n&quot;
+</a><a href="#h3-1-57" id="h3-1-57" class="d">-	result += &quot;  reg       [23:0] a_m, b_m, z_m;\n&quot;
+</a><a href="#h3-1-58" id="h3-1-58" class="d">-	result += &quot;  reg       [9:0] a_e, b_e, z_e;\n&quot;
+</a><a href="#h3-1-59" id="h3-1-59" class="d">-	result += &quot;  reg       a_s, b_s, z_s;\n&quot;
+</a><a href="#h3-1-60" id="h3-1-60" class="d">-	result += &quot;  reg       guard, round_bit, sticky;\n&quot;
+</a><a href="#h3-1-61" id="h3-1-61" class="d">-	result += &quot;  reg       [49:0] product;\n&quot;
+</a><a href="#h3-1-62" id="h3-1-62" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-63" id="h3-1-63" class="d">-	result += &quot;  always @(posedge clk)\n&quot;
+</a><a href="#h3-1-64" id="h3-1-64" class="d">-	result += &quot;  begin\n&quot;
+</a><a href="#h3-1-65" id="h3-1-65" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-66" id="h3-1-66" class="d">-	result += &quot;    case(state)\n&quot;
+</a><a href="#h3-1-67" id="h3-1-67" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-68" id="h3-1-68" class="d">-	result += &quot;      get_a:\n&quot;
+</a><a href="#h3-1-69" id="h3-1-69" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-70" id="h3-1-70" class="d">-	result += &quot;        s_input_a_ack &lt;= 1;\n&quot;
+</a><a href="#h3-1-71" id="h3-1-71" class="d">-	result += &quot;        if (s_input_a_ack &amp;&amp; input_a_stb) begin\n&quot;
+</a><a href="#h3-1-72" id="h3-1-72" class="d">-	result += &quot;          a &lt;= input_a;\n&quot;
+</a><a href="#h3-1-73" id="h3-1-73" class="d">-	result += &quot;          s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h3-1-74" id="h3-1-74" class="d">-	result += &quot;          state &lt;= get_b;\n&quot;
+</a><a href="#h3-1-75" id="h3-1-75" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-76" id="h3-1-76" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-77" id="h3-1-77" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-78" id="h3-1-78" class="d">-	result += &quot;      get_b:\n&quot;
+</a><a href="#h3-1-79" id="h3-1-79" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-80" id="h3-1-80" class="d">-	result += &quot;        s_input_b_ack &lt;= 1;\n&quot;
+</a><a href="#h3-1-81" id="h3-1-81" class="d">-	result += &quot;        if (s_input_b_ack &amp;&amp; input_b_stb) begin\n&quot;
+</a><a href="#h3-1-82" id="h3-1-82" class="d">-	result += &quot;          b &lt;= input_b;\n&quot;
+</a><a href="#h3-1-83" id="h3-1-83" class="d">-	result += &quot;          s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h3-1-84" id="h3-1-84" class="d">-	result += &quot;          state &lt;= unpack;\n&quot;
+</a><a href="#h3-1-85" id="h3-1-85" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-86" id="h3-1-86" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-87" id="h3-1-87" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-88" id="h3-1-88" class="d">-	result += &quot;      unpack:\n&quot;
+</a><a href="#h3-1-89" id="h3-1-89" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-90" id="h3-1-90" class="d">-	result += &quot;        a_m &lt;= a[22 : 0];\n&quot;
+</a><a href="#h3-1-91" id="h3-1-91" class="d">-	result += &quot;        b_m &lt;= b[22 : 0];\n&quot;
+</a><a href="#h3-1-92" id="h3-1-92" class="d">-	result += &quot;        a_e &lt;= a[30 : 23] - 127;\n&quot;
+</a><a href="#h3-1-93" id="h3-1-93" class="d">-	result += &quot;        b_e &lt;= b[30 : 23] - 127;\n&quot;
+</a><a href="#h3-1-94" id="h3-1-94" class="d">-	result += &quot;        a_s &lt;= a[31];\n&quot;
+</a><a href="#h3-1-95" id="h3-1-95" class="d">-	result += &quot;        b_s &lt;= b[31];\n&quot;
+</a><a href="#h3-1-96" id="h3-1-96" class="d">-	result += &quot;        state &lt;= special_cases;\n&quot;
+</a><a href="#h3-1-97" id="h3-1-97" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-98" id="h3-1-98" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-99" id="h3-1-99" class="d">-	result += &quot;      special_cases:\n&quot;
+</a><a href="#h3-1-100" id="h3-1-100" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-101" id="h3-1-101" class="d">-	result += &quot;        //if a is NaN or b is NaN return NaN \n&quot;
+</a><a href="#h3-1-102" id="h3-1-102" class="d">-	result += &quot;        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin\n&quot;
+</a><a href="#h3-1-103" id="h3-1-103" class="d">-	result += &quot;          z[31] &lt;= 1;\n&quot;
+</a><a href="#h3-1-104" id="h3-1-104" class="d">-	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h3-1-105" id="h3-1-105" class="d">-	result += &quot;          z[22] &lt;= 1;\n&quot;
+</a><a href="#h3-1-106" id="h3-1-106" class="d">-	result += &quot;          z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-107" id="h3-1-107" class="d">-	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-108" id="h3-1-108" class="d">-	result += &quot;        //if a is inf return inf\n&quot;
+</a><a href="#h3-1-109" id="h3-1-109" class="d">-	result += &quot;        end else if (a_e == 128) begin\n&quot;
+</a><a href="#h3-1-110" id="h3-1-110" class="d">-	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h3-1-111" id="h3-1-111" class="d">-	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h3-1-112" id="h3-1-112" class="d">-	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-113" id="h3-1-113" class="d">-	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-114" id="h3-1-114" class="d">-	result += &quot;           //if b is zero return NaN\n&quot;
+</a><a href="#h3-1-115" id="h3-1-115" class="d">-	result += &quot;          if ($signed(b_e == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h3-1-116" id="h3-1-116" class="d">-	result += &quot;            z[31] &lt;= 1;\n&quot;
+</a><a href="#h3-1-117" id="h3-1-117" class="d">-	result += &quot;            z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h3-1-118" id="h3-1-118" class="d">-	result += &quot;            z[22] &lt;= 1;\n&quot;
+</a><a href="#h3-1-119" id="h3-1-119" class="d">-	result += &quot;            z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-120" id="h3-1-120" class="d">-	result += &quot;            state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-121" id="h3-1-121" class="d">-	result += &quot;          end\n&quot;
+</a><a href="#h3-1-122" id="h3-1-122" class="d">-	result += &quot;        //if b is inf return inf\n&quot;
+</a><a href="#h3-1-123" id="h3-1-123" class="d">-	result += &quot;        end else if (b_e == 128) begin\n&quot;
+</a><a href="#h3-1-124" id="h3-1-124" class="d">-	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h3-1-125" id="h3-1-125" class="d">-	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h3-1-126" id="h3-1-126" class="d">-	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-127" id="h3-1-127" class="d">-	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-128" id="h3-1-128" class="d">-	result += &quot;        //if a is zero return zero\n&quot;
+</a><a href="#h3-1-129" id="h3-1-129" class="d">-	result += &quot;        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin\n&quot;
+</a><a href="#h3-1-130" id="h3-1-130" class="d">-	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h3-1-131" id="h3-1-131" class="d">-	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h3-1-132" id="h3-1-132" class="d">-	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-133" id="h3-1-133" class="d">-	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-134" id="h3-1-134" class="d">-	result += &quot;        //if b is zero return zero\n&quot;
+</a><a href="#h3-1-135" id="h3-1-135" class="d">-	result += &quot;        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h3-1-136" id="h3-1-136" class="d">-	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h3-1-137" id="h3-1-137" class="d">-	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h3-1-138" id="h3-1-138" class="d">-	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-139" id="h3-1-139" class="d">-	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-140" id="h3-1-140" class="d">-	result += &quot;        end else begin\n&quot;
+</a><a href="#h3-1-141" id="h3-1-141" class="d">-	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h3-1-142" id="h3-1-142" class="d">-	result += &quot;          if ($signed(a_e) == -127) begin\n&quot;
+</a><a href="#h3-1-143" id="h3-1-143" class="d">-	result += &quot;            a_e &lt;= -126;\n&quot;
+</a><a href="#h3-1-144" id="h3-1-144" class="d">-	result += &quot;          end else begin\n&quot;
+</a><a href="#h3-1-145" id="h3-1-145" class="d">-	result += &quot;            a_m[23] &lt;= 1;\n&quot;
+</a><a href="#h3-1-146" id="h3-1-146" class="d">-	result += &quot;          end\n&quot;
+</a><a href="#h3-1-147" id="h3-1-147" class="d">-	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h3-1-148" id="h3-1-148" class="d">-	result += &quot;          if ($signed(b_e) == -127) begin\n&quot;
+</a><a href="#h3-1-149" id="h3-1-149" class="d">-	result += &quot;            b_e &lt;= -126;\n&quot;
+</a><a href="#h3-1-150" id="h3-1-150" class="d">-	result += &quot;          end else begin\n&quot;
+</a><a href="#h3-1-151" id="h3-1-151" class="d">-	result += &quot;            b_m[23] &lt;= 1;\n&quot;
+</a><a href="#h3-1-152" id="h3-1-152" class="d">-	result += &quot;          end\n&quot;
+</a><a href="#h3-1-153" id="h3-1-153" class="d">-	result += &quot;          state &lt;= normalise_a;\n&quot;
+</a><a href="#h3-1-154" id="h3-1-154" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-155" id="h3-1-155" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-156" id="h3-1-156" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-157" id="h3-1-157" class="d">-	result += &quot;      normalise_a:\n&quot;
+</a><a href="#h3-1-158" id="h3-1-158" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-159" id="h3-1-159" class="d">-	result += &quot;        if (a_m[23]) begin\n&quot;
+</a><a href="#h3-1-160" id="h3-1-160" class="d">-	result += &quot;          state &lt;= normalise_b;\n&quot;
+</a><a href="#h3-1-161" id="h3-1-161" class="d">-	result += &quot;        end else begin\n&quot;
+</a><a href="#h3-1-162" id="h3-1-162" class="d">-	result += &quot;          a_m &lt;= a_m &lt;&lt; 1;\n&quot;
+</a><a href="#h3-1-163" id="h3-1-163" class="d">-	result += &quot;          a_e &lt;= a_e - 1;\n&quot;
+</a><a href="#h3-1-164" id="h3-1-164" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-165" id="h3-1-165" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-166" id="h3-1-166" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-167" id="h3-1-167" class="d">-	result += &quot;      normalise_b:\n&quot;
+</a><a href="#h3-1-168" id="h3-1-168" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-169" id="h3-1-169" class="d">-	result += &quot;        if (b_m[23]) begin\n&quot;
+</a><a href="#h3-1-170" id="h3-1-170" class="d">-	result += &quot;          state &lt;= multiply_0;\n&quot;
+</a><a href="#h3-1-171" id="h3-1-171" class="d">-	result += &quot;        end else begin\n&quot;
+</a><a href="#h3-1-172" id="h3-1-172" class="d">-	result += &quot;          b_m &lt;= b_m &lt;&lt; 1;\n&quot;
+</a><a href="#h3-1-173" id="h3-1-173" class="d">-	result += &quot;          b_e &lt;= b_e - 1;\n&quot;
+</a><a href="#h3-1-174" id="h3-1-174" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-175" id="h3-1-175" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-176" id="h3-1-176" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-177" id="h3-1-177" class="d">-	result += &quot;      multiply_0:\n&quot;
+</a><a href="#h3-1-178" id="h3-1-178" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-179" id="h3-1-179" class="d">-	result += &quot;        z_s &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h3-1-180" id="h3-1-180" class="d">-	result += &quot;        z_e &lt;= a_e + b_e + 1;\n&quot;
+</a><a href="#h3-1-181" id="h3-1-181" class="d">-	result += &quot;        product &lt;= a_m * b_m * 4;\n&quot;
+</a><a href="#h3-1-182" id="h3-1-182" class="d">-	result += &quot;        state &lt;= multiply_1;\n&quot;
+</a><a href="#h3-1-183" id="h3-1-183" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-184" id="h3-1-184" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-185" id="h3-1-185" class="d">-	result += &quot;      multiply_1:\n&quot;
+</a><a href="#h3-1-186" id="h3-1-186" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-187" id="h3-1-187" class="d">-	result += &quot;        z_m &lt;= product[49:26];\n&quot;
+</a><a href="#h3-1-188" id="h3-1-188" class="d">-	result += &quot;        guard &lt;= product[25];\n&quot;
+</a><a href="#h3-1-189" id="h3-1-189" class="d">-	result += &quot;        round_bit &lt;= product[24];\n&quot;
+</a><a href="#h3-1-190" id="h3-1-190" class="d">-	result += &quot;        sticky &lt;= (product[23:0] != 0);\n&quot;
+</a><a href="#h3-1-191" id="h3-1-191" class="d">-	result += &quot;        state &lt;= normalise_1;\n&quot;
+</a><a href="#h3-1-192" id="h3-1-192" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-193" id="h3-1-193" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-194" id="h3-1-194" class="d">-	result += &quot;      normalise_1:\n&quot;
+</a><a href="#h3-1-195" id="h3-1-195" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-196" id="h3-1-196" class="d">-	result += &quot;        if (z_m[23] == 0) begin\n&quot;
+</a><a href="#h3-1-197" id="h3-1-197" class="d">-	result += &quot;          z_e &lt;= z_e - 1;\n&quot;
+</a><a href="#h3-1-198" id="h3-1-198" class="d">-	result += &quot;          z_m &lt;= z_m &lt;&lt; 1;\n&quot;
+</a><a href="#h3-1-199" id="h3-1-199" class="d">-	result += &quot;          z_m[0] &lt;= guard;\n&quot;
+</a><a href="#h3-1-200" id="h3-1-200" class="d">-	result += &quot;          guard &lt;= round_bit;\n&quot;
+</a><a href="#h3-1-201" id="h3-1-201" class="d">-	result += &quot;          round_bit &lt;= 0;\n&quot;
+</a><a href="#h3-1-202" id="h3-1-202" class="d">-	result += &quot;        end else begin\n&quot;
+</a><a href="#h3-1-203" id="h3-1-203" class="d">-	result += &quot;          state &lt;= normalise_2;\n&quot;
+</a><a href="#h3-1-204" id="h3-1-204" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-205" id="h3-1-205" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-206" id="h3-1-206" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-207" id="h3-1-207" class="d">-	result += &quot;      normalise_2:\n&quot;
+</a><a href="#h3-1-208" id="h3-1-208" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-209" id="h3-1-209" class="d">-	result += &quot;        if ($signed(z_e) &lt; -126) begin\n&quot;
+</a><a href="#h3-1-210" id="h3-1-210" class="d">-	result += &quot;          z_e &lt;= z_e + 1;\n&quot;
+</a><a href="#h3-1-211" id="h3-1-211" class="d">-	result += &quot;          z_m &lt;= z_m &gt;&gt; 1;\n&quot;
+</a><a href="#h3-1-212" id="h3-1-212" class="d">-	result += &quot;          guard &lt;= z_m[0];\n&quot;
+</a><a href="#h3-1-213" id="h3-1-213" class="d">-	result += &quot;          round_bit &lt;= guard;\n&quot;
+</a><a href="#h3-1-214" id="h3-1-214" class="d">-	result += &quot;          sticky &lt;= sticky | round_bit;\n&quot;
+</a><a href="#h3-1-215" id="h3-1-215" class="d">-	result += &quot;        end else begin\n&quot;
+</a><a href="#h3-1-216" id="h3-1-216" class="d">-	result += &quot;          state &lt;= round;\n&quot;
+</a><a href="#h3-1-217" id="h3-1-217" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-218" id="h3-1-218" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-219" id="h3-1-219" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-220" id="h3-1-220" class="d">-	result += &quot;      round:\n&quot;
+</a><a href="#h3-1-221" id="h3-1-221" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-222" id="h3-1-222" class="d">-	result += &quot;        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin\n&quot;
+</a><a href="#h3-1-223" id="h3-1-223" class="d">-	result += &quot;          z_m &lt;= z_m + 1;\n&quot;
+</a><a href="#h3-1-224" id="h3-1-224" class="d">-	result += &quot;          if (z_m == 24&#39;hffffff) begin\n&quot;
+</a><a href="#h3-1-225" id="h3-1-225" class="d">-	result += &quot;            z_e &lt;=z_e + 1;\n&quot;
+</a><a href="#h3-1-226" id="h3-1-226" class="d">-	result += &quot;          end\n&quot;
+</a><a href="#h3-1-227" id="h3-1-227" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-228" id="h3-1-228" class="d">-	result += &quot;        state &lt;= pack;\n&quot;
+</a><a href="#h3-1-229" id="h3-1-229" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-230" id="h3-1-230" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-231" id="h3-1-231" class="d">-	result += &quot;      pack:\n&quot;
+</a><a href="#h3-1-232" id="h3-1-232" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-233" id="h3-1-233" class="d">-	result += &quot;        z[22 : 0] &lt;= z_m[22:0];\n&quot;
+</a><a href="#h3-1-234" id="h3-1-234" class="d">-	result += &quot;        z[30 : 23] &lt;= z_e[7:0] + 127;\n&quot;
+</a><a href="#h3-1-235" id="h3-1-235" class="d">-	result += &quot;        z[31] &lt;= z_s;\n&quot;
+</a><a href="#h3-1-236" id="h3-1-236" class="d">-	result += &quot;        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin\n&quot;
+</a><a href="#h3-1-237" id="h3-1-237" class="d">-	result += &quot;          z[30 : 23] &lt;= 0;\n&quot;
+</a><a href="#h3-1-238" id="h3-1-238" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-239" id="h3-1-239" class="d">-	result += &quot;        //if overflow occurs, return inf\n&quot;
+</a><a href="#h3-1-240" id="h3-1-240" class="d">-	result += &quot;        if ($signed(z_e) &gt; 127) begin\n&quot;
+</a><a href="#h3-1-241" id="h3-1-241" class="d">-	result += &quot;          z[22 : 0] &lt;= 0;\n&quot;
+</a><a href="#h3-1-242" id="h3-1-242" class="d">-	result += &quot;          z[30 : 23] &lt;= 255;\n&quot;
+</a><a href="#h3-1-243" id="h3-1-243" class="d">-	result += &quot;          z[31] &lt;= z_s;\n&quot;
+</a><a href="#h3-1-244" id="h3-1-244" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-245" id="h3-1-245" class="d">-	result += &quot;        state &lt;= put_z;\n&quot;
+</a><a href="#h3-1-246" id="h3-1-246" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-247" id="h3-1-247" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-248" id="h3-1-248" class="d">-	result += &quot;      put_z:\n&quot;
+</a><a href="#h3-1-249" id="h3-1-249" class="d">-	result += &quot;      begin\n&quot;
+</a><a href="#h3-1-250" id="h3-1-250" class="d">-	result += &quot;        s_output_z_stb &lt;= 1;\n&quot;
+</a><a href="#h3-1-251" id="h3-1-251" class="d">-	result += &quot;        s_output_z &lt;= z;\n&quot;
+</a><a href="#h3-1-252" id="h3-1-252" class="d">-	result += &quot;        if (s_output_z_stb &amp;&amp; output_z_ack) begin\n&quot;
+</a><a href="#h3-1-253" id="h3-1-253" class="d">-	result += &quot;          s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h3-1-254" id="h3-1-254" class="d">-	result += &quot;          state &lt;= get_a;\n&quot;
+</a><a href="#h3-1-255" id="h3-1-255" class="d">-	result += &quot;        end\n&quot;
+</a><a href="#h3-1-256" id="h3-1-256" class="d">-	result += &quot;      end\n&quot;
+</a><a href="#h3-1-257" id="h3-1-257" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-258" id="h3-1-258" class="d">-	result += &quot;    endcase\n&quot;
+</a><a href="#h3-1-259" id="h3-1-259" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-260" id="h3-1-260" class="d">-	result += &quot;    if (rst == 1) begin\n&quot;
+</a><a href="#h3-1-261" id="h3-1-261" class="d">-	result += &quot;      state &lt;= get_a;\n&quot;
+</a><a href="#h3-1-262" id="h3-1-262" class="d">-	result += &quot;      s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h3-1-263" id="h3-1-263" class="d">-	result += &quot;      s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h3-1-264" id="h3-1-264" class="d">-	result += &quot;      s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h3-1-265" id="h3-1-265" class="d">-	result += &quot;    end\n&quot;
+</a><a href="#h3-1-266" id="h3-1-266" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-267" id="h3-1-267" class="d">-	result += &quot;  end\n&quot;
+</a><a href="#h3-1-268" id="h3-1-268" class="d">-	result += &quot;  assign input_a_ack = s_input_a_ack;\n&quot;
+</a><a href="#h3-1-269" id="h3-1-269" class="d">-	result += &quot;  assign input_b_ack = s_input_b_ack;\n&quot;
+</a><a href="#h3-1-270" id="h3-1-270" class="d">-	result += &quot;  assign output_z_stb = s_output_z_stb;\n&quot;
+</a><a href="#h3-1-271" id="h3-1-271" class="d">-	result += &quot;  assign output_z = s_output_z;\n&quot;
+</a><a href="#h3-1-272" id="h3-1-272" class="d">-	result += &quot;\n&quot;
+</a><a href="#h3-1-273" id="h3-1-273" class="d">-	result += &quot;endmodule\n&quot;
+</a><a href="#h3-1-274" id="h3-1-274" class="i">+
+</a><a href="#h3-1-275" id="h3-1-275" class="i">+	tmpl := arch.createBasicTemplateData()
+</a><a href="#h3-1-276" id="h3-1-276" class="i">+	tmpl.ModuleName = &quot;multiplier_&quot; + arch.Tag
+</a><a href="#h3-1-277" id="h3-1-277" class="i">+	var f bytes.Buffer
+</a><a href="#h3-1-278" id="h3-1-278" class="i">+
+</a><a href="#h3-1-279" id="h3-1-279" class="i">+	t, _ := template.New(&quot;multiplier&quot;).Funcs(tmpl.funcmap).Parse(multf16)
+</a><a href="#h3-1-280" id="h3-1-280" class="i">+
+</a><a href="#h3-1-281" id="h3-1-281" class="i">+	t.Execute(&amp;f, *tmpl)
+</a><a href="#h3-1-282" id="h3-1-282" class="i">+
+</a><a href="#h3-1-283" id="h3-1-283" class="i">+	result := f.String()
+</a> 
+ 	return []string{&quot;multiplier&quot;}, []string{result}
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/template.go.html">pkg/procbuilder/template.go</a> b/<a href="../file/pkg/procbuilder/template.go.html">pkg/procbuilder/template.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,47 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package procbuilder
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+import (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;text/template&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+)
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+type templateData struct {
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	// Rsize       int
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+	// Buswidth    string
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	// Inputs      []string
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+	// InputNum    int
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	// InputsBins  []string
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	// Outputs     []string
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	// OutputNum   int
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	// OutputsBins []string
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	// SendSM      stateMachine
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	funcmap template.FuncMap
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	// PackageName string
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	ModuleName string
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	// DataType    string
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+}
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+func (arch *Arch) createBasicTemplateData() *templateData {
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+	result := new(templateData)
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+	// result.Rsize = int(bmach.Rsize)
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	// result.Buswidth = &quot;[&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0]&quot;
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+	funcMap := template.FuncMap{
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+		&quot;inc&quot;: func(i int) int {
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+			return i + 1
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+		},
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+		&quot;dec&quot;: func(i int) int {
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+			return i - 1
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+		},
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+		// &quot;next&quot;: func(i int) int {
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+		// 	if i &lt; result.SendSM.Nums-1 {
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+		// 		return i + 1
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+		// 	} else {
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+		// 		return 0
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+		// 	}
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+		// },
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+		&quot;bits&quot;: func(i int) int {
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+			return Needed_bits(i)
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+		},
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+	}
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+	result.funcmap = funcMap
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+	return result
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

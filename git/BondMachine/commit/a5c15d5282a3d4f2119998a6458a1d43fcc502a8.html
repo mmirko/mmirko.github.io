@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Macro resolver - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a5c15d5282a3d4f2119998a6458a1d43fcc502a8.html">a5c15d5282a3d4f2119998a6458a1d43fcc502a8</a>
+<b>parent</b> <a href="../commit/6d89b08b2b288cd348fa50c5aa04dbbfd6fd99b6.html">6d89b08b2b288cd348fa50c5aa04dbbfd6fd99b6</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  8 Sep 2023 22:58:49 +0200
+
+Macro resolver
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/basm/macroresolver.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/passes.go</a></td><td> | </td><td class="num">42</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>3 files changed, 77 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -118,7 +118,8 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		passFragmentOptimizer1 |
+ 		passMemComposer |
+ 		passSectionCleaner |
+<a href="#h0-0-3" id="h0-0-3" class="d">-		passCallResolver
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		passCallResolver |
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		passMacroResolver
+</a> 
+ 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.dynMatchers = make([]*bmline.BasmLine, 0)
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/macroresolver.go.html">pkg/basm/macroresolver.go</a> b/<a href="../file/pkg/basm/macroresolver.go.html">pkg/basm/macroresolver.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package basm
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import &quot;fmt&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func macroResolver(bi *BasmInstance) error {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	// Loop over the sections
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	for sectName, section := range bi.sections {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			if bi.debug {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+			}
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			body := section.sectionBody
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+			for _, line := range body.Lines {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+				op := line.Operation.GetValue()
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+				if _, ok := bi.macros[op]; ok {
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+					if bi.debug {
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+						fmt.Println(yellow(&quot;\t\t\tMacro: &quot;) + op)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+					}
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+				}
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+			}
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+		} else {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+			if bi.debug {
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+				fmt.Println(yellow(&quot;\t\tSection type not handled: &quot;) + sectName)
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+			}
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	}
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	// Loop over the fragments
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	for fragName, fragment := range bi.fragments {
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		if bi.debug {
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+			fmt.Println(green(&quot;\t\tFragment: &quot;) + fragName)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+		}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+		body := fragment.fragmentBody
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+		for _, line := range body.Lines {
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+			op := line.Operation.GetValue()
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+			if _, ok := bi.macros[op]; ok {
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+				if bi.debug {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+					fmt.Println(yellow(&quot;\t\t\tMacro: &quot;) + op)
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+				}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+			}
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+		}
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	}
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	return nil
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,24 +5,25 @@ import &quot;errors&quot;
+</a> const (
+ 	passTemplateResolver      = uint64(1)
+ 	passMetadataInfer1        = uint64(2)
+<a href="#h2-0-3" id="h2-0-3" class="d">-	passCallResolver          = uint64(4)
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	passDynamicalInstructions = uint64(8)
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	passSymbolTagger1         = uint64(16)
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	passDataSections2Bytes    = uint64(32)
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	passMetadataInfer2        = uint64(64)
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	passFragmentAnalyzer      = uint64(128)
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	passFragmentOptimizer1    = uint64(256)
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	passFragmentPruner        = uint64(512)
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	passFragmentComposer      = uint64(1024)
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	passMetadataInfer3        = uint64(2048)
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	passEntryPoints           = uint64(4096)
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-	passMatcherResolver       = uint64(8192)
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-	passSymbolTagger2         = uint64(16384)
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-	passMemComposer           = uint64(32768)
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	passSectionCleaner        = uint64(65536)
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	passSymbolTagger3         = uint64(131072)
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-	passSymbolsResolver       = uint64(262144)
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-	LAST_PASS                 = uint64(262144)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	passMacroResolver         = uint64(4)
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	passCallResolver          = uint64(8)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	passDynamicalInstructions = uint64(16)
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	passSymbolTagger1         = uint64(32)
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	passDataSections2Bytes    = uint64(64)
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	passMetadataInfer2        = uint64(128)
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	passFragmentAnalyzer      = uint64(256)
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+	passFragmentOptimizer1    = uint64(512)
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	passFragmentPruner        = uint64(1024)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	passFragmentComposer      = uint64(2048)
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	passMetadataInfer3        = uint64(4096)
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	passEntryPoints           = uint64(8192)
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	passMatcherResolver       = uint64(16384)
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	passSymbolTagger2         = uint64(32768)
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+	passMemComposer           = uint64(65536)
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+	passSectionCleaner        = uint64(131072)
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	passSymbolTagger3         = uint64(262144)
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	passSymbolsResolver       = uint64(524288)
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	LAST_PASS                 = uint64(524288)
+</a> )
+ 
+ func getPassFunction() map[uint64]func(*BasmInstance) error {
+<a href="#h2-1" id="h2-1" class="h">@@ -46,6 +47,7 @@ func getPassFunction() map[uint64]func(*BasmInstance) error {
+</a> 		passMemComposer:           memComposer,
+ 		passSectionCleaner:        sectionCleaner,
+ 		passCallResolver:          callResolver,
+<a href="#h2-1-3" id="h2-1-3" class="i">+		passMacroResolver:         macroResolver,
+</a> 	}
+ }
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -70,6 +72,7 @@ func getPassFunctionName() map[uint64]string {
+</a> 		passMemComposer:           &quot;memComposer&quot;,
+ 		passSectionCleaner:        &quot;sectionCleaner&quot;,
+ 		passCallResolver:          &quot;callResolver&quot;,
+<a href="#h2-2-3" id="h2-2-3" class="i">+		passMacroResolver:         &quot;macroResolver&quot;,
+</a> 	}
+ }
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -94,6 +97,7 @@ func IsOptionalPass() map[uint64]bool {
+</a> 		passMemComposer:           false,
+ 		passSectionCleaner:        false,
+ 		passCallResolver:          false,
+<a href="#h2-3-3" id="h2-3-3" class="i">+		passMacroResolver:         false,
+</a> 	}
+ }
+ 
+<a href="#h2-4" id="h2-4" class="h">@@ -121,6 +125,8 @@ func GetPassMnemonic() map[uint64]string {
+</a> 		passFragmentOptimizer1:    &quot;fragmentoptimizer&quot;,
+ 		passMemComposer:           &quot;memcomposer&quot;,
+ 		passSectionCleaner:        &quot;sectioncleaner&quot;,
+<a href="#h2-4-3" id="h2-4-3" class="i">+		passCallResolver:          &quot;callresolver&quot;,
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+		passMacroResolver:         &quot;macroresolver&quot;,
+</a> 	}
+ 
+ }
+</pre>
+</div>
+</body>
+</html>

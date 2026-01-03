@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quantum hardware generation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6bf359a8da6406a8a8092e57ce253ab19d261585.html">6bf359a8da6406a8a8092e57ce253ab19d261585</a>
+<b>parent</b> <a href="../commit/dc94a42571614feb5f9358bd50da60259b3cb0fa.html">dc94a42571614feb5f9358bd50da60259b3cb0fa</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 28 Mar 2024 14:57:50 +0100
+
+Quantum hardware generation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmqsim/files_cppopencl_complex.go</a></td><td> | </td><td class="num">105</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/files_cppopencl_real.go</a></td><td> | </td><td class="num">105</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmqsim/files_cpynqapi_complex.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmqsim/files_cpynqapi_real.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmqsim/files_seqhardcoded_complex.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+</table></pre><pre>5 files changed, 154 insertions(+), 61 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a> b/<a href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,8 +1,8 @@
+</a> package bmqsim
+ 
+ const (
+<a href="#h0-0-3" id="h0-0-3" class="d">-	CppOpenCLComplex = `#include &lt;stdio.h&gt;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#include &lt;pynq_api.h&gt;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	CppOpenCLComplex = `#include &quot;xcl2.hpp&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#include &lt;vector&gt;
+</a> 
+ #define BATCH_SIZE 16
+ #define BM_INPUT {{ mult 2 .MatrixRows }}
+<a href="#h0-1" id="h0-1" class="h">@@ -13,39 +13,86 @@ const (
+</a> #define TOTOUT BATCH_SIZE*BM_OUTPUT
+ 
+ int main() {
+<a href="#h0-1-3" id="h0-1-3" class="d">-        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+        std::string bmFirmwareFile = &quot;firmware.xclbin&quot;;
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-  
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+        // Allocate Memory in Host Memory
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+        auto vector_size_bytes_in = sizeof(float) * TOTIN;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+        auto vector_size_bytes_out = sizeof(float) * TOTOUT;
+</a> 
+<a href="#h0-1-16" id="h0-1-16" class="d">-        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-                d2[i]=0;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_input(TOTIN);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_output(TOTOUT);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+        // Create zero state
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+        for (int i = 0; i &lt; TOTIN ; i++) {
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+                source_input[i] = 0.0;
+</a>         }
+<a href="#h0-1-25" id="h0-1-25" class="d">-  
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-        d1[0]=1.0;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+        source_input[0] = 1.0;
+</a> 
+<a href="#h0-1-29" id="h0-1-29" class="d">-        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d1[{{ $i }}]{{ end }});
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+        // OpenCL context, device, program, kernel 
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+        cl_int err;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+        cl::CommandQueue q;
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+        cl::Context context;
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+        cl::Program program;
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+        
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+        auto devices = xcl::get_xil_devices();
+</a> 
+<a href="#h0-1-38" id="h0-1-38" class="d">-        PYNQ_AXI_DMA dma;
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h0-1-40" id="h0-1-40" class="d">-  
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h0-1-42" id="h0-1-42" class="d">-        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+        // load the BM firmware and return the pointer to file buffer.
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+        auto fileBuf = xcl::read_binary_file(bmFirmwareFile);
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+        cl::Program::Binaries bins{{&quot;{{&quot;}}fileBuf.data(), fileBuf.size(){{&quot;}}&quot;}};
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+        bool valid_device = false;
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+        for (unsigned int i = 0; i &lt; devices.size(); i++) {
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+                auto device = devices[i];
+</a> 
+<a href="#h0-1-50" id="h0-1-50" class="d">-        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h0-1-51" id="h0-1-51" class="d">-        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h0-1-52" id="h0-1-52" class="d">-        
+</a><a href="#h0-1-53" id="h0-1-53" class="d">-        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d2[{{ $i }}]{{ end }});
+</a><a href="#h0-1-54" id="h0-1-54" class="d">-        
+</a><a href="#h0-1-55" id="h0-1-55" class="d">-        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h0-1-56" id="h0-1-56" class="d">-        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h0-1-57" id="h0-1-57" class="d">-        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h0-1-58" id="h0-1-58" class="d">-        
+</a><a href="#h0-1-59" id="h0-1-59" class="d">-        return 0;
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+                // Creating Context and Command Queue for selected Device
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+                OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, &amp;err));
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+                OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &amp;err));
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+                // std::cout &lt;&lt; &quot;Trying to program device[&quot; &lt;&lt; i &lt;&lt; &quot;]: &quot; &lt;&lt; device.getInfo&lt;CL_DEVICE_NAME&gt;() &lt;&lt; std::endl;
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+                program = cl::Program(context, {device}, bins, nullptr, &amp;err);
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+                if (err != CL_SUCCESS) {
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+                        std::cout &lt;&lt; &quot;Failed to program device[&quot; &lt;&lt; i &lt;&lt; &quot;] with xclbin file!\n&quot;;
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+                } else {
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+                        std::cout &lt;&lt; &quot;Device[&quot; &lt;&lt; i &lt;&lt; &quot;]: program successful!\n&quot;;
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+                        valid_device = true;
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+                        break; // we break because we found a valid device
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+                }
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+        }
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+        if (!valid_device) {
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+                std::cout &lt;&lt; &quot;Failed to program any device found, exit!\n&quot;;
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+                exit(EXIT_FAILURE);
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+        }
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+        OCL_CHECK(err, cl::Kernel krnl_bondmachine(program, &quot;krnl_bondmachine_rtl&quot;, &amp;err));
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+        // Allocate Buffer in Global Memory
+</a><a href="#h0-1-82" id="h0-1-82" class="i">+        OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+</a><a href="#h0-1-83" id="h0-1-83" class="i">+        OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+</a><a href="#h0-1-84" id="h0-1-84" class="i">+
+</a><a href="#h0-1-85" id="h0-1-85" class="i">+        // Set the Kernel Arguments
+</a><a href="#h0-1-86" id="h0-1-86" class="i">+        OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+</a><a href="#h0-1-87" id="h0-1-87" class="i">+        OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+</a><a href="#h0-1-88" id="h0-1-88" class="i">+
+</a><a href="#h0-1-89" id="h0-1-89" class="i">+        // Copy input data to device global memory
+</a><a href="#h0-1-90" id="h0-1-90" class="i">+        cl::Event write_event;
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+</a><a href="#h0-1-92" id="h0-1-92" class="i">+
+</a><a href="#h0-1-93" id="h0-1-93" class="i">+        // Launch the Kernel
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+        std::vector&lt;cl::Event&gt; eventVec;
+</a><a href="#h0-1-95" id="h0-1-95" class="i">+        eventVec.push_back(write_event);
+</a><a href="#h0-1-96" id="h0-1-96" class="i">+        OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+</a><a href="#h0-1-97" id="h0-1-97" class="i">+
+</a><a href="#h0-1-98" id="h0-1-98" class="i">+        // wait for all kernels to finish their operations
+</a><a href="#h0-1-99" id="h0-1-99" class="i">+        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-100" id="h0-1-100" class="i">+
+</a><a href="#h0-1-101" id="h0-1-101" class="i">+        // Copy Result from Device Global Memory to Host Local Memory
+</a><a href="#h0-1-102" id="h0-1-102" class="i">+        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+</a><a href="#h0-1-103" id="h0-1-103" class="i">+        OCL_CHECK(err, err = q.finish());
+</a><a href="#h0-1-104" id="h0-1-104" class="i">+
+</a><a href="#h0-1-105" id="h0-1-105" class="i">+        for (int i = 0; i &lt; BM_OUTPUT; i++) {
+</a><a href="#h0-1-106" id="h0-1-106" class="i">+                std::cout &lt;&lt; &quot; Device result = &quot; &lt;&lt; source_output[i] &lt;&lt; std::endl;
+</a><a href="#h0-1-107" id="h0-1-107" class="i">+        }
+</a><a href="#h0-1-108" id="h0-1-108" class="i">+
+</a><a href="#h0-1-109" id="h0-1-109" class="i">+        return 0; 
+</a> }
+ `
+ )
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/files_cppopencl_real.go.html">pkg/bmqsim/files_cppopencl_real.go</a> b/<a href="../file/pkg/bmqsim/files_cppopencl_real.go.html">pkg/bmqsim/files_cppopencl_real.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,8 +1,8 @@
+</a> package bmqsim
+ 
+ const (
+<a href="#h1-0-3" id="h1-0-3" class="d">-	CppOpenCLReal = `#include &lt;stdio.h&gt;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#include &lt;pynq_api.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	CppOpenCLReal = `#include &quot;xcl2.hpp&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#include &lt;vector&gt;
+</a> 
+ #define BATCH_SIZE 16
+ #define BM_INPUT {{ .MatrixRows }}
+<a href="#h1-1" id="h1-1" class="h">@@ -13,39 +13,86 @@ const (
+</a> #define TOTOUT BATCH_SIZE*BM_OUTPUT
+ 
+ int main() {
+<a href="#h1-1-3" id="h1-1-3" class="d">-        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+        std::string bmFirmwareFile = &quot;firmware.xclbin&quot;;
+</a> 
+<a href="#h1-1-6" id="h1-1-6" class="d">-        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-  
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+        // Allocate Memory in Host Memory
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+        auto vector_size_bytes_in = sizeof(float) * TOTIN;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+        auto vector_size_bytes_out = sizeof(float) * TOTOUT;
+</a> 
+<a href="#h1-1-16" id="h1-1-16" class="d">-        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-                d2[i]=0;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_input(TOTIN);
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+        std::vector&lt;float, aligned_allocator&lt;float&gt; &gt; source_output(TOTOUT);
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+        // Create zero state
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+        for (int i = 0; i &lt; TOTIN ; i++) {
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+                source_input[i] = 0.0;
+</a>         }
+<a href="#h1-1-25" id="h1-1-25" class="d">-  
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-        d1[0]=1.0;
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+        source_input[0] = 1.0;
+</a> 
+<a href="#h1-1-29" id="h1-1-29" class="d">-        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d1[{{ $i }}]{{ end }});
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+        // OpenCL context, device, program, kernel 
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+        cl_int err;
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+        cl::CommandQueue q;
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+        cl::Context context;
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+        cl::Program program;
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+        
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+        auto devices = xcl::get_xil_devices();
+</a> 
+<a href="#h1-1-38" id="h1-1-38" class="d">-        PYNQ_AXI_DMA dma;
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h1-1-40" id="h1-1-40" class="d">-  
+</a><a href="#h1-1-41" id="h1-1-41" class="d">-        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h1-1-42" id="h1-1-42" class="d">-        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+        // load the BM firmware and return the pointer to file buffer.
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+        auto fileBuf = xcl::read_binary_file(bmFirmwareFile);
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+        cl::Program::Binaries bins{{&quot;{{&quot;}}fileBuf.data(), fileBuf.size(){{&quot;}}&quot;}};
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+        bool valid_device = false;
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+        for (unsigned float i = 0; i &lt; devices.size(); i++) {
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+                auto device = devices[i];
+</a> 
+<a href="#h1-1-50" id="h1-1-50" class="d">-        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h1-1-51" id="h1-1-51" class="d">-        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h1-1-52" id="h1-1-52" class="d">-        
+</a><a href="#h1-1-53" id="h1-1-53" class="d">-        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d2[{{ $i }}]{{ end }});
+</a><a href="#h1-1-54" id="h1-1-54" class="d">-        
+</a><a href="#h1-1-55" id="h1-1-55" class="d">-        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h1-1-56" id="h1-1-56" class="d">-        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h1-1-57" id="h1-1-57" class="d">-        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h1-1-58" id="h1-1-58" class="d">-        
+</a><a href="#h1-1-59" id="h1-1-59" class="d">-        return 0;
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+                // Creating Context and Command Queue for selected Device
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+                OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, &amp;err));
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+                OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &amp;err));
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+                // std::cout &lt;&lt; &quot;Trying to program device[&quot; &lt;&lt; i &lt;&lt; &quot;]: &quot; &lt;&lt; device.getInfo&lt;CL_DEVICE_NAME&gt;() &lt;&lt; std::endl;
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+                program = cl::Program(context, {device}, bins, nullptr, &amp;err);
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+                if (err != CL_SUCCESS) {
+</a><a href="#h1-1-67" id="h1-1-67" class="i">+                        std::cout &lt;&lt; &quot;Failed to program device[&quot; &lt;&lt; i &lt;&lt; &quot;] with xclbin file!\n&quot;;
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+                } else {
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+                        std::cout &lt;&lt; &quot;Device[&quot; &lt;&lt; i &lt;&lt; &quot;]: program successful!\n&quot;;
+</a><a href="#h1-1-70" id="h1-1-70" class="i">+                        valid_device = true;
+</a><a href="#h1-1-71" id="h1-1-71" class="i">+                        break; // we break because we found a valid device
+</a><a href="#h1-1-72" id="h1-1-72" class="i">+                }
+</a><a href="#h1-1-73" id="h1-1-73" class="i">+        }
+</a><a href="#h1-1-74" id="h1-1-74" class="i">+        if (!valid_device) {
+</a><a href="#h1-1-75" id="h1-1-75" class="i">+                std::cout &lt;&lt; &quot;Failed to program any device found, exit!\n&quot;;
+</a><a href="#h1-1-76" id="h1-1-76" class="i">+                exit(EXIT_FAILURE);
+</a><a href="#h1-1-77" id="h1-1-77" class="i">+        }
+</a><a href="#h1-1-78" id="h1-1-78" class="i">+
+</a><a href="#h1-1-79" id="h1-1-79" class="i">+        OCL_CHECK(err, cl::Kernel krnl_bondmachine(program, &quot;krnl_bondmachine_rtl&quot;, &amp;err));
+</a><a href="#h1-1-80" id="h1-1-80" class="i">+
+</a><a href="#h1-1-81" id="h1-1-81" class="i">+        // Allocate Buffer in Global Memory
+</a><a href="#h1-1-82" id="h1-1-82" class="i">+        OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+</a><a href="#h1-1-83" id="h1-1-83" class="i">+        OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+</a><a href="#h1-1-84" id="h1-1-84" class="i">+
+</a><a href="#h1-1-85" id="h1-1-85" class="i">+        // Set the Kernel Arguments
+</a><a href="#h1-1-86" id="h1-1-86" class="i">+        OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+</a><a href="#h1-1-87" id="h1-1-87" class="i">+        OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+</a><a href="#h1-1-88" id="h1-1-88" class="i">+
+</a><a href="#h1-1-89" id="h1-1-89" class="i">+        // Copy input data to device global memory
+</a><a href="#h1-1-90" id="h1-1-90" class="i">+        cl::Event write_event;
+</a><a href="#h1-1-91" id="h1-1-91" class="i">+        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+</a><a href="#h1-1-92" id="h1-1-92" class="i">+
+</a><a href="#h1-1-93" id="h1-1-93" class="i">+        // Launch the Kernel
+</a><a href="#h1-1-94" id="h1-1-94" class="i">+        std::vector&lt;cl::Event&gt; eventVec;
+</a><a href="#h1-1-95" id="h1-1-95" class="i">+        eventVec.push_back(write_event);
+</a><a href="#h1-1-96" id="h1-1-96" class="i">+        OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+</a><a href="#h1-1-97" id="h1-1-97" class="i">+
+</a><a href="#h1-1-98" id="h1-1-98" class="i">+        // wait for all kernels to finish their operations
+</a><a href="#h1-1-99" id="h1-1-99" class="i">+        OCL_CHECK(err, err = q.finish());
+</a><a href="#h1-1-100" id="h1-1-100" class="i">+
+</a><a href="#h1-1-101" id="h1-1-101" class="i">+        // Copy Result from Device Global Memory to Host Local Memory
+</a><a href="#h1-1-102" id="h1-1-102" class="i">+        OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+</a><a href="#h1-1-103" id="h1-1-103" class="i">+        OCL_CHECK(err, err = q.finish());
+</a><a href="#h1-1-104" id="h1-1-104" class="i">+
+</a><a href="#h1-1-105" id="h1-1-105" class="i">+        for (int i = 0; i &lt; TOTOUT; i++) {
+</a><a href="#h1-1-106" id="h1-1-106" class="i">+                std::cout &lt;&lt; &quot; Device result = &quot; &lt;&lt; source_output[i] &lt;&lt; std::endl;
+</a><a href="#h1-1-107" id="h1-1-107" class="i">+        }
+</a><a href="#h1-1-108" id="h1-1-108" class="i">+
+</a><a href="#h1-1-109" id="h1-1-109" class="i">+        return 0; 
+</a> }
+ `
+ )
+<b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/files_cpynqapi_complex.go.html">pkg/bmqsim/files_cpynqapi_complex.go</a> b/<a href="../file/pkg/bmqsim/files_cpynqapi_complex.go.html">pkg/bmqsim/files_cpynqapi_complex.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -23,7 +23,7 @@ int main() {
+</a>         float * d2=(float*)shared_memory_2.pointer;
+ 
+         for (int i=0;i&lt;TOTIN;i++) {
+<a href="#h2-0-3" id="h2-0-3" class="d">-                d2[i]=0;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+                d1[i]=0;
+</a>         }
+   
+         d1[0]=1.0;
+<b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/files_cpynqapi_real.go.html">pkg/bmqsim/files_cpynqapi_real.go</a> b/<a href="../file/pkg/bmqsim/files_cpynqapi_real.go.html">pkg/bmqsim/files_cpynqapi_real.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -23,7 +23,7 @@ int main() {
+</a>         float * d2=(float*)shared_memory_2.pointer;
+ 
+         for (int i=0;i&lt;TOTIN;i++) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-                d2[i]=0;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+                d1[i]=0;
+</a>         }
+   
+         d1[0]=1.0;
+<b>diff --git a/<a id="h4" href="../file/pkg/bmqsim/files_seqhardcoded_complex.go.html">pkg/bmqsim/files_seqhardcoded_complex.go</a> b/<a href="../file/pkg/bmqsim/files_seqhardcoded_complex.go.html">pkg/bmqsim/files_seqhardcoded_complex.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -16,7 +16,6 @@ mainloop:
+</a> 
+ 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r0, r3
+ 	mov	r6, r0
+<a href="#h4-0-3" id="h4-0-3" class="d">-	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r6, r3
+</a> 	mov	r7, 0f-1
+ 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r7, r5
+ 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r7, r4
+</pre>
+</div>
+</body>
+</html>

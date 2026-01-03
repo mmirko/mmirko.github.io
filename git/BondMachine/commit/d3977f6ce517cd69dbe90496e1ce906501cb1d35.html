@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>data sections resolvers - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d3977f6ce517cd69dbe90496e1ce906501cb1d35.html">d3977f6ce517cd69dbe90496e1ce906501cb1d35</a>
+<b>parent</b> <a href="../commit/3bf99e03f8eb01420faaefd086dede5a2fe2044a.html">3bf99e03f8eb01420faaefd086dede5a2fe2044a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 21 Sep 2023 17:28:34 +0200
+
+data sections resolvers
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/asmparser.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/datasects2bytes.go</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/memcomposer.go</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 73 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a> b/<a href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -272,7 +272,7 @@ func basmParser(bi *BasmInstance, s string, lineNo uint32) error {
+</a> 						newLine := new(bmline.BasmLine)
+ 						newLine.Operation = newElem
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-						if bi.isWithinSection != &quot;&quot; &amp;&amp; bi.sections[bi.isWithinSection].sectionType == sectRomData {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+						if bi.isWithinSection != &quot;&quot; &amp;&amp; (bi.sections[bi.isWithinSection].sectionType == sectRomData || bi.sections[bi.isWithinSection].sectionType == sectRamData) {
+</a> 							if argN &gt; 1 {
+ 								argS := strings.Split(strings.TrimSpace(strings.Join(argS[1:], &quot; &quot;)), &quot; &quot;)
+ 								if len(argS) &gt; 1 {
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a> b/<a href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -70,6 +70,15 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 						line.Elements = newElements
+ 						offset += len(decodedBytes)
+ 					}
+<a href="#h1-0-3" id="h1-0-3" class="i">+				case &quot;sym&quot;:
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+					// The symbol is resolved in the next steps
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+					newElements := make([]*bmline.BasmElement, 1)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+					newArg := new(bmline.BasmElement)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+					newArg.SetValue(dataValue)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+					newElements[0] = newArg
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+					line.Elements = newElements
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+					// the amount of bytes is not known yet, anyway, the symbol will be stored in a single cell so the offset is incremented by 1
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+					offset += 1
+</a> 				case &quot;equ&quot;:
+ 					// TODO: finish this and the other data operators
+ 				default:
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a> b/<a href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -149,7 +149,15 @@ func memComposer(bi *BasmInstance) error {
+</a> 
+ 				// Resolving Symbols for the composed section
+ 				if romData != nil {
+<a href="#h2-0-3" id="h2-0-3" class="d">-					for _, symbol := range romData.sectionBody.Lines {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+					newSection := new(BasmSection)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+					newSection.sectionName = &quot;romdata&quot; + cpNewSectionName
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+					newSection.sectionType = sectRomData
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+					newSection.sectionBody = romData.sectionBody.Copy()
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+					bi.resolveSymbols(newSection, cpNewSectionName)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+					bi.sections[newSection.sectionName] = newSection
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+					cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romdata&quot;, newSection.sectionName)
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+					for _, symbol := range newSection.sectionBody.Lines {
+</a> 						symbolName := symbol.Operation.GetValue()
+ 						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+ 						location, _ := strconv.Atoi(offset)
+<a href="#h2-1" id="h2-1" class="h">@@ -165,6 +173,14 @@ func memComposer(bi *BasmInstance) error {
+</a> 				}
+ 
+ 				if ramData != nil {
+<a href="#h2-1-3" id="h2-1-3" class="i">+					newSection := new(BasmSection)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+					newSection.sectionName = &quot;ramdata&quot; + cpNewSectionName
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+					newSection.sectionType = sectRomData
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+					newSection.sectionBody = ramData.sectionBody.Copy()
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+					bi.resolveSymbols(newSection, cpNewSectionName)
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+					bi.sections[newSection.sectionName] = newSection
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+					cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramdata&quot;, newSection.sectionName)
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+
+</a> 					for _, symbol := range ramData.sectionBody.Lines {
+ 						symbolName := symbol.Operation.GetValue()
+ 						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -271,6 +271,30 @@ func metadataInfer(bi *BasmInstance) error {
+</a> 		}
+ 	}
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	for sectName, section := range bi.sections {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		if section.sectionType == sectRomData || section.sectionType == sectRamData {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+			if bi.debug {
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+			}
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+			// if section.sectionType == sectRomText {
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+			// 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+			// } else {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+			// 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+			// }
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+			body := section.sectionBody
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+			if err := bi.bodyMetadataInfer(body, soShortNames); err != nil {
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+				return err
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+			}
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+		} else {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+			if bi.debug {
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+				fmt.Println(yellow(&quot;\t\tSection type not handled: &quot;) + sectName)
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+			}
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+		}
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	}
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+
+</a> 	for fragName, frag := range bi.fragments {
+ 		if bi.debug {
+ 			fmt.Println(green(&quot;\t\tFragment: &quot;) + fragName)
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -55,6 +55,28 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 				return errors.New(&quot;ramcode section not found: &quot; + ramCodeName)
+ 			}
+ 		}
+<a href="#h4-0-3" id="h4-0-3" class="i">+		romDataName := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		if strings.HasPrefix(romDataName, &quot;romdata&quot;) {
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+			if section, ok := bi.sections[romDataName]; ok {
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+				name := romDataName[7:]
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+				if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+					return err
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+				}
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+			} else {
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+				return errors.New(&quot;romdata section not found: &quot; + romDataName)
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+			}
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+		}
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+		ramDataName := cp.GetMeta(&quot;ramdata&quot;)
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+		if strings.HasPrefix(ramDataName, &quot;ramdata&quot;) {
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+			if section, ok := bi.sections[ramDataName]; ok {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+				name := ramDataName[7:]
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+				if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+					return err
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+				}
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+			} else {
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+				return errors.New(&quot;ramdata section not found: &quot; + ramDataName)
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+			}
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+		}
+</a> 	}
+ 	return nil
+ }
+</pre>
+</div>
+</body>
+</html>

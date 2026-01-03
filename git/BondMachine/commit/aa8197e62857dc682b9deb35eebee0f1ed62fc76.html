@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>New opcode - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aa8197e62857dc682b9deb35eebee0f1ed62fc76.html">aa8197e62857dc682b9deb35eebee0f1ed62fc76</a>
+<b>parent</b> <a href="../commit/2908afca42430f992e60594f84e2371f0f2f7bf9.html">2908afca42430f992e60594f84e2371f0f2f7bf9</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 30 Aug 2024 23:42:35 +0200
+
+New opcode
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">library/fragments/newline.basm</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/fragments/putline.basm</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">library/fragments/readline.basm</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/datasects2bytes.go</a></td><td> | </td><td class="num">45</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bondirect/bondirect.go</a></td><td> | </td><td class="num">56</td><td><span class="i">++++++++</span><span class="d">------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bondirect/bondirect_test_cluster.json</a></td><td> | </td><td class="num">32</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bondirect/bondirect_test_mesh.json</a></td><td> | </td><td class="num">86</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/bondirect/json.go</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/op_cmpr.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h11">pkg/procbuilder/op_cmprlt.go</a></td><td> | </td><td class="num">240</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/op_cmpv.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/procbuilder/op_jcmpa.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h14">pkg/procbuilder/op_jcmpl.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h15">pkg/procbuilder/op_jcmpo.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h16">pkg/procbuilder/op_jcmpria.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h17">pkg/procbuilder/op_jcmprio.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>18 files changed, 438 insertions(+), 148 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -127,13 +127,13 @@ var etherbond_macfile = flag.String(&quot;etherbond-macfile&quot;, &quot;&quot;, &quot;File mapping the b
+</a> 
+ var use_udpbond = flag.Bool(&quot;use-udpbond&quot;, false, &quot;Build including udpbond support&quot;)
+ var udpbond_flavor = flag.String(&quot;udpbond-flavor&quot;, &quot;esp8266&quot;, &quot;Choose the type of network device. currently supported: esp8266.&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="d">-var udpbond_mapfile = flag.String(&quot;udpbond-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the udpbond.&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var bondirectMapfile = flag.String(&quot;udpbond-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the udpbond.&quot;)
+</a> var udpbond_ipfile = flag.String(&quot;udpbond-ipfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine peers to IP addresses.&quot;)
+ var udpbond_netconfig = flag.String(&quot;udpbond-netconfig&quot;, &quot;&quot;, &quot;JSON file containing the network configuration for udpbond&quot;)
+ 
+ var use_bondirect = flag.Bool(&quot;use-bondirect&quot;, false, &quot;Build including bondirect support&quot;)
+ var bondirect_flavor = flag.String(&quot;bondirect-flavor&quot;, &quot;basic&quot;, &quot;Choose the type of bondirect device. currently supported: basic.&quot;)
+<a href="#h0-0-10" id="h0-0-10" class="d">-var bondirect_mesh = flag.String(&quot;bondirect-mesh&quot;, &quot;&quot;, &quot;Bondirect mesh File &quot;)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+var bondirectMesh = flag.String(&quot;bondirect-mesh&quot;, &quot;&quot;, &quot;Bondirect mesh File &quot;)
+</a> var bondirect_mapfile = flag.String(&quot;bondirect-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the bondirect.&quot;)
+ 
+ var usebmapi = flag.Bool(&quot;use-bmapi&quot;, false, &quot;Build a BMAPI interface&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -427,8 +427,8 @@ func main() {
+</a> 				}
+ 
+ 				ethiomap := new(bondmachine.IOmap)
+<a href="#h0-1-3" id="h0-1-3" class="d">-				if *udpbond_mapfile != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-					if mapfile_json, err := os.ReadFile(*udpbond_mapfile); err == nil {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				if *bondirectMapfile != &quot;&quot; {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+					if mapfile_json, err := os.ReadFile(*bondirectMapfile); err == nil {
+</a> 						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+ 							panic(err)
+ 						}
+<a href="#h0-2" id="h0-2" class="h">@@ -494,17 +494,17 @@ func main() {
+</a> 				bdir.Flavor = *bondirect_flavor
+ 
+ 				if *cluster_spec != &quot;&quot; {
+<a href="#h0-2-3" id="h0-2-3" class="d">-					//					if cluster, err := bondirect.UnmarshallCluster(config, *cluster_spec); err != nil {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-					//						panic(err)
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-					//					} else {
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-					///						bdir.Cluster = cluster
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-					//					}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+					if cluster, err := bondirect.UnmarshallCluster(config, *cluster_spec); err != nil {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+						panic(err)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+					} else {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+						bdir.Cluster = cluster
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+					}
+</a> 				} else {
+ 					panic(&quot;A Cluster spec file is needed&quot;)
+ 				}
+ 
+<a href="#h0-2-17" id="h0-2-17" class="d">-				if *bondirect_mesh != &quot;&quot; {
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-					if mesh, err := bondirect.UnmarshallMesh(config, *bondirect_mesh); err != nil {
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+				if *bondirectMesh != &quot;&quot; {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+					if mesh, err := bondirect.UnmarshallMesh(config, *bondirectMesh); err != nil {
+</a> 						panic(err)
+ 					} else {
+ 						bdir.Mesh = mesh
+<a href="#h0-3" id="h0-3" class="h">@@ -513,19 +513,20 @@ func main() {
+</a> 					panic(&quot;A Mesh spec file is needed&quot;)
+ 				}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-				//				ethiomap := new(bondmachine.IOmap)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-				//				if *udpbond_mapfile != &quot;&quot; {
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-				//					if mapfile_json, err := os.ReadFile(*udpbond_mapfile); err == nil {
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-				//						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-				//							panic(err)
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-				//						}
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-				//					} else {
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-				//						panic(err)
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-				//					}
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-				//
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-				//				} else {
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-				//					panic(errors.New(&quot;Udpbond Mapfile needed&quot;))
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-				//				}
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+				bmdirmap := new(bondmachine.IOmap)
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+				if *bondirectMapfile != &quot;&quot; {
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+					if mapfileJSON, err := os.ReadFile(*bondirectMapfile); err == nil {
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+						if err := json.Unmarshal([]byte(mapfileJSON), bmdirmap); err != nil {
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+							panic(err)
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+						}
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+					} else {
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+						panic(err)
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+					}
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+				} else {
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+					panic(errors.New(&quot;bondirect mapfile needed&quot;))
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+				}
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+
+</a> 				//
+ 				//				udpb.PeerID = uint32(*peer_id)
+ 				//				if ipst, ok := macmap.Assoc[&quot;peer_&quot;+strconv.Itoa(*peer_id)]; ok {
+<b>diff --git a/<a id="h1" href="../file/library/fragments/newline.basm.html">library/fragments/newline.basm</a> b/<a href="../file/library/fragments/newline.basm.html">library/fragments/newline.basm</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,17 +1,38 @@
+</a> ; Ths function go to a new line
+<a href="#h1-0-1" id="h1-0-1" class="d">-; r0: x position within the screen (video textual memory vtm0)
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+; r0: pointer to the memory start (0 for vtm0) 
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+; r2: x position within the memory (video textual memory vtm0 or similar)
+</a> %fragment newline default_out:vtm0 default_height:16 default_width:16
+<a href="#h1-0-5" id="h1-0-5" class="d">-        nop
+</a>         mov     r1, {{ .Params.height }}
+         dec     r1
+<a href="#h1-0-8" id="h1-0-8" class="d">-        mov     r2, {{ .Params.width }}
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-        mult    r1, r2 ; this is the start cell of the last line
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-        jlt     r0, r1, dontscroll
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+        mov     r3, {{ .Params.width }}
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+        mult    r1, r3 ; this is the start cell of the last line
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+        mov     r3, r2
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+        sub     r3, r0 ; this is the current cell (offset from the start)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+        cmprlt  r3, r1 ; if the current cell is less than the start of the last line don&#39;t scroll
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+        jcmp    dontscroll ; at this point r3 is the offset from the start of the memory, r1 is the current cell (no offset)
+</a> scroll:
+ 
+ dontscroll:
+<a href="#h1-0-20" id="h1-0-20" class="d">-        nop
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-;        j putchar
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+        ; find out the next line position
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+        mov     r1, 0
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+        mov     r4, {{ .Params.width }}
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+findnextline:
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+        inc     r1
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+        mov     r5, r1
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+        mult    r5, r4
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+        cmprlt  r5, r3
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+        jcmp    findnextline
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+        mov     r1, 0x20
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+fillblank:
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+        inc     r3
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+        cmpr    r5, r3
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+        jcmp    end
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+        mov     r6, r3
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+        add     r6, r0
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+        mov     {{ .Params.out }}:[r6], r1
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+        j       fillblank
+</a> end:
+<a href="#h1-0-41" id="h1-0-41" class="d">-        nop
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+        inc     r6
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+        mov     r2, r6
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+        mov     r4, r3
+</a> %endfragment
+<b>diff --git a/<a id="h2" href="../file/library/fragments/putline.basm.html">library/fragments/putline.basm</a> b/<a href="../file/library/fragments/putline.basm.html">library/fragments/putline.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -9,6 +9,7 @@ putchar:
+</a>         mov     {{ .Params.out }}:[r2], r1
+         inc     r0
+         inc     r2
+<a href="#h2-0-3" id="h2-0-3" class="i">+        inc     r4
+</a>         j putchar
+ end:
+         nop
+<b>diff --git a/<a id="h3" href="../file/library/fragments/readline.basm.html">library/fragments/readline.basm</a> b/<a href="../file/library/fragments/readline.basm.html">library/fragments/readline.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,14 +1,16 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="d">-; Ths reads a string from the keyboard the is supposed to be connected to i0
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+; This reads a string from the keyboard the is supposed to be connected to kbd
+</a> ; r0 pointer to the buffer beginning (es: mov r0, ram:buff)
+ ; r2: pointer to the start of the memory where the string will be stored, it will be updated and it will point to the end
+<a href="#h3-0-4" id="h3-0-4" class="d">-%fragment readline default_out:vtm0
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+%fragment readline default_out:vtm0 default_kbd:i0 default_feedout:vtm0 default_feedreg:r4
+</a> 	rsets8	r3, 13
+ getchar:
+<a href="#h3-0-8" id="h3-0-8" class="d">-	i2rw	r1, i0
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	i2rw	r1, {{ .Params.kbd }}
+</a> 	cmpr	r1, r3
+ 	jcmp	end
+         mov     {{ .Params.out }}:[r2], r1
+ 	mov	ram:[r0], r1
+<a href="#h3-0-14" id="h3-0-14" class="i">+	mov	{{ .Params.feedout }}:[{{ .Params.feedreg }}], r1
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	inc	{{ .Params.feedreg }}
+</a>         inc     r0
+         inc     r2
+         j getchar
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a> b/<a href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;regexp&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h4-1" id="h4-1" class="h">@@ -57,8 +58,8 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 				dataValue := line.Elements[1].GetValue()
+ 				line.Operation.BasmMeta = line.Operation.BasmMeta.SetMeta(&quot;offset&quot;, fmt.Sprintf(&quot;%d&quot;, offset))
+ 
+<a href="#h4-1-3" id="h4-1-3" class="d">-				switch dataOperator {
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-				case &quot;db&quot;:
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+				re := regexp.MustCompile(&quot;^db$&quot;)
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+				if re.MatchString(dataOperator) {
+</a> 					if decodedBytes, err := dbDataConverter(dataValue); err != nil {
+ 						return err
+ 					} else {
+<a href="#h4-2" id="h4-2" class="h">@@ -71,7 +72,32 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 						line.Elements = newElements
+ 						offset += len(decodedBytes)
+ 					}
+<a href="#h4-2-3" id="h4-2-3" class="d">-				case &quot;dd&quot;:
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+					continue
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+				}
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+				re = regexp.MustCompile(&quot;^(?P&lt;num&gt;[0-9]+):db$&quot;)
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+				if re.MatchString(dataOperator) {
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+					if decodedBytes, err := dbDataConverter(dataValue); err != nil {
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+						return err
+</a><a href="#h4-2-11" id="h4-2-11" class="i">+					} else {
+</a><a href="#h4-2-12" id="h4-2-12" class="i">+						numS := re.ReplaceAllString(dataOperator, &quot;${num}&quot;)
+</a><a href="#h4-2-13" id="h4-2-13" class="i">+						num, _ := strconv.Atoi(numS)
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+						decoded := len(decodedBytes)
+</a><a href="#h4-2-15" id="h4-2-15" class="i">+						newElements := make([]*bmline.BasmElement, num*decoded)
+</a><a href="#h4-2-16" id="h4-2-16" class="i">+						for i, obj := range decodedBytes {
+</a><a href="#h4-2-17" id="h4-2-17" class="i">+							for j := 0; j &lt; num; j++ {
+</a><a href="#h4-2-18" id="h4-2-18" class="i">+								newArg := new(bmline.BasmElement)
+</a><a href="#h4-2-19" id="h4-2-19" class="i">+								newArg.SetValue(obj)
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+								newElements[j*decoded+i] = newArg
+</a><a href="#h4-2-21" id="h4-2-21" class="i">+							}
+</a><a href="#h4-2-22" id="h4-2-22" class="i">+						}
+</a><a href="#h4-2-23" id="h4-2-23" class="i">+						line.Elements = newElements
+</a><a href="#h4-2-24" id="h4-2-24" class="i">+						offset += num * len(decodedBytes)
+</a><a href="#h4-2-25" id="h4-2-25" class="i">+					}
+</a><a href="#h4-2-26" id="h4-2-26" class="i">+					continue
+</a><a href="#h4-2-27" id="h4-2-27" class="i">+				}
+</a><a href="#h4-2-28" id="h4-2-28" class="i">+				re = regexp.MustCompile(&quot;^dd$&quot;)
+</a><a href="#h4-2-29" id="h4-2-29" class="i">+				if re.MatchString(dataOperator) {
+</a> 					if decodedBytes, err := dbDataConverter(dataValue); err != nil {
+ 						return err
+ 					} else {
+<a href="#h4-3" id="h4-3" class="h">@@ -95,7 +121,10 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 						line.Elements = newElements
+ 						offset += len(newElements)
+ 					}
+<a href="#h4-3-3" id="h4-3-3" class="d">-				case &quot;sym&quot;:
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+					continue
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+				}
+</a><a href="#h4-3-6" id="h4-3-6" class="i">+				re = regexp.MustCompile(&quot;^sym$&quot;)
+</a><a href="#h4-3-7" id="h4-3-7" class="i">+				if re.MatchString(dataOperator) {
+</a> 					// The symbol is resolved in the next steps
+ 					newElements := make([]*bmline.BasmElement, 1)
+ 					newArg := new(bmline.BasmElement)
+<a href="#h4-4" id="h4-4" class="h">@@ -104,11 +133,11 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 					line.Elements = newElements
+ 					// the amount of bytes is not known yet, anyway, the symbol will be stored in a single cell so the offset is incremented by 1
+ 					offset += 1
+<a href="#h4-4-3" id="h4-4-3" class="d">-				case &quot;equ&quot;:
+</a><a href="#h4-4-4" id="h4-4-4" class="d">-					// TODO: finish this and the other data operators
+</a><a href="#h4-4-5" id="h4-4-5" class="d">-				default:
+</a><a href="#h4-4-6" id="h4-4-6" class="d">-					return errors.New(&quot;Unknown data operator &quot; + dataOperator)
+</a><a href="#h4-4-7" id="h4-4-7" class="i">+					continue
+</a> 				}
+<a href="#h4-4-9" id="h4-4-9" class="i">+				//	case &quot;equ&quot;:
+</a><a href="#h4-4-10" id="h4-4-10" class="i">+				// TODO: finish this and the other data operators
+</a><a href="#h4-4-11" id="h4-4-11" class="i">+				return errors.New(&quot;Unknown data operator &quot; + dataOperator)
+</a> 			}
+ 
+ 			if section.sectionType == sectRomData {
+<b>diff --git a/<a id="h5" href="../file/pkg/bondirect/bondirect.go.html">pkg/bondirect/bondirect.go</a> b/<a href="../file/pkg/bondirect/bondirect.go.html">pkg/bondirect/bondirect.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,49 +1,11 @@
+</a> package bondirect
+ 
+<a href="#h5-0-2" id="h5-0-2" class="d">-import ()
+</a><a href="#h5-0-3" id="h5-0-3" class="d">-
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-const (
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-	ETHERTYPE = 0x8888
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-)
+</a><a href="#h5-0-7" id="h5-0-7" class="d">-
+</a><a href="#h5-0-8" id="h5-0-8" class="d">-const (
+</a><a href="#h5-0-9" id="h5-0-9" class="d">-	ADV_CLU_FR = 0 + iota
+</a><a href="#h5-0-10" id="h5-0-10" class="d">-	ADV_CH_FR
+</a><a href="#h5-0-11" id="h5-0-11" class="d">-	ADV_IN_FR
+</a><a href="#h5-0-12" id="h5-0-12" class="d">-	ADV_OUT_FR
+</a><a href="#h5-0-13" id="h5-0-13" class="d">-	IO_TR_FR
+</a><a href="#h5-0-14" id="h5-0-14" class="d">-	ACK_FR
+</a><a href="#h5-0-15" id="h5-0-15" class="d">-)
+</a><a href="#h5-0-16" id="h5-0-16" class="d">-
+</a><a href="#h5-0-17" id="h5-0-17" class="d">-const (
+</a><a href="#h5-0-18" id="h5-0-18" class="d">-	ADV_CLU_CM = 0x01
+</a><a href="#h5-0-19" id="h5-0-19" class="d">-	ADV_CH_CM  = 0x02
+</a><a href="#h5-0-20" id="h5-0-20" class="d">-	ADV_IN_CM  = 0x03
+</a><a href="#h5-0-21" id="h5-0-21" class="d">-	ADV_OUT_CM = 0x04
+</a><a href="#h5-0-22" id="h5-0-22" class="d">-	IO_TR_CM   = 0x05
+</a><a href="#h5-0-23" id="h5-0-23" class="d">-	ACK_CM     = 0xff
+</a><a href="#h5-0-24" id="h5-0-24" class="d">-)
+</a><a href="#h5-0-25" id="h5-0-25" class="d">-
+</a><a href="#h5-0-26" id="h5-0-26" class="d">-const (
+</a><a href="#h5-0-27" id="h5-0-27" class="d">-	TRANSNEW = uint8(0) + iota
+</a><a href="#h5-0-28" id="h5-0-28" class="d">-	TRANSDONE
+</a><a href="#h5-0-29" id="h5-0-29" class="d">-)
+</a><a href="#h5-0-30" id="h5-0-30" class="d">-
+</a> // Config struct
+<a href="#h5-0-32" id="h5-0-32" class="d">-
+</a> type Config struct {
+<a href="#h5-0-34" id="h5-0-34" class="d">-	Rsize           uint8
+</a><a href="#h5-0-35" id="h5-0-35" class="d">-	Debug           bool
+</a><a href="#h5-0-36" id="h5-0-36" class="d">-	Done            chan bool
+</a><a href="#h5-0-37" id="h5-0-37" class="d">-	kill_sender     chan bool
+</a><a href="#h5-0-38" id="h5-0-38" class="d">-	kill_receiver   chan bool
+</a><a href="#h5-0-39" id="h5-0-39" class="d">-	kill_advertiser chan bool
+</a><a href="#h5-0-40" id="h5-0-40" class="d">-	frame_send_chan chan string
+</a><a href="#h5-0-41" id="h5-0-41" class="d">-	tag_chan        chan uint32
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+	Rsize uint8
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+	Debug bool
+</a> }
+ 
+<a href="#h5-0-46" id="h5-0-46" class="d">-// Cluster description
+</a><a href="#h5-0-47" id="h5-0-47" class="d">-
+</a> type Peer struct {
+ 	PeerId   uint32
+ 	Channels []uint32
+<a href="#h5-1" id="h5-1" class="h">@@ -58,13 +20,13 @@ type Cluster struct {
+</a> 
+ // Mesh description
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-type Edgeslist []string
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+type EdgesList []string
+</a> 
+<a href="#h5-1-6" id="h5-1-6" class="d">-type Nodesparams struct {
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+type NodesParams struct {
+</a> 	Data map[string]string
+ }
+ 
+<a href="#h5-1-11" id="h5-1-11" class="d">-type Edgesparams struct {
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+type EdgesParams struct {
+</a> 	From  string
+ 	To    string
+ 	Wires uint8
+<a href="#h5-2" id="h5-2" class="h">@@ -73,15 +35,13 @@ type Edgesparams struct {
+</a> }
+ 
+ type Mesh struct {
+<a href="#h5-2-3" id="h5-2-3" class="d">-	Adjacency map[string]Edgeslist
+</a><a href="#h5-2-4" id="h5-2-4" class="d">-	Nodes     map[string]Nodesparams
+</a><a href="#h5-2-5" id="h5-2-5" class="d">-	Edges     map[string]Edgesparams
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+	Adjacency map[string]EdgesList
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+	Nodes     map[string]NodesParams
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+	Edges     map[string]EdgesParams
+</a> }
+ 
+ //
+ 
+<a href="#h5-2-13" id="h5-2-13" class="d">-type peerlist map[int]int
+</a><a href="#h5-2-14" id="h5-2-14" class="d">-
+</a> type Ips struct {
+ 	Assoc map[string]string
+ }
+<b>diff --git a/<a id="h6" href="../file/pkg/bondirect/bondirect_test_cluster.json.html">pkg/bondirect/bondirect_test_cluster.json</a> b/<a href="../file/pkg/bondirect/bondirect_test_cluster.json.html">pkg/bondirect/bondirect_test_cluster.json</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -1 +1,30 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="d">-{&quot;ClusterId&quot;:0,&quot;Peers&quot;: [{&quot;PeerId&quot;:0, &quot;Channels&quot;:[0,1], &quot;Inputs&quot;: [0], &quot;Outputs&quot;: [1]}, {&quot;PeerId&quot;:1,&quot;Channels&quot;:[0], &quot;Inputs&quot;: [1], &quot;Outputs&quot;: [0]}]}
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+{
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+	&quot;ClusterId&quot;: 0,
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;Peers&quot;: [
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		{
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+			&quot;PeerId&quot;: 0,
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+			&quot;Channels&quot;: [
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+				0,
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+				1
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+			],
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+			&quot;Inputs&quot;: [
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+				0
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+			],
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+			&quot;Outputs&quot;: [
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+				1
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+			]
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+		},
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+		{
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+			&quot;PeerId&quot;: 1,
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+			&quot;Channels&quot;: [
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+				0
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+			],
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+			&quot;Inputs&quot;: [
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+				1
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+			],
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+			&quot;Outputs&quot;: [
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+				0
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+			]
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+		}
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+	]
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+}
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h7" href="../file/pkg/bondirect/bondirect_test_mesh.json.html">pkg/bondirect/bondirect_test_mesh.json</a> b/<a href="../file/pkg/bondirect/bondirect_test_mesh.json.html">pkg/bondirect/bondirect_test_mesh.json</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,41 +1,46 @@
+</a> {
+<a href="#h7-0-1" id="h7-0-1" class="d">-  &quot;Adjacency&quot;: {
+</a><a href="#h7-0-2" id="h7-0-2" class="d">-    &quot;peer0&quot;: [&quot;wire0&quot;, &quot;wire1&quot;],
+</a><a href="#h7-0-3" id="h7-0-3" class="d">-    &quot;peer1&quot;: [&quot;wire2&quot;],
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-    &quot;peer2&quot;: []
+</a><a href="#h7-0-5" id="h7-0-5" class="d">-  },
+</a><a href="#h7-0-6" id="h7-0-6" class="d">-  &quot;Nodes&quot;: {
+</a><a href="#h7-0-7" id="h7-0-7" class="d">-    &quot;peer0&quot;: {
+</a><a href="#h7-0-8" id="h7-0-8" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-9" id="h7-0-9" class="d">-    },
+</a><a href="#h7-0-10" id="h7-0-10" class="d">-    &quot;peer1&quot;: {
+</a><a href="#h7-0-11" id="h7-0-11" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-12" id="h7-0-12" class="d">-    },
+</a><a href="#h7-0-13" id="h7-0-13" class="d">-    &quot;peer2&quot;: {
+</a><a href="#h7-0-14" id="h7-0-14" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-15" id="h7-0-15" class="d">-    }
+</a><a href="#h7-0-16" id="h7-0-16" class="d">-  },
+</a><a href="#h7-0-17" id="h7-0-17" class="d">-  &quot;Edges&quot;: {
+</a><a href="#h7-0-18" id="h7-0-18" class="d">-    &quot;wire0&quot;: {
+</a><a href="#h7-0-19" id="h7-0-19" class="d">-       &quot;From&quot;: &quot;peer0&quot;,
+</a><a href="#h7-0-20" id="h7-0-20" class="d">-       &quot;To&quot;: &quot;peer1&quot;,
+</a><a href="#h7-0-21" id="h7-0-21" class="d">-       &quot;Wires&quot;: 1,
+</a><a href="#h7-0-22" id="h7-0-22" class="d">-       &quot;Clock&quot;: 10,
+</a><a href="#h7-0-23" id="h7-0-23" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-24" id="h7-0-24" class="d">-    },
+</a><a href="#h7-0-25" id="h7-0-25" class="d">-    &quot;wire1&quot;: {
+</a><a href="#h7-0-26" id="h7-0-26" class="d">-       &quot;From&quot;: &quot;peer0&quot;,
+</a><a href="#h7-0-27" id="h7-0-27" class="d">-       &quot;To&quot;: &quot;peer2&quot;,
+</a><a href="#h7-0-28" id="h7-0-28" class="d">-       &quot;Wires&quot;: 1,
+</a><a href="#h7-0-29" id="h7-0-29" class="d">-       &quot;Clock&quot;: 10,
+</a><a href="#h7-0-30" id="h7-0-30" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-31" id="h7-0-31" class="d">-    },
+</a><a href="#h7-0-32" id="h7-0-32" class="d">-    &quot;wire2&quot;: {
+</a><a href="#h7-0-33" id="h7-0-33" class="d">-       &quot;From&quot;: &quot;peer1&quot;,
+</a><a href="#h7-0-34" id="h7-0-34" class="d">-       &quot;To&quot;: &quot;peer2&quot;,
+</a><a href="#h7-0-35" id="h7-0-35" class="d">-       &quot;Wires&quot;: 2,
+</a><a href="#h7-0-36" id="h7-0-36" class="d">-       &quot;Clock&quot;: 10,
+</a><a href="#h7-0-37" id="h7-0-37" class="d">-       &quot;Data&quot; : {}
+</a><a href="#h7-0-38" id="h7-0-38" class="d">-    }
+</a><a href="#h7-0-39" id="h7-0-39" class="d">-  }
+</a><a href="#h7-0-40" id="h7-0-40" class="d">-}
+</a><a href="#h7-0-41" id="h7-0-41" class="i">+   &quot;Adjacency&quot;: {
+</a><a href="#h7-0-42" id="h7-0-42" class="i">+      &quot;peer0&quot;: [
+</a><a href="#h7-0-43" id="h7-0-43" class="i">+         &quot;wire0&quot;,
+</a><a href="#h7-0-44" id="h7-0-44" class="i">+         &quot;wire1&quot;
+</a><a href="#h7-0-45" id="h7-0-45" class="i">+      ],
+</a><a href="#h7-0-46" id="h7-0-46" class="i">+      &quot;peer1&quot;: [
+</a><a href="#h7-0-47" id="h7-0-47" class="i">+         &quot;wire2&quot;
+</a><a href="#h7-0-48" id="h7-0-48" class="i">+      ],
+</a><a href="#h7-0-49" id="h7-0-49" class="i">+      &quot;peer2&quot;: []
+</a><a href="#h7-0-50" id="h7-0-50" class="i">+   },
+</a><a href="#h7-0-51" id="h7-0-51" class="i">+   &quot;Nodes&quot;: {
+</a><a href="#h7-0-52" id="h7-0-52" class="i">+      &quot;peer0&quot;: {
+</a><a href="#h7-0-53" id="h7-0-53" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-54" id="h7-0-54" class="i">+      },
+</a><a href="#h7-0-55" id="h7-0-55" class="i">+      &quot;peer1&quot;: {
+</a><a href="#h7-0-56" id="h7-0-56" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-57" id="h7-0-57" class="i">+      },
+</a><a href="#h7-0-58" id="h7-0-58" class="i">+      &quot;peer2&quot;: {
+</a><a href="#h7-0-59" id="h7-0-59" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-60" id="h7-0-60" class="i">+      }
+</a><a href="#h7-0-61" id="h7-0-61" class="i">+   },
+</a><a href="#h7-0-62" id="h7-0-62" class="i">+   &quot;Edges&quot;: {
+</a><a href="#h7-0-63" id="h7-0-63" class="i">+      &quot;wire0&quot;: {
+</a><a href="#h7-0-64" id="h7-0-64" class="i">+         &quot;From&quot;: &quot;peer0&quot;,
+</a><a href="#h7-0-65" id="h7-0-65" class="i">+         &quot;To&quot;: &quot;peer1&quot;,
+</a><a href="#h7-0-66" id="h7-0-66" class="i">+         &quot;Wires&quot;: 1,
+</a><a href="#h7-0-67" id="h7-0-67" class="i">+         &quot;Clock&quot;: 10,
+</a><a href="#h7-0-68" id="h7-0-68" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-69" id="h7-0-69" class="i">+      },
+</a><a href="#h7-0-70" id="h7-0-70" class="i">+      &quot;wire1&quot;: {
+</a><a href="#h7-0-71" id="h7-0-71" class="i">+         &quot;From&quot;: &quot;peer0&quot;,
+</a><a href="#h7-0-72" id="h7-0-72" class="i">+         &quot;To&quot;: &quot;peer2&quot;,
+</a><a href="#h7-0-73" id="h7-0-73" class="i">+         &quot;Wires&quot;: 1,
+</a><a href="#h7-0-74" id="h7-0-74" class="i">+         &quot;Clock&quot;: 10,
+</a><a href="#h7-0-75" id="h7-0-75" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-76" id="h7-0-76" class="i">+      },
+</a><a href="#h7-0-77" id="h7-0-77" class="i">+      &quot;wire2&quot;: {
+</a><a href="#h7-0-78" id="h7-0-78" class="i">+         &quot;From&quot;: &quot;peer1&quot;,
+</a><a href="#h7-0-79" id="h7-0-79" class="i">+         &quot;To&quot;: &quot;peer2&quot;,
+</a><a href="#h7-0-80" id="h7-0-80" class="i">+         &quot;Wires&quot;: 2,
+</a><a href="#h7-0-81" id="h7-0-81" class="i">+         &quot;Clock&quot;: 10,
+</a><a href="#h7-0-82" id="h7-0-82" class="i">+         &quot;Data&quot;: {}
+</a><a href="#h7-0-83" id="h7-0-83" class="i">+      }
+</a><a href="#h7-0-84" id="h7-0-84" class="i">+   }
+</a><a href="#h7-0-85" id="h7-0-85" class="i">+}
+</a><a href="#h7-0-86" id="h7-0-86" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h8" href="../file/pkg/bondirect/json.go.html">pkg/bondirect/json.go</a> b/<a href="../file/pkg/bondirect/json.go.html">pkg/bondirect/json.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -2,17 +2,16 @@ package bondirect
+</a> 
+ import (
+ 	&quot;encoding/json&quot;
+<a href="#h8-0-3" id="h8-0-3" class="d">-	&quot;io/ioutil&quot;
+</a> 	&quot;os&quot;
+ )
+ 
+ func UnmarshallMesh(c *Config, mesh_file string) (*Mesh, error) {
+ 
+<a href="#h8-0-9" id="h8-0-9" class="d">-	clus := new(Mesh)
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+	cluster := new(Mesh)
+</a> 
+ 	if _, err := os.Stat(mesh_file); err == nil {
+<a href="#h8-0-13" id="h8-0-13" class="d">-		if jsonfile, err := ioutil.ReadFile(mesh_file); err == nil {
+</a><a href="#h8-0-14" id="h8-0-14" class="d">-			if err := json.Unmarshal([]byte(jsonfile), clus); err != nil {
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+		if jsonFile, err := os.ReadFile(mesh_file); err == nil {
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+			if err := json.Unmarshal([]byte(jsonFile), cluster); err != nil {
+</a> 				return nil, err
+ 			}
+ 		} else {
+<a href="#h8-1" id="h8-1" class="h">@@ -22,16 +21,16 @@ func UnmarshallMesh(c *Config, mesh_file string) (*Mesh, error) {
+</a> 		return nil, err
+ 	}
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-	return clus, nil
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+	return cluster, nil
+</a> }
+ 
+ func UnmarshallCluster(c *Config, cluster_file string) (*Cluster, error) {
+ 
+<a href="#h8-1-9" id="h8-1-9" class="d">-	clus := new(Cluster)
+</a><a href="#h8-1-10" id="h8-1-10" class="i">+	cluster := new(Cluster)
+</a> 
+ 	if _, err := os.Stat(cluster_file); err == nil {
+<a href="#h8-1-13" id="h8-1-13" class="d">-		if jsonfile, err := ioutil.ReadFile(cluster_file); err == nil {
+</a><a href="#h8-1-14" id="h8-1-14" class="d">-			if err := json.Unmarshal([]byte(jsonfile), clus); err != nil {
+</a><a href="#h8-1-15" id="h8-1-15" class="i">+		if jsonFile, err := os.ReadFile(cluster_file); err == nil {
+</a><a href="#h8-1-16" id="h8-1-16" class="i">+			if err := json.Unmarshal([]byte(jsonFile), cluster); err != nil {
+</a> 				return nil, err
+ 			}
+ 		} else {
+<a href="#h8-2" id="h8-2" class="h">@@ -41,5 +40,5 @@ func UnmarshallCluster(c *Config, cluster_file string) (*Cluster, error) {
+</a> 		return nil, err
+ 	}
+ 
+<a href="#h8-2-3" id="h8-2-3" class="d">-	return clus, nil
+</a><a href="#h8-2-4" id="h8-2-4" class="i">+	return cluster, nil
+</a> }
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -55,6 +55,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Clc{})
+ 	Allopcodes = append(Allopcodes, Clr{})
+ 	Allopcodes = append(Allopcodes, Cmpr{})
+<a href="#h9-0-3" id="h9-0-3" class="i">+	Allopcodes = append(Allopcodes, Cmprlt{})
+</a> 	Allopcodes = append(Allopcodes, Cpy{})
+ 	Allopcodes = append(Allopcodes, Cset{})
+ 	Allopcodes = append(Allopcodes, Dec{})
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_cmpr.go.html">pkg/procbuilder/op_cmpr.go</a> b/<a href="../file/pkg/procbuilder/op_cmpr.go.html">pkg/procbuilder/op_cmpr.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -35,7 +35,7 @@ func (op Cmpr) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Cmpr) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+ 	result := &quot;&quot;
+<a href="#h10-0-3" id="h10-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 
+<b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/op_cmprlt.go.html">pkg/procbuilder/op_cmprlt.go</a> b/<a href="../file/pkg/procbuilder/op_cmprlt.go.html">pkg/procbuilder/op_cmprlt.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -0,0 +1,240 @@
+</a><a href="#h11-0-0" id="h11-0-0" class="i">+package procbuilder
+</a><a href="#h11-0-1" id="h11-0-1" class="i">+
+</a><a href="#h11-0-2" id="h11-0-2" class="i">+import (
+</a><a href="#h11-0-3" id="h11-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h11-0-5" id="h11-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h11-0-6" id="h11-0-6" class="i">+
+</a><a href="#h11-0-7" id="h11-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h11-0-8" id="h11-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a><a href="#h11-0-9" id="h11-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h11-0-10" id="h11-0-10" class="i">+)
+</a><a href="#h11-0-11" id="h11-0-11" class="i">+
+</a><a href="#h11-0-12" id="h11-0-12" class="i">+type Cmprlt struct {
+</a><a href="#h11-0-13" id="h11-0-13" class="i">+	pipeline *bool
+</a><a href="#h11-0-14" id="h11-0-14" class="i">+}
+</a><a href="#h11-0-15" id="h11-0-15" class="i">+
+</a><a href="#h11-0-16" id="h11-0-16" class="i">+func (op Cmprlt) Op_get_name() string {
+</a><a href="#h11-0-17" id="h11-0-17" class="i">+	return &quot;cmprlt&quot;
+</a><a href="#h11-0-18" id="h11-0-18" class="i">+}
+</a><a href="#h11-0-19" id="h11-0-19" class="i">+
+</a><a href="#h11-0-20" id="h11-0-20" class="i">+func (op Cmprlt) Op_get_desc() string {
+</a><a href="#h11-0-21" id="h11-0-21" class="i">+	return &quot;Register comparison&quot;
+</a><a href="#h11-0-22" id="h11-0-22" class="i">+}
+</a><a href="#h11-0-23" id="h11-0-23" class="i">+
+</a><a href="#h11-0-24" id="h11-0-24" class="i">+func (op Cmprlt) Op_show_assembler(arch *Arch) string {
+</a><a href="#h11-0-25" id="h11-0-25" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h11-0-26" id="h11-0-26" class="i">+	result := &quot;cmprlt [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Compare two registers value setting a flag [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h11-0-27" id="h11-0-27" class="i">+	return result
+</a><a href="#h11-0-28" id="h11-0-28" class="i">+}
+</a><a href="#h11-0-29" id="h11-0-29" class="i">+
+</a><a href="#h11-0-30" id="h11-0-30" class="i">+func (op Cmprlt) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h11-0-31" id="h11-0-31" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h11-0-32" id="h11-0-32" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h11-0-33" id="h11-0-33" class="i">+}
+</a><a href="#h11-0-34" id="h11-0-34" class="i">+
+</a><a href="#h11-0-35" id="h11-0-35" class="i">+func (op Cmprlt) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a><a href="#h11-0-36" id="h11-0-36" class="i">+	result := &quot;&quot;
+</a><a href="#h11-0-37" id="h11-0-37" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h11-0-38" id="h11-0-38" class="i">+		result += &quot;\treg cmpflag;\n&quot;
+</a><a href="#h11-0-39" id="h11-0-39" class="i">+	}
+</a><a href="#h11-0-40" id="h11-0-40" class="i">+
+</a><a href="#h11-0-41" id="h11-0-41" class="i">+	return result
+</a><a href="#h11-0-42" id="h11-0-42" class="i">+}
+</a><a href="#h11-0-43" id="h11-0-43" class="i">+
+</a><a href="#h11-0-44" id="h11-0-44" class="i">+func (op Cmprlt) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h11-0-45" id="h11-0-45" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h11-0-46" id="h11-0-46" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h11-0-47" id="h11-0-47" class="i">+
+</a><a href="#h11-0-48" id="h11-0-48" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h11-0-49" id="h11-0-49" class="i">+
+</a><a href="#h11-0-50" id="h11-0-50" class="i">+	result := &quot;&quot;
+</a><a href="#h11-0-51" id="h11-0-51" class="i">+	result += &quot;					CMPRLT: begin\n&quot;
+</a><a href="#h11-0-52" id="h11-0-52" class="i">+	if arch.R == 1 {
+</a><a href="#h11-0-53" id="h11-0-53" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a><a href="#h11-0-54" id="h11-0-54" class="i">+	} else {
+</a><a href="#h11-0-55" id="h11-0-55" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h11-0-56" id="h11-0-56" class="i">+	}
+</a><a href="#h11-0-57" id="h11-0-57" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h11-0-58" id="h11-0-58" class="i">+
+</a><a href="#h11-0-59" id="h11-0-59" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h11-0-60" id="h11-0-60" class="i">+			cp := arch.Tag
+</a><a href="#h11-0-61" id="h11-0-61" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:cmprlt&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h11-0-62" id="h11-0-62" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h11-0-63" id="h11-0-63" class="i">+				continue
+</a><a href="#h11-0-64" id="h11-0-64" class="i">+			}
+</a><a href="#h11-0-65" id="h11-0-65" class="i">+		}
+</a><a href="#h11-0-66" id="h11-0-66" class="i">+
+</a><a href="#h11-0-67" id="h11-0-67" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h11-0-68" id="h11-0-68" class="i">+
+</a><a href="#h11-0-69" id="h11-0-69" class="i">+		if arch.R == 1 {
+</a><a href="#h11-0-70" id="h11-0-70" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h11-0-71" id="h11-0-71" class="i">+		} else {
+</a><a href="#h11-0-72" id="h11-0-72" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h11-0-73" id="h11-0-73" class="i">+		}
+</a><a href="#h11-0-74" id="h11-0-74" class="i">+
+</a><a href="#h11-0-75" id="h11-0-75" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h11-0-76" id="h11-0-76" class="i">+
+</a><a href="#h11-0-77" id="h11-0-77" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h11-0-78" id="h11-0-78" class="i">+				cp := arch.Tag
+</a><a href="#h11-0-79" id="h11-0-79" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:cmprlt&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h11-0-80" id="h11-0-80" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h11-0-81" id="h11-0-81" class="i">+					continue
+</a><a href="#h11-0-82" id="h11-0-82" class="i">+				}
+</a><a href="#h11-0-83" id="h11-0-83" class="i">+			}
+</a><a href="#h11-0-84" id="h11-0-84" class="i">+
+</a><a href="#h11-0-85" id="h11-0-85" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h11-0-86" id="h11-0-86" class="i">+			result += &quot;								if (_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt; _&quot; + strings.ToLower(Get_register_name(j)) + &quot;) begin\n&quot;
+</a><a href="#h11-0-87" id="h11-0-87" class="i">+			result += &quot;									cmpflag &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h11-0-88" id="h11-0-88" class="i">+			result += &quot;								end else begin\n&quot;
+</a><a href="#h11-0-89" id="h11-0-89" class="i">+			result += &quot;									cmpflag &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h11-0-90" id="h11-0-90" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h11-0-91" id="h11-0-91" class="i">+			result += &quot;								$display(\&quot;CMPRLT&quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h11-0-92" id="h11-0-92" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h11-0-93" id="h11-0-93" class="i">+		}
+</a><a href="#h11-0-94" id="h11-0-94" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h11-0-95" id="h11-0-95" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h11-0-96" id="h11-0-96" class="i">+	}
+</a><a href="#h11-0-97" id="h11-0-97" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h11-0-98" id="h11-0-98" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h11-0-99" id="h11-0-99" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h11-0-100" id="h11-0-100" class="i">+	return result
+</a><a href="#h11-0-101" id="h11-0-101" class="i">+}
+</a><a href="#h11-0-102" id="h11-0-102" class="i">+
+</a><a href="#h11-0-103" id="h11-0-103" class="i">+func (op Cmprlt) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h11-0-104" id="h11-0-104" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-105" id="h11-0-105" class="i">+}
+</a><a href="#h11-0-106" id="h11-0-106" class="i">+
+</a><a href="#h11-0-107" id="h11-0-107" class="i">+func (op Cmprlt) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h11-0-108" id="h11-0-108" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h11-0-109" id="h11-0-109" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h11-0-110" id="h11-0-110" class="i">+
+</a><a href="#h11-0-111" id="h11-0-111" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h11-0-112" id="h11-0-112" class="i">+
+</a><a href="#h11-0-113" id="h11-0-113" class="i">+	if len(words) != 2 {
+</a><a href="#h11-0-114" id="h11-0-114" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h11-0-115" id="h11-0-115" class="i">+	}
+</a><a href="#h11-0-116" id="h11-0-116" class="i">+
+</a><a href="#h11-0-117" id="h11-0-117" class="i">+	result := &quot;&quot;
+</a><a href="#h11-0-118" id="h11-0-118" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h11-0-119" id="h11-0-119" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h11-0-120" id="h11-0-120" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h11-0-121" id="h11-0-121" class="i">+			break
+</a><a href="#h11-0-122" id="h11-0-122" class="i">+		}
+</a><a href="#h11-0-123" id="h11-0-123" class="i">+	}
+</a><a href="#h11-0-124" id="h11-0-124" class="i">+
+</a><a href="#h11-0-125" id="h11-0-125" class="i">+	if result == &quot;&quot; {
+</a><a href="#h11-0-126" id="h11-0-126" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h11-0-127" id="h11-0-127" class="i">+	}
+</a><a href="#h11-0-128" id="h11-0-128" class="i">+
+</a><a href="#h11-0-129" id="h11-0-129" class="i">+	partial := &quot;&quot;
+</a><a href="#h11-0-130" id="h11-0-130" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h11-0-131" id="h11-0-131" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h11-0-132" id="h11-0-132" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h11-0-133" id="h11-0-133" class="i">+			break
+</a><a href="#h11-0-134" id="h11-0-134" class="i">+		}
+</a><a href="#h11-0-135" id="h11-0-135" class="i">+	}
+</a><a href="#h11-0-136" id="h11-0-136" class="i">+
+</a><a href="#h11-0-137" id="h11-0-137" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h11-0-138" id="h11-0-138" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h11-0-139" id="h11-0-139" class="i">+	}
+</a><a href="#h11-0-140" id="h11-0-140" class="i">+
+</a><a href="#h11-0-141" id="h11-0-141" class="i">+	result += partial
+</a><a href="#h11-0-142" id="h11-0-142" class="i">+
+</a><a href="#h11-0-143" id="h11-0-143" class="i">+	for i := opBits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h11-0-144" id="h11-0-144" class="i">+		result += &quot;0&quot;
+</a><a href="#h11-0-145" id="h11-0-145" class="i">+	}
+</a><a href="#h11-0-146" id="h11-0-146" class="i">+
+</a><a href="#h11-0-147" id="h11-0-147" class="i">+	return result, nil
+</a><a href="#h11-0-148" id="h11-0-148" class="i">+}
+</a><a href="#h11-0-149" id="h11-0-149" class="i">+
+</a><a href="#h11-0-150" id="h11-0-150" class="i">+func (op Cmprlt) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h11-0-151" id="h11-0-151" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h11-0-152" id="h11-0-152" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h11-0-153" id="h11-0-153" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h11-0-154" id="h11-0-154" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h11-0-155" id="h11-0-155" class="i">+	return result, nil
+</a><a href="#h11-0-156" id="h11-0-156" class="i">+}
+</a><a href="#h11-0-157" id="h11-0-157" class="i">+
+</a><a href="#h11-0-158" id="h11-0-158" class="i">+func (op Cmprlt) Simulate(vm *VM, instr string) error {
+</a><a href="#h11-0-159" id="h11-0-159" class="i">+	// TODO
+</a><a href="#h11-0-160" id="h11-0-160" class="i">+	return nil
+</a><a href="#h11-0-161" id="h11-0-161" class="i">+}
+</a><a href="#h11-0-162" id="h11-0-162" class="i">+
+</a><a href="#h11-0-163" id="h11-0-163" class="i">+// The random generation does nothing
+</a><a href="#h11-0-164" id="h11-0-164" class="i">+func (op Cmprlt) Generate(arch *Arch) string {
+</a><a href="#h11-0-165" id="h11-0-165" class="i">+	// TODO
+</a><a href="#h11-0-166" id="h11-0-166" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-167" id="h11-0-167" class="i">+}
+</a><a href="#h11-0-168" id="h11-0-168" class="i">+
+</a><a href="#h11-0-169" id="h11-0-169" class="i">+func (op Cmprlt) Required_shared() (bool, []string) {
+</a><a href="#h11-0-170" id="h11-0-170" class="i">+	return false, []string{}
+</a><a href="#h11-0-171" id="h11-0-171" class="i">+}
+</a><a href="#h11-0-172" id="h11-0-172" class="i">+
+</a><a href="#h11-0-173" id="h11-0-173" class="i">+func (op Cmprlt) Required_modes() (bool, []string) {
+</a><a href="#h11-0-174" id="h11-0-174" class="i">+	return false, []string{}
+</a><a href="#h11-0-175" id="h11-0-175" class="i">+}
+</a><a href="#h11-0-176" id="h11-0-176" class="i">+
+</a><a href="#h11-0-177" id="h11-0-177" class="i">+func (op Cmprlt) Forbidden_modes() (bool, []string) {
+</a><a href="#h11-0-178" id="h11-0-178" class="i">+	return false, []string{}
+</a><a href="#h11-0-179" id="h11-0-179" class="i">+}
+</a><a href="#h11-0-180" id="h11-0-180" class="i">+
+</a><a href="#h11-0-181" id="h11-0-181" class="i">+func (op Cmprlt) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h11-0-182" id="h11-0-182" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-183" id="h11-0-183" class="i">+}
+</a><a href="#h11-0-184" id="h11-0-184" class="i">+
+</a><a href="#h11-0-185" id="h11-0-185" class="i">+func (op Cmprlt) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h11-0-186" id="h11-0-186" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-187" id="h11-0-187" class="i">+}
+</a><a href="#h11-0-188" id="h11-0-188" class="i">+
+</a><a href="#h11-0-189" id="h11-0-189" class="i">+func (op Cmprlt) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h11-0-190" id="h11-0-190" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-191" id="h11-0-191" class="i">+}
+</a><a href="#h11-0-192" id="h11-0-192" class="i">+
+</a><a href="#h11-0-193" id="h11-0-193" class="i">+func (op Cmprlt) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h11-0-194" id="h11-0-194" class="i">+	return &quot;&quot;
+</a><a href="#h11-0-195" id="h11-0-195" class="i">+}
+</a><a href="#h11-0-196" id="h11-0-196" class="i">+
+</a><a href="#h11-0-197" id="h11-0-197" class="i">+func (op Cmprlt) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h11-0-198" id="h11-0-198" class="i">+	return []string{}, []string{}
+</a><a href="#h11-0-199" id="h11-0-199" class="i">+}
+</a><a href="#h11-0-200" id="h11-0-200" class="i">+
+</a><a href="#h11-0-201" id="h11-0-201" class="i">+func (op Cmprlt) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h11-0-202" id="h11-0-202" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h11-0-203" id="h11-0-203" class="i">+	return result, nil
+</a><a href="#h11-0-204" id="h11-0-204" class="i">+}
+</a><a href="#h11-0-205" id="h11-0-205" class="i">+
+</a><a href="#h11-0-206" id="h11-0-206" class="i">+func (op Cmprlt) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h11-0-207" id="h11-0-207" class="i">+	result := &quot;&quot;
+</a><a href="#h11-0-208" id="h11-0-208" class="i">+	switch blockname {
+</a><a href="#h11-0-209" id="h11-0-209" class="i">+	default:
+</a><a href="#h11-0-210" id="h11-0-210" class="i">+		result = &quot;&quot;
+</a><a href="#h11-0-211" id="h11-0-211" class="i">+	}
+</a><a href="#h11-0-212" id="h11-0-212" class="i">+	return result
+</a><a href="#h11-0-213" id="h11-0-213" class="i">+}
+</a><a href="#h11-0-214" id="h11-0-214" class="i">+func (op Cmprlt) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h11-0-215" id="h11-0-215" class="i">+	result := make([]string, 0)
+</a><a href="#h11-0-216" id="h11-0-216" class="i">+	result = append(result, &quot;cmprlt::*--type=reg::*--type=reg&quot;)
+</a><a href="#h11-0-217" id="h11-0-217" class="i">+	return result
+</a><a href="#h11-0-218" id="h11-0-218" class="i">+}
+</a><a href="#h11-0-219" id="h11-0-219" class="i">+func (op Cmprlt) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h11-0-220" id="h11-0-220" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h11-0-221" id="h11-0-221" class="i">+	case &quot;cmprlt&quot;:
+</a><a href="#h11-0-222" id="h11-0-222" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h11-0-223" id="h11-0-223" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h11-0-224" id="h11-0-224" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h11-0-225" id="h11-0-225" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h11-0-226" id="h11-0-226" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;cmprlt&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h11-0-227" id="h11-0-227" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:cmprlt&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h11-0-228" id="h11-0-228" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:cmprlt&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h11-0-229" id="h11-0-229" class="i">+		return line, nil
+</a><a href="#h11-0-230" id="h11-0-230" class="i">+	}
+</a><a href="#h11-0-231" id="h11-0-231" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h11-0-232" id="h11-0-232" class="i">+}
+</a><a href="#h11-0-233" id="h11-0-233" class="i">+func (op Cmprlt) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h11-0-234" id="h11-0-234" class="i">+	return []string{}, []string{}
+</a><a href="#h11-0-235" id="h11-0-235" class="i">+}
+</a><a href="#h11-0-236" id="h11-0-236" class="i">+
+</a><a href="#h11-0-237" id="h11-0-237" class="i">+func (op Cmprlt) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h11-0-238" id="h11-0-238" class="i">+	return nil, nil
+</a><a href="#h11-0-239" id="h11-0-239" class="i">+}
+</a><b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/op_cmpv.go.html">pkg/procbuilder/op_cmpv.go</a> b/<a href="../file/pkg/procbuilder/op_cmpv.go.html">pkg/procbuilder/op_cmpv.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -37,7 +37,7 @@ func (op Cmpv) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Cmpv) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+ 	result := &quot;&quot;
+<a href="#h12-0-3" id="h12-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h12-0-4" id="h12-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 
+<b>diff --git a/<a id="h13" href="../file/pkg/procbuilder/op_jcmpa.go.html">pkg/procbuilder/op_jcmpa.go</a> b/<a href="../file/pkg/procbuilder/op_jcmpa.go.html">pkg/procbuilder/op_jcmpa.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -55,7 +55,7 @@ func (op Jcmpa) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Jcmpa) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+<a href="#h13-0-3" id="h13-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h13-0-4" id="h13-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 	return result
+<b>diff --git a/<a id="h14" href="../file/pkg/procbuilder/op_jcmpl.go.html">pkg/procbuilder/op_jcmpl.go</a> b/<a href="../file/pkg/procbuilder/op_jcmpl.go.html">pkg/procbuilder/op_jcmpl.go</a></b>
+<a href="#h14-0" id="h14-0" class="h">@@ -59,7 +59,7 @@ func (op Jcmpl) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Jcmpl) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+<a href="#h14-0-3" id="h14-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h14-0-4" id="h14-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 	return result
+<b>diff --git a/<a id="h15" href="../file/pkg/procbuilder/op_jcmpo.go.html">pkg/procbuilder/op_jcmpo.go</a> b/<a href="../file/pkg/procbuilder/op_jcmpo.go.html">pkg/procbuilder/op_jcmpo.go</a></b>
+<a href="#h15-0" id="h15-0" class="h">@@ -55,7 +55,7 @@ func (op Jcmpo) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Jcmpo) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+ 	result := &quot;&quot;
+<a href="#h15-0-3" id="h15-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h15-0-4" id="h15-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 	return result
+<b>diff --git a/<a id="h16" href="../file/pkg/procbuilder/op_jcmpria.go.html">pkg/procbuilder/op_jcmpria.go</a> b/<a href="../file/pkg/procbuilder/op_jcmpria.go.html">pkg/procbuilder/op_jcmpria.go</a></b>
+<a href="#h16-0" id="h16-0" class="h">@@ -34,7 +34,7 @@ func (op Jcmpria) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Jcmpria) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+ 	result := &quot;&quot;
+<a href="#h16-0-3" id="h16-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h16-0-4" id="h16-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 	return result
+<b>diff --git a/<a id="h17" href="../file/pkg/procbuilder/op_jcmprio.go.html">pkg/procbuilder/op_jcmprio.go</a> b/<a href="../file/pkg/procbuilder/op_jcmprio.go.html">pkg/procbuilder/op_jcmprio.go</a></b>
+<a href="#h17-0" id="h17-0" class="h">@@ -34,7 +34,7 @@ func (op Jcmprio) Op_get_instruction_len(arch *Arch) int {
+</a> 
+ func (op Jcmprio) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+ 	result := &quot;&quot;
+<a href="#h17-0-3" id="h17-0-3" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a><a href="#h17-0-4" id="h17-0-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;cmpr&quot;, &quot;cmprlt&quot;, &quot;cmpv&quot;, &quot;jcmpl&quot;, &quot;jcmpo&quot;, &quot;jcmpa&quot;, &quot;jcmprio&quot;, &quot;jcmpria&quot;, &quot;jncmpl&quot;, &quot;jncmpo&quot;, &quot;jncmpa&quot;, &quot;jncmprio&quot;, &quot;jncmpria&quot;}) {
+</a> 		result += &quot;\treg cmpflag;\n&quot;
+ 	}
+ 	return result
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmbuilder and addtree_complex for quantum - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/af37c8ac482b4f4b2898c1510d534f1ac83a4da3.html">af37c8ac482b4f4b2898c1510d534f1ac83a4da3</a>
+<b>parent</b> <a href="../commit/a9bd2f82f3279723505416490404e5a7a6ec8cf0.html">a9bd2f82f3279723505416490404e5a7a6ec8cf0</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 12 Apr 2024 12:22:12 +0200
+
+bmbuilder and addtree_complex for quantum
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">cmd/bmbuilder/basm.bmb</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">cmd/bmbuilder/bmbuilder.go</a></td><td> | </td><td class="num">148</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">cmd/bmbuilder/test.basm</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">cmd/bmbuilder/utils.go</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h5">pkg/basm/generator.go</a></td><td> | </td><td class="num">10</td><td><span class="i"></span><span class="d">----------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/bmbuilder/README.md</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bmbuilder/bmbuilder.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">pkg/bmbuilder/creatorbm.go</a></td><td> | </td><td class="num">62</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/bmbuilder/generator_basm.go</a></td><td> | </td><td class="num">111</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/bmbuilder/meta.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/bmqsim/files_seqhardcoded_addtree_complex.go</a></td><td> | </td><td class="num">63</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/bmqsim/templates.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>14 files changed, 472 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -117,7 +117,6 @@ func main() {
+</a> 	bi.BMinfo = new(bminfo.BMinfo)
+ 
+ 	if *bmInfoFile != &quot;&quot; {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		bi.BMinfo = new(bminfo.BMinfo)
+</a> 		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+ 			if err := json.Unmarshal(bmInfoJSON, bi.BMinfo); err != nil {
+ 				panic(err)
+<b>diff --git a/<a id="h1" href="../file/cmd/bmbuilder/basm.bmb.html">cmd/bmbuilder/basm.bmb</a> b/<a href="../file/cmd/bmbuilder/basm.bmb.html">cmd/bmbuilder/basm.bmb</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,11 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+%block code1 .sequential
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+: basmfiles:/home/mirko/Projects/BondMachine/cmd/bmbuilder/test.basm
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+: cdscsd:432432
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+: csdcsdcsd:43423432
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	basm
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+: basmfiles:/home/mirko/Projects/BondMachine/cmd/bmbuilder/test.basm
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	basm
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+%endblock
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+%meta bmdef global main:code1
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+%meta bmdef global registersize:16
+</a><b>diff --git a/<a id="h2" href="../file/cmd/bmbuilder/bmbuilder.go.html">cmd/bmbuilder/bmbuilder.go</a> b/<a href="../file/cmd/bmbuilder/bmbuilder.go.html">cmd/bmbuilder/bmbuilder.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,148 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package main
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;flag&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	&quot;fmt&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;log&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	&quot;os&quot;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	&quot;path/filepath&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmbuilder&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+)
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+// Build modes
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+var bmFile = flag.String(&quot;save-basm&quot;, &quot;a.out.json&quot;, &quot;Save the BM file&quot;)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+var emitBMAPIMaps = flag.Bool(&quot;emit-bmapi-maps&quot;, false, &quot;Emit the BMAPIMaps&quot;)
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+var bmAPIMapsFile = flag.String(&quot;bmapi-maps-file&quot;, &quot;bmapi.json&quot;, &quot;BMAPIMaps file to be used as output&quot;)
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+func init() {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+	flag.Parse()
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	// if *debug {
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	// 	fmt.Println(&quot;basm init&quot;)
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	// }
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	if *linearDataRange != &quot;&quot; {
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+			log.Fatal(err)
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+		}
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+			}
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+		}
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+		for i, t := range procbuilder.AllDynamicalInstructions {
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+				dynIst := t.(procbuilder.DynLinearQuantizer)
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+				dynIst.Ranges = lqRanges
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+				procbuilder.AllDynamicalInstructions[i] = dynIst
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+			}
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+		}
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+	}
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+}
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+func main() {
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+	bld := new(bmbuilder.BMBuilder)
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	bld.BMBuilderInit()
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+	if *debug {
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+		bld.SetDebug()
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+	}
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+	if *verbose {
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+		bld.SetVerbose()
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+	}
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	startBuilding := false
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+	for _, bmbFile := range flag.Args() {
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		startBuilding = true
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+		// Get the file extension
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+		ext := filepath.Ext(bmbFile)
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+		switch ext {
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+		case &quot;.bmb&quot;:
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+			err := bld.ParseBuilderDefault(bmbFile)
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+			if err != nil {
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+				bld.Alert(&quot;Error while parsing file:&quot;, err)
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+				return
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+			}
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+		default:
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+			err := bld.ParseBuilderDefault(bmbFile)
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+			if err != nil {
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+				bld.Alert(&quot;Error while parsing file:&quot;, err)
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+				return
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+			}
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+		}
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+	}
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+	if startBuilding {
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+		if err := bld.RunBuilder(); err != nil {
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+			bld.Alert(err)
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+			return
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+		}
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+		if *debug {
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+			fmt.Println(purple(&quot;BmBuilder completed&quot;))
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+		}
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+	}
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	if *bmFile != &quot;&quot; {
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+		if err := bld.BuildBondMachine(); err != nil {
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+			bld.Alert(&quot;Error in creating a BondMachine&quot;, err)
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+			return
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+		}
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+		var outF string
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+		if *bmFile != &quot;&quot; {
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+			outF = *bmFile
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+		} else {
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+			outF = &quot;bondmachine.json&quot;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+		}
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+		bMach := bld.GetBondMachine()
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+		// Write the bondmachine file (TODO rewrite)
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+		f, _ := os.Create(outF)
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+		defer f.Close()
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+		b, _ := json.Marshal(bMach.Jsoner())
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+		f.WriteString(string(b))
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+		// if *bmInfoFile != &quot;&quot; {
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+		// 	// Write the config file
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+		// 	if bmInfoFileJSON, err := json.MarshalIndent(bi.BMinfo, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+		// 		os.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+		// 	} else {
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+		// 		panic(err)
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+		// 	}
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+		// }
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+		// if *dumpRequirements != &quot;&quot; {
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+		// 	// Write the requirements file
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+		// 	if requirementsJSON, err := json.MarshalIndent(bi.DumpRequirements(), &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+		// 		os.WriteFile(*dumpRequirements, requirementsJSON, 0644)
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+		// 	} else {
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+		// 		panic(err)
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+		// 	}
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+		// }
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+	}
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/cmd/bmbuilder/test.basm.html">cmd/bmbuilder/test.basm</a> b/<a href="../file/cmd/bmbuilder/test.basm.html">cmd/bmbuilder/test.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,13 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+%section code1 .romtext iomode:async
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+        entry _start    ; Entry point
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+_start:
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	inc	r0
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	mov	o0, r0		
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	j 	_start
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+%endsection
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+%meta cpdef	cpu1	romcode: code1, ramsize:8
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+%meta bmdef	global  registersize:8
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+%meta ioatt	testio1 cp: cpu1, index:0, type:output
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+%meta ioatt	testio1 cp: bm, index:0, type:output
+</a><b>diff --git a/<a id="h4" href="../file/cmd/bmbuilder/utils.go.html">cmd/bmbuilder/utils.go</a> b/<a href="../file/cmd/bmbuilder/utils.go.html">cmd/bmbuilder/utils.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,36 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package main
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+import &quot;fmt&quot;
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+func purple(in ...interface{}) string {
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	return &quot;\033[35m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+}
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+func green(in ...interface{}) string {
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+	return &quot;\033[32m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+}
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+func yellow(in ...interface{}) string {
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	return &quot;\033[33m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+}
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+func blue(in ...interface{}) string {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	return &quot;\033[34m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+}
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+func red(in ...interface{}) string {
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	return &quot;\033[31m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+}
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+func cyan(in ...interface{}) string {
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+	return &quot;\033[36m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+}
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+func gray(in ...interface{}) string {
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+	return &quot;\033[37m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+}
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+func white(in ...interface{}) string {
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+	ins := fmt.Sprint(in...)
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	return &quot;\033[97m&quot; + ins + &quot;\033[0m&quot;
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/pkg/basm/generator.go.html">pkg/basm/generator.go</a> b/<a href="../file/pkg/basm/generator.go.html">pkg/basm/generator.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,10 +0,0 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="d">-package basm
+</a><a href="#h5-0-1" id="h5-0-1" class="d">-
+</a><a href="#h5-0-2" id="h5-0-2" class="d">-import (
+</a><a href="#h5-0-3" id="h5-0-3" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-)
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-
+</a><a href="#h5-0-7" id="h5-0-7" class="d">-func BasmGenerator(e *bmline.BasmElement, l *bmline.BasmLine) (*bondmachine.Bondmachine, error) {
+</a><a href="#h5-0-8" id="h5-0-8" class="d">-	return nil, nil
+</a><a href="#h5-0-9" id="h5-0-9" class="d">-}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/bmbuilder/README.md.html">pkg/bmbuilder/README.md</a> b/<a href="../file/pkg/bmbuilder/README.md.html">pkg/bmbuilder/README.md</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,15 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+# Basm Generator Metadata #
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+## bminfofile ##
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+File bminfo
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+## disabledynamicalmatching ##
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+## chooserminwordsize ##
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+## chooserforcesame ##
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+## optimizations ##
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+## basmfiles ##
+</a><b>diff --git a/<a id="h7" href="../file/pkg/bmbuilder/bmbuilder.go.html">pkg/bmbuilder/bmbuilder.go</a> b/<a href="../file/pkg/bmbuilder/bmbuilder.go.html">pkg/bmbuilder/bmbuilder.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -25,6 +25,7 @@ type BMBuilder struct {
+</a> 	blocks        map[string]*BMBuilderBlock
+ 	global        *bmline.BasmElement
+ 	generators    map[string]Generator
+<a href="#h7-0-3" id="h7-0-3" class="i">+	result        *bondmachine.Bondmachine
+</a> }
+ 
+ // Sections and Macros
+<a href="#h7-1" id="h7-1" class="h">@@ -161,3 +162,7 @@ func (bi *BMBuilder) ExportBasmBody() (*bmline.BasmBody, error) {
+</a> 	// Get the main block
+ 	return bi.blocks[mainBlock].blockBody, nil
+ }
+<a href="#h7-1-3" id="h7-1-3" class="i">+
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+func (bi *BMBuilder) GetBondMachine() *bondmachine.Bondmachine {
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+	return bi.result
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a> b/<a href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,62 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+package bmbuilder
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+import (
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+)
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+func (bi *BMBuilder) BuildBondMachine() error {
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+	if bi.debug {
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+		fmt.Println(&quot;\t&quot; + green(&quot;BondMachine metadata&quot;))
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+	}
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+	registerSize := bi.global.GetMeta(&quot;registersize&quot;)
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	if registerSize == &quot;&quot; {
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+		return errors.New(&quot;register size not specified&quot;)
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+	}
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	var rSize uint8
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+	if size, err := strconv.Atoi(registerSize); err == nil {
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+		if 0 &lt; size &amp;&amp; size &lt; 256 {
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+			rSize = uint8(size)
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+		} else {
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+			return errors.New(&quot;wrong value for register size&quot;)
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+		}
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+	} else {
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+		return errors.New(&quot;register size not valid&quot;)
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+	}
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+	if bi.debug {
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+		fmt.Println(&quot;\t\t&quot;+green(&quot;register size:&quot;), rSize)
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+	}
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+	// Get the main block
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+	mainBlock := bi.global.GetMeta(&quot;main&quot;)
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+	if mainBlock == &quot;&quot; {
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+		return errors.New(&quot;main block not specified&quot;)
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+	}
+</a><a href="#h8-0-39" id="h8-0-39" class="i">+
+</a><a href="#h8-0-40" id="h8-0-40" class="i">+	if block, ok := bi.blocks[mainBlock]; ok {
+</a><a href="#h8-0-41" id="h8-0-41" class="i">+		if bi.debug {
+</a><a href="#h8-0-42" id="h8-0-42" class="i">+			fmt.Println(&quot;\t\t&quot;+green(&quot;main block:&quot;), mainBlock)
+</a><a href="#h8-0-43" id="h8-0-43" class="i">+		}
+</a><a href="#h8-0-44" id="h8-0-44" class="i">+
+</a><a href="#h8-0-45" id="h8-0-45" class="i">+		switch block.blockType {
+</a><a href="#h8-0-46" id="h8-0-46" class="i">+		case blockSequential:
+</a><a href="#h8-0-47" id="h8-0-47" class="i">+			return bi.BuildSequentialBlock(block)
+</a><a href="#h8-0-48" id="h8-0-48" class="i">+		default:
+</a><a href="#h8-0-49" id="h8-0-49" class="i">+			return errors.New(&quot;unknown block type for main block&quot;)
+</a><a href="#h8-0-50" id="h8-0-50" class="i">+		}
+</a><a href="#h8-0-51" id="h8-0-51" class="i">+
+</a><a href="#h8-0-52" id="h8-0-52" class="i">+	} else {
+</a><a href="#h8-0-53" id="h8-0-53" class="i">+		return errors.New(&quot;main block not found&quot;)
+</a><a href="#h8-0-54" id="h8-0-54" class="i">+	}
+</a><a href="#h8-0-55" id="h8-0-55" class="i">+
+</a><a href="#h8-0-56" id="h8-0-56" class="i">+	return nil
+</a><a href="#h8-0-57" id="h8-0-57" class="i">+}
+</a><a href="#h8-0-58" id="h8-0-58" class="i">+
+</a><a href="#h8-0-59" id="h8-0-59" class="i">+func (bi *BMBuilder) BuildSequentialBlock(block *BMBuilderBlock) error {
+</a><a href="#h8-0-60" id="h8-0-60" class="i">+	return nil
+</a><a href="#h8-0-61" id="h8-0-61" class="i">+}
+</a><b>diff --git a/<a id="h9" href="../file/pkg/bmbuilder/generator_basm.go.html">pkg/bmbuilder/generator_basm.go</a> b/<a href="../file/pkg/bmbuilder/generator_basm.go.html">pkg/bmbuilder/generator_basm.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -1,9 +1,16 @@
+</a> package bmbuilder
+ 
+ import (
+<a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+<a href="#h9-0-6" id="h9-0-6" class="i">+	&quot;os&quot;
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+	&quot;path/filepath&quot;
+</a><a href="#h9-0-8" id="h9-0-8" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/basm&quot;
+<a href="#h9-0-11" id="h9-0-11" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+ )
+<a href="#h9-1" id="h9-1" class="h">@@ -15,6 +22,108 @@ func BasmGenerator(b *BMBuilder, e *bmline.BasmElement, l *bmline.BasmLine) (*bo
+</a> 		defer fmt.Println(green(&quot;\t\t\tBasmGenerator - End&quot;))
+ 	}
+ 
+<a href="#h9-1-3" id="h9-1-3" class="d">-	return basm.BasmGenerator(e, l)
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+	bi := new(basm.BasmInstance)
+</a><a href="#h9-1-5" id="h9-1-5" class="i">+	if b.debug {
+</a><a href="#h9-1-6" id="h9-1-6" class="i">+		bi.SetDebug()
+</a><a href="#h9-1-7" id="h9-1-7" class="i">+	}
+</a><a href="#h9-1-8" id="h9-1-8" class="i">+	if b.verbose {
+</a><a href="#h9-1-9" id="h9-1-9" class="i">+		bi.SetVerbose()
+</a><a href="#h9-1-10" id="h9-1-10" class="i">+	}
+</a><a href="#h9-1-11" id="h9-1-11" class="i">+
+</a><a href="#h9-1-12" id="h9-1-12" class="i">+	bi.BMinfo = new(bminfo.BMinfo)
+</a><a href="#h9-1-13" id="h9-1-13" class="i">+
+</a><a href="#h9-1-14" id="h9-1-14" class="i">+	// Load the BMinfo file if it exists as metadata
+</a><a href="#h9-1-15" id="h9-1-15" class="i">+	bmInfoFile := l.GetMeta(&quot;bminfofile&quot;)
+</a><a href="#h9-1-16" id="h9-1-16" class="i">+
+</a><a href="#h9-1-17" id="h9-1-17" class="i">+	if bmInfoFile != &quot;&quot; {
+</a><a href="#h9-1-18" id="h9-1-18" class="i">+		bmInfoFile := l.GetMeta(&quot;bminfofile&quot;)
+</a><a href="#h9-1-19" id="h9-1-19" class="i">+		if bmInfoJSON, err := os.ReadFile(bmInfoFile); err == nil {
+</a><a href="#h9-1-20" id="h9-1-20" class="i">+			if err := json.Unmarshal(bmInfoJSON, bi.BMinfo); err != nil {
+</a><a href="#h9-1-21" id="h9-1-21" class="i">+				return nil, err
+</a><a href="#h9-1-22" id="h9-1-22" class="i">+			}
+</a><a href="#h9-1-23" id="h9-1-23" class="i">+		} else {
+</a><a href="#h9-1-24" id="h9-1-24" class="i">+			return nil, err
+</a><a href="#h9-1-25" id="h9-1-25" class="i">+		}
+</a><a href="#h9-1-26" id="h9-1-26" class="i">+	}
+</a><a href="#h9-1-27" id="h9-1-27" class="i">+
+</a><a href="#h9-1-28" id="h9-1-28" class="i">+	bi.BasmInstanceInit(nil)
+</a><a href="#h9-1-29" id="h9-1-29" class="i">+
+</a><a href="#h9-1-30" id="h9-1-30" class="i">+	if l.GetMeta(&quot;disabledynamicalmatching&quot;) != &quot;&quot; {
+</a><a href="#h9-1-31" id="h9-1-31" class="i">+		bi.Activate(bmconfig.DisableDynamicalMatching)
+</a><a href="#h9-1-32" id="h9-1-32" class="i">+	}
+</a><a href="#h9-1-33" id="h9-1-33" class="i">+	if l.GetMeta(&quot;chooserminwordsize&quot;) != &quot;&quot; {
+</a><a href="#h9-1-34" id="h9-1-34" class="i">+		bi.Activate(bmconfig.ChooserMinWordSize)
+</a><a href="#h9-1-35" id="h9-1-35" class="i">+	}
+</a><a href="#h9-1-36" id="h9-1-36" class="i">+	if l.GetMeta(&quot;chooserforcesamename&quot;) != &quot;&quot; {
+</a><a href="#h9-1-37" id="h9-1-37" class="i">+		bi.Activate(bmconfig.ChooserForceSameName)
+</a><a href="#h9-1-38" id="h9-1-38" class="i">+	}
+</a><a href="#h9-1-39" id="h9-1-39" class="i">+
+</a><a href="#h9-1-40" id="h9-1-40" class="i">+	// TODO: The the passes control from metadata
+</a><a href="#h9-1-41" id="h9-1-41" class="i">+
+</a><a href="#h9-1-42" id="h9-1-42" class="i">+	if l.GetMeta(&quot;optimizations&quot;) != &quot;&quot; {
+</a><a href="#h9-1-43" id="h9-1-43" class="i">+		optA := strings.Split(l.GetMeta(&quot;optimizations&quot;), &quot;:&quot;)
+</a><a href="#h9-1-44" id="h9-1-44" class="i">+		for _, o := range optA {
+</a><a href="#h9-1-45" id="h9-1-45" class="i">+			if err := bi.ActivateOptimization(o); err != nil {
+</a><a href="#h9-1-46" id="h9-1-46" class="i">+				return nil, err
+</a><a href="#h9-1-47" id="h9-1-47" class="i">+			}
+</a><a href="#h9-1-48" id="h9-1-48" class="i">+		}
+</a><a href="#h9-1-49" id="h9-1-49" class="i">+	}
+</a><a href="#h9-1-50" id="h9-1-50" class="i">+
+</a><a href="#h9-1-51" id="h9-1-51" class="i">+	startAssembling := false
+</a><a href="#h9-1-52" id="h9-1-52" class="i">+
+</a><a href="#h9-1-53" id="h9-1-53" class="i">+	if l.GetMeta(&quot;basmfiles&quot;) == &quot;&quot; {
+</a><a href="#h9-1-54" id="h9-1-54" class="i">+		return nil, fmt.Errorf(&quot;No BASM files to assemble&quot;)
+</a><a href="#h9-1-55" id="h9-1-55" class="i">+	}
+</a><a href="#h9-1-56" id="h9-1-56" class="i">+
+</a><a href="#h9-1-57" id="h9-1-57" class="i">+	basmFiles := strings.Split(l.GetMeta(&quot;basmfiles&quot;), &quot;:&quot;)
+</a><a href="#h9-1-58" id="h9-1-58" class="i">+
+</a><a href="#h9-1-59" id="h9-1-59" class="i">+	for _, asmFile := range basmFiles {
+</a><a href="#h9-1-60" id="h9-1-60" class="i">+		startAssembling = true
+</a><a href="#h9-1-61" id="h9-1-61" class="i">+
+</a><a href="#h9-1-62" id="h9-1-62" class="i">+		// Get the file extension
+</a><a href="#h9-1-63" id="h9-1-63" class="i">+		ext := filepath.Ext(asmFile)
+</a><a href="#h9-1-64" id="h9-1-64" class="i">+
+</a><a href="#h9-1-65" id="h9-1-65" class="i">+		switch ext {
+</a><a href="#h9-1-66" id="h9-1-66" class="i">+
+</a><a href="#h9-1-67" id="h9-1-67" class="i">+		case &quot;.basm&quot;:
+</a><a href="#h9-1-68" id="h9-1-68" class="i">+			err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h9-1-69" id="h9-1-69" class="i">+			if err != nil {
+</a><a href="#h9-1-70" id="h9-1-70" class="i">+				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h9-1-71" id="h9-1-71" class="i">+			}
+</a><a href="#h9-1-72" id="h9-1-72" class="i">+		case &quot;.ll&quot;:
+</a><a href="#h9-1-73" id="h9-1-73" class="i">+			err := bi.ParseAssemblyLLVM(asmFile)
+</a><a href="#h9-1-74" id="h9-1-74" class="i">+			if err != nil {
+</a><a href="#h9-1-75" id="h9-1-75" class="i">+				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h9-1-76" id="h9-1-76" class="i">+			}
+</a><a href="#h9-1-77" id="h9-1-77" class="i">+		default:
+</a><a href="#h9-1-78" id="h9-1-78" class="i">+			// Default is .basm
+</a><a href="#h9-1-79" id="h9-1-79" class="i">+			err := bi.ParseAssemblyDefault(asmFile)
+</a><a href="#h9-1-80" id="h9-1-80" class="i">+			if err != nil {
+</a><a href="#h9-1-81" id="h9-1-81" class="i">+				return nil, errors.New(&quot;Error while parsing file&quot; + err.Error())
+</a><a href="#h9-1-82" id="h9-1-82" class="i">+			}
+</a><a href="#h9-1-83" id="h9-1-83" class="i">+		}
+</a><a href="#h9-1-84" id="h9-1-84" class="i">+	}
+</a><a href="#h9-1-85" id="h9-1-85" class="i">+
+</a><a href="#h9-1-86" id="h9-1-86" class="i">+	if !startAssembling {
+</a><a href="#h9-1-87" id="h9-1-87" class="i">+		return nil, errors.New(&quot;no BASM files to assemble&quot;)
+</a><a href="#h9-1-88" id="h9-1-88" class="i">+	}
+</a><a href="#h9-1-89" id="h9-1-89" class="i">+
+</a><a href="#h9-1-90" id="h9-1-90" class="i">+	if err := bi.RunAssembler(); err != nil {
+</a><a href="#h9-1-91" id="h9-1-91" class="i">+		bi.Alert(err)
+</a><a href="#h9-1-92" id="h9-1-92" class="i">+		return nil, err
+</a><a href="#h9-1-93" id="h9-1-93" class="i">+	}
+</a><a href="#h9-1-94" id="h9-1-94" class="i">+
+</a><a href="#h9-1-95" id="h9-1-95" class="i">+	if err := bi.Assembler2BondMachine(); err != nil {
+</a><a href="#h9-1-96" id="h9-1-96" class="i">+		return nil, errors.New(&quot;Error while converting assembler to BondMachine&quot; + err.Error())
+</a><a href="#h9-1-97" id="h9-1-97" class="i">+	}
+</a><a href="#h9-1-98" id="h9-1-98" class="i">+
+</a><a href="#h9-1-99" id="h9-1-99" class="i">+	bMach := bi.GetBondMachine()
+</a><a href="#h9-1-100" id="h9-1-100" class="i">+
+</a><a href="#h9-1-101" id="h9-1-101" class="i">+	// TODO: bminfofile write ?
+</a><a href="#h9-1-102" id="h9-1-102" class="i">+
+</a><a href="#h9-1-103" id="h9-1-103" class="i">+	// TODO: dumprequirements ?
+</a><a href="#h9-1-104" id="h9-1-104" class="i">+
+</a><a href="#h9-1-105" id="h9-1-105" class="i">+	// TODO: bcof ?
+</a> 
+<a href="#h9-1-107" id="h9-1-107" class="i">+	return bMach, nil
+</a> }
+<b>diff --git a/<a id="h10" href="../file/pkg/bmbuilder/meta.go.html">pkg/bmbuilder/meta.go</a> b/<a href="../file/pkg/bmbuilder/meta.go.html">pkg/bmbuilder/meta.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -122,6 +122,7 @@ func (bi *BMBuilder) filteredMetaAdd(el *bmline.BasmElement, key string, value s
+</a> 	case &quot;global&quot;:
+ 		switch key {
+ 		case &quot;main&quot;:
+<a href="#h10-0-3" id="h10-0-3" class="i">+		case &quot;registersize&quot;:
+</a> 		default:
+ 			return errors.New(&quot;Unknown global %meta: &quot; + key)
+ 		}
+<b>diff --git a/<a id="h11" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -400,7 +400,7 @@ func (sim *BmQSimulator) EmitBMAPIMaps(hwflavor string) (string, error) {
+</a> 		switch hwflavor {
+ 		case &quot;seq_hardcoded_real&quot;:
+ 			ioNum = int(math.Pow(float64(2), float64(len(sim.qbits))))
+<a href="#h11-0-3" id="h11-0-3" class="d">-		case &quot;seq_hardcoded_complex&quot;:
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+		case &quot;seq_hardcoded_complex&quot;, &quot;seq_hardcoded_addtree_complex&quot;:
+</a> 			ioNum = int(math.Pow(float64(2), float64(len(sim.qbits)))) * 2
+ 		}
+ 		newMap := new(IOmap)
+<b>diff --git a/<a id="h12" href="../file/pkg/bmqsim/files_seqhardcoded_addtree_complex.go.html">pkg/bmqsim/files_seqhardcoded_addtree_complex.go</a> b/<a href="../file/pkg/bmqsim/files_seqhardcoded_addtree_complex.go.html">pkg/bmqsim/files_seqhardcoded_addtree_complex.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -117,18 +117,59 @@ endloop:
+</a> {{- end }}
+ {{- end }}
+ 
+<a href="#h12-0-3" id="h12-0-3" class="d">-{{- range $i := n 0 .MatrixRows }}
+</a><a href="#h12-0-4" id="h12-0-4" class="d">-%meta cpdef	add{{ $i }}	romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h12-0-5" id="h12-0-5" class="d">-{{- end }}
+</a><a href="#h12-0-6" id="h12-0-6" class="i">+{{/*
+</a><a href="#h12-0-7" id="h12-0-7" class="i">+{{- define &quot;addline&quot; -}}
+</a><a href="#h12-0-8" id="h12-0-8" class="i">+{{- $level := .level -}}
+</a><a href="#h12-0-9" id="h12-0-9" class="i">+{{- $prefix := .prefix -}}
+</a><a href="#h12-0-10" id="h12-0-10" class="i">+ 	{{- if eq $level 0 }}
+</a><a href="#h12-0-11" id="h12-0-11" class="i">+ %meta cpdef	add {{ $prefix }} romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h12-0-12" id="h12-0-12" class="i">+ 	{{- else -}}
+</a><a href="#h12-0-13" id="h12-0-13" class="i">+ 		{{- range $i := n 0 (pow $level 2) -}}
+</a><a href="#h12-0-14" id="h12-0-14" class="i">+ 			{{- template &quot;addline&quot; dict &quot;level&quot; (dec $level) &quot;prefix&quot; (printf &quot;%s_%d&quot; $prefix $i) -}}
+</a><a href="#h12-0-15" id="h12-0-15" class="i">+ 		{{- end -}}
+</a><a href="#h12-0-16" id="h12-0-16" class="i">+ 	{{- end -}}
+</a><a href="#h12-0-17" id="h12-0-17" class="i">+ {{- end -}}
+</a><a href="#h12-0-18" id="h12-0-18" class="i">+
+</a><a href="#h12-0-19" id="h12-0-19" class="i">+%meta cpdef	add{{- template &quot;addline&quot; dict &quot;level&quot; 3 &quot;prefix&quot; &quot;g&quot; -}}	romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h12-0-20" id="h12-0-20" class="i">+*/}}
+</a><a href="#h12-0-21" id="h12-0-21" class="i">+
+</a><a href="#h12-0-22" id="h12-0-22" class="i">+{{- range $r := n 0 .MatrixRows }}
+</a><a href="#h12-0-23" id="h12-0-23" class="i">+{{- range $i := n 0 $.Qbits }}
+</a><a href="#h12-0-24" id="h12-0-24" class="i">+{{- range $j := n 0 (pow 2 $i) }}
+</a><a href="#h12-0-25" id="h12-0-25" class="i">+%meta cpdef	add{{ $r }}_{{ $i }}_{{ $j }} romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h12-0-26" id="h12-0-26" class="i">+{{- end -}}
+</a><a href="#h12-0-27" id="h12-0-27" class="i">+{{- end -}}
+</a><a href="#h12-0-28" id="h12-0-28" class="i">+{{ end }}
+</a> 
+ %meta cpdef	main	romcode: main, ramdata:mainram, execmode: ha
+ 
+<a href="#h12-0-32" id="h12-0-32" class="d">-{{- range $i := n 0 .MatrixRows }}
+</a><a href="#h12-0-33" id="h12-0-33" class="d">-{{- range $j := n 0 $.MatrixRows }}
+</a><a href="#h12-0-34" id="h12-0-34" class="d">-%meta ioatt	toadd{{ $i }}_{{ $j }}_r	cp: mult{{ $i }}_{{ $j }}, index:0, type:output
+</a><a href="#h12-0-35" id="h12-0-35" class="d">-%meta ioatt     toadd{{ $i }}_{{ $j }}_r	cp: add{{ $i }}, index:{{ mult 2 $j }}, type:input
+</a><a href="#h12-0-36" id="h12-0-36" class="d">-%meta ioatt	toadd{{ $i }}_{{ $j }}_i	cp: mult{{ $i }}_{{ $j }}, index:1, type:output
+</a><a href="#h12-0-37" id="h12-0-37" class="d">-%meta ioatt     toadd{{ $i }}_{{ $j }}_i	cp: add{{ $i }}, index:{{ (sum 1 (mult 2 $j)) }}, type:input
+</a><a href="#h12-0-38" id="h12-0-38" class="i">+{{- range $r := n 0 .MatrixRows }}
+</a><a href="#h12-0-39" id="h12-0-39" class="i">+{{- range $i := n 0 $.Qbits}}
+</a><a href="#h12-0-40" id="h12-0-40" class="i">+{{- range $j := ns 0 (pow 2 $i) 2 }}
+</a><a href="#h12-0-41" id="h12-0-41" class="i">+{{- if ne $i 0 }}
+</a><a href="#h12-0-42" id="h12-0-42" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_r	cp: add{{ $r }}_{{ $i }}_{{ $j }}, index:0, type:output
+</a><a href="#h12-0-43" id="h12-0-43" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_r	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:0, type:input
+</a><a href="#h12-0-44" id="h12-0-44" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_i	cp: add{{ $r }}_{{ $i }}_{{ $j }}, index:1, type:output
+</a><a href="#h12-0-45" id="h12-0-45" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_i	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:1, type:input
+</a><a href="#h12-0-46" id="h12-0-46" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ $i }}_{{ inc $j }}, index:0, type:output
+</a><a href="#h12-0-47" id="h12-0-47" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:2, type:input
+</a><a href="#h12-0-48" id="h12-0-48" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ $i }}_{{ inc $j }}, index:1, type:output
+</a><a href="#h12-0-49" id="h12-0-49" class="i">+%meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:3, type:input
+</a><a href="#h12-0-50" id="h12-0-50" class="i">+{{- end -}}
+</a><a href="#h12-0-51" id="h12-0-51" class="i">+{{- end -}}
+</a><a href="#h12-0-52" id="h12-0-52" class="i">+{{- end -}}
+</a><a href="#h12-0-53" id="h12-0-53" class="i">+{{ end }}
+</a><a href="#h12-0-54" id="h12-0-54" class="i">+
+</a><a href="#h12-0-55" id="h12-0-55" class="i">+{{- range $r := n 0 .MatrixRows }}
+</a><a href="#h12-0-56" id="h12-0-56" class="i">+{{- range $j := ns 0 $.MatrixRows 2 }}
+</a><a href="#h12-0-57" id="h12-0-57" class="i">+%meta ioatt	toadd{{ $r }}_{{ $j }}_r	cp: mult{{ $r }}_{{ $j }}, index:0, type:output
+</a><a href="#h12-0-58" id="h12-0-58" class="i">+%meta ioatt     toadd{{ $r }}_{{ $j }}_r	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:0, type:input
+</a><a href="#h12-0-59" id="h12-0-59" class="i">+%meta ioatt	toadd{{ $r }}_{{ $j }}_i	cp: mult{{ $r }}_{{ $j }}, index:1, type:output
+</a><a href="#h12-0-60" id="h12-0-60" class="i">+%meta ioatt     toadd{{ $r }}_{{ $j }}_i	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:1, type:input
+</a><a href="#h12-0-61" id="h12-0-61" class="i">+%meta ioatt	toadd{{ $r }}_{{ inc $j }}_r	cp: mult{{ $r }}_{{ inc $j }}, index:0, type:output
+</a><a href="#h12-0-62" id="h12-0-62" class="i">+%meta ioatt     toadd{{ $r }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:2, type:input
+</a><a href="#h12-0-63" id="h12-0-63" class="i">+%meta ioatt	toadd{{ $r }}_{{ inc $j }}_i	cp: mult{{ $r }}_{{ inc $j }}, index:1, type:output
+</a><a href="#h12-0-64" id="h12-0-64" class="i">+%meta ioatt     toadd{{ $r }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:3, type:input
+</a> {{- end }}
+ {{- end }}
+ 
+<a href="#h12-1" id="h12-1" class="h">@@ -142,8 +183,8 @@ endloop:
+</a> {{- end }}
+ 
+ {{- range $i := n 0 .MatrixRows }}
+<a href="#h12-1-3" id="h12-1-3" class="d">-%meta ioatt     tomain{{ $i }}_r	cp: add{{ $i }}, index:0, type:output
+</a><a href="#h12-1-4" id="h12-1-4" class="d">-%meta ioatt     tomain{{ $i }}_i	cp: add{{ $i }}, index:1, type:output
+</a><a href="#h12-1-5" id="h12-1-5" class="i">+%meta ioatt     tomain{{ $i }}_r	cp: add{{ $i }}_0_0, index:0, type:output
+</a><a href="#h12-1-6" id="h12-1-6" class="i">+%meta ioatt     tomain{{ $i }}_i	cp: add{{ $i }}_0_0, index:1, type:output
+</a> %meta ioatt     tomain{{ $i }}_r	cp: main, index:{{ sum (mult 2 $.MatrixRows) (mult 2 $i) }}, type:input
+ %meta ioatt     tomain{{ $i }}_i	cp: main, index:{{ sum (mult 2 $.MatrixRows) (sum 1 (mult 2 $i)) }}, type:input
+ {{- end }}
+<b>diff --git a/<a id="h13" href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a> b/<a href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -2,6 +2,7 @@ package bmqsim
+</a> 
+ import (
+ 	&quot;bytes&quot;
+<a href="#h13-0-3" id="h13-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 	&quot;math&quot;
+ 	&quot;text/template&quot;
+<a href="#h13-1" id="h13-1" class="h">@@ -101,6 +102,23 @@ func (sim *BmQSimulator) createBasicTemplateData() *templateData {
+</a> 		&quot;mult&quot;: func(a, b int) int {
+ 			return a * b
+ 		},
+<a href="#h13-1-3" id="h13-1-3" class="i">+		&quot;pow&quot;: func(a, b int) int {
+</a><a href="#h13-1-4" id="h13-1-4" class="i">+			return int(math.Pow(float64(a), float64(b)))
+</a><a href="#h13-1-5" id="h13-1-5" class="i">+		},
+</a><a href="#h13-1-6" id="h13-1-6" class="i">+		&quot;dict&quot;: func(values ...interface{}) (map[string]interface{}, error) {
+</a><a href="#h13-1-7" id="h13-1-7" class="i">+			if len(values)%2 != 0 {
+</a><a href="#h13-1-8" id="h13-1-8" class="i">+				return nil, errors.New(&quot;invalid dict call&quot;)
+</a><a href="#h13-1-9" id="h13-1-9" class="i">+			}
+</a><a href="#h13-1-10" id="h13-1-10" class="i">+			dict := make(map[string]interface{}, len(values)/2)
+</a><a href="#h13-1-11" id="h13-1-11" class="i">+			for i := 0; i &lt; len(values); i += 2 {
+</a><a href="#h13-1-12" id="h13-1-12" class="i">+				key, ok := values[i].(string)
+</a><a href="#h13-1-13" id="h13-1-13" class="i">+				if !ok {
+</a><a href="#h13-1-14" id="h13-1-14" class="i">+					return nil, errors.New(&quot;dict keys must be strings&quot;)
+</a><a href="#h13-1-15" id="h13-1-15" class="i">+				}
+</a><a href="#h13-1-16" id="h13-1-16" class="i">+				dict[key] = values[i+1]
+</a><a href="#h13-1-17" id="h13-1-17" class="i">+			}
+</a><a href="#h13-1-18" id="h13-1-18" class="i">+			return dict, nil
+</a><a href="#h13-1-19" id="h13-1-19" class="i">+		},
+</a> 	}
+ 	result.funcMap = funcMap
+ 	return result
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bondmachine.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> bondmachine.go (36872B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package main
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;encoding/binary&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;encoding/csv&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;encoding/json&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;errors&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;flag&quot;
+<a href="#l9" class="line" id="l9">      9</a> 	&quot;fmt&quot;
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;log&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;math/rand&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;net&quot;
+<a href="#l13" class="line" id="l13">     13</a> 	&quot;os&quot;
+<a href="#l14" class="line" id="l14">     14</a> 	&quot;sort&quot;
+<a href="#l15" class="line" id="l15">     15</a> 	&quot;strconv&quot;
+<a href="#l16" class="line" id="l16">     16</a> 	&quot;strings&quot;
+<a href="#l17" class="line" id="l17">     17</a> 	&quot;time&quot;
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+<a href="#l20" class="line" id="l20">     20</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#l21" class="line" id="l21">     21</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+<a href="#l22" class="line" id="l22">     22</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l23" class="line" id="l23">     23</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondirect&quot;
+<a href="#l24" class="line" id="l24">     24</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#l25" class="line" id="l25">     25</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/etherbond&quot;
+<a href="#l26" class="line" id="l26">     26</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#l27" class="line" id="l27">     27</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/simbox&quot;
+<a href="#l28" class="line" id="l28">     28</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/udpbond&quot;
+<a href="#l29" class="line" id="l29">     29</a> 	&quot;google.golang.org/protobuf/proto&quot;
+<a href="#l30" class="line" id="l30">     30</a> )
+<a href="#l31" class="line" id="l31">     31</a> 
+<a href="#l32" class="line" id="l32">     32</a> type string_slice []string
+<a href="#l33" class="line" id="l33">     33</a> 
+<a href="#l34" class="line" id="l34">     34</a> func (i *string_slice) String() string {
+<a href="#l35" class="line" id="l35">     35</a> 	return fmt.Sprint(*i)
+<a href="#l36" class="line" id="l36">     36</a> }
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> func (i *string_slice) Set(value string) error {
+<a href="#l39" class="line" id="l39">     39</a> 	for _, dt := range strings.Split(value, &quot;,&quot;) {
+<a href="#l40" class="line" id="l40">     40</a> 		*i = append(*i, dt)
+<a href="#l41" class="line" id="l41">     41</a> 	}
+<a href="#l42" class="line" id="l42">     42</a> 	return nil
+<a href="#l43" class="line" id="l43">     43</a> }
+<a href="#l44" class="line" id="l44">     44</a> 
+<a href="#l45" class="line" id="l45">     45</a> var debug = flag.Bool(&quot;d&quot;, false, &quot;Debug&quot;)
+<a href="#l46" class="line" id="l46">     46</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#l47" class="line" id="l47">     47</a> var commentedVerilog = flag.Bool(&quot;comment-verilog&quot;, false, &quot;Comment generated verilog&quot;)
+<a href="#l48" class="line" id="l48">     48</a> 
+<a href="#l49" class="line" id="l49">     49</a> var register_size = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-bit)&quot;)
+<a href="#l50" class="line" id="l50">     50</a> 
+<a href="#l51" class="line" id="l51">     51</a> var bondmachine_file = flag.String(&quot;bondmachine-file&quot;, &quot;&quot;, &quot;Filename of the bondmachine&quot;)
+<a href="#l52" class="line" id="l52">     52</a> 
+<a href="#l53" class="line" id="l53">     53</a> var bcofInFile = flag.String(&quot;bcof-file&quot;, &quot;&quot;, &quot;Use a BCOF file as input for RAM initialization&quot;)
+<a href="#l54" class="line" id="l54">     54</a> 
+<a href="#l55" class="line" id="l55">     55</a> // Verilog processing
+<a href="#l56" class="line" id="l56">     56</a> var create_verilog = flag.Bool(&quot;create-verilog&quot;, false, &quot;Create default verilog files&quot;)
+<a href="#l57" class="line" id="l57">     57</a> var verilog_flavor = flag.String(&quot;verilog-flavor&quot;, &quot;iverilog&quot;, &quot;Choose the type of verilog device. currently supported: iverilog,de10nano.&quot;)
+<a href="#l58" class="line" id="l58">     58</a> var verilog_mapfile = flag.String(&quot;verilog-mapfile&quot;, &quot;&quot;, &quot;File mapping the device IO to bondmachine IO&quot;)
+<a href="#l59" class="line" id="l59">     59</a> var verilog_simulation = flag.Bool(&quot;verilog-simulation&quot;, false, &quot;Create simulation oriented verilog as default.&quot;)
+<a href="#l60" class="line" id="l60">     60</a> 
+<a href="#l61" class="line" id="l61">     61</a> var show_program_alias = flag.Bool(&quot;show-program-alias&quot;, false, &quot;Show program alias for the processor&quot;)
+<a href="#l62" class="line" id="l62">     62</a> 
+<a href="#l63" class="line" id="l63">     63</a> // Domains processing
+<a href="#l64" class="line" id="l64">     64</a> var list_domains = flag.Bool(&quot;list-domains&quot;, false, &quot;Domain list&quot;)
+<a href="#l65" class="line" id="l65">     65</a> var add_domains string_slice
+<a href="#l66" class="line" id="l66">     66</a> var del_domains string_slice
+<a href="#l67" class="line" id="l67">     67</a> 
+<a href="#l68" class="line" id="l68">     68</a> // Processors
+<a href="#l69" class="line" id="l69">     69</a> var list_processors = flag.Bool(&quot;list-processors&quot;, false, &quot;Processor list&quot;)
+<a href="#l70" class="line" id="l70">     70</a> var add_processor = flag.Int(&quot;add-processor&quot;, -1, &quot;Add a processor of the given domain&quot;)
+<a href="#l71" class="line" id="l71">     71</a> var enumProcessors = flag.Bool(&quot;enum-processors&quot;, false, &quot;Enumerate all the processors&quot;)
+<a href="#l72" class="line" id="l72">     72</a> 
+<a href="#l73" class="line" id="l73">     73</a> // TODO del-processor
+<a href="#l74" class="line" id="l74">     74</a> 
+<a href="#l75" class="line" id="l75">     75</a> // Inputs
+<a href="#l76" class="line" id="l76">     76</a> var list_inputs = flag.Bool(&quot;list-inputs&quot;, false, &quot;Inputs list&quot;)
+<a href="#l77" class="line" id="l77">     77</a> var add_inputs = flag.Int(&quot;add-inputs&quot;, 0, &quot;Inputs to add&quot;) // When adding we need how many new inputs, when removing we need which (thats why the list)
+<a href="#l78" class="line" id="l78">     78</a> var del_inputs string_slice
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> // Outputs
+<a href="#l81" class="line" id="l81">     81</a> var list_outputs = flag.Bool(&quot;list-outputs&quot;, false, &quot;Outputs list&quot;)
+<a href="#l82" class="line" id="l82">     82</a> var add_outputs = flag.Int(&quot;add-outputs&quot;, 0, &quot;Outputs to add&quot;)
+<a href="#l83" class="line" id="l83">     83</a> var del_outputs string_slice
+<a href="#l84" class="line" id="l84">     84</a> 
+<a href="#l85" class="line" id="l85">     85</a> var list_bonds = flag.Bool(&quot;list-bonds&quot;, false, &quot;Bonds list&quot;)
+<a href="#l86" class="line" id="l86">     86</a> var enumBonds = flag.Bool(&quot;enum-bonds&quot;, false, &quot;Enumerate all the bonds&quot;)
+<a href="#l87" class="line" id="l87">     87</a> var add_bond string_slice
+<a href="#l88" class="line" id="l88">     88</a> var del_bonds string_slice
+<a href="#l89" class="line" id="l89">     89</a> 
+<a href="#l90" class="line" id="l90">     90</a> var specs = flag.Bool(&quot;specs&quot;, false, &quot;Show BondMachine specs&quot;)
+<a href="#l91" class="line" id="l91">     91</a> 
+<a href="#l92" class="line" id="l92">     92</a> // TODO Shared objects
+<a href="#l93" class="line" id="l93">     93</a> var list_shared_objects = flag.Bool(&quot;list-shared-objects&quot;, false, &quot;Shared object list&quot;)
+<a href="#l94" class="line" id="l94">     94</a> var add_shared_objects string_slice
+<a href="#l95" class="line" id="l95">     95</a> var del_shared_objects string_slice
+<a href="#l96" class="line" id="l96">     96</a> var list_processor_shared_object_links = flag.Bool(&quot;list-processor-shared-object-links&quot;, false, &quot;Processor shared object link list&quot;)
+<a href="#l97" class="line" id="l97">     97</a> var connect_processor_shared_object string_slice
+<a href="#l98" class="line" id="l98">     98</a> var disconnect_processor_shared_object string_slice
+<a href="#l99" class="line" id="l99">     99</a> 
+<a href="#l100" class="line" id="l100">    100</a> var list_internal_inputs = flag.Bool(&quot;list-internal-inputs&quot;, false, &quot;Internal inputs list&quot;)
+<a href="#l101" class="line" id="l101">    101</a> var list_internal_outputs = flag.Bool(&quot;list-internal-outputs&quot;, false, &quot;Internal outputs list&quot;)
+<a href="#l102" class="line" id="l102">    102</a> 
+<a href="#l103" class="line" id="l103">    103</a> // Dot output
+<a href="#l104" class="line" id="l104">    104</a> var emit_dot = flag.Bool(&quot;emit-dot&quot;, false, &quot;Emit dot file on stdout&quot;)
+<a href="#l105" class="line" id="l105">    105</a> var dot_detail = flag.Int(&quot;dot-detail&quot;, 1, &quot;Detail of infos on dot file 1-5&quot;)
+<a href="#l106" class="line" id="l106">    106</a> 
+<a href="#l107" class="line" id="l107">    107</a> // Assembly output
+<a href="#l108" class="line" id="l108">    108</a> var show_program_disassembled = flag.Bool(&quot;show-program-disassembled&quot;, false, &quot;Show disassebled program&quot;)
+<a href="#l109" class="line" id="l109">    109</a> var multi_abstract_assembly_file = flag.String(&quot;multi-abstract-assembly-file&quot;, &quot;&quot;, &quot;Save the bondmachine as multi abstract assembly file&quot;)
+<a href="#l110" class="line" id="l110">    110</a> 
+<a href="#l111" class="line" id="l111">    111</a> var simbox_file = flag.String(&quot;simbox-file&quot;, &quot;&quot;, &quot;Filename of the simulation data file&quot;)
+<a href="#l112" class="line" id="l112">    112</a> 
+<a href="#l113" class="line" id="l113">    113</a> var sim = flag.Bool(&quot;sim&quot;, false, &quot;Simulate bond machine&quot;)
+<a href="#l114" class="line" id="l114">    114</a> var simInteractions = flag.Int(&quot;sim-interactions&quot;, 10, &quot;Simulation interaction&quot;)
+<a href="#l115" class="line" id="l115">    115</a> var simReport = flag.String(&quot;sim-report&quot;, &quot;&quot;, &quot;Simulation report file&quot;)
+<a href="#l116" class="line" id="l116">    116</a> 
+<a href="#l117" class="line" id="l117">    117</a> var emu = flag.Bool(&quot;emu&quot;, false, &quot;Emulate bond machine&quot;)
+<a href="#l118" class="line" id="l118">    118</a> var emu_interactions = flag.Int(&quot;emu-interactions&quot;, 10, &quot;Emulation interaction (0 means forever)&quot;)
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> var cluster_spec = flag.String(&quot;cluster-spec&quot;, &quot;&quot;, &quot;Etherbond or udpbond cluster Spec File &quot;)
+<a href="#l121" class="line" id="l121">    121</a> var peer_id = flag.Int(&quot;peer-id&quot;, -1, &quot;Etherbond or udpbond Peer ID&quot;)
+<a href="#l122" class="line" id="l122">    122</a> 
+<a href="#l123" class="line" id="l123">    123</a> var use_etherbond = flag.Bool(&quot;use-etherbond&quot;, false, &quot;Build including etherbond support&quot;)
+<a href="#l124" class="line" id="l124">    124</a> var etherbond_flavor = flag.String(&quot;etherbond-flavor&quot;, &quot;enc60j28&quot;, &quot;Choose the type of ethernet device. currently supported: enc60j28.&quot;)
+<a href="#l125" class="line" id="l125">    125</a> var etherbond_mapfile = flag.String(&quot;etherbond-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the etherbond.&quot;)
+<a href="#l126" class="line" id="l126">    126</a> var etherbond_macfile = flag.String(&quot;etherbond-macfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine peers to MAC addresses.&quot;)
+<a href="#l127" class="line" id="l127">    127</a> 
+<a href="#l128" class="line" id="l128">    128</a> var use_udpbond = flag.Bool(&quot;use-udpbond&quot;, false, &quot;Build including udpbond support&quot;)
+<a href="#l129" class="line" id="l129">    129</a> var udpbond_flavor = flag.String(&quot;udpbond-flavor&quot;, &quot;esp8266&quot;, &quot;Choose the type of network device. currently supported: esp8266.&quot;)
+<a href="#l130" class="line" id="l130">    130</a> var bondirectMapfile = flag.String(&quot;udpbond-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the udpbond.&quot;)
+<a href="#l131" class="line" id="l131">    131</a> var udpbond_ipfile = flag.String(&quot;udpbond-ipfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine peers to IP addresses.&quot;)
+<a href="#l132" class="line" id="l132">    132</a> var udpbond_netconfig = flag.String(&quot;udpbond-netconfig&quot;, &quot;&quot;, &quot;JSON file containing the network configuration for udpbond&quot;)
+<a href="#l133" class="line" id="l133">    133</a> 
+<a href="#l134" class="line" id="l134">    134</a> var use_bondirect = flag.Bool(&quot;use-bondirect&quot;, false, &quot;Build including bondirect support&quot;)
+<a href="#l135" class="line" id="l135">    135</a> var bondirect_flavor = flag.String(&quot;bondirect-flavor&quot;, &quot;basic&quot;, &quot;Choose the type of bondirect device. currently supported: basic.&quot;)
+<a href="#l136" class="line" id="l136">    136</a> var bondirectMesh = flag.String(&quot;bondirect-mesh&quot;, &quot;&quot;, &quot;Bondirect mesh File &quot;)
+<a href="#l137" class="line" id="l137">    137</a> var bondirect_mapfile = flag.String(&quot;bondirect-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the bondirect.&quot;)
+<a href="#l138" class="line" id="l138">    138</a> 
+<a href="#l139" class="line" id="l139">    139</a> var usebmapi = flag.Bool(&quot;use-bmapi&quot;, false, &quot;Build a BMAPI interface&quot;)
+<a href="#l140" class="line" id="l140">    140</a> var bmapiLanguage = flag.String(&quot;bmapi-language&quot;, &quot;go&quot;, &quot;Choose BMAPI language (go,c,python)&quot;)
+<a href="#l141" class="line" id="l141">    141</a> var bmapiFramework = flag.String(&quot;bmapi-framework&quot;, &quot;&quot;, &quot;Choose BMAPI framework (pynq)&quot;)
+<a href="#l142" class="line" id="l142">    142</a> var bmapiFlavor = flag.String(&quot;bmapi-flavor&quot;, &quot;&quot;, &quot;Choose the BMAPI interconnect&quot;)
+<a href="#l143" class="line" id="l143">    143</a> var bmapiFlavorVersion = flag.String(&quot;bmapi-flavor-version&quot;, &quot;&quot;, &quot;Choose the BMAPI interconnect version&quot;)
+<a href="#l144" class="line" id="l144">    144</a> var bmapiMapfile = flag.String(&quot;bmapi-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the BMAPI.&quot;)
+<a href="#l145" class="line" id="l145">    145</a> var bmapiLibOutDir = flag.String(&quot;bmapi-liboutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI library.&quot;)
+<a href="#l146" class="line" id="l146">    146</a> var bmapiModOutDir = flag.String(&quot;bmapi-modoutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI kernel module.&quot;)
+<a href="#l147" class="line" id="l147">    147</a> var bmapiAuxOutDir = flag.String(&quot;bmapi-auxoutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI auxiliary material.&quot;)
+<a href="#l148" class="line" id="l148">    148</a> var bmapiPackageName = flag.String(&quot;bmapi-packagename&quot;, &quot;&quot;, &quot;GO package name.&quot;)
+<a href="#l149" class="line" id="l149">    149</a> var bmapiModuleName = flag.String(&quot;bmapi-modulename&quot;, &quot;&quot;, &quot;GO module name.&quot;)
+<a href="#l150" class="line" id="l150">    150</a> var bmapiGenerateExample = flag.String(&quot;bmapi-generate-example&quot;, &quot;&quot;, &quot;Generate an example program using the BMAPI.&quot;)
+<a href="#l151" class="line" id="l151">    151</a> var bmapiDataType = flag.String(&quot;bmapi-data-type&quot;, &quot;float32&quot;, &quot;Data type for the BMAPI.&quot;)
+<a href="#l152" class="line" id="l152">    152</a> 
+<a href="#l153" class="line" id="l153">    153</a> var board_slow = flag.Bool(&quot;board-slow&quot;, false, &quot;Board slow support&quot;)
+<a href="#l154" class="line" id="l154">    154</a> var board_slow_factor = flag.Int(&quot;board-slow-factor&quot;, 1, &quot;Board slow factor&quot;)
+<a href="#l155" class="line" id="l155">    155</a> 
+<a href="#l156" class="line" id="l156">    156</a> var uart = flag.Bool(&quot;uart&quot;, false, &quot;UART support&quot;)
+<a href="#l157" class="line" id="l157">    157</a> var uartMapFile = flag.String(&quot;uart-mapfile&quot;, &quot;&quot;, &quot;UART mappings&quot;)
+<a href="#l158" class="line" id="l158">    158</a> 
+<a href="#l159" class="line" id="l159">    159</a> var basys3_7segment = flag.Bool(&quot;basys3-7segment&quot;, false, &quot;Basys3 7 segments display support&quot;)
+<a href="#l160" class="line" id="l160">    160</a> var basys3_7segment_map = flag.String(&quot;basys3-7segment-map&quot;, &quot;&quot;, &quot;Basys3 7 segments display mappings&quot;)
+<a href="#l161" class="line" id="l161">    161</a> 
+<a href="#l162" class="line" id="l162">    162</a> var iceBreakerLeds = flag.Bool(&quot;icebreaker-leds&quot;, false, &quot;Icebreaker leds support&quot;)
+<a href="#l163" class="line" id="l163">    163</a> var iceBreakerLedsMap = flag.String(&quot;icebreaker-leds-map&quot;, &quot;&quot;, &quot;Icebreaker leds mappings&quot;)
+<a href="#l164" class="line" id="l164">    164</a> 
+<a href="#l165" class="line" id="l165">    165</a> var iceFunLeds = flag.Bool(&quot;icefun-leds&quot;, false, &quot;IceFun leds support&quot;)
+<a href="#l166" class="line" id="l166">    166</a> var iceFunLedsMap = flag.String(&quot;icefun-leds-map&quot;, &quot;&quot;, &quot;IceFun leds mappings&quot;)
+<a href="#l167" class="line" id="l167">    167</a> 
+<a href="#l168" class="line" id="l168">    168</a> var Ice40Lp1kLeds = flag.Bool(&quot;ice40lp1k-leds&quot;, false, &quot;Ice40lp1k leds support&quot;)
+<a href="#l169" class="line" id="l169">    169</a> var Ice40Lp1kLedsMap = flag.String(&quot;ice40lp1k-leds-map&quot;, &quot;&quot;, &quot;Ice40lp1k leds mappings&quot;)
+<a href="#l170" class="line" id="l170">    170</a> 
+<a href="#l171" class="line" id="l171">    171</a> var vgatext = flag.Bool(&quot;vgatext&quot;, false, &quot;Multi CP VGA Textual support&quot;)
+<a href="#l172" class="line" id="l172">    172</a> var vgatextFlavor = flag.String(&quot;vgatext-flavor&quot;, &quot;800x600&quot;, &quot;VGA Textual flavor. currently supported: 800x600&quot;)
+<a href="#l173" class="line" id="l173">    173</a> var vgatextFonts = flag.String(&quot;vgatext-fonts&quot;, &quot;&quot;, &quot;VGA Textual fonts file&quot;)
+<a href="#l174" class="line" id="l174">    174</a> var vgatextHeader = flag.String(&quot;vgatext-header&quot;, &quot;&quot;, &quot;VGA Textual header rom file&quot;)
+<a href="#l175" class="line" id="l175">    175</a> 
+<a href="#l176" class="line" id="l176">    176</a> var ps2keyboardIo = flag.Bool(&quot;ps2-keyboard-io&quot;, false, &quot;PS2 Keyboard support via IO&quot;)
+<a href="#l177" class="line" id="l177">    177</a> var ps2keyboardIoMap = flag.String(&quot;ps2-keyboard-io-map&quot;, &quot;&quot;, &quot;PS2 Keyboard via IO mappings&quot;)
+<a href="#l178" class="line" id="l178">    178</a> 
+<a href="#l179" class="line" id="l179">    179</a> var ps2keyboard = flag.Bool(&quot;ps2-keyboard&quot;, false, &quot;PS2 Keyboard support via SO&quot;)
+<a href="#l180" class="line" id="l180">    180</a> 
+<a href="#l181" class="line" id="l181">    181</a> var attach_benchmark_core string_slice
+<a href="#l182" class="line" id="l182">    182</a> 
+<a href="#l183" class="line" id="l183">    183</a> var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;File containing the bondmachine extra info&quot;)
+<a href="#l184" class="line" id="l184">    184</a> var bmRequirementsFile = flag.String(&quot;bmrequirements-file&quot;, &quot;&quot;, &quot;File containing the bondmachine requirements&quot;)
+<a href="#l185" class="line" id="l185">    185</a> var hwOptimizations = flag.String(&quot;hw-optimizations&quot;, &quot;&quot;, &quot;comma separated hardware optimizations&quot;)
+<a href="#l186" class="line" id="l186">    186</a> 
+<a href="#l187" class="line" id="l187">    187</a> var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the sintax index,filename)&quot;)
+<a href="#l188" class="line" id="l188">    188</a> 
+<a href="#l189" class="line" id="l189">    189</a> func check(e error) {
+<a href="#l190" class="line" id="l190">    190</a> 	if e != nil {
+<a href="#l191" class="line" id="l191">    191</a> 		panic(e)
+<a href="#l192" class="line" id="l192">    192</a> 	}
+<a href="#l193" class="line" id="l193">    193</a> }
+<a href="#l194" class="line" id="l194">    194</a> 
+<a href="#l195" class="line" id="l195">    195</a> func init() {
+<a href="#l196" class="line" id="l196">    196</a> 	rand.Seed(int64(time.Now().Unix()))
+<a href="#l197" class="line" id="l197">    197</a> 
+<a href="#l198" class="line" id="l198">    198</a> 	flag.Var(&amp;add_domains, &quot;add-domains&quot;, &quot;Comma-separated list of JSON machine files to add&quot;)
+<a href="#l199" class="line" id="l199">    199</a> 	flag.Var(&amp;del_domains, &quot;del-domains&quot;, &quot;Comma-separated list of domain ID to delete&quot;)
+<a href="#l200" class="line" id="l200">    200</a> 	flag.Var(&amp;del_inputs, &quot;del-inputs&quot;, &quot;Comma-separated list of input ID to delete&quot;)
+<a href="#l201" class="line" id="l201">    201</a> 	flag.Var(&amp;del_outputs, &quot;del-outputs&quot;, &quot;Comma-separated list of output ID to delete&quot;)
+<a href="#l202" class="line" id="l202">    202</a> 	flag.Var(&amp;del_bonds, &quot;del-bonds&quot;, &quot;Comma-separated list of bond ID to delete&quot;)
+<a href="#l203" class="line" id="l203">    203</a> 	flag.Var(&amp;add_bond, &quot;add-bond&quot;, &quot;Bond with comma-separated endpoints&quot;)
+<a href="#l204" class="line" id="l204">    204</a> 	flag.Var(&amp;add_shared_objects, &quot;add-shared-objects&quot;, &quot;Add a shared object&quot;)
+<a href="#l205" class="line" id="l205">    205</a> 	flag.Var(&amp;del_shared_objects, &quot;del-shared-objects&quot;, &quot;Delete a shared object&quot;)
+<a href="#l206" class="line" id="l206">    206</a> 	flag.Var(&amp;connect_processor_shared_object, &quot;connect-processor-shared-object&quot;, &quot;Connect a processor to a shared object&quot;)
+<a href="#l207" class="line" id="l207">    207</a> 	flag.Var(&amp;disconnect_processor_shared_object, &quot;disconnect-processor-shared-object&quot;, &quot;Disconnect a processor from a shared object&quot;)
+<a href="#l208" class="line" id="l208">    208</a> 	flag.Var(&amp;attach_benchmark_core, &quot;attach-benchmark-core&quot;, &quot;Attach a benchmark core&quot;)
+<a href="#l209" class="line" id="l209">    209</a> 
+<a href="#l210" class="line" id="l210">    210</a> 	flag.Parse()
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> 	if *linearDataRange != &quot;&quot; {
+<a href="#l213" class="line" id="l213">    213</a> 		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+<a href="#l214" class="line" id="l214">    214</a> 			log.Fatal(err)
+<a href="#l215" class="line" id="l215">    215</a> 		}
+<a href="#l216" class="line" id="l216">    216</a> 
+<a href="#l217" class="line" id="l217">    217</a> 		var lqRanges *map[int]bmnumbers.LinearDataRange
+<a href="#l218" class="line" id="l218">    218</a> 		for _, t := range bmnumbers.AllDynamicalTypes {
+<a href="#l219" class="line" id="l219">    219</a> 			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+<a href="#l220" class="line" id="l220">    220</a> 				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+<a href="#l221" class="line" id="l221">    221</a> 			}
+<a href="#l222" class="line" id="l222">    222</a> 		}
+<a href="#l223" class="line" id="l223">    223</a> 
+<a href="#l224" class="line" id="l224">    224</a> 		for i, t := range procbuilder.AllDynamicalInstructions {
+<a href="#l225" class="line" id="l225">    225</a> 			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+<a href="#l226" class="line" id="l226">    226</a> 				dynIst := t.(procbuilder.DynLinearQuantizer)
+<a href="#l227" class="line" id="l227">    227</a> 				dynIst.Ranges = lqRanges
+<a href="#l228" class="line" id="l228">    228</a> 				procbuilder.AllDynamicalInstructions[i] = dynIst
+<a href="#l229" class="line" id="l229">    229</a> 			}
+<a href="#l230" class="line" id="l230">    230</a> 		}
+<a href="#l231" class="line" id="l231">    231</a> 
+<a href="#l232" class="line" id="l232">    232</a> 	}
+<a href="#l233" class="line" id="l233">    233</a> }
+<a href="#l234" class="line" id="l234">    234</a> 
+<a href="#l235" class="line" id="l235">    235</a> func lastAddr(n *net.IPNet) (net.IP, error) { // works when the n is a prefix, otherwise...
+<a href="#l236" class="line" id="l236">    236</a> 	if n.IP.To4() == nil {
+<a href="#l237" class="line" id="l237">    237</a> 		return net.IP{}, errors.New(&quot;does not support IPv6 addresses.&quot;)
+<a href="#l238" class="line" id="l238">    238</a> 	}
+<a href="#l239" class="line" id="l239">    239</a> 	ip := make(net.IP, len(n.IP.To4()))
+<a href="#l240" class="line" id="l240">    240</a> 	binary.BigEndian.PutUint32(ip, binary.BigEndian.Uint32(n.IP.To4())|^binary.BigEndian.Uint32(net.IP(n.Mask).To4()))
+<a href="#l241" class="line" id="l241">    241</a> 	return ip, nil
+<a href="#l242" class="line" id="l242">    242</a> }
+<a href="#l243" class="line" id="l243">    243</a> func main() {
+<a href="#l244" class="line" id="l244">    244</a> 	conf := new(bondmachine.Config)
+<a href="#l245" class="line" id="l245">    245</a> 	conf.Debug = *debug
+<a href="#l246" class="line" id="l246">    246</a> 	conf.HwOptimizations = 0
+<a href="#l247" class="line" id="l247">    247</a> 	conf.Dotdetail = uint8(*dot_detail)
+<a href="#l248" class="line" id="l248">    248</a> 	conf.CommentedVerilog = *commentedVerilog
+<a href="#l249" class="line" id="l249">    249</a> 	if *bcofInFile != &quot;&quot; {
+<a href="#l250" class="line" id="l250">    250</a> 		conf.BCOFEntry = new(bcof.BCOFEntry)
+<a href="#l251" class="line" id="l251">    251</a> 		bcofBytes, err := os.ReadFile(*bcofInFile)
+<a href="#l252" class="line" id="l252">    252</a> 		if err != nil {
+<a href="#l253" class="line" id="l253">    253</a> 			panic(&quot;failed to read BCOF file&quot;)
+<a href="#l254" class="line" id="l254">    254</a> 		}
+<a href="#l255" class="line" id="l255">    255</a> 		if err := proto.Unmarshal(bcofBytes, conf.BCOFEntry); err != nil {
+<a href="#l256" class="line" id="l256">    256</a> 			panic(&quot;failed to unmarshal BCOF&quot;)
+<a href="#l257" class="line" id="l257">    257</a> 		}
+<a href="#l258" class="line" id="l258">    258</a> 	}
+<a href="#l259" class="line" id="l259">    259</a> 
+<a href="#l260" class="line" id="l260">    260</a> 	if *hwOptimizations != &quot;&quot; {
+<a href="#l261" class="line" id="l261">    261</a> 		for _, opt := range strings.Split(*hwOptimizations, &quot;,&quot;) {
+<a href="#l262" class="line" id="l262">    262</a> 			if id := procbuilder.HwOptimizationId(opt); id != 0 {
+<a href="#l263" class="line" id="l263">    263</a> 				conf.HwOptimizations = procbuilder.SetHwOptimization(conf.HwOptimizations, id)
+<a href="#l264" class="line" id="l264">    264</a> 			} else {
+<a href="#l265" class="line" id="l265">    265</a> 				panic(&quot;Unknown hardware optimization: &quot; + opt)
+<a href="#l266" class="line" id="l266">    266</a> 			}
+<a href="#l267" class="line" id="l267">    267</a> 		}
+<a href="#l268" class="line" id="l268">    268</a> 	}
+<a href="#l269" class="line" id="l269">    269</a> 
+<a href="#l270" class="line" id="l270">    270</a> 	var bmach *bondmachine.Bondmachine
+<a href="#l271" class="line" id="l271">    271</a> 
+<a href="#l272" class="line" id="l272">    272</a> 	if *bmInfoFile != &quot;&quot; {
+<a href="#l273" class="line" id="l273">    273</a> 		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+<a href="#l274" class="line" id="l274">    274</a> 			conf.BMinfo = new(bminfo.BMinfo)
+<a href="#l275" class="line" id="l275">    275</a> 			if err := json.Unmarshal(bmInfoJSON, conf.BMinfo); err != nil {
+<a href="#l276" class="line" id="l276">    276</a> 				panic(err)
+<a href="#l277" class="line" id="l277">    277</a> 			}
+<a href="#l278" class="line" id="l278">    278</a> 		} else {
+<a href="#l279" class="line" id="l279">    279</a> 			panic(err)
+<a href="#l280" class="line" id="l280">    280</a> 		}
+<a href="#l281" class="line" id="l281">    281</a> 	}
+<a href="#l282" class="line" id="l282">    282</a> 
+<a href="#l283" class="line" id="l283">    283</a> 	if *bmRequirementsFile != &quot;&quot; {
+<a href="#l284" class="line" id="l284">    284</a> 		if bmRequirementsJSON, err := os.ReadFile(*bmRequirementsFile); err == nil {
+<a href="#l285" class="line" id="l285">    285</a> 			reqs := new(bmreqs.ExportedReqs)
+<a href="#l286" class="line" id="l286">    286</a> 			if err := json.Unmarshal(bmRequirementsJSON, reqs); err != nil {
+<a href="#l287" class="line" id="l287">    287</a> 				panic(err)
+<a href="#l288" class="line" id="l288">    288</a> 			}
+<a href="#l289" class="line" id="l289">    289</a> 			newRg, _ := bmreqs.Import(reqs)
+<a href="#l290" class="line" id="l290">    290</a> 			conf.ReqRoot = newRg
+<a href="#l291" class="line" id="l291">    291</a> 			// fmt.Println(newRg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, Op: bmreqs.OpDump}))
+<a href="#l292" class="line" id="l292">    292</a> 		} else {
+<a href="#l293" class="line" id="l293">    293</a> 			panic(err)
+<a href="#l294" class="line" id="l294">    294</a> 		}
+<a href="#l295" class="line" id="l295">    295</a> 	}
+<a href="#l296" class="line" id="l296">    296</a> 
+<a href="#l297" class="line" id="l297">    297</a> 	if *bondmachine_file != &quot;&quot; {
+<a href="#l298" class="line" id="l298">    298</a> 		if _, err := os.Stat(*bondmachine_file); err == nil {
+<a href="#l299" class="line" id="l299">    299</a> 			// Open the bondmachine file is exists
+<a href="#l300" class="line" id="l300">    300</a> 			if bondmachine_json, err := os.ReadFile(*bondmachine_file); err == nil {
+<a href="#l301" class="line" id="l301">    301</a> 				var bmachj bondmachine.Bondmachine_json
+<a href="#l302" class="line" id="l302">    302</a> 				if err := json.Unmarshal([]byte(bondmachine_json), &amp;bmachj); err == nil {
+<a href="#l303" class="line" id="l303">    303</a> 					bmach = (&amp;bmachj).Dejsoner()
+<a href="#l304" class="line" id="l304">    304</a> 				} else {
+<a href="#l305" class="line" id="l305">    305</a> 					panic(err)
+<a href="#l306" class="line" id="l306">    306</a> 				}
+<a href="#l307" class="line" id="l307">    307</a> 			} else {
+<a href="#l308" class="line" id="l308">    308</a> 				panic(err)
+<a href="#l309" class="line" id="l309">    309</a> 			}
+<a href="#l310" class="line" id="l310">    310</a> 		} else {
+<a href="#l311" class="line" id="l311">    311</a> 			// Or create a new one
+<a href="#l312" class="line" id="l312">    312</a> 			bmach = new(bondmachine.Bondmachine)
+<a href="#l313" class="line" id="l313">    313</a> 			bmach.Rsize = uint8(*register_size)
+<a href="#l314" class="line" id="l314">    314</a> 		}
+<a href="#l315" class="line" id="l315">    315</a> 
+<a href="#l316" class="line" id="l316">    316</a> 		bmach.Init()
+<a href="#l317" class="line" id="l317">    317</a> 
+<a href="#l318" class="line" id="l318">    318</a> 		if &amp;attach_benchmark_core != nil &amp;&amp; len(attach_benchmark_core) == 2 {
+<a href="#l319" class="line" id="l319">    319</a> 			err := bmach.Attach_benchmark_core(attach_benchmark_core)
+<a href="#l320" class="line" id="l320">    320</a> 			check(err)
+<a href="#l321" class="line" id="l321">    321</a> 		}
+<a href="#l322" class="line" id="l322">    322</a> 
+<a href="#l323" class="line" id="l323">    323</a> 		// Eventually create verilog files
+<a href="#l324" class="line" id="l324">    324</a> 		if *create_verilog {
+<a href="#l325" class="line" id="l325">    325</a> 			iomap := new(bondmachine.IOmap)
+<a href="#l326" class="line" id="l326">    326</a> 			if *verilog_mapfile != &quot;&quot; {
+<a href="#l327" class="line" id="l327">    327</a> 				if mapfile_json, err := os.ReadFile(*verilog_mapfile); err == nil {
+<a href="#l328" class="line" id="l328">    328</a> 					if err := json.Unmarshal([]byte(mapfile_json), iomap); err != nil {
+<a href="#l329" class="line" id="l329">    329</a> 						panic(err)
+<a href="#l330" class="line" id="l330">    330</a> 					}
+<a href="#l331" class="line" id="l331">    331</a> 				} else {
+<a href="#l332" class="line" id="l332">    332</a> 					panic(err)
+<a href="#l333" class="line" id="l333">    333</a> 				}
+<a href="#l334" class="line" id="l334">    334</a> 
+<a href="#l335" class="line" id="l335">    335</a> 			}
+<a href="#l336" class="line" id="l336">    336</a> 			//fmt.Println(iomap)
+<a href="#l337" class="line" id="l337">    337</a> 
+<a href="#l338" class="line" id="l338">    338</a> 			// Precess the possible extra modules
+<a href="#l339" class="line" id="l339">    339</a> 			extramodules := make([]bondmachine.ExtraModule, 0)
+<a href="#l340" class="line" id="l340">    340</a> 
+<a href="#l341" class="line" id="l341">    341</a> 			// Slower
+<a href="#l342" class="line" id="l342">    342</a> 			if *board_slow {
+<a href="#l343" class="line" id="l343">    343</a> 				em := new(bondmachine.Slow_extra)
+<a href="#l344" class="line" id="l344">    344</a> 				em.Slow_factor = strconv.Itoa(*board_slow_factor)
+<a href="#l345" class="line" id="l345">    345</a> 
+<a href="#l346" class="line" id="l346">    346</a> 				if err := em.Check(bmach); err != nil {
+<a href="#l347" class="line" id="l347">    347</a> 					panic(err)
+<a href="#l348" class="line" id="l348">    348</a> 				}
+<a href="#l349" class="line" id="l349">    349</a> 				extramodules = append(extramodules, em)
+<a href="#l350" class="line" id="l350">    350</a> 			}
+<a href="#l351" class="line" id="l351">    351</a> 
+<a href="#l352" class="line" id="l352">    352</a> 			// Etherbond
+<a href="#l353" class="line" id="l353">    353</a> 			//TODO
+<a href="#l354" class="line" id="l354">    354</a> 			if *use_etherbond {
+<a href="#l355" class="line" id="l355">    355</a> 				ethb := new(bondmachine.Etherbond_extra)
+<a href="#l356" class="line" id="l356">    356</a> 
+<a href="#l357" class="line" id="l357">    357</a> 				config := new(etherbond.Config)
+<a href="#l358" class="line" id="l358">    358</a> 				config.Rsize = uint8(*register_size)
+<a href="#l359" class="line" id="l359">    359</a> 
+<a href="#l360" class="line" id="l360">    360</a> 				ethb.Config = config
+<a href="#l361" class="line" id="l361">    361</a> 				ethb.Flavor = *etherbond_flavor
+<a href="#l362" class="line" id="l362">    362</a> 
+<a href="#l363" class="line" id="l363">    363</a> 				if *cluster_spec != &quot;&quot; {
+<a href="#l364" class="line" id="l364">    364</a> 					if cluster, err := etherbond.UnmarshallCluster(config, *cluster_spec); err != nil {
+<a href="#l365" class="line" id="l365">    365</a> 						panic(err)
+<a href="#l366" class="line" id="l366">    366</a> 					} else {
+<a href="#l367" class="line" id="l367">    367</a> 						ethb.Cluster = cluster
+<a href="#l368" class="line" id="l368">    368</a> 					}
+<a href="#l369" class="line" id="l369">    369</a> 				} else {
+<a href="#l370" class="line" id="l370">    370</a> 					panic(&quot;A Cluster spec file is needed&quot;)
+<a href="#l371" class="line" id="l371">    371</a> 				}
+<a href="#l372" class="line" id="l372">    372</a> 
+<a href="#l373" class="line" id="l373">    373</a> 				ethiomap := new(bondmachine.IOmap)
+<a href="#l374" class="line" id="l374">    374</a> 				if *etherbond_mapfile != &quot;&quot; {
+<a href="#l375" class="line" id="l375">    375</a> 					if mapfile_json, err := os.ReadFile(*etherbond_mapfile); err == nil {
+<a href="#l376" class="line" id="l376">    376</a> 						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+<a href="#l377" class="line" id="l377">    377</a> 							panic(err)
+<a href="#l378" class="line" id="l378">    378</a> 						}
+<a href="#l379" class="line" id="l379">    379</a> 					} else {
+<a href="#l380" class="line" id="l380">    380</a> 						panic(err)
+<a href="#l381" class="line" id="l381">    381</a> 					}
+<a href="#l382" class="line" id="l382">    382</a> 
+<a href="#l383" class="line" id="l383">    383</a> 				} else {
+<a href="#l384" class="line" id="l384">    384</a> 					panic(errors.New(&quot;Etherbond Mapfile needed&quot;))
+<a href="#l385" class="line" id="l385">    385</a> 				}
+<a href="#l386" class="line" id="l386">    386</a> 
+<a href="#l387" class="line" id="l387">    387</a> 				macmap := new(etherbond.Macs)
+<a href="#l388" class="line" id="l388">    388</a> 				if *etherbond_macfile != &quot;&quot; {
+<a href="#l389" class="line" id="l389">    389</a> 					if macfile_json, err := os.ReadFile(*etherbond_macfile); err == nil {
+<a href="#l390" class="line" id="l390">    390</a> 						if err := json.Unmarshal([]byte(macfile_json), macmap); err != nil {
+<a href="#l391" class="line" id="l391">    391</a> 							panic(err)
+<a href="#l392" class="line" id="l392">    392</a> 						}
+<a href="#l393" class="line" id="l393">    393</a> 					} else {
+<a href="#l394" class="line" id="l394">    394</a> 						panic(err)
+<a href="#l395" class="line" id="l395">    395</a> 					}
+<a href="#l396" class="line" id="l396">    396</a> 				}
+<a href="#l397" class="line" id="l397">    397</a> 
+<a href="#l398" class="line" id="l398">    398</a> 				ethb.Macs = macmap
+<a href="#l399" class="line" id="l399">    399</a> 				ethb.Maps = ethiomap
+<a href="#l400" class="line" id="l400">    400</a> 				ethb.PeerID = uint32(*peer_id)
+<a href="#l401" class="line" id="l401">    401</a> 				ethb.Mac = &quot;0288&quot; + fmt.Sprintf(&quot;%08d&quot;, *peer_id)
+<a href="#l402" class="line" id="l402">    402</a> 
+<a href="#l403" class="line" id="l403">    403</a> 				if err := ethb.Check(bmach); err != nil {
+<a href="#l404" class="line" id="l404">    404</a> 					panic(err)
+<a href="#l405" class="line" id="l405">    405</a> 				}
+<a href="#l406" class="line" id="l406">    406</a> 				extramodules = append(extramodules, ethb)
+<a href="#l407" class="line" id="l407">    407</a> 			}
+<a href="#l408" class="line" id="l408">    408</a> 			if *use_udpbond {
+<a href="#l409" class="line" id="l409">    409</a> 				udpb := new(bondmachine.Udpbond_extra)
+<a href="#l410" class="line" id="l410">    410</a> 
+<a href="#l411" class="line" id="l411">    411</a> 				// TODO Import the wiki configuration from file
+<a href="#l412" class="line" id="l412">    412</a> 
+<a href="#l413" class="line" id="l413">    413</a> 				config := new(udpbond.Config)
+<a href="#l414" class="line" id="l414">    414</a> 				config.Rsize = uint8(*register_size)
+<a href="#l415" class="line" id="l415">    415</a> 
+<a href="#l416" class="line" id="l416">    416</a> 				udpb.Config = config
+<a href="#l417" class="line" id="l417">    417</a> 				udpb.Flavor = *udpbond_flavor
+<a href="#l418" class="line" id="l418">    418</a> 
+<a href="#l419" class="line" id="l419">    419</a> 				if *cluster_spec != &quot;&quot; {
+<a href="#l420" class="line" id="l420">    420</a> 					if cluster, err := udpbond.UnmarshallCluster(config, *cluster_spec); err != nil {
+<a href="#l421" class="line" id="l421">    421</a> 						panic(err)
+<a href="#l422" class="line" id="l422">    422</a> 					} else {
+<a href="#l423" class="line" id="l423">    423</a> 						udpb.Cluster = cluster
+<a href="#l424" class="line" id="l424">    424</a> 					}
+<a href="#l425" class="line" id="l425">    425</a> 				} else {
+<a href="#l426" class="line" id="l426">    426</a> 					panic(&quot;A Cluster spec file is needed&quot;)
+<a href="#l427" class="line" id="l427">    427</a> 				}
+<a href="#l428" class="line" id="l428">    428</a> 
+<a href="#l429" class="line" id="l429">    429</a> 				ethiomap := new(bondmachine.IOmap)
+<a href="#l430" class="line" id="l430">    430</a> 				if *bondirectMapfile != &quot;&quot; {
+<a href="#l431" class="line" id="l431">    431</a> 					if mapfile_json, err := os.ReadFile(*bondirectMapfile); err == nil {
+<a href="#l432" class="line" id="l432">    432</a> 						if err := json.Unmarshal([]byte(mapfile_json), ethiomap); err != nil {
+<a href="#l433" class="line" id="l433">    433</a> 							panic(err)
+<a href="#l434" class="line" id="l434">    434</a> 						}
+<a href="#l435" class="line" id="l435">    435</a> 					} else {
+<a href="#l436" class="line" id="l436">    436</a> 						panic(err)
+<a href="#l437" class="line" id="l437">    437</a> 					}
+<a href="#l438" class="line" id="l438">    438</a> 
+<a href="#l439" class="line" id="l439">    439</a> 				} else {
+<a href="#l440" class="line" id="l440">    440</a> 					panic(errors.New(&quot;Udpbond Mapfile needed&quot;))
+<a href="#l441" class="line" id="l441">    441</a> 				}
+<a href="#l442" class="line" id="l442">    442</a> 
+<a href="#l443" class="line" id="l443">    443</a> 				macmap := new(udpbond.Ips)
+<a href="#l444" class="line" id="l444">    444</a> 				if *udpbond_ipfile != &quot;&quot; {
+<a href="#l445" class="line" id="l445">    445</a> 					if macfile_json, err := os.ReadFile(*udpbond_ipfile); err == nil {
+<a href="#l446" class="line" id="l446">    446</a> 						if err := json.Unmarshal([]byte(macfile_json), macmap); err != nil {
+<a href="#l447" class="line" id="l447">    447</a> 							panic(err)
+<a href="#l448" class="line" id="l448">    448</a> 						}
+<a href="#l449" class="line" id="l449">    449</a> 					} else {
+<a href="#l450" class="line" id="l450">    450</a> 						panic(err)
+<a href="#l451" class="line" id="l451">    451</a> 					}
+<a href="#l452" class="line" id="l452">    452</a> 				}
+<a href="#l453" class="line" id="l453">    453</a> 
+<a href="#l454" class="line" id="l454">    454</a> 				netparams := new(bondmachine.NetParameters)
+<a href="#l455" class="line" id="l455">    455</a> 				if *udpbond_netconfig != &quot;&quot; {
+<a href="#l456" class="line" id="l456">    456</a> 					if netconfig_json, err := os.ReadFile(*udpbond_netconfig); err == nil {
+<a href="#l457" class="line" id="l457">    457</a> 						if err := json.Unmarshal([]byte(netconfig_json), netparams); err != nil {
+<a href="#l458" class="line" id="l458">    458</a> 							panic(err)
+<a href="#l459" class="line" id="l459">    459</a> 						}
+<a href="#l460" class="line" id="l460">    460</a> 					} else {
+<a href="#l461" class="line" id="l461">    461</a> 						panic(err)
+<a href="#l462" class="line" id="l462">    462</a> 					}
+<a href="#l463" class="line" id="l463">    463</a> 				}
+<a href="#l464" class="line" id="l464">    464</a> 				fmt.Println(netparams)
+<a href="#l465" class="line" id="l465">    465</a> 				udpb.NetParams = netparams
+<a href="#l466" class="line" id="l466">    466</a> 				udpb.Ips = macmap
+<a href="#l467" class="line" id="l467">    467</a> 				udpb.Maps = ethiomap
+<a href="#l468" class="line" id="l468">    468</a> 				udpb.PeerID = uint32(*peer_id)
+<a href="#l469" class="line" id="l469">    469</a> 				if ipst, ok := macmap.Assoc[&quot;peer_&quot;+strconv.Itoa(*peer_id)]; ok {
+<a href="#l470" class="line" id="l470">    470</a> 					ip := strings.Split(ipst, &quot;/&quot;)[0]
+<a href="#l471" class="line" id="l471">    471</a> 					port := strings.Split(ipst, &quot;:&quot;)[1]
+<a href="#l472" class="line" id="l472">    472</a> 					udpb.Ip = ip
+<a href="#l473" class="line" id="l473">    473</a> 					udpb.Port = port
+<a href="#l474" class="line" id="l474">    474</a> 					_, nip, _ := net.ParseCIDR(strings.Split(ipst, &quot;:&quot;)[0])
+<a href="#l475" class="line" id="l475">    475</a> 					brd, _ := lastAddr(nip)
+<a href="#l476" class="line" id="l476">    476</a> 					udpb.Broadcast = brd.String()
+<a href="#l477" class="line" id="l477">    477</a> 					//udpb.Netmask = nip.String()
+<a href="#l478" class="line" id="l478">    478</a> 				} else {
+<a href="#l479" class="line" id="l479">    479</a> 					panic(errors.New(&quot;Wrong IP&quot;))
+<a href="#l480" class="line" id="l480">    480</a> 				}
+<a href="#l481" class="line" id="l481">    481</a> 				if err := udpb.Check(bmach); err != nil {
+<a href="#l482" class="line" id="l482">    482</a> 					panic(err)
+<a href="#l483" class="line" id="l483">    483</a> 				}
+<a href="#l484" class="line" id="l484">    484</a> 				extramodules = append(extramodules, udpb)
+<a href="#l485" class="line" id="l485">    485</a> 			}
+<a href="#l486" class="line" id="l486">    486</a> 
+<a href="#l487" class="line" id="l487">    487</a> 			if *use_bondirect {
+<a href="#l488" class="line" id="l488">    488</a> 				bdir := new(bondmachine.Bondirect_extra)
+<a href="#l489" class="line" id="l489">    489</a> 
+<a href="#l490" class="line" id="l490">    490</a> 				config := new(bondirect.Config)
+<a href="#l491" class="line" id="l491">    491</a> 				config.Rsize = uint8(*register_size)
+<a href="#l492" class="line" id="l492">    492</a> 
+<a href="#l493" class="line" id="l493">    493</a> 				bdir.Config = config
+<a href="#l494" class="line" id="l494">    494</a> 				bdir.Flavor = *bondirect_flavor
+<a href="#l495" class="line" id="l495">    495</a> 
+<a href="#l496" class="line" id="l496">    496</a> 				if *cluster_spec != &quot;&quot; {
+<a href="#l497" class="line" id="l497">    497</a> 					if cluster, err := bondirect.UnmarshallCluster(config, *cluster_spec); err != nil {
+<a href="#l498" class="line" id="l498">    498</a> 						panic(err)
+<a href="#l499" class="line" id="l499">    499</a> 					} else {
+<a href="#l500" class="line" id="l500">    500</a> 						bdir.Cluster = cluster
+<a href="#l501" class="line" id="l501">    501</a> 					}
+<a href="#l502" class="line" id="l502">    502</a> 				} else {
+<a href="#l503" class="line" id="l503">    503</a> 					panic(&quot;A Cluster spec file is needed&quot;)
+<a href="#l504" class="line" id="l504">    504</a> 				}
+<a href="#l505" class="line" id="l505">    505</a> 
+<a href="#l506" class="line" id="l506">    506</a> 				if *bondirectMesh != &quot;&quot; {
+<a href="#l507" class="line" id="l507">    507</a> 					if mesh, err := bondirect.UnmarshallMesh(config, *bondirectMesh); err != nil {
+<a href="#l508" class="line" id="l508">    508</a> 						panic(err)
+<a href="#l509" class="line" id="l509">    509</a> 					} else {
+<a href="#l510" class="line" id="l510">    510</a> 						bdir.Mesh = mesh
+<a href="#l511" class="line" id="l511">    511</a> 					}
+<a href="#l512" class="line" id="l512">    512</a> 				} else {
+<a href="#l513" class="line" id="l513">    513</a> 					panic(&quot;A Mesh spec file is needed&quot;)
+<a href="#l514" class="line" id="l514">    514</a> 				}
+<a href="#l515" class="line" id="l515">    515</a> 
+<a href="#l516" class="line" id="l516">    516</a> 				bmdirmap := new(bondmachine.IOmap)
+<a href="#l517" class="line" id="l517">    517</a> 				if *bondirectMapfile != &quot;&quot; {
+<a href="#l518" class="line" id="l518">    518</a> 					if mapfileJSON, err := os.ReadFile(*bondirectMapfile); err == nil {
+<a href="#l519" class="line" id="l519">    519</a> 						if err := json.Unmarshal([]byte(mapfileJSON), bmdirmap); err != nil {
+<a href="#l520" class="line" id="l520">    520</a> 							panic(err)
+<a href="#l521" class="line" id="l521">    521</a> 						}
+<a href="#l522" class="line" id="l522">    522</a> 					} else {
+<a href="#l523" class="line" id="l523">    523</a> 						panic(err)
+<a href="#l524" class="line" id="l524">    524</a> 					}
+<a href="#l525" class="line" id="l525">    525</a> 
+<a href="#l526" class="line" id="l526">    526</a> 				} else {
+<a href="#l527" class="line" id="l527">    527</a> 					panic(errors.New(&quot;bondirect mapfile needed&quot;))
+<a href="#l528" class="line" id="l528">    528</a> 				}
+<a href="#l529" class="line" id="l529">    529</a> 
+<a href="#l530" class="line" id="l530">    530</a> 				//
+<a href="#l531" class="line" id="l531">    531</a> 				//				udpb.PeerID = uint32(*peer_id)
+<a href="#l532" class="line" id="l532">    532</a> 				//				if ipst, ok := macmap.Assoc[&quot;peer_&quot;+strconv.Itoa(*peer_id)]; ok {
+<a href="#l533" class="line" id="l533">    533</a> 				//					ip := strings.Split(ipst, &quot;/&quot;)[0]
+<a href="#l534" class="line" id="l534">    534</a> 				//					port := strings.Split(ipst, &quot;:&quot;)[1]
+<a href="#l535" class="line" id="l535">    535</a> 				//					udpb.Ip = ip
+<a href="#l536" class="line" id="l536">    536</a> 				//					udpb.Port = port
+<a href="#l537" class="line" id="l537">    537</a> 				//					_, nip, _ := net.ParseCIDR(strings.Split(ipst, &quot;:&quot;)[0])
+<a href="#l538" class="line" id="l538">    538</a> 				//					brd, _ := lastAddr(nip)
+<a href="#l539" class="line" id="l539">    539</a> 				//					udpb.Broadcast = brd.String()
+<a href="#l540" class="line" id="l540">    540</a> 				//					//udpb.Netmask = nip.String()
+<a href="#l541" class="line" id="l541">    541</a> 				//				} else {
+<a href="#l542" class="line" id="l542">    542</a> 				//					panic(errors.New(&quot;Wrong IP&quot;))
+<a href="#l543" class="line" id="l543">    543</a> 				//				}
+<a href="#l544" class="line" id="l544">    544</a> 				//				if err := udpb.Check(bmach); err != nil {
+<a href="#l545" class="line" id="l545">    545</a> 				//					panic(err)
+<a href="#l546" class="line" id="l546">    546</a> 				//				}
+<a href="#l547" class="line" id="l547">    547</a> 				extramodules = append(extramodules, bdir)
+<a href="#l548" class="line" id="l548">    548</a> 			}
+<a href="#l549" class="line" id="l549">    549</a> 
+<a href="#l550" class="line" id="l550">    550</a> 			if *usebmapi {
+<a href="#l551" class="line" id="l551">    551</a> 				bmapi := new(bondmachine.BMAPIExtra)
+<a href="#l552" class="line" id="l552">    552</a> 
+<a href="#l553" class="line" id="l553">    553</a> 				bmapi.Rsize = uint8(*register_size)
+<a href="#l554" class="line" id="l554">    554</a> 
+<a href="#l555" class="line" id="l555">    555</a> 				// TOTO Error checking
+<a href="#l556" class="line" id="l556">    556</a> 				bmapi.Language = *bmapiLanguage
+<a href="#l557" class="line" id="l557">    557</a> 				bmapi.Flavor = *bmapiFlavor
+<a href="#l558" class="line" id="l558">    558</a> 				bmapi.FlavorVersion = *bmapiFlavorVersion
+<a href="#l559" class="line" id="l559">    559</a> 				bmapi.Framework = *bmapiFramework
+<a href="#l560" class="line" id="l560">    560</a> 				bmapi.LibOutDir = *bmapiLibOutDir
+<a href="#l561" class="line" id="l561">    561</a> 				bmapi.ModOutDir = *bmapiModOutDir
+<a href="#l562" class="line" id="l562">    562</a> 				bmapi.AuxOutDir = *bmapiAuxOutDir
+<a href="#l563" class="line" id="l563">    563</a> 				bmapi.ModuleName = *bmapiModuleName
+<a href="#l564" class="line" id="l564">    564</a> 				bmapi.PackageName = *bmapiPackageName
+<a href="#l565" class="line" id="l565">    565</a> 				bmapi.GenerateExample = *bmapiGenerateExample
+<a href="#l566" class="line" id="l566">    566</a> 				bmapi.DataType = *bmapiDataType
+<a href="#l567" class="line" id="l567">    567</a> 
+<a href="#l568" class="line" id="l568">    568</a> 				bmAPIMap := new(bondmachine.IOmap)
+<a href="#l569" class="line" id="l569">    569</a> 				if *bmapiMapfile != &quot;&quot; {
+<a href="#l570" class="line" id="l570">    570</a> 					if mapfileJSON, err := os.ReadFile(*bmapiMapfile); err == nil {
+<a href="#l571" class="line" id="l571">    571</a> 						if err := json.Unmarshal([]byte(mapfileJSON), bmAPIMap); err != nil {
+<a href="#l572" class="line" id="l572">    572</a> 							panic(err)
+<a href="#l573" class="line" id="l573">    573</a> 						} else {
+<a href="#l574" class="line" id="l574">    574</a> 							bmapi.Maps = bmAPIMap
+<a href="#l575" class="line" id="l575">    575</a> 						}
+<a href="#l576" class="line" id="l576">    576</a> 					} else {
+<a href="#l577" class="line" id="l577">    577</a> 						panic(err)
+<a href="#l578" class="line" id="l578">    578</a> 					}
+<a href="#l579" class="line" id="l579">    579</a> 
+<a href="#l580" class="line" id="l580">    580</a> 				} else {
+<a href="#l581" class="line" id="l581">    581</a> 					panic(errors.New(&quot;BMAPI Mapfile needed&quot;))
+<a href="#l582" class="line" id="l582">    582</a> 				}
+<a href="#l583" class="line" id="l583">    583</a> 
+<a href="#l584" class="line" id="l584">    584</a> 				extramodules = append(extramodules, bmapi)
+<a href="#l585" class="line" id="l585">    585</a> 
+<a href="#l586" class="line" id="l586">    586</a> 			}
+<a href="#l587" class="line" id="l587">    587</a> 
+<a href="#l588" class="line" id="l588">    588</a> 			if *uart {
+<a href="#l589" class="line" id="l589">    589</a> 				uart := new(bondmachine.UartExtra)
+<a href="#l590" class="line" id="l590">    590</a> 				uartMap := new(bondmachine.IOmap)
+<a href="#l591" class="line" id="l591">    591</a> 				if *uartMapFile != &quot;&quot; {
+<a href="#l592" class="line" id="l592">    592</a> 					if mapfileJSON, err := os.ReadFile(*uartMapFile); err == nil {
+<a href="#l593" class="line" id="l593">    593</a> 						if err := json.Unmarshal([]byte(mapfileJSON), uartMap); err != nil {
+<a href="#l594" class="line" id="l594">    594</a> 							panic(err)
+<a href="#l595" class="line" id="l595">    595</a> 						} else {
+<a href="#l596" class="line" id="l596">    596</a> 							uart.Maps = uartMap
+<a href="#l597" class="line" id="l597">    597</a> 						}
+<a href="#l598" class="line" id="l598">    598</a> 					} else {
+<a href="#l599" class="line" id="l599">    599</a> 						panic(err)
+<a href="#l600" class="line" id="l600">    600</a> 					}
+<a href="#l601" class="line" id="l601">    601</a> 				}
+<a href="#l602" class="line" id="l602">    602</a> 				extramodules = append(extramodules, uart)
+<a href="#l603" class="line" id="l603">    603</a> 			}
+<a href="#l604" class="line" id="l604">    604</a> 
+<a href="#l605" class="line" id="l605">    605</a> 			if *basys3_7segment {
+<a href="#l606" class="line" id="l606">    606</a> 				b37s := new(bondmachine.B37s)
+<a href="#l607" class="line" id="l607">    607</a> 				b37s.Mapped_output = *basys3_7segment_map
+<a href="#l608" class="line" id="l608">    608</a> 				extramodules = append(extramodules, b37s)
+<a href="#l609" class="line" id="l609">    609</a> 			}
+<a href="#l610" class="line" id="l610">    610</a> 
+<a href="#l611" class="line" id="l611">    611</a> 			if *iceBreakerLeds {
+<a href="#l612" class="line" id="l612">    612</a> 				IBL := new(bondmachine.IcebreakerLeds)
+<a href="#l613" class="line" id="l613">    613</a> 				IBL.MappedOutput = *iceBreakerLedsMap
+<a href="#l614" class="line" id="l614">    614</a> 				extramodules = append(extramodules, IBL)
+<a href="#l615" class="line" id="l615">    615</a> 			}
+<a href="#l616" class="line" id="l616">    616</a> 
+<a href="#l617" class="line" id="l617">    617</a> 			if *iceFunLeds {
+<a href="#l618" class="line" id="l618">    618</a> 				IFL := new(bondmachine.IceFunLeds)
+<a href="#l619" class="line" id="l619">    619</a> 				IFL.MappedOutput = *iceFunLedsMap
+<a href="#l620" class="line" id="l620">    620</a> 				extramodules = append(extramodules, IFL)
+<a href="#l621" class="line" id="l621">    621</a> 			}
+<a href="#l622" class="line" id="l622">    622</a> 
+<a href="#l623" class="line" id="l623">    623</a> 			if *Ice40Lp1kLeds {
+<a href="#l624" class="line" id="l624">    624</a> 				IFL := new(bondmachine.Ice40Lp1kLeds)
+<a href="#l625" class="line" id="l625">    625</a> 				IFL.MappedOutput = *Ice40Lp1kLedsMap
+<a href="#l626" class="line" id="l626">    626</a> 				extramodules = append(extramodules, IFL)
+<a href="#l627" class="line" id="l627">    627</a> 			}
+<a href="#l628" class="line" id="l628">    628</a> 
+<a href="#l629" class="line" id="l629">    629</a> 			// Inclusion of PS2 keyboard extra module
+<a href="#l630" class="line" id="l630">    630</a> 			if *ps2keyboardIo {
+<a href="#l631" class="line" id="l631">    631</a> 				ps2 := new(bondmachine.Ps2KeyboardIoExtra)
+<a href="#l632" class="line" id="l632">    632</a> 				ps2.MappedInput = *ps2keyboardIoMap
+<a href="#l633" class="line" id="l633">    633</a> 				extramodules = append(extramodules, ps2)
+<a href="#l634" class="line" id="l634">    634</a> 			}
+<a href="#l635" class="line" id="l635">    635</a> 
+<a href="#l636" class="line" id="l636">    636</a> 			// Inclusion of the multi CPU textual VGA module
+<a href="#l637" class="line" id="l637">    637</a> 			if *vgatext {
+<a href="#l638" class="line" id="l638">    638</a> 				if *vgatextFlavor == &quot;800x600&quot; {
+<a href="#l639" class="line" id="l639">    639</a> 					vgat := new(bondmachine.Vga800x600Extra)
+<a href="#l640" class="line" id="l640">    640</a> 					vgat.Header = *vgatextHeader
+<a href="#l641" class="line" id="l641">    641</a> 					vgat.Fonts = *vgatextFonts
+<a href="#l642" class="line" id="l642">    642</a> 					extramodules = append(extramodules, vgat)
+<a href="#l643" class="line" id="l643">    643</a> 				} else {
+<a href="#l644" class="line" id="l644">    644</a> 					panic(errors.New(&quot;Unsopported VGA flavor&quot;))
+<a href="#l645" class="line" id="l645">    645</a> 				}
+<a href="#l646" class="line" id="l646">    646</a> 			}
+<a href="#l647" class="line" id="l647">    647</a> 
+<a href="#l648" class="line" id="l648">    648</a> 			var flavor string
+<a href="#l649" class="line" id="l649">    649</a> 
+<a href="#l650" class="line" id="l650">    650</a> 			if *verilog_simulation {
+<a href="#l651" class="line" id="l651">    651</a> 				flavor = *verilog_flavor + &quot;_simulation&quot;
+<a href="#l652" class="line" id="l652">    652</a> 			} else {
+<a href="#l653" class="line" id="l653">    653</a> 				flavor = *verilog_flavor
+<a href="#l654" class="line" id="l654">    654</a> 			}
+<a href="#l655" class="line" id="l655">    655</a> 
+<a href="#l656" class="line" id="l656">    656</a> 			var sbox *simbox.Simbox
+<a href="#l657" class="line" id="l657">    657</a> 
+<a href="#l658" class="line" id="l658">    658</a> 			if *verilog_simulation {
+<a href="#l659" class="line" id="l659">    659</a> 				if *simbox_file != &quot;&quot; {
+<a href="#l660" class="line" id="l660">    660</a> 					sbox = new(simbox.Simbox)
+<a href="#l661" class="line" id="l661">    661</a> 					if _, err := os.Stat(*simbox_file); err == nil {
+<a href="#l662" class="line" id="l662">    662</a> 						// Open the simbox file is exists
+<a href="#l663" class="line" id="l663">    663</a> 						if simbox_json, err := os.ReadFile(*simbox_file); err == nil {
+<a href="#l664" class="line" id="l664">    664</a> 							if err := json.Unmarshal([]byte(simbox_json), sbox); err != nil {
+<a href="#l665" class="line" id="l665">    665</a> 								panic(err)
+<a href="#l666" class="line" id="l666">    666</a> 							}
+<a href="#l667" class="line" id="l667">    667</a> 						} else {
+<a href="#l668" class="line" id="l668">    668</a> 							panic(err)
+<a href="#l669" class="line" id="l669">    669</a> 						}
+<a href="#l670" class="line" id="l670">    670</a> 					}
+<a href="#l671" class="line" id="l671">    671</a> 
+<a href="#l672" class="line" id="l672">    672</a> 				}
+<a href="#l673" class="line" id="l673">    673</a> 			}
+<a href="#l674" class="line" id="l674">    674</a> 
+<a href="#l675" class="line" id="l675">    675</a> 			bmach.Write_verilog(conf, flavor, iomap, extramodules, sbox)
+<a href="#l676" class="line" id="l676">    676</a> 
+<a href="#l677" class="line" id="l677">    677</a> 			if *usebmapi {
+<a href="#l678" class="line" id="l678">    678</a> 				if err := bmach.WriteBMAPI(conf, flavor, iomap, extramodules, sbox); err != nil {
+<a href="#l679" class="line" id="l679">    679</a> 					panic(err)
+<a href="#l680" class="line" id="l680">    680</a> 				}
+<a href="#l681" class="line" id="l681">    681</a> 			}
+<a href="#l682" class="line" id="l682">    682</a> 		}
+<a href="#l683" class="line" id="l683">    683</a> 
+<a href="#l684" class="line" id="l684">    684</a> 		// All the operation are exclusive
+<a href="#l685" class="line" id="l685">    685</a> 		if *list_domains {
+<a href="#l686" class="line" id="l686">    686</a> 			fmt.Println(bmach.List_domains())
+<a href="#l687" class="line" id="l687">    687</a> 		} else if &amp;add_domains != nil &amp;&amp; len(add_domains) != 0 {
+<a href="#l688" class="line" id="l688">    688</a> 			for _, load_machine := range add_domains {
+<a href="#l689" class="line" id="l689">    689</a> 				if _, err := os.Stat(load_machine); err == nil {
+<a href="#l690" class="line" id="l690">    690</a> 					if jsonfile, err := os.ReadFile(load_machine); err == nil {
+<a href="#l691" class="line" id="l691">    691</a> 						var machj procbuilder.Machine_json
+<a href="#l692" class="line" id="l692">    692</a> 						if err := json.Unmarshal([]byte(jsonfile), &amp;machj); err == nil {
+<a href="#l693" class="line" id="l693">    693</a> 							mymachine := (&amp;machj).Dejsoner()
+<a href="#l694" class="line" id="l694">    694</a> 							bmach.Domains = append(bmach.Domains, mymachine)
+<a href="#l695" class="line" id="l695">    695</a> 						} else {
+<a href="#l696" class="line" id="l696">    696</a> 							panic(err)
+<a href="#l697" class="line" id="l697">    697</a> 						}
+<a href="#l698" class="line" id="l698">    698</a> 					} else {
+<a href="#l699" class="line" id="l699">    699</a> 						panic(err)
+<a href="#l700" class="line" id="l700">    700</a> 					}
+<a href="#l701" class="line" id="l701">    701</a> 				} else {
+<a href="#l702" class="line" id="l702">    702</a> 					fmt.Println(load_machine + &quot; file not found, ignoring it.&quot;)
+<a href="#l703" class="line" id="l703">    703</a> 				}
+<a href="#l704" class="line" id="l704">    704</a> 			}
+<a href="#l705" class="line" id="l705">    705</a> 		} else if (&amp;del_domains != nil) &amp;&amp; len(del_domains) != 0 {
+<a href="#l706" class="line" id="l706">    706</a> 			for _, remove_domain := range del_domains {
+<a href="#l707" class="line" id="l707">    707</a> 				if remove_domain_id, err := strconv.Atoi(remove_domain); err == nil {
+<a href="#l708" class="line" id="l708">    708</a> 					if remove_domain_id &lt; len(bmach.Domains)-1 {
+<a href="#l709" class="line" id="l709">    709</a> 						bmach.Domains = append(bmach.Domains[:remove_domain_id], bmach.Domains[remove_domain_id+1:]...)
+<a href="#l710" class="line" id="l710">    710</a> 					} else if remove_domain_id == len(bmach.Domains)-1 {
+<a href="#l711" class="line" id="l711">    711</a> 						bmach.Domains = bmach.Domains[:remove_domain_id]
+<a href="#l712" class="line" id="l712">    712</a> 					} else {
+<a href="#l713" class="line" id="l713">    713</a> 						fmt.Println(remove_domain + &quot; not a valid domain id, ignoring it.&quot;)
+<a href="#l714" class="line" id="l714">    714</a> 					}
+<a href="#l715" class="line" id="l715">    715</a> 				} else {
+<a href="#l716" class="line" id="l716">    716</a> 					fmt.Println(remove_domain + &quot; not a valid domain id, ignoring it.&quot;)
+<a href="#l717" class="line" id="l717">    717</a> 				}
+<a href="#l718" class="line" id="l718">    718</a> 			}
+<a href="#l719" class="line" id="l719">    719</a> 			// TODO Include the check of unbounded processors
+<a href="#l720" class="line" id="l720">    720</a> 		} else if *specs {
+<a href="#l721" class="line" id="l721">    721</a> 			fmt.Printf(bmach.Specs())
+<a href="#l722" class="line" id="l722">    722</a> 		} else if *list_inputs {
+<a href="#l723" class="line" id="l723">    723</a> 			for i, inp := range bmach.List_inputs() {
+<a href="#l724" class="line" id="l724">    724</a> 				fmt.Printf(&quot;%d %s\n&quot;, i, inp)
+<a href="#l725" class="line" id="l725">    725</a> 			}
+<a href="#l726" class="line" id="l726">    726</a> 		} else if *add_inputs != 0 {
+<a href="#l727" class="line" id="l727">    727</a> 			for i := 0; i &lt; *add_inputs; i++ {
+<a href="#l728" class="line" id="l728">    728</a> 				message, err := bmach.Add_input()
+<a href="#l729" class="line" id="l729">    729</a> 				check(err)
+<a href="#l730" class="line" id="l730">    730</a> 				if *debug {
+<a href="#l731" class="line" id="l731">    731</a> 					log.Println(message)
+<a href="#l732" class="line" id="l732">    732</a> 				} else if *verbose {
+<a href="#l733" class="line" id="l733">    733</a> 					fmt.Println(message)
+<a href="#l734" class="line" id="l734">    734</a> 				}
+<a href="#l735" class="line" id="l735">    735</a> 			}
+<a href="#l736" class="line" id="l736">    736</a> 		} else if (&amp;del_inputs != nil) &amp;&amp; len(del_inputs) != 0 {
+<a href="#l737" class="line" id="l737">    737</a> 			// Reorder the inputs to delete, last first
+<a href="#l738" class="line" id="l738">    738</a> 			todelete := make([]int, 0)
+<a href="#l739" class="line" id="l739">    739</a> 			for _, inp := range del_inputs {
+<a href="#l740" class="line" id="l740">    740</a> 				if value, ok := strconv.Atoi(inp); ok == nil {
+<a href="#l741" class="line" id="l741">    741</a> 					pcheck := false
+<a href="#l742" class="line" id="l742">    742</a> 					for _, i := range todelete {
+<a href="#l743" class="line" id="l743">    743</a> 						if i == value {
+<a href="#l744" class="line" id="l744">    744</a> 							pcheck = true
+<a href="#l745" class="line" id="l745">    745</a> 							break
+<a href="#l746" class="line" id="l746">    746</a> 						}
+<a href="#l747" class="line" id="l747">    747</a> 					}
+<a href="#l748" class="line" id="l748">    748</a> 					if !pcheck &amp;&amp; value &lt; bmach.Inputs {
+<a href="#l749" class="line" id="l749">    749</a> 						todelete = append(todelete, value)
+<a href="#l750" class="line" id="l750">    750</a> 					}
+<a href="#l751" class="line" id="l751">    751</a> 				}
+<a href="#l752" class="line" id="l752">    752</a> 			}
+<a href="#l753" class="line" id="l753">    753</a> 			sort.Ints(todelete)
+<a href="#l754" class="line" id="l754">    754</a> 			for i, _ := range todelete {
+<a href="#l755" class="line" id="l755">    755</a> 				// Remove the inputs, higher first
+<a href="#l756" class="line" id="l756">    756</a> 				bmach.Del_input(todelete[len(todelete)-i-1])
+<a href="#l757" class="line" id="l757">    757</a> 			}
+<a href="#l758" class="line" id="l758">    758</a> 		} else if *list_outputs {
+<a href="#l759" class="line" id="l759">    759</a> 			for i, outp := range bmach.List_outputs() {
+<a href="#l760" class="line" id="l760">    760</a> 				fmt.Printf(&quot;%d %s\n&quot;, i, outp)
+<a href="#l761" class="line" id="l761">    761</a> 			}
+<a href="#l762" class="line" id="l762">    762</a> 		} else if *add_outputs != 0 {
+<a href="#l763" class="line" id="l763">    763</a> 			for i := 0; i &lt; *add_outputs; i++ {
+<a href="#l764" class="line" id="l764">    764</a> 				message, err := bmach.Add_output()
+<a href="#l765" class="line" id="l765">    765</a> 				check(err)
+<a href="#l766" class="line" id="l766">    766</a> 				if *debug {
+<a href="#l767" class="line" id="l767">    767</a> 					log.Println(message)
+<a href="#l768" class="line" id="l768">    768</a> 				} else if *verbose {
+<a href="#l769" class="line" id="l769">    769</a> 					fmt.Println(message)
+<a href="#l770" class="line" id="l770">    770</a> 				}
+<a href="#l771" class="line" id="l771">    771</a> 			}
+<a href="#l772" class="line" id="l772">    772</a> 		} else if (&amp;del_outputs != nil) &amp;&amp; len(del_outputs) != 0 {
+<a href="#l773" class="line" id="l773">    773</a> 			// Reorder the outputs to delete, last first
+<a href="#l774" class="line" id="l774">    774</a> 			todelete := make([]int, 0)
+<a href="#l775" class="line" id="l775">    775</a> 			for _, inp := range del_outputs {
+<a href="#l776" class="line" id="l776">    776</a> 				if value, ok := strconv.Atoi(inp); ok == nil {
+<a href="#l777" class="line" id="l777">    777</a> 					pcheck := false
+<a href="#l778" class="line" id="l778">    778</a> 					for _, i := range todelete {
+<a href="#l779" class="line" id="l779">    779</a> 						if i == value {
+<a href="#l780" class="line" id="l780">    780</a> 							pcheck = true
+<a href="#l781" class="line" id="l781">    781</a> 							break
+<a href="#l782" class="line" id="l782">    782</a> 						}
+<a href="#l783" class="line" id="l783">    783</a> 					}
+<a href="#l784" class="line" id="l784">    784</a> 					if !pcheck &amp;&amp; value &lt; bmach.Outputs {
+<a href="#l785" class="line" id="l785">    785</a> 						todelete = append(todelete, value)
+<a href="#l786" class="line" id="l786">    786</a> 					}
+<a href="#l787" class="line" id="l787">    787</a> 				}
+<a href="#l788" class="line" id="l788">    788</a> 			}
+<a href="#l789" class="line" id="l789">    789</a> 			sort.Ints(todelete)
+<a href="#l790" class="line" id="l790">    790</a> 			for i, _ := range todelete {
+<a href="#l791" class="line" id="l791">    791</a> 				// Remove the outputs, higher first
+<a href="#l792" class="line" id="l792">    792</a> 				bmach.Del_output(todelete[len(todelete)-i-1])
+<a href="#l793" class="line" id="l793">    793</a> 			}
+<a href="#l794" class="line" id="l794">    794</a> 		} else if *enumProcessors {
+<a href="#l795" class="line" id="l795">    795</a> 			fmt.Println(bmach.EnumProcessors())
+<a href="#l796" class="line" id="l796">    796</a> 		} else if *enumBonds {
+<a href="#l797" class="line" id="l797">    797</a> 			fmt.Println(bmach.EnumBonds())
+<a href="#l798" class="line" id="l798">    798</a> 		} else if *list_processors {
+<a href="#l799" class="line" id="l799">    799</a> 			fmt.Print(bmach.List_processors())
+<a href="#l800" class="line" id="l800">    800</a> 		} else if *add_processor != -1 {
+<a href="#l801" class="line" id="l801">    801</a> 			message, err := bmach.Add_processor(*add_processor)
+<a href="#l802" class="line" id="l802">    802</a> 			check(err)
+<a href="#l803" class="line" id="l803">    803</a> 			fmt.Println(message)
+<a href="#l804" class="line" id="l804">    804</a> 		} else if *list_bonds {
+<a href="#l805" class="line" id="l805">    805</a> 			for i, bond := range bmach.List_bonds() {
+<a href="#l806" class="line" id="l806">    806</a> 				fmt.Printf(&quot;%d %s\n&quot;, i, bond)
+<a href="#l807" class="line" id="l807">    807</a> 			}
+<a href="#l808" class="line" id="l808">    808</a> 		} else if *list_internal_inputs {
+<a href="#l809" class="line" id="l809">    809</a> 			for _, inp := range bmach.List_internal_inputs() {
+<a href="#l810" class="line" id="l810">    810</a> 				fmt.Println(inp)
+<a href="#l811" class="line" id="l811">    811</a> 			}
+<a href="#l812" class="line" id="l812">    812</a> 		} else if *list_internal_outputs {
+<a href="#l813" class="line" id="l813">    813</a> 			for _, outp := range bmach.List_internal_outputs() {
+<a href="#l814" class="line" id="l814">    814</a> 				fmt.Println(outp)
+<a href="#l815" class="line" id="l815">    815</a> 			}
+<a href="#l816" class="line" id="l816">    816</a> 		} else if *emit_dot &amp;&amp; !*sim {
+<a href="#l817" class="line" id="l817">    817</a> 			fmt.Print(bmach.Dot(conf, &quot;&quot;, nil, nil))
+<a href="#l818" class="line" id="l818">    818</a> 		} else if *show_program_disassembled {
+<a href="#l819" class="line" id="l819">    819</a> 			// TODO Finish
+<a href="#l820" class="line" id="l820">    820</a> 		} else if *multi_abstract_assembly_file != &quot;&quot; {
+<a href="#l821" class="line" id="l821">    821</a> 			// TODO Temporary, clean up code!
+<a href="#l822" class="line" id="l822">    822</a> 			mu, _ := bmach.GetMultiAssembly()
+<a href="#l823" class="line" id="l823">    823</a> 			// Write the multi_abstract_assembly_file file
+<a href="#l824" class="line" id="l824">    824</a> 			mufile, err := os.Create(*multi_abstract_assembly_file)
+<a href="#l825" class="line" id="l825">    825</a> 			check(err)
+<a href="#l826" class="line" id="l826">    826</a> 			defer mufile.Close()
+<a href="#l827" class="line" id="l827">    827</a> 			b, errj := json.Marshal(mu)
+<a href="#l828" class="line" id="l828">    828</a> 			check(errj)
+<a href="#l829" class="line" id="l829">    829</a> 			_, err = mufile.WriteString(string(b))
+<a href="#l830" class="line" id="l830">    830</a> 			check(err)
+<a href="#l831" class="line" id="l831">    831</a> 		} else if *show_program_alias {
+<a href="#l832" class="line" id="l832">    832</a> 			pa, _ := bmach.GetProgramsAlias()
+<a href="#l833" class="line" id="l833">    833</a> 			for i, al := range pa {
+<a href="#l834" class="line" id="l834">    834</a> 				alfile, err := os.Create(&quot;p&quot; + strconv.Itoa(i) + &quot;.alias&quot;)
+<a href="#l835" class="line" id="l835">    835</a> 				check(err)
+<a href="#l836" class="line" id="l836">    836</a> 				defer alfile.Close()
+<a href="#l837" class="line" id="l837">    837</a> 				_, err = alfile.WriteString(string(al))
+<a href="#l838" class="line" id="l838">    838</a> 				check(err)
+<a href="#l839" class="line" id="l839">    839</a> 			}
+<a href="#l840" class="line" id="l840">    840</a> 		} else if &amp;add_bond != nil &amp;&amp; len(add_bond) == 2 {
+<a href="#l841" class="line" id="l841">    841</a> 			bmach.Add_bond(add_bond)
+<a href="#l842" class="line" id="l842">    842</a> 		} else if (&amp;del_bonds != nil) &amp;&amp; len(del_bonds) != 0 {
+<a href="#l843" class="line" id="l843">    843</a> 			for _, remove_bond := range del_bonds {
+<a href="#l844" class="line" id="l844">    844</a> 				if remove_bond_id, err := strconv.Atoi(remove_bond); err == nil {
+<a href="#l845" class="line" id="l845">    845</a> 					if remove_bond_id &lt; len(bmach.Links) {
+<a href="#l846" class="line" id="l846">    846</a> 						bmach.Del_bond(remove_bond_id)
+<a href="#l847" class="line" id="l847">    847</a> 					} else {
+<a href="#l848" class="line" id="l848">    848</a> 						fmt.Println(remove_bond + &quot; not a valid bond id, ignoring it.&quot;)
+<a href="#l849" class="line" id="l849">    849</a> 					}
+<a href="#l850" class="line" id="l850">    850</a> 				} else {
+<a href="#l851" class="line" id="l851">    851</a> 					fmt.Println(remove_bond + &quot; not a valid bond id, ignoring it.&quot;)
+<a href="#l852" class="line" id="l852">    852</a> 				}
+<a href="#l853" class="line" id="l853">    853</a> 			}
+<a href="#l854" class="line" id="l854">    854</a> 		} else if *list_shared_objects {
+<a href="#l855" class="line" id="l855">    855</a> 			fmt.Print(bmach.List_shared_objects())
+<a href="#l856" class="line" id="l856">    856</a> 		} else if &amp;add_shared_objects != nil &amp;&amp; len(add_shared_objects) &gt; 0 {
+<a href="#l857" class="line" id="l857">    857</a> 			bmach.Add_shared_objects(add_shared_objects)
+<a href="#l858" class="line" id="l858">    858</a> 		} else if *list_processor_shared_object_links {
+<a href="#l859" class="line" id="l859">    859</a> 			fmt.Print(bmach.List_processor_shared_object_links())
+<a href="#l860" class="line" id="l860">    860</a> 		} else if &amp;connect_processor_shared_object != nil &amp;&amp; len(connect_processor_shared_object) == 2 {
+<a href="#l861" class="line" id="l861">    861</a> 			bmach.Connect_processor_shared_object(connect_processor_shared_object)
+<a href="#l862" class="line" id="l862">    862</a> 		} else if *sim {
+<a href="#l863" class="line" id="l863">    863</a> 			var sbox *simbox.Simbox
+<a href="#l864" class="line" id="l864">    864</a> 			if *simbox_file != &quot;&quot; {
+<a href="#l865" class="line" id="l865">    865</a> 				sbox = new(simbox.Simbox)
+<a href="#l866" class="line" id="l866">    866</a> 				if _, err := os.Stat(*simbox_file); err == nil {
+<a href="#l867" class="line" id="l867">    867</a> 					// Open the simbox file is exists
+<a href="#l868" class="line" id="l868">    868</a> 					if simbox_json, err := os.ReadFile(*simbox_file); err == nil {
+<a href="#l869" class="line" id="l869">    869</a> 						if err := json.Unmarshal([]byte(simbox_json), sbox); err != nil {
+<a href="#l870" class="line" id="l870">    870</a> 							panic(err)
+<a href="#l871" class="line" id="l871">    871</a> 						}
+<a href="#l872" class="line" id="l872">    872</a> 					} else {
+<a href="#l873" class="line" id="l873">    873</a> 						panic(err)
+<a href="#l874" class="line" id="l874">    874</a> 					}
+<a href="#l875" class="line" id="l875">    875</a> 				}
+<a href="#l876" class="line" id="l876">    876</a> 
+<a href="#l877" class="line" id="l877">    877</a> 			}
+<a href="#l878" class="line" id="l878">    878</a> 
+<a href="#l879" class="line" id="l879">    879</a> 			vm := new(bondmachine.VM)
+<a href="#l880" class="line" id="l880">    880</a> 			vm.Bmach = bmach
+<a href="#l881" class="line" id="l881">    881</a> 			err := vm.Init()
+<a href="#l882" class="line" id="l882">    882</a> 			check(err)
+<a href="#l883" class="line" id="l883">    883</a> 
+<a href="#l884" class="line" id="l884">    884</a> 			var pstatevm *bondmachine.VM
+<a href="#l885" class="line" id="l885">    885</a> 
+<a href="#l886" class="line" id="l886">    886</a> 			// Build the simulation configuration
+<a href="#l887" class="line" id="l887">    887</a> 			sconfig := new(bondmachine.Sim_config)
+<a href="#l888" class="line" id="l888">    888</a> 			scerr := sconfig.Init(sbox, vm, conf)
+<a href="#l889" class="line" id="l889">    889</a> 			check(scerr)
+<a href="#l890" class="line" id="l890">    890</a> 
+<a href="#l891" class="line" id="l891">    891</a> 			// Build the simulation driver
+<a href="#l892" class="line" id="l892">    892</a> 			sdrive := new(bondmachine.Sim_drive)
+<a href="#l893" class="line" id="l893">    893</a> 			sderr := sdrive.Init(conf, sbox, vm)
+<a href="#l894" class="line" id="l894">    894</a> 			check(sderr)
+<a href="#l895" class="line" id="l895">    895</a> 
+<a href="#l896" class="line" id="l896">    896</a> 			// Build the simultion report
+<a href="#l897" class="line" id="l897">    897</a> 			srep := new(bondmachine.Sim_report)
+<a href="#l898" class="line" id="l898">    898</a> 			srerr := srep.Init(sbox, vm)
+<a href="#l899" class="line" id="l899">    899</a> 			check(srerr)
+<a href="#l900" class="line" id="l900">    900</a> 
+<a href="#l901" class="line" id="l901">    901</a> 			lerr := vm.Launch_processors(sbox)
+<a href="#l902" class="line" id="l902">    902</a> 			check(lerr)
+<a href="#l903" class="line" id="l903">    903</a> 
+<a href="#l904" class="line" id="l904">    904</a> 			var intlen_s string
+<a href="#l905" class="line" id="l905">    905</a> 
+<a href="#l906" class="line" id="l906">    906</a> 			if *emit_dot {
+<a href="#l907" class="line" id="l907">    907</a> 				pstatevm = new(bondmachine.VM)
+<a href="#l908" class="line" id="l908">    908</a> 				pstatevm.Bmach = bmach
+<a href="#l909" class="line" id="l909">    909</a> 				err := pstatevm.Init()
+<a href="#l910" class="line" id="l910">    910</a> 				check(err)
+<a href="#l911" class="line" id="l911">    911</a> 
+<a href="#l912" class="line" id="l912">    912</a> 				sim_int_s := strconv.Itoa(*simInteractions)
+<a href="#l913" class="line" id="l913">    913</a> 				intlen := len(sim_int_s)
+<a href="#l914" class="line" id="l914">    914</a> 				intlen_s = strconv.Itoa(intlen)
+<a href="#l915" class="line" id="l915">    915</a> 			}
+<a href="#l916" class="line" id="l916">    916</a> 
+<a href="#l917" class="line" id="l917">    917</a> 			var reportData *csv.Writer
+<a href="#l918" class="line" id="l918">    918</a> 			if *simReport != &quot;&quot; {
+<a href="#l919" class="line" id="l919">    919</a> 				rf, err := os.Create(*simReport)
+<a href="#l920" class="line" id="l920">    920</a> 				check(err)
+<a href="#l921" class="line" id="l921">    921</a> 				defer rf.Close()
+<a href="#l922" class="line" id="l922">    922</a> 				reportData = csv.NewWriter(rf)
+<a href="#l923" class="line" id="l923">    923</a> 
+<a href="#l924" class="line" id="l924">    924</a> 				if sconfig.GetTicks {
+<a href="#l925" class="line" id="l925">    925</a> 					if err := reportData.Write(append([]string{&quot;tick&quot;}, srep.ReportablesNames...)); err != nil {
+<a href="#l926" class="line" id="l926">    926</a> 						log.Fatalln(&quot;error writing record to csv:&quot;, err)
+<a href="#l927" class="line" id="l927">    927</a> 					}
+<a href="#l928" class="line" id="l928">    928</a> 				} else {
+<a href="#l929" class="line" id="l929">    929</a> 					if err := reportData.Write(srep.ReportablesNames); err != nil {
+<a href="#l930" class="line" id="l930">    930</a> 						log.Fatalln(&quot;error writing record to csv:&quot;, err)
+<a href="#l931" class="line" id="l931">    931</a> 					}
+<a href="#l932" class="line" id="l932">    932</a> 				}
+<a href="#l933" class="line" id="l933">    933</a> 
+<a href="#l934" class="line" id="l934">    934</a> 				reportData.Flush()
+<a href="#l935" class="line" id="l935">    935</a> 
+<a href="#l936" class="line" id="l936">    936</a> 				if err := reportData.Error(); err != nil {
+<a href="#l937" class="line" id="l937">    937</a> 					log.Fatal(err)
+<a href="#l938" class="line" id="l938">    938</a> 				}
+<a href="#l939" class="line" id="l939">    939</a> 
+<a href="#l940" class="line" id="l940">    940</a> 			}
+<a href="#l941" class="line" id="l941">    941</a> 
+<a href="#l942" class="line" id="l942">    942</a> 			var oldRecordC *[]string
+<a href="#l943" class="line" id="l943">    943</a> 
+<a href="#l944" class="line" id="l944">    944</a> 			for i := uint64(0); i &lt; uint64(*simInteractions); i++ {
+<a href="#l945" class="line" id="l945">    945</a> 
+<a href="#l946" class="line" id="l946">    946</a> 				// This will get actions eventually to do on this tick
+<a href="#l947" class="line" id="l947">    947</a> 				if act, exist_actions := sdrive.AbsSet[i]; exist_actions {
+<a href="#l948" class="line" id="l948">    948</a> 					for k, val := range act {
+<a href="#l949" class="line" id="l949">    949</a> 						*sdrive.Injectables[k] = val
+<a href="#l950" class="line" id="l950">    950</a> 					}
+<a href="#l951" class="line" id="l951">    951</a> 				}
+<a href="#l952" class="line" id="l952">    952</a> 
+<a href="#l953" class="line" id="l953">    953</a> 				// TODO Periodic set
+<a href="#l954" class="line" id="l954">    954</a> 
+<a href="#l955" class="line" id="l955">    955</a> 				if *emit_dot {
+<a href="#l956" class="line" id="l956">    956</a> 					gvfile := bmach.Dot(conf, &quot;&quot;, vm, pstatevm)
+<a href="#l957" class="line" id="l957">    957</a> 					filename := fmt.Sprintf(&quot;graphviz%0&quot;+intlen_s+&quot;d&quot;, int(i))
+<a href="#l958" class="line" id="l958">    958</a> 					f, err := os.Create(filename + &quot;.dot&quot;)
+<a href="#l959" class="line" id="l959">    959</a> 					check(err)
+<a href="#l960" class="line" id="l960">    960</a> 					_, err = f.WriteString(gvfile)
+<a href="#l961" class="line" id="l961">    961</a> 					check(err)
+<a href="#l962" class="line" id="l962">    962</a> 					f.Close()
+<a href="#l963" class="line" id="l963">    963</a> 
+<a href="#l964" class="line" id="l964">    964</a> 					pstatevm.CopyState(vm)
+<a href="#l965" class="line" id="l965">    965</a> 				}
+<a href="#l966" class="line" id="l966">    966</a> 
+<a href="#l967" class="line" id="l967">    967</a> 				result, err := vm.Step(sconfig)
+<a href="#l968" class="line" id="l968">    968</a> 				check(err)
+<a href="#l969" class="line" id="l969">    969</a> 
+<a href="#l970" class="line" id="l970">    970</a> 				fmt.Print(result)
+<a href="#l971" class="line" id="l971">    971</a> 
+<a href="#l972" class="line" id="l972">    972</a> 				showList := make([]int, 0, len(srep.Showables))
+<a href="#l973" class="line" id="l973">    973</a> 
+<a href="#l974" class="line" id="l974">    974</a> 				// This will get value to show on this tick
+<a href="#l975" class="line" id="l975">    975</a> 				if slist, exist_shows := srep.AbsShow[i]; exist_shows {
+<a href="#l976" class="line" id="l976">    976</a> 					for k, _ := range slist {
+<a href="#l977" class="line" id="l977">    977</a> 						showList = append(showList, k)
+<a href="#l978" class="line" id="l978">    978</a> 					}
+<a href="#l979" class="line" id="l979">    979</a> 				}
+<a href="#l980" class="line" id="l980">    980</a> 
+<a href="#l981" class="line" id="l981">    981</a> 				// This will get value to show on periodic ticks
+<a href="#l982" class="line" id="l982">    982</a> 				for j, slist := range srep.PerShow {
+<a href="#l983" class="line" id="l983">    983</a> 					if i%j == 0 {
+<a href="#l984" class="line" id="l984">    984</a> 						for k, _ := range slist {
+<a href="#l985" class="line" id="l985">    985</a> 							alredtIn := false
+<a href="#l986" class="line" id="l986">    986</a> 							for _, v := range showList {
+<a href="#l987" class="line" id="l987">    987</a> 								if v == k {
+<a href="#l988" class="line" id="l988">    988</a> 									alredtIn = true
+<a href="#l989" class="line" id="l989">    989</a> 									break
+<a href="#l990" class="line" id="l990">    990</a> 								}
+<a href="#l991" class="line" id="l991">    991</a> 							}
+<a href="#l992" class="line" id="l992">    992</a> 							if !alredtIn {
+<a href="#l993" class="line" id="l993">    993</a> 								showList = append(showList, k)
+<a href="#l994" class="line" id="l994">    994</a> 							}
+<a href="#l995" class="line" id="l995">    995</a> 						}
+<a href="#l996" class="line" id="l996">    996</a> 					}
+<a href="#l997" class="line" id="l997">    997</a> 				}
+<a href="#l998" class="line" id="l998">    998</a> 
+<a href="#l999" class="line" id="l999">    999</a> 				sort.Ints(showList)
+<a href="#l1000" class="line" id="l1000">   1000</a> 
+<a href="#l1001" class="line" id="l1001">   1001</a> 				// Show the tick values
+<a href="#l1002" class="line" id="l1002">   1002</a> 				for _, k := range showList {
+<a href="#l1003" class="line" id="l1003">   1003</a> 					nType := srep.ShowablesTypes[k]
+<a href="#l1004" class="line" id="l1004">   1004</a> 					if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+<a href="#l1005" class="line" id="l1005">   1005</a> 						log.Fatal(err)
+<a href="#l1006" class="line" id="l1006">   1006</a> 					}
+<a href="#l1007" class="line" id="l1007">   1007</a> 					if v := bmnumbers.GetType(nType); v == nil {
+<a href="#l1008" class="line" id="l1008">   1008</a> 						log.Fatal(&quot;Error: Unknown type&quot;)
+<a href="#l1009" class="line" id="l1009">   1009</a> 					} else {
+<a href="#l1010" class="line" id="l1010">   1010</a> 						bits := v.GetSize()
+<a href="#l1011" class="line" id="l1011">   1011</a> 						if number, err := bmnumbers.ImportUint(*srep.Showables[k], bits); err != nil {
+<a href="#l1012" class="line" id="l1012">   1012</a> 							log.Fatal(err)
+<a href="#l1013" class="line" id="l1013">   1013</a> 						} else {
+<a href="#l1014" class="line" id="l1014">   1014</a> 							if err := bmnumbers.CastType(number, v); err != nil {
+<a href="#l1015" class="line" id="l1015">   1015</a> 								log.Fatal(err)
+<a href="#l1016" class="line" id="l1016">   1016</a> 							} else {
+<a href="#l1017" class="line" id="l1017">   1017</a> 								if numberS, err := number.ExportString(nil); err != nil {
+<a href="#l1018" class="line" id="l1018">   1018</a> 									log.Fatal(err)
+<a href="#l1019" class="line" id="l1019">   1019</a> 								} else {
+<a href="#l1020" class="line" id="l1020">   1020</a> 									fmt.Print(numberS + &quot; &quot;)
+<a href="#l1021" class="line" id="l1021">   1021</a> 								}
+<a href="#l1022" class="line" id="l1022">   1022</a> 							}
+<a href="#l1023" class="line" id="l1023">   1023</a> 						}
+<a href="#l1024" class="line" id="l1024">   1024</a> 					}
+<a href="#l1025" class="line" id="l1025">   1025</a> 				}
+<a href="#l1026" class="line" id="l1026">   1026</a> 				if len(showList) &gt; 0 {
+<a href="#l1027" class="line" id="l1027">   1027</a> 					fmt.Println()
+<a href="#l1028" class="line" id="l1028">   1028</a> 				}
+<a href="#l1029" class="line" id="l1029">   1029</a> 
+<a href="#l1030" class="line" id="l1030">   1030</a> 				if *simReport != &quot;&quot; {
+<a href="#l1031" class="line" id="l1031">   1031</a> 
+<a href="#l1032" class="line" id="l1032">   1032</a> 					repList := make([]int, 0, len(srep.Reportables))
+<a href="#l1033" class="line" id="l1033">   1033</a> 					recordC := make([]string, len(srep.Reportables))
+<a href="#l1034" class="line" id="l1034">   1034</a> 
+<a href="#l1035" class="line" id="l1035">   1035</a> 					if sconfig.GetTicks {
+<a href="#l1036" class="line" id="l1036">   1036</a> 						recordC = append(recordC, &quot;&quot;)
+<a href="#l1037" class="line" id="l1037">   1037</a> 						recordC[0] = strconv.FormatUint(i, 10)
+<a href="#l1038" class="line" id="l1038">   1038</a> 					}
+<a href="#l1039" class="line" id="l1039">   1039</a> 
+<a href="#l1040" class="line" id="l1040">   1040</a> 					if sconfig.GetAll || sconfig.GetAllInternal {
+<a href="#l1041" class="line" id="l1041">   1041</a> 						for j := range srep.Reportables {
+<a href="#l1042" class="line" id="l1042">   1042</a> 							repList = append(repList, j)
+<a href="#l1043" class="line" id="l1043">   1043</a> 						}
+<a href="#l1044" class="line" id="l1044">   1044</a> 					} else {
+<a href="#l1045" class="line" id="l1045">   1045</a> 						if rep, exist_reports := srep.AbsGet[i]; exist_reports {
+<a href="#l1046" class="line" id="l1046">   1046</a> 							for k := range rep {
+<a href="#l1047" class="line" id="l1047">   1047</a> 								repList = append(repList, k)
+<a href="#l1048" class="line" id="l1048">   1048</a> 							}
+<a href="#l1049" class="line" id="l1049">   1049</a> 						}
+<a href="#l1050" class="line" id="l1050">   1050</a> 
+<a href="#l1051" class="line" id="l1051">   1051</a> 						// This will get value to show on periodic ticks
+<a href="#l1052" class="line" id="l1052">   1052</a> 						for j, rep := range srep.PerGet {
+<a href="#l1053" class="line" id="l1053">   1053</a> 							if i%j == 0 {
+<a href="#l1054" class="line" id="l1054">   1054</a> 								for k, _ := range rep {
+<a href="#l1055" class="line" id="l1055">   1055</a> 									alredtIn := false
+<a href="#l1056" class="line" id="l1056">   1056</a> 									for _, v := range repList {
+<a href="#l1057" class="line" id="l1057">   1057</a> 										if v == k {
+<a href="#l1058" class="line" id="l1058">   1058</a> 											alredtIn = true
+<a href="#l1059" class="line" id="l1059">   1059</a> 											break
+<a href="#l1060" class="line" id="l1060">   1060</a> 										}
+<a href="#l1061" class="line" id="l1061">   1061</a> 									}
+<a href="#l1062" class="line" id="l1062">   1062</a> 									if !alredtIn {
+<a href="#l1063" class="line" id="l1063">   1063</a> 										repList = append(repList, k)
+<a href="#l1064" class="line" id="l1064">   1064</a> 									}
+<a href="#l1065" class="line" id="l1065">   1065</a> 								}
+<a href="#l1066" class="line" id="l1066">   1066</a> 							}
+<a href="#l1067" class="line" id="l1067">   1067</a> 						}
+<a href="#l1068" class="line" id="l1068">   1068</a> 					}
+<a href="#l1069" class="line" id="l1069">   1069</a> 
+<a href="#l1070" class="line" id="l1070">   1070</a> 					// sort.Ints(repList)
+<a href="#l1071" class="line" id="l1071">   1071</a> 
+<a href="#l1072" class="line" id="l1072">   1072</a> 					someToReport := false
+<a href="#l1073" class="line" id="l1073">   1073</a> 					for _, k := range repList {
+<a href="#l1074" class="line" id="l1074">   1074</a> 						nType := srep.ReportablesTypes[k]
+<a href="#l1075" class="line" id="l1075">   1075</a> 						if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+<a href="#l1076" class="line" id="l1076">   1076</a> 							log.Fatal(err)
+<a href="#l1077" class="line" id="l1077">   1077</a> 						}
+<a href="#l1078" class="line" id="l1078">   1078</a> 						if v := bmnumbers.GetType(nType); v == nil {
+<a href="#l1079" class="line" id="l1079">   1079</a> 							log.Fatal(&quot;Error: Unknown type&quot;)
+<a href="#l1080" class="line" id="l1080">   1080</a> 						} else {
+<a href="#l1081" class="line" id="l1081">   1081</a> 							bits := v.GetSize()
+<a href="#l1082" class="line" id="l1082">   1082</a> 							if number, err := bmnumbers.ImportUint(*srep.Reportables[k], bits); err != nil {
+<a href="#l1083" class="line" id="l1083">   1083</a> 								log.Fatal(err)
+<a href="#l1084" class="line" id="l1084">   1084</a> 							} else {
+<a href="#l1085" class="line" id="l1085">   1085</a> 								if err := bmnumbers.CastType(number, v); err != nil {
+<a href="#l1086" class="line" id="l1086">   1086</a> 									log.Fatal(err)
+<a href="#l1087" class="line" id="l1087">   1087</a> 								} else {
+<a href="#l1088" class="line" id="l1088">   1088</a> 									if numberS, err := number.ExportString(nil); err != nil {
+<a href="#l1089" class="line" id="l1089">   1089</a> 										log.Fatal(err)
+<a href="#l1090" class="line" id="l1090">   1090</a> 									} else {
+<a href="#l1091" class="line" id="l1091">   1091</a> 										someToReport = true
+<a href="#l1092" class="line" id="l1092">   1092</a> 										if sconfig.GetTicks {
+<a href="#l1093" class="line" id="l1093">   1093</a> 											recordC[k+1] = numberS
+<a href="#l1094" class="line" id="l1094">   1094</a> 										} else {
+<a href="#l1095" class="line" id="l1095">   1095</a> 											recordC[k] = numberS
+<a href="#l1096" class="line" id="l1096">   1096</a> 										}
+<a href="#l1097" class="line" id="l1097">   1097</a> 									}
+<a href="#l1098" class="line" id="l1098">   1098</a> 								}
+<a href="#l1099" class="line" id="l1099">   1099</a> 							}
+<a href="#l1100" class="line" id="l1100">   1100</a> 						}
+<a href="#l1101" class="line" id="l1101">   1101</a> 					}
+<a href="#l1102" class="line" id="l1102">   1102</a> 
+<a href="#l1103" class="line" id="l1103">   1103</a> 					if sconfig.GetTicks || someToReport {
+<a href="#l1104" class="line" id="l1104">   1104</a> 
+<a href="#l1105" class="line" id="l1105">   1105</a> 						reportWrite := make([]string, len(recordC))
+<a href="#l1106" class="line" id="l1106">   1106</a> 
+<a href="#l1107" class="line" id="l1107">   1107</a> 						for recI, recV := range recordC {
+<a href="#l1108" class="line" id="l1108">   1108</a> 							if sconfig.GetTicks {
+<a href="#l1109" class="line" id="l1109">   1109</a> 								if conf.FormatSimReports &amp;&amp; (oldRecordC == nil || ((recI != 0) &amp;&amp; (*oldRecordC)[recI] != recV)) {
+<a href="#l1110" class="line" id="l1110">   1110</a> 									reportWrite[recI] = &quot;\033[31m&quot; + fmt.Sprintf(&quot;%-25s&quot;, recV) + &quot;\033[0m&quot;
+<a href="#l1111" class="line" id="l1111">   1111</a> 								} else if conf.FormatSimReports {
+<a href="#l1112" class="line" id="l1112">   1112</a> 									reportWrite[recI] = fmt.Sprintf(&quot;%-25s&quot;, recV)
+<a href="#l1113" class="line" id="l1113">   1113</a> 								} else {
+<a href="#l1114" class="line" id="l1114">   1114</a> 									reportWrite[recI] = recV
+<a href="#l1115" class="line" id="l1115">   1115</a> 								}
+<a href="#l1116" class="line" id="l1116">   1116</a> 							} else {
+<a href="#l1117" class="line" id="l1117">   1117</a> 								if conf.FormatSimReports &amp;&amp; (oldRecordC == nil || (*oldRecordC)[recI] != recV) {
+<a href="#l1118" class="line" id="l1118">   1118</a> 									reportWrite[recI] = &quot;\033[31m&quot; + recV + &quot;\033[0m&quot;
+<a href="#l1119" class="line" id="l1119">   1119</a> 								} else {
+<a href="#l1120" class="line" id="l1120">   1120</a> 									reportWrite[recI] = recV
+<a href="#l1121" class="line" id="l1121">   1121</a> 								}
+<a href="#l1122" class="line" id="l1122">   1122</a> 							}
+<a href="#l1123" class="line" id="l1123">   1123</a> 						}
+<a href="#l1124" class="line" id="l1124">   1124</a> 
+<a href="#l1125" class="line" id="l1125">   1125</a> 						if err := reportData.Write(reportWrite); err != nil {
+<a href="#l1126" class="line" id="l1126">   1126</a> 							log.Fatalln(&quot;error writing record to csv:&quot;, err)
+<a href="#l1127" class="line" id="l1127">   1127</a> 						}
+<a href="#l1128" class="line" id="l1128">   1128</a> 
+<a href="#l1129" class="line" id="l1129">   1129</a> 						reportData.Flush()
+<a href="#l1130" class="line" id="l1130">   1130</a> 
+<a href="#l1131" class="line" id="l1131">   1131</a> 						if err := reportData.Error(); err != nil {
+<a href="#l1132" class="line" id="l1132">   1132</a> 							log.Fatal(err)
+<a href="#l1133" class="line" id="l1133">   1133</a> 						}
+<a href="#l1134" class="line" id="l1134">   1134</a> 						oldRecordC = &amp;recordC
+<a href="#l1135" class="line" id="l1135">   1135</a> 					}
+<a href="#l1136" class="line" id="l1136">   1136</a> 				}
+<a href="#l1137" class="line" id="l1137">   1137</a> 			}
+<a href="#l1138" class="line" id="l1138">   1138</a> 		} else if *emu {
+<a href="#l1139" class="line" id="l1139">   1139</a> 
+<a href="#l1140" class="line" id="l1140">   1140</a> 			emuDrivers := make([]bondmachine.EmuDriver, 0)
+<a href="#l1141" class="line" id="l1141">   1141</a> 
+<a href="#l1142" class="line" id="l1142">   1142</a> 			// Inclusion of the multi CPU textual VGA module
+<a href="#l1143" class="line" id="l1143">   1143</a> 			if *vgatext {
+<a href="#l1144" class="line" id="l1144">   1144</a> 				if *vgatextFlavor == &quot;800x600&quot; {
+<a href="#l1145" class="line" id="l1145">   1145</a> 					vga := new(bondmachine.Vga800x600Emu)
+<a href="#l1146" class="line" id="l1146">   1146</a> 					emuDrivers = append(emuDrivers, vga)
+<a href="#l1147" class="line" id="l1147">   1147</a> 				} else {
+<a href="#l1148" class="line" id="l1148">   1148</a> 					panic(errors.New(&quot;unsopported VGA flavor&quot;))
+<a href="#l1149" class="line" id="l1149">   1149</a> 				}
+<a href="#l1150" class="line" id="l1150">   1150</a> 			}
+<a href="#l1151" class="line" id="l1151">   1151</a> 
+<a href="#l1152" class="line" id="l1152">   1152</a> 			vm := new(bondmachine.VM)
+<a href="#l1153" class="line" id="l1153">   1153</a> 			vm.Bmach = bmach
+<a href="#l1154" class="line" id="l1154">   1154</a> 			vm.EmuDrivers = emuDrivers
+<a href="#l1155" class="line" id="l1155">   1155</a> 			err := vm.Init()
+<a href="#l1156" class="line" id="l1156">   1156</a> 			check(err)
+<a href="#l1157" class="line" id="l1157">   1157</a> 
+<a href="#l1158" class="line" id="l1158">   1158</a> 			// the emulation configuration is not really needed
+<a href="#l1159" class="line" id="l1159">   1159</a> 			sconfig := new(bondmachine.Sim_config)
+<a href="#l1160" class="line" id="l1160">   1160</a> 			scerr := sconfig.Init(nil, vm, conf)
+<a href="#l1161" class="line" id="l1161">   1161</a> 			check(scerr)
+<a href="#l1162" class="line" id="l1162">   1162</a> 
+<a href="#l1163" class="line" id="l1163">   1163</a> 			lerr := vm.Launch_processors(nil)
+<a href="#l1164" class="line" id="l1164">   1164</a> 			check(lerr)
+<a href="#l1165" class="line" id="l1165">   1165</a> 
+<a href="#l1166" class="line" id="l1166">   1166</a> 			for i := uint64(0); ; {
+<a href="#l1167" class="line" id="l1167">   1167</a> 				if *emu_interactions != 0 {
+<a href="#l1168" class="line" id="l1168">   1168</a> 					if i &gt;= uint64(*emu_interactions) {
+<a href="#l1169" class="line" id="l1169">   1169</a> 						break
+<a href="#l1170" class="line" id="l1170">   1170</a> 					}
+<a href="#l1171" class="line" id="l1171">   1171</a> 				}
+<a href="#l1172" class="line" id="l1172">   1172</a> 
+<a href="#l1173" class="line" id="l1173">   1173</a> 				_, err := vm.Step(sconfig)
+<a href="#l1174" class="line" id="l1174">   1174</a> 				check(err)
+<a href="#l1175" class="line" id="l1175">   1175</a> 
+<a href="#l1176" class="line" id="l1176">   1176</a> 				if *emu_interactions != 0 {
+<a href="#l1177" class="line" id="l1177">   1177</a> 					if *verbose {
+<a href="#l1178" class="line" id="l1178">   1178</a> 						fmt.Println(&quot;Interaction:&quot;, i)
+<a href="#l1179" class="line" id="l1179">   1179</a> 					}
+<a href="#l1180" class="line" id="l1180">   1180</a> 					i++
+<a href="#l1181" class="line" id="l1181">   1181</a> 				}
+<a href="#l1182" class="line" id="l1182">   1182</a> 
+<a href="#l1183" class="line" id="l1183">   1183</a> 			}
+<a href="#l1184" class="line" id="l1184">   1184</a> 		}
+<a href="#l1185" class="line" id="l1185">   1185</a> 		// Write the bondmachine file
+<a href="#l1186" class="line" id="l1186">   1186</a> 		f, err := os.Create(*bondmachine_file)
+<a href="#l1187" class="line" id="l1187">   1187</a> 		check(err)
+<a href="#l1188" class="line" id="l1188">   1188</a> 		defer f.Close()
+<a href="#l1189" class="line" id="l1189">   1189</a> 		b, errj := json.Marshal(bmach.Jsoner())
+<a href="#l1190" class="line" id="l1190">   1190</a> 		check(errj)
+<a href="#l1191" class="line" id="l1191">   1191</a> 		_, err = f.WriteString(string(b))
+<a href="#l1192" class="line" id="l1192">   1192</a> 		check(err)
+<a href="#l1193" class="line" id="l1193">   1193</a> 	} else {
+<a href="#l1194" class="line" id="l1194">   1194</a> 		panic(&quot;bondmachine-file is a mandatory option&quot;)
+<a href="#l1195" class="line" id="l1195">   1195</a> 	}
+<a href="#l1196" class="line" id="l1196">   1196</a> }
+</pre>
+</div>
+</body>
+</html>

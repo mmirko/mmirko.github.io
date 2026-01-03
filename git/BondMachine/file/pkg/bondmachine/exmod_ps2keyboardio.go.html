@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>exmod_ps2keyboardio.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> exmod_ps2keyboardio.go (12359B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;encoding/json&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;errors&quot;
+<a href="#l6" class="line" id="l6">      6</a> )
+<a href="#l7" class="line" id="l7">      7</a> 
+<a href="#l8" class="line" id="l8">      8</a> type Ps2KeyboardIoExtra struct {
+<a href="#l9" class="line" id="l9">      9</a> 	MappedInput string
+<a href="#l10" class="line" id="l10">     10</a> }
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> func (sl *Ps2KeyboardIoExtra) Get_Name() string {
+<a href="#l13" class="line" id="l13">     13</a> 	return &quot;ps2keyboard&quot;
+<a href="#l14" class="line" id="l14">     14</a> }
+<a href="#l15" class="line" id="l15">     15</a> 
+<a href="#l16" class="line" id="l16">     16</a> func (sl *Ps2KeyboardIoExtra) Get_Params() *ExtraParams {
+<a href="#l17" class="line" id="l17">     17</a> 	result := new(ExtraParams)
+<a href="#l18" class="line" id="l18">     18</a> 	result.Params = map[string]string{&quot;mapped_input&quot;: sl.MappedInput}
+<a href="#l19" class="line" id="l19">     19</a> 	return result
+<a href="#l20" class="line" id="l20">     20</a> }
+<a href="#l21" class="line" id="l21">     21</a> 
+<a href="#l22" class="line" id="l22">     22</a> func (sl *Ps2KeyboardIoExtra) Import(inp string) error {
+<a href="#l23" class="line" id="l23">     23</a> 	if err := json.Unmarshal([]byte(inp), sl); err != nil {
+<a href="#l24" class="line" id="l24">     24</a> 		return errors.New(&quot;Unmarshalling failed&quot;)
+<a href="#l25" class="line" id="l25">     25</a> 	}
+<a href="#l26" class="line" id="l26">     26</a> 	return nil
+<a href="#l27" class="line" id="l27">     27</a> }
+<a href="#l28" class="line" id="l28">     28</a> 
+<a href="#l29" class="line" id="l29">     29</a> func (sl *Ps2KeyboardIoExtra) Export() string {
+<a href="#l30" class="line" id="l30">     30</a> 	b, _ := json.Marshal(sl)
+<a href="#l31" class="line" id="l31">     31</a> 	return string(b)
+<a href="#l32" class="line" id="l32">     32</a> }
+<a href="#l33" class="line" id="l33">     33</a> 
+<a href="#l34" class="line" id="l34">     34</a> func (sl *Ps2KeyboardIoExtra) Check(bmach *Bondmachine) error {
+<a href="#l35" class="line" id="l35">     35</a> 	return nil
+<a href="#l36" class="line" id="l36">     36</a> }
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> func (sl *Ps2KeyboardIoExtra) Verilog_headers() string {
+<a href="#l39" class="line" id="l39">     39</a> 	return &quot;&quot;
+<a href="#l40" class="line" id="l40">     40</a> }
+<a href="#l41" class="line" id="l41">     41</a> 
+<a href="#l42" class="line" id="l42">     42</a> func (sl *Ps2KeyboardIoExtra) StaticVerilog() string {
+<a href="#l43" class="line" id="l43">     43</a> 	result := &quot;\n`timescale 1ns / 1ps\n&quot;
+<a href="#l44" class="line" id="l44">     44</a> 	result += `
+<a href="#l45" class="line" id="l45">     45</a> module debouncer(
+<a href="#l46" class="line" id="l46">     46</a>     input clk,
+<a href="#l47" class="line" id="l47">     47</a>     input I,
+<a href="#l48" class="line" id="l48">     48</a>     output reg O
+<a href="#l49" class="line" id="l49">     49</a>     );
+<a href="#l50" class="line" id="l50">     50</a>     parameter COUNT_MAX=255, COUNT_WIDTH=8;
+<a href="#l51" class="line" id="l51">     51</a>     reg [COUNT_WIDTH-1:0] count;
+<a href="#l52" class="line" id="l52">     52</a>     reg Iv=0;
+<a href="#l53" class="line" id="l53">     53</a>     always@(posedge clk)
+<a href="#l54" class="line" id="l54">     54</a>         if (I == Iv) begin
+<a href="#l55" class="line" id="l55">     55</a>             if (count == COUNT_MAX)
+<a href="#l56" class="line" id="l56">     56</a>                 O &lt;= I;
+<a href="#l57" class="line" id="l57">     57</a>             else
+<a href="#l58" class="line" id="l58">     58</a>                 count &lt;= count + 1&#39;b1;
+<a href="#l59" class="line" id="l59">     59</a>         end else begin
+<a href="#l60" class="line" id="l60">     60</a>             count &lt;= &#39;b0;
+<a href="#l61" class="line" id="l61">     61</a>             Iv &lt;= I;
+<a href="#l62" class="line" id="l62">     62</a>         end
+<a href="#l63" class="line" id="l63">     63</a> endmodule
+<a href="#l64" class="line" id="l64">     64</a> 	`
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+<a href="#l67" class="line" id="l67">     67</a> 	result += `
+<a href="#l68" class="line" id="l68">     68</a> module PS2Receiver(
+<a href="#l69" class="line" id="l69">     69</a> 	input clk,
+<a href="#l70" class="line" id="l70">     70</a> 	input kclk,
+<a href="#l71" class="line" id="l71">     71</a> 	input kdata,
+<a href="#l72" class="line" id="l72">     72</a> 	output reg [15:0] keycode=0,
+<a href="#l73" class="line" id="l73">     73</a> 	output reg oflag
+<a href="#l74" class="line" id="l74">     74</a> 	);
+<a href="#l75" class="line" id="l75">     75</a> 		
+<a href="#l76" class="line" id="l76">     76</a> 	wire kclkf, kdataf;
+<a href="#l77" class="line" id="l77">     77</a> 	reg [7:0]datacur=0;
+<a href="#l78" class="line" id="l78">     78</a> 	reg [7:0]dataprev=0;
+<a href="#l79" class="line" id="l79">     79</a> 	reg [3:0]cnt=0;
+<a href="#l80" class="line" id="l80">     80</a> 	reg flag=0;
+<a href="#l81" class="line" id="l81">     81</a> 		
+<a href="#l82" class="line" id="l82">     82</a> 	debouncer #(
+<a href="#l83" class="line" id="l83">     83</a> 		.COUNT_MAX(19),
+<a href="#l84" class="line" id="l84">     84</a> 		.COUNT_WIDTH(5)
+<a href="#l85" class="line" id="l85">     85</a> 	) db_clk(
+<a href="#l86" class="line" id="l86">     86</a> 		.clk(clk),
+<a href="#l87" class="line" id="l87">     87</a> 		.I(kclk),
+<a href="#l88" class="line" id="l88">     88</a> 		.O(kclkf)
+<a href="#l89" class="line" id="l89">     89</a> 	);
+<a href="#l90" class="line" id="l90">     90</a> 	debouncer #(
+<a href="#l91" class="line" id="l91">     91</a> 	   .COUNT_MAX(19),
+<a href="#l92" class="line" id="l92">     92</a> 	   .COUNT_WIDTH(5)
+<a href="#l93" class="line" id="l93">     93</a> 	) db_data(
+<a href="#l94" class="line" id="l94">     94</a> 		.clk(clk),
+<a href="#l95" class="line" id="l95">     95</a> 		.I(kdata),
+<a href="#l96" class="line" id="l96">     96</a> 		.O(kdataf)
+<a href="#l97" class="line" id="l97">     97</a> 	);
+<a href="#l98" class="line" id="l98">     98</a> 		
+<a href="#l99" class="line" id="l99">     99</a> 	always@(negedge(kclkf))begin
+<a href="#l100" class="line" id="l100">    100</a> 		case(cnt)
+<a href="#l101" class="line" id="l101">    101</a> 		0:;//Start bit
+<a href="#l102" class="line" id="l102">    102</a> 		1:datacur[0]&lt;=kdataf;
+<a href="#l103" class="line" id="l103">    103</a> 		2:datacur[1]&lt;=kdataf;
+<a href="#l104" class="line" id="l104">    104</a> 		3:datacur[2]&lt;=kdataf;
+<a href="#l105" class="line" id="l105">    105</a> 		4:datacur[3]&lt;=kdataf;
+<a href="#l106" class="line" id="l106">    106</a> 		5:datacur[4]&lt;=kdataf;
+<a href="#l107" class="line" id="l107">    107</a> 		6:datacur[5]&lt;=kdataf;
+<a href="#l108" class="line" id="l108">    108</a> 		7:datacur[6]&lt;=kdataf;
+<a href="#l109" class="line" id="l109">    109</a> 		8:datacur[7]&lt;=kdataf;
+<a href="#l110" class="line" id="l110">    110</a> 		9:flag&lt;=1&#39;b1;
+<a href="#l111" class="line" id="l111">    111</a> 		10:flag&lt;=1&#39;b0;
+<a href="#l112" class="line" id="l112">    112</a> 		
+<a href="#l113" class="line" id="l113">    113</a> 		endcase
+<a href="#l114" class="line" id="l114">    114</a> 			if(cnt&lt;=9) cnt&lt;=cnt+1;
+<a href="#l115" class="line" id="l115">    115</a> 			else if(cnt==10) cnt&lt;=0;
+<a href="#l116" class="line" id="l116">    116</a> 	end
+<a href="#l117" class="line" id="l117">    117</a> 	
+<a href="#l118" class="line" id="l118">    118</a> 	reg pflag;
+<a href="#l119" class="line" id="l119">    119</a> 	always@(posedge clk) begin
+<a href="#l120" class="line" id="l120">    120</a> 		if (flag == 1&#39;b1 &amp;&amp; pflag == 1&#39;b0) begin
+<a href="#l121" class="line" id="l121">    121</a> 			keycode &lt;= {dataprev, datacur};
+<a href="#l122" class="line" id="l122">    122</a> 			oflag &lt;= 1&#39;b1;
+<a href="#l123" class="line" id="l123">    123</a> 			dataprev &lt;= datacur;
+<a href="#l124" class="line" id="l124">    124</a> 		end else
+<a href="#l125" class="line" id="l125">    125</a> 			oflag &lt;= &#39;b0;
+<a href="#l126" class="line" id="l126">    126</a> 		pflag &lt;= flag;
+<a href="#l127" class="line" id="l127">    127</a> 	end
+<a href="#l128" class="line" id="l128">    128</a> 	
+<a href="#l129" class="line" id="l129">    129</a> endmodule
+<a href="#l130" class="line" id="l130">    130</a> 	`
+<a href="#l131" class="line" id="l131">    131</a> 
+<a href="#l132" class="line" id="l132">    132</a> 	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+<a href="#l133" class="line" id="l133">    133</a> 	result += `
+<a href="#l134" class="line" id="l134">    134</a> 	module bondkeydrv(
+<a href="#l135" class="line" id="l135">    135</a> 		input       clk,
+<a href="#l136" class="line" id="l136">    136</a> 		input       PS2Data,
+<a href="#l137" class="line" id="l137">    137</a> 		input       PS2Clk,
+<a href="#l138" class="line" id="l138">    138</a> 		output reg  [15:0] key,
+<a href="#l139" class="line" id="l139">    139</a> 		output reg  keycode_valid,
+<a href="#l140" class="line" id="l140">    140</a> 		input       keycode_recv
+<a href="#l141" class="line" id="l141">    141</a> 	);
+<a href="#l142" class="line" id="l142">    142</a> 	
+<a href="#l143" class="line" id="l143">    143</a> 		reg         start=0;
+<a href="#l144" class="line" id="l144">    144</a> 		reg         CLK50MHZ=0;
+<a href="#l145" class="line" id="l145">    145</a> 		wire [15:0] keycode;
+<a href="#l146" class="line" id="l146">    146</a> 		reg [15:0] keycodev;
+<a href="#l147" class="line" id="l147">    147</a> 		wire        flag;
+<a href="#l148" class="line" id="l148">    148</a> 		reg         cn=0;
+<a href="#l149" class="line" id="l149">    149</a> 	
+<a href="#l150" class="line" id="l150">    150</a> 		reg [5:0]	mods; // 0 Shift - 1 Ctrl - 3 Alt
+<a href="#l151" class="line" id="l151">    151</a> 
+<a href="#l152" class="line" id="l152">    152</a> 		always @(posedge(clk))begin
+<a href="#l153" class="line" id="l153">    153</a> 			CLK50MHZ&lt;=~CLK50MHZ;
+<a href="#l154" class="line" id="l154">    154</a> 		end
+<a href="#l155" class="line" id="l155">    155</a> 		
+<a href="#l156" class="line" id="l156">    156</a> 		PS2Receiver uut (
+<a href="#l157" class="line" id="l157">    157</a> 			.clk(CLK50MHZ),
+<a href="#l158" class="line" id="l158">    158</a> 			.kclk(PS2Clk),
+<a href="#l159" class="line" id="l159">    159</a> 			.kdata(PS2Data),
+<a href="#l160" class="line" id="l160">    160</a> 			.keycode(keycode),
+<a href="#l161" class="line" id="l161">    161</a> 			.oflag(flag)
+<a href="#l162" class="line" id="l162">    162</a> 		);
+<a href="#l163" class="line" id="l163">    163</a> 		
+<a href="#l164" class="line" id="l164">    164</a> 		always@(keycode)
+<a href="#l165" class="line" id="l165">    165</a> 			if (keycode[7:0] == 8&#39;hf0) begin
+<a href="#l166" class="line" id="l166">    166</a> 				cn &lt;= 1&#39;b0;
+<a href="#l167" class="line" id="l167">    167</a> 			end else if (keycode[15:8] == 8&#39;hf0) begin
+<a href="#l168" class="line" id="l168">    168</a> 				cn &lt;= keycode != keycodev;
+<a href="#l169" class="line" id="l169">    169</a> 			end else begin
+<a href="#l170" class="line" id="l170">    170</a> 				cn &lt;= keycode[7:0] != keycodev[7:0] || keycodev[15:8] == 8&#39;hf0;
+<a href="#l171" class="line" id="l171">    171</a> 			end
+<a href="#l172" class="line" id="l172">    172</a> 		
+<a href="#l173" class="line" id="l173">    173</a> 		always @(posedge clk)
+<a href="#l174" class="line" id="l174">    174</a> 			if (flag == 1&#39;b1 &amp;&amp; cn == 1&#39;b1) begin
+<a href="#l175" class="line" id="l175">    175</a> 				keycodev &lt;= keycode;
+<a href="#l176" class="line" id="l176">    176</a> 				case (keycode[15:8])
+<a href="#l177" class="line" id="l177">    177</a> 					8&#39;hf0: // Break Codes
+<a href="#l178" class="line" id="l178">    178</a> 						case (keycode[7:0])
+<a href="#l179" class="line" id="l179">    179</a> 							// Modificators
+<a href="#l180" class="line" id="l180">    180</a> 							8&#39;h12 : begin // Left Shift
+<a href="#l181" class="line" id="l181">    181</a> 									mods[0] &lt;= 1&#39;b0;
+<a href="#l182" class="line" id="l182">    182</a> 									start &lt;= 1&#39;b0;
+<a href="#l183" class="line" id="l183">    183</a> 								end
+<a href="#l184" class="line" id="l184">    184</a> 							8&#39;h59 : begin // Right Shift
+<a href="#l185" class="line" id="l185">    185</a> 									mods[0] &lt;= 1&#39;b0;
+<a href="#l186" class="line" id="l186">    186</a> 									start &lt;= 1&#39;b0;
+<a href="#l187" class="line" id="l187">    187</a> 								end
+<a href="#l188" class="line" id="l188">    188</a> 							default:
+<a href="#l189" class="line" id="l189">    189</a> 								start &lt;= 1&#39;b0;
+<a href="#l190" class="line" id="l190">    190</a> 						endcase
+<a href="#l191" class="line" id="l191">    191</a> 					default: // Make Codes
+<a href="#l192" class="line" id="l192">    192</a> 						case (keycode[7:0])
+<a href="#l193" class="line" id="l193">    193</a> 							// Modificators
+<a href="#l194" class="line" id="l194">    194</a> 							8&#39;h12 : begin // Left Shift
+<a href="#l195" class="line" id="l195">    195</a> 									mods[0] &lt;= 1&#39;b1;
+<a href="#l196" class="line" id="l196">    196</a> 									start &lt;= 1&#39;b0;
+<a href="#l197" class="line" id="l197">    197</a> 								end
+<a href="#l198" class="line" id="l198">    198</a> 							8&#39;h59 : begin // Right Shift
+<a href="#l199" class="line" id="l199">    199</a> 									mods[0] &lt;= 1&#39;b1;
+<a href="#l200" class="line" id="l200">    200</a> 									start &lt;= 1&#39;b0;
+<a href="#l201" class="line" id="l201">    201</a> 								end
+<a href="#l202" class="line" id="l202">    202</a> 							// Special
+<a href="#l203" class="line" id="l203">    203</a> 							8&#39;h29 : begin
+<a href="#l204" class="line" id="l204">    204</a> 									key &lt;= 16&#39;h0020;  // Space
+<a href="#l205" class="line" id="l205">    205</a> 									start &lt;= 1&#39;b1;
+<a href="#l206" class="line" id="l206">    206</a> 								end
+<a href="#l207" class="line" id="l207">    207</a> 							8&#39;h5a : begin
+<a href="#l208" class="line" id="l208">    208</a> 									key &lt;= 16&#39;h000d;  // Enter
+<a href="#l209" class="line" id="l209">    209</a> 									start &lt;= 1&#39;b1;
+<a href="#l210" class="line" id="l210">    210</a> 								end
+<a href="#l211" class="line" id="l211">    211</a> 							8&#39;h76 : begin
+<a href="#l212" class="line" id="l212">    212</a> 									key &lt;= 16&#39;h001b;  // Escape
+<a href="#l213" class="line" id="l213">    213</a> 									start &lt;= 1&#39;b1;
+<a href="#l214" class="line" id="l214">    214</a> 								end
+<a href="#l215" class="line" id="l215">    215</a> 							8&#39;h66 : begin
+<a href="#l216" class="line" id="l216">    216</a> 									key &lt;= 16&#39;h0008;  // Backspace
+<a href="#l217" class="line" id="l217">    217</a> 									start &lt;= 1&#39;b1;
+<a href="#l218" class="line" id="l218">    218</a> 								end
+<a href="#l219" class="line" id="l219">    219</a> 							8&#39;h0d : begin
+<a href="#l220" class="line" id="l220">    220</a> 									key &lt;= 16&#39;h000b;  // Tab
+<a href="#l221" class="line" id="l221">    221</a> 									start &lt;= 1&#39;b1;
+<a href="#l222" class="line" id="l222">    222</a> 								end
+<a href="#l223" class="line" id="l223">    223</a> 							8&#39;h52 : begin
+<a href="#l224" class="line" id="l224">    224</a> 									if (mods[0])
+<a href="#l225" class="line" id="l225">    225</a> 										key &lt;= 16&#39;h0022;  // &quot;
+<a href="#l226" class="line" id="l226">    226</a> 									else
+<a href="#l227" class="line" id="l227">    227</a> 										key &lt;= 16&#39;h0027;  // &#39;
+<a href="#l228" class="line" id="l228">    228</a> 									start &lt;= 1&#39;b1;
+<a href="#l229" class="line" id="l229">    229</a> 								end
+<a href="#l230" class="line" id="l230">    230</a> 							8&#39;h4c : begin
+<a href="#l231" class="line" id="l231">    231</a> 									if (mods[0])
+<a href="#l232" class="line" id="l232">    232</a> 										key &lt;= 16&#39;h003a;  // :
+<a href="#l233" class="line" id="l233">    233</a> 									else
+<a href="#l234" class="line" id="l234">    234</a> 										key &lt;= 16&#39;h003b;  // ;
+<a href="#l235" class="line" id="l235">    235</a> 									start &lt;= 1&#39;b1;
+<a href="#l236" class="line" id="l236">    236</a> 								end
+<a href="#l237" class="line" id="l237">    237</a> 							8&#39;h54 : begin
+<a href="#l238" class="line" id="l238">    238</a> 									if (mods[0])
+<a href="#l239" class="line" id="l239">    239</a> 										key &lt;= 16&#39;h007b;  // {
+<a href="#l240" class="line" id="l240">    240</a> 									else
+<a href="#l241" class="line" id="l241">    241</a> 										key &lt;= 16&#39;h005b;  // [
+<a href="#l242" class="line" id="l242">    242</a> 									start &lt;= 1&#39;b1;
+<a href="#l243" class="line" id="l243">    243</a> 								end
+<a href="#l244" class="line" id="l244">    244</a> 							8&#39;h5b : begin
+<a href="#l245" class="line" id="l245">    245</a> 									if (mods[0])
+<a href="#l246" class="line" id="l246">    246</a> 										key &lt;= 16&#39;h007d;  // }
+<a href="#l247" class="line" id="l247">    247</a> 									else
+<a href="#l248" class="line" id="l248">    248</a> 										key &lt;= 16&#39;h005d;  // ]
+<a href="#l249" class="line" id="l249">    249</a> 									start &lt;= 1&#39;b1;
+<a href="#l250" class="line" id="l250">    250</a> 								end
+<a href="#l251" class="line" id="l251">    251</a> 							8&#39;h0e : begin
+<a href="#l252" class="line" id="l252">    252</a> 									if (mods[0])
+<a href="#l253" class="line" id="l253">    253</a> 										key &lt;= 16&#39;h007e;  // ~
+<a href="#l254" class="line" id="l254">    254</a> 									else
+<a href="#l255" class="line" id="l255">    255</a> 										key &lt;= 16&#39;h0060;  // reverse &#39;
+<a href="#l256" class="line" id="l256">    256</a> 									start &lt;= 1&#39;b1;
+<a href="#l257" class="line" id="l257">    257</a> 								end
+<a href="#l258" class="line" id="l258">    258</a> 							8&#39;h5d : begin
+<a href="#l259" class="line" id="l259">    259</a> 									if (mods[0])
+<a href="#l260" class="line" id="l260">    260</a> 										key &lt;= 16&#39;h007c;  // |
+<a href="#l261" class="line" id="l261">    261</a> 									else
+<a href="#l262" class="line" id="l262">    262</a> 										key &lt;= 16&#39;h005c;  // \
+<a href="#l263" class="line" id="l263">    263</a> 									start &lt;= 1&#39;b1;
+<a href="#l264" class="line" id="l264">    264</a> 								end
+<a href="#l265" class="line" id="l265">    265</a> 							8&#39;h4e : begin
+<a href="#l266" class="line" id="l266">    266</a> 									if (mods[0])
+<a href="#l267" class="line" id="l267">    267</a> 										key &lt;= 16&#39;h005f;  // _
+<a href="#l268" class="line" id="l268">    268</a> 									else
+<a href="#l269" class="line" id="l269">    269</a> 										key &lt;= 16&#39;h002d;  // -
+<a href="#l270" class="line" id="l270">    270</a> 									start &lt;= 1&#39;b1;
+<a href="#l271" class="line" id="l271">    271</a> 								end
+<a href="#l272" class="line" id="l272">    272</a> 							8&#39;h55 : begin
+<a href="#l273" class="line" id="l273">    273</a> 									if (mods[0])
+<a href="#l274" class="line" id="l274">    274</a> 										key &lt;= 16&#39;h002b;  // +
+<a href="#l275" class="line" id="l275">    275</a> 									else
+<a href="#l276" class="line" id="l276">    276</a> 										key &lt;= 16&#39;h003d;  // =
+<a href="#l277" class="line" id="l277">    277</a> 									start &lt;= 1&#39;b1;
+<a href="#l278" class="line" id="l278">    278</a> 								end
+<a href="#l279" class="line" id="l279">    279</a> 							8&#39;h4a : begin
+<a href="#l280" class="line" id="l280">    280</a> 									if (mods[0])
+<a href="#l281" class="line" id="l281">    281</a> 										key &lt;= 16&#39;h003f;  // ?
+<a href="#l282" class="line" id="l282">    282</a> 									else
+<a href="#l283" class="line" id="l283">    283</a> 										key &lt;= 16&#39;h002f;  // /
+<a href="#l284" class="line" id="l284">    284</a> 									start &lt;= 1&#39;b1;
+<a href="#l285" class="line" id="l285">    285</a> 								end
+<a href="#l286" class="line" id="l286">    286</a> 							8&#39;h41 : begin
+<a href="#l287" class="line" id="l287">    287</a> 									if (mods[0])
+<a href="#l288" class="line" id="l288">    288</a> 										key &lt;= 16&#39;h003c;  // &lt;
+<a href="#l289" class="line" id="l289">    289</a> 									else
+<a href="#l290" class="line" id="l290">    290</a> 										key &lt;= 16&#39;h002c;  // ,
+<a href="#l291" class="line" id="l291">    291</a> 									start &lt;= 1&#39;b1;
+<a href="#l292" class="line" id="l292">    292</a> 								end
+<a href="#l293" class="line" id="l293">    293</a> 							8&#39;h49 : begin
+<a href="#l294" class="line" id="l294">    294</a> 									if (mods[0])
+<a href="#l295" class="line" id="l295">    295</a> 										key &lt;= 16&#39;h003e;  // &gt;
+<a href="#l296" class="line" id="l296">    296</a> 									else
+<a href="#l297" class="line" id="l297">    297</a> 										key &lt;= 16&#39;h002e;  // .
+<a href="#l298" class="line" id="l298">    298</a> 									start &lt;= 1&#39;b1;
+<a href="#l299" class="line" id="l299">    299</a> 								end
+<a href="#l300" class="line" id="l300">    300</a> 							// Numbers 0-9
+<a href="#l301" class="line" id="l301">    301</a> 							8&#39;h45 : begin
+<a href="#l302" class="line" id="l302">    302</a> 									if (mods[0])
+<a href="#l303" class="line" id="l303">    303</a> 										key &lt;= 16&#39;h0029;  // )
+<a href="#l304" class="line" id="l304">    304</a> 									else
+<a href="#l305" class="line" id="l305">    305</a> 										key &lt;= 16&#39;h0030;  // 0
+<a href="#l306" class="line" id="l306">    306</a> 									start &lt;= 1&#39;b1;
+<a href="#l307" class="line" id="l307">    307</a> 								end
+<a href="#l308" class="line" id="l308">    308</a> 							8&#39;h16 : begin
+<a href="#l309" class="line" id="l309">    309</a> 									if (mods[0])
+<a href="#l310" class="line" id="l310">    310</a> 										key &lt;= 16&#39;h0021;  // !
+<a href="#l311" class="line" id="l311">    311</a> 									else
+<a href="#l312" class="line" id="l312">    312</a> 										key &lt;= 16&#39;h0031;  // 1
+<a href="#l313" class="line" id="l313">    313</a> 									start &lt;= 1&#39;b1;
+<a href="#l314" class="line" id="l314">    314</a> 								end
+<a href="#l315" class="line" id="l315">    315</a> 							8&#39;h1e : begin
+<a href="#l316" class="line" id="l316">    316</a> 									if (mods[0])
+<a href="#l317" class="line" id="l317">    317</a> 										key &lt;= 16&#39;h0040;  // @
+<a href="#l318" class="line" id="l318">    318</a> 									else
+<a href="#l319" class="line" id="l319">    319</a> 										key &lt;= 16&#39;h0032;  // 2
+<a href="#l320" class="line" id="l320">    320</a> 									start &lt;= 1&#39;b1;
+<a href="#l321" class="line" id="l321">    321</a> 								end
+<a href="#l322" class="line" id="l322">    322</a> 							8&#39;h26 : begin
+<a href="#l323" class="line" id="l323">    323</a> 									if (mods[0])
+<a href="#l324" class="line" id="l324">    324</a> 										key &lt;= 16&#39;h0023;  // #
+<a href="#l325" class="line" id="l325">    325</a> 									else
+<a href="#l326" class="line" id="l326">    326</a> 										key &lt;= 16&#39;h0033;  // 3
+<a href="#l327" class="line" id="l327">    327</a> 									start &lt;= 1&#39;b1;
+<a href="#l328" class="line" id="l328">    328</a> 								end
+<a href="#l329" class="line" id="l329">    329</a> 							8&#39;h25 : begin
+<a href="#l330" class="line" id="l330">    330</a> 									if (mods[0])
+<a href="#l331" class="line" id="l331">    331</a> 										key &lt;= 16&#39;h0024;  // $
+<a href="#l332" class="line" id="l332">    332</a> 									else
+<a href="#l333" class="line" id="l333">    333</a> 										key &lt;= 16&#39;h0034;  // 4
+<a href="#l334" class="line" id="l334">    334</a> 									start &lt;= 1&#39;b1;
+<a href="#l335" class="line" id="l335">    335</a> 								end
+<a href="#l336" class="line" id="l336">    336</a> 							8&#39;h2e : begin
+<a href="#l337" class="line" id="l337">    337</a> 									if (mods[0])
+<a href="#l338" class="line" id="l338">    338</a> 										key &lt;= 16&#39;h0025;  // %
+<a href="#l339" class="line" id="l339">    339</a> 									else
+<a href="#l340" class="line" id="l340">    340</a> 										key &lt;= 16&#39;h0035;  // 5
+<a href="#l341" class="line" id="l341">    341</a> 									start &lt;= 1&#39;b1;
+<a href="#l342" class="line" id="l342">    342</a> 								end
+<a href="#l343" class="line" id="l343">    343</a> 							8&#39;h36 : begin
+<a href="#l344" class="line" id="l344">    344</a> 									if (mods[0])
+<a href="#l345" class="line" id="l345">    345</a> 										key &lt;= 16&#39;h005e;  // ^
+<a href="#l346" class="line" id="l346">    346</a> 									else
+<a href="#l347" class="line" id="l347">    347</a> 										key &lt;= 16&#39;h0036;  // 6
+<a href="#l348" class="line" id="l348">    348</a> 									start &lt;= 1&#39;b1;
+<a href="#l349" class="line" id="l349">    349</a> 								end
+<a href="#l350" class="line" id="l350">    350</a> 							8&#39;h3d : begin
+<a href="#l351" class="line" id="l351">    351</a> 									if (mods[0])
+<a href="#l352" class="line" id="l352">    352</a> 										key &lt;= 16&#39;h0026;  // &amp;
+<a href="#l353" class="line" id="l353">    353</a> 									else
+<a href="#l354" class="line" id="l354">    354</a> 										key &lt;= 16&#39;h0037;  // 7
+<a href="#l355" class="line" id="l355">    355</a> 									start &lt;= 1&#39;b1;
+<a href="#l356" class="line" id="l356">    356</a> 								end
+<a href="#l357" class="line" id="l357">    357</a> 							8&#39;h3e : begin
+<a href="#l358" class="line" id="l358">    358</a> 									if (mods[0])
+<a href="#l359" class="line" id="l359">    359</a> 										key &lt;= 16&#39;h002a;  // *
+<a href="#l360" class="line" id="l360">    360</a> 									else
+<a href="#l361" class="line" id="l361">    361</a> 										key &lt;= 16&#39;h0038;  // 8
+<a href="#l362" class="line" id="l362">    362</a> 									start &lt;= 1&#39;b1;
+<a href="#l363" class="line" id="l363">    363</a> 								end
+<a href="#l364" class="line" id="l364">    364</a> 							8&#39;h46 : begin
+<a href="#l365" class="line" id="l365">    365</a> 									if (mods[0])
+<a href="#l366" class="line" id="l366">    366</a> 										key &lt;= 16&#39;h0028;  // (
+<a href="#l367" class="line" id="l367">    367</a> 									else
+<a href="#l368" class="line" id="l368">    368</a> 										key &lt;= 16&#39;h0039;  // 9
+<a href="#l369" class="line" id="l369">    369</a> 									start &lt;= 1&#39;b1;
+<a href="#l370" class="line" id="l370">    370</a> 								end
+<a href="#l371" class="line" id="l371">    371</a> 							// Characters
+<a href="#l372" class="line" id="l372">    372</a> 							8&#39;h15 : begin
+<a href="#l373" class="line" id="l373">    373</a> 									if (mods[0])
+<a href="#l374" class="line" id="l374">    374</a> 										key &lt;= 16&#39;h0051;  // Q
+<a href="#l375" class="line" id="l375">    375</a> 									else
+<a href="#l376" class="line" id="l376">    376</a> 										key &lt;= 16&#39;h0071;  // q 
+<a href="#l377" class="line" id="l377">    377</a> 									start &lt;= 1&#39;b1;
+<a href="#l378" class="line" id="l378">    378</a> 								end
+<a href="#l379" class="line" id="l379">    379</a> 							8&#39;h1d : begin
+<a href="#l380" class="line" id="l380">    380</a> 									if (mods[0])
+<a href="#l381" class="line" id="l381">    381</a> 										key &lt;= 16&#39;h0057;  // W
+<a href="#l382" class="line" id="l382">    382</a> 									else
+<a href="#l383" class="line" id="l383">    383</a> 										key &lt;= 16&#39;h0077;  // w
+<a href="#l384" class="line" id="l384">    384</a> 									start &lt;= 1&#39;b1;
+<a href="#l385" class="line" id="l385">    385</a> 								end
+<a href="#l386" class="line" id="l386">    386</a> 							8&#39;h24 : begin
+<a href="#l387" class="line" id="l387">    387</a> 									if (mods[0])
+<a href="#l388" class="line" id="l388">    388</a> 										key &lt;= 16&#39;h0045;  // E
+<a href="#l389" class="line" id="l389">    389</a> 									else
+<a href="#l390" class="line" id="l390">    390</a> 										key &lt;= 16&#39;h0065;  // e
+<a href="#l391" class="line" id="l391">    391</a> 									start &lt;= 1&#39;b1;
+<a href="#l392" class="line" id="l392">    392</a> 								end
+<a href="#l393" class="line" id="l393">    393</a> 							8&#39;h2d : begin
+<a href="#l394" class="line" id="l394">    394</a> 									if (mods[0])
+<a href="#l395" class="line" id="l395">    395</a> 										key &lt;= 16&#39;h0052;  // R
+<a href="#l396" class="line" id="l396">    396</a> 									else
+<a href="#l397" class="line" id="l397">    397</a> 										key &lt;= 16&#39;h0072;  // r
+<a href="#l398" class="line" id="l398">    398</a> 									start &lt;= 1&#39;b1;
+<a href="#l399" class="line" id="l399">    399</a> 								end
+<a href="#l400" class="line" id="l400">    400</a> 							8&#39;h2c : begin
+<a href="#l401" class="line" id="l401">    401</a> 									if (mods[0])
+<a href="#l402" class="line" id="l402">    402</a> 										key &lt;= 16&#39;h0054;  // T
+<a href="#l403" class="line" id="l403">    403</a> 									else
+<a href="#l404" class="line" id="l404">    404</a> 										key &lt;= 16&#39;h0074;  // t
+<a href="#l405" class="line" id="l405">    405</a> 									start &lt;= 1&#39;b1;
+<a href="#l406" class="line" id="l406">    406</a> 								end
+<a href="#l407" class="line" id="l407">    407</a> 							8&#39;h35 : begin
+<a href="#l408" class="line" id="l408">    408</a> 									if (mods[0])
+<a href="#l409" class="line" id="l409">    409</a> 										key &lt;= 16&#39;h0059;  // Y
+<a href="#l410" class="line" id="l410">    410</a> 									else
+<a href="#l411" class="line" id="l411">    411</a> 										key &lt;= 16&#39;h0079;  // y
+<a href="#l412" class="line" id="l412">    412</a> 									start &lt;= 1&#39;b1;
+<a href="#l413" class="line" id="l413">    413</a> 								end
+<a href="#l414" class="line" id="l414">    414</a> 							8&#39;h3c : begin
+<a href="#l415" class="line" id="l415">    415</a> 									if (mods[0])
+<a href="#l416" class="line" id="l416">    416</a> 										key &lt;= 16&#39;h0055;  // U
+<a href="#l417" class="line" id="l417">    417</a> 									else
+<a href="#l418" class="line" id="l418">    418</a> 										key &lt;= 16&#39;h0075;  // u
+<a href="#l419" class="line" id="l419">    419</a> 									start &lt;= 1&#39;b1;
+<a href="#l420" class="line" id="l420">    420</a> 								end
+<a href="#l421" class="line" id="l421">    421</a> 							8&#39;h43 : begin
+<a href="#l422" class="line" id="l422">    422</a> 									if (mods[0])
+<a href="#l423" class="line" id="l423">    423</a> 										key &lt;= 16&#39;h0049;  // I
+<a href="#l424" class="line" id="l424">    424</a> 									else
+<a href="#l425" class="line" id="l425">    425</a> 										key &lt;= 16&#39;h0069;  // i
+<a href="#l426" class="line" id="l426">    426</a> 									start &lt;= 1&#39;b1;
+<a href="#l427" class="line" id="l427">    427</a> 								end
+<a href="#l428" class="line" id="l428">    428</a> 							8&#39;h44 : begin
+<a href="#l429" class="line" id="l429">    429</a> 									if (mods[0])
+<a href="#l430" class="line" id="l430">    430</a> 										key &lt;= 16&#39;h004f;  // O
+<a href="#l431" class="line" id="l431">    431</a> 									else
+<a href="#l432" class="line" id="l432">    432</a> 										key &lt;= 16&#39;h006f;  // o
+<a href="#l433" class="line" id="l433">    433</a> 									start &lt;= 1&#39;b1;
+<a href="#l434" class="line" id="l434">    434</a> 								end
+<a href="#l435" class="line" id="l435">    435</a> 							8&#39;h4d : begin
+<a href="#l436" class="line" id="l436">    436</a> 									if (mods[0])
+<a href="#l437" class="line" id="l437">    437</a> 										key &lt;= 16&#39;h0050;  // P
+<a href="#l438" class="line" id="l438">    438</a> 									else
+<a href="#l439" class="line" id="l439">    439</a> 										key &lt;= 16&#39;h0070;  // p
+<a href="#l440" class="line" id="l440">    440</a> 									start &lt;= 1&#39;b1;
+<a href="#l441" class="line" id="l441">    441</a> 								end
+<a href="#l442" class="line" id="l442">    442</a> 							8&#39;h1c : begin
+<a href="#l443" class="line" id="l443">    443</a> 									if (mods[0])
+<a href="#l444" class="line" id="l444">    444</a> 										key &lt;= 16&#39;h0041;  // A
+<a href="#l445" class="line" id="l445">    445</a> 									else
+<a href="#l446" class="line" id="l446">    446</a> 										key &lt;= 16&#39;h0061;  // a
+<a href="#l447" class="line" id="l447">    447</a> 									start &lt;= 1&#39;b1;
+<a href="#l448" class="line" id="l448">    448</a> 								end
+<a href="#l449" class="line" id="l449">    449</a> 							8&#39;h1b : begin
+<a href="#l450" class="line" id="l450">    450</a> 									if (mods[0])
+<a href="#l451" class="line" id="l451">    451</a> 										key &lt;= 16&#39;h0053;  // S
+<a href="#l452" class="line" id="l452">    452</a> 									else
+<a href="#l453" class="line" id="l453">    453</a> 										key &lt;= 16&#39;h0073;  // s
+<a href="#l454" class="line" id="l454">    454</a> 									start &lt;= 1&#39;b1;
+<a href="#l455" class="line" id="l455">    455</a> 								end
+<a href="#l456" class="line" id="l456">    456</a> 							8&#39;h23 : begin
+<a href="#l457" class="line" id="l457">    457</a> 									if (mods[0])
+<a href="#l458" class="line" id="l458">    458</a> 										key &lt;= 16&#39;h0044;  // D
+<a href="#l459" class="line" id="l459">    459</a> 									else
+<a href="#l460" class="line" id="l460">    460</a> 										key &lt;= 16&#39;h0064;  // d
+<a href="#l461" class="line" id="l461">    461</a> 									start &lt;= 1&#39;b1;
+<a href="#l462" class="line" id="l462">    462</a> 								end
+<a href="#l463" class="line" id="l463">    463</a> 							8&#39;h2b : begin
+<a href="#l464" class="line" id="l464">    464</a> 									if (mods[0])
+<a href="#l465" class="line" id="l465">    465</a> 										key &lt;= 16&#39;h0046;  // F
+<a href="#l466" class="line" id="l466">    466</a> 									else
+<a href="#l467" class="line" id="l467">    467</a> 										key &lt;= 16&#39;h0066;  // f
+<a href="#l468" class="line" id="l468">    468</a> 									start &lt;= 1&#39;b1;
+<a href="#l469" class="line" id="l469">    469</a> 								end
+<a href="#l470" class="line" id="l470">    470</a> 							8&#39;h34 : begin
+<a href="#l471" class="line" id="l471">    471</a> 									if (mods[0])
+<a href="#l472" class="line" id="l472">    472</a> 										key &lt;= 16&#39;h0047;  // G
+<a href="#l473" class="line" id="l473">    473</a> 									else
+<a href="#l474" class="line" id="l474">    474</a> 										key &lt;= 16&#39;h0067;  // g
+<a href="#l475" class="line" id="l475">    475</a> 									start &lt;= 1&#39;b1;
+<a href="#l476" class="line" id="l476">    476</a> 								end
+<a href="#l477" class="line" id="l477">    477</a> 							8&#39;h33 : begin
+<a href="#l478" class="line" id="l478">    478</a> 									if (mods[0])
+<a href="#l479" class="line" id="l479">    479</a> 										key &lt;= 16&#39;h0048;  // H
+<a href="#l480" class="line" id="l480">    480</a> 									else
+<a href="#l481" class="line" id="l481">    481</a> 										key &lt;= 16&#39;h0068;  // h 
+<a href="#l482" class="line" id="l482">    482</a> 									start &lt;= 1&#39;b1;
+<a href="#l483" class="line" id="l483">    483</a> 								end
+<a href="#l484" class="line" id="l484">    484</a> 							8&#39;h3b : begin
+<a href="#l485" class="line" id="l485">    485</a> 									if (mods[0])
+<a href="#l486" class="line" id="l486">    486</a> 										key &lt;= 16&#39;h004a;  // J
+<a href="#l487" class="line" id="l487">    487</a> 									else
+<a href="#l488" class="line" id="l488">    488</a> 										key &lt;= 16&#39;h006a;  // j
+<a href="#l489" class="line" id="l489">    489</a> 									start &lt;= 1&#39;b1;
+<a href="#l490" class="line" id="l490">    490</a> 								end
+<a href="#l491" class="line" id="l491">    491</a> 							8&#39;h42 : begin
+<a href="#l492" class="line" id="l492">    492</a> 									if (mods[0])
+<a href="#l493" class="line" id="l493">    493</a> 										key &lt;= 16&#39;h004b;  // K
+<a href="#l494" class="line" id="l494">    494</a> 									else
+<a href="#l495" class="line" id="l495">    495</a> 										key &lt;= 16&#39;h006b;  // k
+<a href="#l496" class="line" id="l496">    496</a> 									start &lt;= 1&#39;b1;
+<a href="#l497" class="line" id="l497">    497</a> 								end
+<a href="#l498" class="line" id="l498">    498</a> 							8&#39;h4b : begin
+<a href="#l499" class="line" id="l499">    499</a> 									if (mods[0])
+<a href="#l500" class="line" id="l500">    500</a> 										key &lt;= 16&#39;h004c;  // L
+<a href="#l501" class="line" id="l501">    501</a> 									else
+<a href="#l502" class="line" id="l502">    502</a> 										key &lt;= 16&#39;h006c;  // l
+<a href="#l503" class="line" id="l503">    503</a> 									start &lt;= 1&#39;b1;
+<a href="#l504" class="line" id="l504">    504</a> 								end
+<a href="#l505" class="line" id="l505">    505</a> 							8&#39;h1a : begin
+<a href="#l506" class="line" id="l506">    506</a> 									if (mods[0])
+<a href="#l507" class="line" id="l507">    507</a> 										key &lt;= 16&#39;h005a;  // Z
+<a href="#l508" class="line" id="l508">    508</a> 									else
+<a href="#l509" class="line" id="l509">    509</a> 										key &lt;= 16&#39;h007a;  // z
+<a href="#l510" class="line" id="l510">    510</a> 									start &lt;= 1&#39;b1;
+<a href="#l511" class="line" id="l511">    511</a> 								end
+<a href="#l512" class="line" id="l512">    512</a> 							8&#39;h22 : begin
+<a href="#l513" class="line" id="l513">    513</a> 									if (mods[0])
+<a href="#l514" class="line" id="l514">    514</a> 										key &lt;= 16&#39;h0058;  // X
+<a href="#l515" class="line" id="l515">    515</a> 									else
+<a href="#l516" class="line" id="l516">    516</a> 										key &lt;= 16&#39;h0078;  // x
+<a href="#l517" class="line" id="l517">    517</a> 									start &lt;= 1&#39;b1;
+<a href="#l518" class="line" id="l518">    518</a> 								end
+<a href="#l519" class="line" id="l519">    519</a> 							8&#39;h21 : begin
+<a href="#l520" class="line" id="l520">    520</a> 									if (mods[0])
+<a href="#l521" class="line" id="l521">    521</a> 										key &lt;= 16&#39;h0043;  // C
+<a href="#l522" class="line" id="l522">    522</a> 									else
+<a href="#l523" class="line" id="l523">    523</a> 										key &lt;= 16&#39;h0063;  // c
+<a href="#l524" class="line" id="l524">    524</a> 									start &lt;= 1&#39;b1;
+<a href="#l525" class="line" id="l525">    525</a> 								end
+<a href="#l526" class="line" id="l526">    526</a> 							8&#39;h2a : begin
+<a href="#l527" class="line" id="l527">    527</a> 									if (mods[0])
+<a href="#l528" class="line" id="l528">    528</a> 										key &lt;= 16&#39;h0056;  // V
+<a href="#l529" class="line" id="l529">    529</a> 									else
+<a href="#l530" class="line" id="l530">    530</a> 										key &lt;= 16&#39;h0076;  // v
+<a href="#l531" class="line" id="l531">    531</a> 									start &lt;= 1&#39;b1;
+<a href="#l532" class="line" id="l532">    532</a> 								end
+<a href="#l533" class="line" id="l533">    533</a> 							8&#39;h32 : begin
+<a href="#l534" class="line" id="l534">    534</a> 									if (mods[0])
+<a href="#l535" class="line" id="l535">    535</a> 										key &lt;= 16&#39;h0042;  // B
+<a href="#l536" class="line" id="l536">    536</a> 									else
+<a href="#l537" class="line" id="l537">    537</a> 										key &lt;= 16&#39;h0062;  // b
+<a href="#l538" class="line" id="l538">    538</a> 									start &lt;= 1&#39;b1;
+<a href="#l539" class="line" id="l539">    539</a> 								end
+<a href="#l540" class="line" id="l540">    540</a> 							8&#39;h31 : begin
+<a href="#l541" class="line" id="l541">    541</a> 									if (mods[0])
+<a href="#l542" class="line" id="l542">    542</a> 										key &lt;= 16&#39;h004e;  // N
+<a href="#l543" class="line" id="l543">    543</a> 									else
+<a href="#l544" class="line" id="l544">    544</a> 										key &lt;= 16&#39;h006e;  // n
+<a href="#l545" class="line" id="l545">    545</a> 									start &lt;= 1&#39;b1;
+<a href="#l546" class="line" id="l546">    546</a> 								end
+<a href="#l547" class="line" id="l547">    547</a> 							8&#39;h3a : begin
+<a href="#l548" class="line" id="l548">    548</a> 									if (mods[0])
+<a href="#l549" class="line" id="l549">    549</a> 										key &lt;= 16&#39;h004d;  // M
+<a href="#l550" class="line" id="l550">    550</a> 									else
+<a href="#l551" class="line" id="l551">    551</a> 										key &lt;= 16&#39;h006d;  // m
+<a href="#l552" class="line" id="l552">    552</a> 									start &lt;= 1&#39;b1;
+<a href="#l553" class="line" id="l553">    553</a> 								end
+<a href="#l554" class="line" id="l554">    554</a> 							default:
+<a href="#l555" class="line" id="l555">    555</a> 								start &lt;= 1&#39;b0;
+<a href="#l556" class="line" id="l556">    556</a> 						endcase
+<a href="#l557" class="line" id="l557">    557</a> 				endcase
+<a href="#l558" class="line" id="l558">    558</a> 			end else
+<a href="#l559" class="line" id="l559">    559</a> 				start &lt;= 1&#39;b0;
+<a href="#l560" class="line" id="l560">    560</a> 	 
+<a href="#l561" class="line" id="l561">    561</a> 		always @(posedge clk) begin
+<a href="#l562" class="line" id="l562">    562</a> 			if (start == 1&#39;b1) begin
+<a href="#l563" class="line" id="l563">    563</a> 				keycode_valid &lt;= 1&#39;b1;
+<a href="#l564" class="line" id="l564">    564</a> 			end
+<a href="#l565" class="line" id="l565">    565</a> 			else begin 
+<a href="#l566" class="line" id="l566">    566</a> 				if (keycode_recv == 1&#39;b1) begin
+<a href="#l567" class="line" id="l567">    567</a> 					keycode_valid &lt;= 1&#39;b0;
+<a href="#l568" class="line" id="l568">    568</a> 				end
+<a href="#l569" class="line" id="l569">    569</a> 			end
+<a href="#l570" class="line" id="l570">    570</a> 		end
+<a href="#l571" class="line" id="l571">    571</a> 		
+<a href="#l572" class="line" id="l572">    572</a> 	endmodule
+<a href="#l573" class="line" id="l573">    573</a> 	`
+<a href="#l574" class="line" id="l574">    574</a> 	return result
+<a href="#l575" class="line" id="l575">    575</a> }
+<a href="#l576" class="line" id="l576">    576</a> 
+<a href="#l577" class="line" id="l577">    577</a> func (sl *Ps2KeyboardIoExtra) ExtraFiles() ([]string, []string) {
+<a href="#l578" class="line" id="l578">    578</a> 	return []string{}, []string{}
+<a href="#l579" class="line" id="l579">    579</a> }
+</pre>
+</div>
+</body>
+</html>

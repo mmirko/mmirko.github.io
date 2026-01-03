@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>neuron inclusion - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7a28f2e6bc278bdf0d769722c451425114983d42.html">7a28f2e6bc278bdf0d769722c451425114983d42</a>
+<b>parent</b> <a href="../commit/ddc49a80346af7addadeffa0c6d109142561e5bf.html">ddc49a80346af7addadeffa0c6d109142561e5bf</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  5 Apr 2023 16:02:09 +0200
+
+neuron inclusion
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">library/melbond/m3number_add.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/melbond/evaluator.go</a></td><td> | </td><td class="num">59</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>2 files changed, 42 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/melbond/m3number_add.nb.html">library/melbond/m3number_add.nb</a> b/<a href="../file/library/melbond/m3number_add.nb.html">library/melbond/m3number_add.nb</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+{
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+	&quot;params&quot;: [&quot;addop&quot;]
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a> b/<a href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,6 +1,7 @@
+</a> package melbond
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 
+ 	&quot;github.com/mmirko/mel/pkg/mel3program&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -46,30 +47,48 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 	implementation := ev.Implementation[iProg.LibraryID]
+ 
+ 	nodeCodeName := implementation.ImplName + &quot;_&quot; + implementation.ProgramNames[iProg.ProgramID]
+<a href="#h1-1-3" id="h1-1-3" class="d">-	ev.MelBondConfig.CodeChan &lt;- fmt.Sprint(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+</a> 
+<a href="#h1-1-5" id="h1-1-5" class="d">-	isFunctional := true
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	if neuron, ok := ev.MelBondConfig.Neurons[nodeCodeName]; ok {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+		ev.MelBondConfig.CodeChan &lt;- fmt.Sprint(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		for _, param := range neuron.Params {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			switch param {
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+			default:
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+				if value, ok := ev.MelBondConfig.Params[param]; ok {
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+					ev.MelBondConfig.CodeChan &lt;- fmt.Sprintf(&quot;, %s:%s&quot;, param, value)
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+				} else {
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+					ev.error = errors.New(&quot;Unknown parameter &quot; + param)
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+					return nil
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+				}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+			}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+		ev.MelBondConfig.CodeChan &lt;- &quot;\n&quot;
+</a> 
+<a href="#h1-1-22" id="h1-1-22" class="d">-	if len(implementation.NonVariadicArgs[iProg.ProgramID]) == 0 &amp;&amp; !implementation.IsVariadic[iProg.ProgramID] {
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-		isFunctional = false
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-	}
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+		isFunctional := true
+</a> 
+<a href="#h1-1-27" id="h1-1-27" class="d">-	if !isFunctional {
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;, &quot; + implementation.ProgramNames[iProg.ProgramID] + &quot;:&quot; + iProg.ProgramValue)
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-	} else {
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln()
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-	}
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+		if len(implementation.NonVariadicArgs[iProg.ProgramID]) == 0 &amp;&amp; !implementation.IsVariadic[iProg.ProgramID] {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+			isFunctional = false
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+		}
+</a> 
+<a href="#h1-1-36" id="h1-1-36" class="d">-	arg_num := len(iProg.NextPrograms)
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-	evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-	names := make([]string, arg_num)
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-	for i, prog := range iProg.NextPrograms {
+</a><a href="#h1-1-40" id="h1-1-40" class="d">-		evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h1-1-41" id="h1-1-41" class="d">-		names[i] = nodeName + string(byte(97+i))
+</a><a href="#h1-1-42" id="h1-1-42" class="d">-		evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h1-1-43" id="h1-1-43" class="d">-		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + nodeName + &quot;, type:input, index:&quot; + fmt.Sprint(i))
+</a><a href="#h1-1-44" id="h1-1-44" class="d">-		ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a><a href="#h1-1-45" id="h1-1-45" class="d">-		evaluators[i].Visit(prog)
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+		if !isFunctional {
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+			ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;, &quot; + implementation.ProgramNames[iProg.ProgramID] + &quot;:&quot; + iProg.ProgramValue)
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+		} else {
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+			ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln()
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+		}
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+		arg_num := len(iProg.NextPrograms)
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+		evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+		names := make([]string, arg_num)
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+		for i, prog := range iProg.NextPrograms {
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+			evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h1-1-57" id="h1-1-57" class="i">+			names[i] = nodeName + string(byte(97+i))
+</a><a href="#h1-1-58" id="h1-1-58" class="i">+			evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+			ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + nodeName + &quot;, type:input, index:&quot; + fmt.Sprint(i))
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+			ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+			evaluators[i].Visit(prog)
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+		}
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+	} else {
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+		ev.error = errors.New(&quot;Unknown neuron &quot; + nodeCodeName)
+</a> 	}
+ 
+ 	return nil
+</pre>
+</div>
+</body>
+</html>

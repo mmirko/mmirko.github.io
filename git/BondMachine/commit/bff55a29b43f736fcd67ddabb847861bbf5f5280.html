@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quantization instructions - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bff55a29b43f736fcd67ddabb847861bbf5f5280.html">bff55a29b43f736fcd67ddabb847861bbf5f5280</a>
+<b>parent</b> <a href="../commit/9b0879e2cb2757082233340c761b7f609b62fc0c.html">9b0879e2cb2757082233340c761b7f609b62fc0c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 19 Apr 2023 11:51:09 +0200
+
+Quantization instructions
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynamical_flopoco.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/dynamical_instructions.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/dynamical_linear_quantizer.go</a></td><td> | </td><td class="num">45</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">80</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>7 files changed, 159 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,6 +12,7 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+</a> )
+ 
+ var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -27,10 +28,10 @@ var target = flag.String(&quot;target&quot;, &quot;bondmachine&quot;, &quot;Choose the assembler target a
+</a> var getMeta = flag.String(&quot;getmeta&quot;, &quot;&quot;, &quot;Get the metadata of an internal parameter of the BondMachine&quot;)
+ 
+ // Optionals
+<a href="#h0-1-3" id="h0-1-3" class="d">-var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;Load additional informations about the BondMachine&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;Load additional information about the BondMachine&quot;)
+</a> var dumpRequirements = flag.String(&quot;dump-requirements&quot;, &quot;&quot;, &quot;Dump the requirements of the BondMachine in a JSON file&quot;)
+ 
+<a href="#h0-1-7" id="h0-1-7" class="d">-var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the sintax index,filename)&quot;)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+</a> 
+ func check(e error) {
+ 	if e != nil {
+<a href="#h0-2" id="h0-2" class="h">@@ -41,10 +42,29 @@ func check(e error) {
+</a> func init() {
+ 	flag.Parse()
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	// if *debug {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	// 	fmt.Println(&quot;basm init&quot;)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	// }
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+
+</a> 	if *linearDataRange != &quot;&quot; {
+ 		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+ 			log.Fatal(err)
+ 		}
+<a href="#h0-2-11" id="h0-2-11" class="i">+
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+			}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		}
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		for i, t := range procbuilder.AllDynamicalInstructions {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				dynIst := t.(procbuilder.DynLinearQuantizer)
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+				dynIst.Ranges = lqRanges
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+				procbuilder.AllDynamicalInstructions[i] = dynIst
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		}
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -198,6 +198,22 @@ func init() {
+</a> 		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+ 			log.Fatal(err)
+ 		}
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+			}
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		for i, t := range procbuilder.AllDynamicalInstructions {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+				dynIst := t.(procbuilder.DynLinearQuantizer)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+				dynIst.Ranges = lqRanges
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+				procbuilder.AllDynamicalInstructions[i] = dynIst
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+			}
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+		}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -10,6 +10,10 @@ import (
+</a> 
+ type DynFloPoCo struct{}
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+func (d DynFloPoCo) GetName() string {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	return &quot;dyn_flopoco&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+}
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a> func (d DynFloPoCo) MatchName(name string) bool {
+ 	re := regexp.MustCompile(&quot;multflpe(?P&lt;e&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+ 	if re.MatchString(name) {
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a> b/<a href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,6 +1,7 @@
+</a> package procbuilder
+ 
+ type DynamicInstruction interface {
+<a href="#h3-0-3" id="h3-0-3" class="i">+	GetName() string
+</a> 	MatchName(string) bool
+ 	CreateInstruction(string) (Opcode, error)
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,11 +1,26 @@
+</a> package procbuilder
+ 
+ import (
+<a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+<a href="#h4-0-6" id="h4-0-6" class="i">+
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+)
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+const (
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	LQADD = uint8(0) + iota
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	LQMULT
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	LQDIV
+</a> )
+ 
+<a href="#h4-0-16" id="h4-0-16" class="d">-type DynLinearQuantizer struct{}
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+type DynLinearQuantizer struct {
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	Ranges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+}
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+func (d DynLinearQuantizer) GetName() string {
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	return &quot;dyn_linear_quantizer&quot;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+}
+</a> 
+ func (d DynLinearQuantizer) MatchName(name string) bool {
+ 	re := regexp.MustCompile(&quot;multlqs(?P&lt;s&gt;[0-9]+)t(?P&lt;t&gt;[0-9]+)&quot;)
+<a href="#h4-1" id="h4-1" class="h">@@ -22,28 +37,48 @@ func (d DynLinearQuantizer) MatchName(name string) bool {
+</a> 
+ func (d DynLinearQuantizer) CreateInstruction(name string) (Opcode, error) {
+ 	var t, s int
+<a href="#h4-1-3" id="h4-1-3" class="d">-	re := regexp.MustCompile(&quot;multlqs(?P&lt;e&gt;[0-9]+)t(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+	var opType uint8
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+	var max float64
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+	re := regexp.MustCompile(&quot;multlqs(?P&lt;s&gt;[0-9]+)t(?P&lt;t&gt;[0-9]+)&quot;)
+</a> 	if re.MatchString(name) {
+ 		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+ 		ts := re.ReplaceAllString(name, &quot;${t}&quot;)
+ 		s, _ = strconv.Atoi(ss)
+ 		t, _ = strconv.Atoi(ts)
+<a href="#h4-1-12" id="h4-1-12" class="i">+		opType = LQMULT
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+		if val, ok := (*d.Ranges)[t]; ok {
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+			max = val.Max
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+		} else {
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+			return nil, errors.New(&quot;Invalid range for index &quot; + strconv.Itoa(t))
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+		}
+</a> 	}
+<a href="#h4-1-19" id="h4-1-19" class="d">-	re = regexp.MustCompile(&quot;addlqs(?P&lt;e&gt;[0-9]+)t(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+	re = regexp.MustCompile(&quot;addlqs(?P&lt;s&gt;[0-9]+)t(?P&lt;t&gt;[0-9]+)&quot;)
+</a> 	if re.MatchString(name) {
+ 		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+ 		ts := re.ReplaceAllString(name, &quot;${t}&quot;)
+ 		s, _ = strconv.Atoi(ss)
+ 		t, _ = strconv.Atoi(ts)
+<a href="#h4-1-26" id="h4-1-26" class="i">+		opType = LQADD
+</a><a href="#h4-1-27" id="h4-1-27" class="i">+		if val, ok := (*d.Ranges)[t]; ok {
+</a><a href="#h4-1-28" id="h4-1-28" class="i">+			max = val.Max
+</a><a href="#h4-1-29" id="h4-1-29" class="i">+		} else {
+</a><a href="#h4-1-30" id="h4-1-30" class="i">+			return nil, errors.New(&quot;Invalid range for index &quot; + strconv.Itoa(t))
+</a><a href="#h4-1-31" id="h4-1-31" class="i">+		}
+</a> 	}
+<a href="#h4-1-33" id="h4-1-33" class="d">-	re = regexp.MustCompile(&quot;divlqs(?P&lt;e&gt;[0-9]+)t(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-1-34" id="h4-1-34" class="i">+	re = regexp.MustCompile(&quot;divlqs(?P&lt;s&gt;[0-9]+)t(?P&lt;t&gt;[0-9]+)&quot;)
+</a> 	if re.MatchString(name) {
+ 		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+ 		ts := re.ReplaceAllString(name, &quot;${t}&quot;)
+ 		s, _ = strconv.Atoi(ss)
+ 		t, _ = strconv.Atoi(ts)
+<a href="#h4-1-40" id="h4-1-40" class="i">+		opType = LQDIV
+</a><a href="#h4-1-41" id="h4-1-41" class="i">+		if val, ok := (*d.Ranges)[t]; ok {
+</a><a href="#h4-1-42" id="h4-1-42" class="i">+			max = val.Max
+</a><a href="#h4-1-43" id="h4-1-43" class="i">+		} else {
+</a><a href="#h4-1-44" id="h4-1-44" class="i">+			return nil, errors.New(&quot;Invalid range for index &quot; + strconv.Itoa(t))
+</a><a href="#h4-1-45" id="h4-1-45" class="i">+		}
+</a> 	}
+ 
+<a href="#h4-1-48" id="h4-1-48" class="d">-	return LinearQuantizer{lqName: name, s: s, t: t}, nil
+</a><a href="#h4-1-49" id="h4-1-49" class="i">+	return LinearQuantizer{lqName: name, s: s, t: t, opType: opType, max: max}, nil
+</a> 
+ }
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -2,6 +2,7 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;errors&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;fmt&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -12,8 +13,10 @@ import (
+</a> // The LinearQuantizer opcode is both a basic instruction and a template for other instructions.
+ type LinearQuantizer struct {
+ 	lqName string
+<a href="#h5-1-3" id="h5-1-3" class="i">+	max    float64
+</a> 	s      int
+ 	t      int
+<a href="#h5-1-6" id="h5-1-6" class="i">+	opType uint8
+</a> }
+ 
+ func (op LinearQuantizer) Op_get_name() string {
+<a href="#h5-2" id="h5-2" class="h">@@ -41,6 +44,11 @@ func (op LinearQuantizer) OpInstructionVerilogHeader(conf *Config, arch *Arch, f
+</a> 	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+ 	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 
+<a href="#h5-2-3" id="h5-2-3" class="i">+	if op.opType == LQMULT || op.opType == LQDIV {
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_corr;\n&quot;
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr;\n&quot;
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+	}
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+
+</a> 	result += &quot;\treg	[1:0] &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state;\n&quot;
+ 	result += &quot;parameter &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put         = 2&#39;d0,\n&quot;
+ 	result += &quot;          &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr        = 2&#39;d1,\n&quot;
+<a href="#h5-3" id="h5-3" class="h">@@ -48,6 +56,10 @@ func (op LinearQuantizer) OpInstructionVerilogHeader(conf *Config, arch *Arch, f
+</a> 
+ 	result += &quot;\t&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot; &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_inst (&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_a, &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b,  &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z);\n\n&quot;
+ 
+<a href="#h5-3-3" id="h5-3-3" class="i">+	if op.opType == LQMULT || op.opType == LQDIV {
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+		result += &quot;\t&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr_inst (&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_corr, &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr);\n\n&quot;
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+	}
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+
+</a> 	return result
+ }
+ 
+<a href="#h5-4" id="h5-4" class="h">@@ -97,10 +109,25 @@ func (op LinearQuantizer) Op_instruction_verilog_state_machine(conf *Config, arc
+</a> 			result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+ 			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+ 			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+<a href="#h5-4-3" id="h5-4-3" class="d">-			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+			switch op.opType {
+</a><a href="#h5-4-5" id="h5-4-5" class="i">+			case LQADD:
+</a><a href="#h5-4-6" id="h5-4-6" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h5-4-7" id="h5-4-7" class="i">+			case LQMULT, LQDIV:
+</a><a href="#h5-4-8" id="h5-4-8" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr;\n&quot;
+</a><a href="#h5-4-9" id="h5-4-9" class="i">+			}
+</a> 			result += &quot;							end\n&quot;
+<a href="#h5-4-11" id="h5-4-11" class="i">+			if op.opType == LQMULT || op.opType == LQDIV {
+</a><a href="#h5-4-12" id="h5-4-12" class="i">+				result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr : begin\n&quot;
+</a><a href="#h5-4-13" id="h5-4-13" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_corr &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h5-4-14" id="h5-4-14" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h5-4-15" id="h5-4-15" class="i">+				result += &quot;							end\n&quot;
+</a><a href="#h5-4-16" id="h5-4-16" class="i">+			}
+</a> 			result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+<a href="#h5-4-18" id="h5-4-18" class="d">-			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h5-4-19" id="h5-4-19" class="i">+			if op.opType == LQADD {
+</a><a href="#h5-4-20" id="h5-4-20" class="i">+				result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h5-4-21" id="h5-4-21" class="i">+			} else {
+</a><a href="#h5-4-22" id="h5-4-22" class="i">+				result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr;\n&quot;
+</a><a href="#h5-4-23" id="h5-4-23" class="i">+			}
+</a> 			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put;\n&quot;
+ 			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+ 			result += &quot;							end\n&quot;
+<a href="#h5-5" id="h5-5" class="h">@@ -213,20 +240,59 @@ func (Op LinearQuantizer) Op_instruction_verilog_internal_state(arch *Arch, flav
+</a> 
+ func (op LinearQuantizer) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+ 	result := &quot;\n\n&quot;
+<a href="#h5-5-3" id="h5-5-3" class="i">+	var moduleName string
+</a> 
+ 	result += &quot;module &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;(\n&quot;
+ 	result += &quot;        input_a,\n&quot;
+ 	result += &quot;        input_b,\n&quot;
+ 	result += &quot;        output_z);\n&quot;
+ 	result += &quot;\n&quot;
+<a href="#h5-5-10" id="h5-5-10" class="d">-	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h5-5-11" id="h5-5-11" class="d">-	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h5-5-12" id="h5-5-12" class="d">-	result += &quot;  output    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h5-5-13" id="h5-5-13" class="d">-	result += &quot;  assign output_z = input_a + input_b;\n&quot;
+</a><a href="#h5-5-14" id="h5-5-14" class="i">+	result += &quot;  input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h5-5-15" id="h5-5-15" class="i">+	result += &quot;  input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h5-5-16" id="h5-5-16" class="i">+	result += &quot;  output signed   [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h5-5-17" id="h5-5-17" class="i">+	switch op.opType {
+</a><a href="#h5-5-18" id="h5-5-18" class="i">+	case LQADD:
+</a><a href="#h5-5-19" id="h5-5-19" class="i">+		result += &quot;  assign output_z = input_a + input_b;\n&quot;
+</a><a href="#h5-5-20" id="h5-5-20" class="i">+		moduleName = &quot;adder&quot;
+</a><a href="#h5-5-21" id="h5-5-21" class="i">+	case LQMULT:
+</a><a href="#h5-5-22" id="h5-5-22" class="i">+		result += &quot;  assign output_z = input_a * input_b;\n&quot;
+</a><a href="#h5-5-23" id="h5-5-23" class="i">+		moduleName = &quot;multiplier&quot;
+</a><a href="#h5-5-24" id="h5-5-24" class="i">+	case LQDIV:
+</a><a href="#h5-5-25" id="h5-5-25" class="i">+		result += &quot;  assign output_z = input_a / input_b;\n&quot;
+</a><a href="#h5-5-26" id="h5-5-26" class="i">+		moduleName = &quot;divider&quot;
+</a><a href="#h5-5-27" id="h5-5-27" class="i">+	}
+</a> 	result += &quot;\n&quot;
+ 	result += &quot;endmodule\n&quot;
+ 
+<a href="#h5-5-31" id="h5-5-31" class="d">-	return []string{&quot;multiplier&quot;}, []string{result}
+</a><a href="#h5-5-32" id="h5-5-32" class="i">+	moduleNames := []string{moduleName}
+</a><a href="#h5-5-33" id="h5-5-33" class="i">+	moduleCodes := []string{result}
+</a><a href="#h5-5-34" id="h5-5-34" class="i">+
+</a><a href="#h5-5-35" id="h5-5-35" class="i">+	if op.opType == LQDIV || op.opType == LQMULT {
+</a><a href="#h5-5-36" id="h5-5-36" class="i">+		correction := &quot;\n\n&quot;
+</a><a href="#h5-5-37" id="h5-5-37" class="i">+		correction += &quot;module &quot; + op.lqName + &quot;_correction_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h5-5-38" id="h5-5-38" class="i">+		correction += &quot;        input,\n&quot;
+</a><a href="#h5-5-39" id="h5-5-39" class="i">+		correction += &quot;        output);\n&quot;
+</a><a href="#h5-5-40" id="h5-5-40" class="i">+		correction += &quot;\n&quot;
+</a><a href="#h5-5-41" id="h5-5-41" class="i">+		correction += &quot;  input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input;\n&quot;
+</a><a href="#h5-5-42" id="h5-5-42" class="i">+		correction += &quot;  output signed   [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output;\n&quot;
+</a><a href="#h5-5-43" id="h5-5-43" class="i">+		sd := float64(uint64(1) &lt;&lt; (arch.Rsize - 1))
+</a><a href="#h5-5-44" id="h5-5-44" class="i">+		sn := float64(op.max)
+</a><a href="#h5-5-45" id="h5-5-45" class="i">+		s := sd / sn
+</a><a href="#h5-5-46" id="h5-5-46" class="i">+		corr := fmt.Sprint(uint(s))
+</a><a href="#h5-5-47" id="h5-5-47" class="i">+		correction += &quot;  parameter signed [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] CORRECTION = &quot; + strconv.Itoa(int(arch.Rsize)) + &quot;&#39;d&quot; + corr + &quot;;\n&quot;
+</a><a href="#h5-5-48" id="h5-5-48" class="i">+		switch op.opType {
+</a><a href="#h5-5-49" id="h5-5-49" class="i">+		case LQMULT:
+</a><a href="#h5-5-50" id="h5-5-50" class="i">+			correction += &quot;  assign output = input / CORRECTION;\n&quot;
+</a><a href="#h5-5-51" id="h5-5-51" class="i">+		case LQDIV:
+</a><a href="#h5-5-52" id="h5-5-52" class="i">+			correction += &quot;  assign output = input * CORRECTION;\n&quot;
+</a><a href="#h5-5-53" id="h5-5-53" class="i">+		}
+</a><a href="#h5-5-54" id="h5-5-54" class="i">+		correction += &quot;\n&quot;
+</a><a href="#h5-5-55" id="h5-5-55" class="i">+		correction += &quot;endmodule\n&quot;
+</a><a href="#h5-5-56" id="h5-5-56" class="i">+		moduleNames = append(moduleNames, &quot;correction&quot;)
+</a><a href="#h5-5-57" id="h5-5-57" class="i">+		moduleCodes = append(moduleCodes, correction)
+</a><a href="#h5-5-58" id="h5-5-58" class="i">+	}
+</a><a href="#h5-5-59" id="h5-5-59" class="i">+
+</a><a href="#h5-5-60" id="h5-5-60" class="i">+	return moduleNames, moduleCodes
+</a> }
+ 
+ func (Op LinearQuantizer) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -29,6 +29,8 @@ var Allshared []Sharedel
+</a> var AllDynamicalInstructions []DynamicInstruction
+ 
+ func init() {
+<a href="#h6-0-3" id="h6-0-3" class="i">+	// fmt.Println(&quot;procbuilder init&quot;)
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+
+</a> 	rand.Seed(int64(time.Now().Unix()))
+ 
+ 	// Keep in mind the lists og opcodes has to be kept ordered by name
+<a href="#h6-1" id="h6-1" class="h">@@ -112,7 +114,7 @@ func init() {
+</a> 
+ 	AllDynamicalInstructions = make([]DynamicInstruction, 0)
+ 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynFloPoCo{})
+<a href="#h6-1-3" id="h6-1-3" class="d">-	AllDynamicalInstructions = append(AllDynamicalInstructions, DynLinearQuantizer{})
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+	AllDynamicalInstructions = append(AllDynamicalInstructions, DynLinearQuantizer{Ranges: nil})
+</a> 
+ 	Allshared = make([]Sharedel, 0)
+ 	Allshared = append(Allshared, Sharedmem{})
+</pre>
+</div>
+</body>
+</html>

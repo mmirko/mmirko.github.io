@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ram - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/de080f129622dc59577434c0140a50fb1138a073.html">de080f129622dc59577434c0140a50fb1138a073</a>
+<b>parent</b> <a href="../commit/b3a9e855479aaf385e9a5273952d22ac0f6ac907.html">b3a9e855479aaf385e9a5273952d22ac0f6ac907</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 26 Jul 2023 15:14:46 +0200
+
+Ram
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 4 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -80,6 +80,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Lfsr82r{})
+ 	// TODO: planned Allopcodes = append(Allopcodes, Lfsr162r{})
+ 	Allopcodes = append(Allopcodes, M2r{})
+<a href="#h0-0-3" id="h0-0-3" class="i">+	Allopcodes = append(Allopcodes, M2rri{})
+</a> 	Allopcodes = append(Allopcodes, Mod{})
+ 	Allopcodes = append(Allopcodes, Mulc{})
+ 	Allopcodes = append(Allopcodes, Mult{})
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -269,7 +269,7 @@ func (Op M2rri) Op_instruction_verilog_extra_block(arch *Arch, flavor string, le
+</a> func (Op M2rri) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 0)
+ 	result = append(result, &quot;m2rri::*--type=reg::*--type=reg&quot;)
+<a href="#h1-0-3" id="h1-0-3" class="d">-	result = append(result, &quot;mov::*--type=reg::*--type=rom--ramaddressing=register&quot;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	result = append(result, &quot;mov::*--type=reg::*--type=ram--ramaddressing=register&quot;)
+</a> 	return result
+ }
+ func (Op M2rri) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -95,7 +95,8 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	}
+ 	if setflag {
+ 		result += &quot;\tassign ram_din = ram_din_i;\n&quot;
+<a href="#h2-0-3" id="h2-0-3" class="d">-		result += &quot;\tassign ram_addr = (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2R) ? addr_ram_m2r : addr_ram_r2mri;\n&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		// TODO Finish this
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		result += &quot;\tassign ram_addr = (rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==R2MRI) ? addr_ram_m2r : addr_ram_r2mri;\n&quot;
+</a> 		result += &quot;\tassign ram_wren = wr_int_ram;\n&quot;
+ 		result += &quot;\tassign ram_en = 1&#39;b1;\n&quot;
+ 	}
+</pre>
+</div>
+</body>
+</html>

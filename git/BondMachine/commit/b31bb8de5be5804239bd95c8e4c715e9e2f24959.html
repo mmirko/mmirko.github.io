@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROM and RAM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b31bb8de5be5804239bd95c8e4c715e9e2f24959.html">b31bb8de5be5804239bd95c8e4c715e9e2f24959</a>
+<b>parent</b> <a href="../commit/7715b77c8fa93a486e93dd2e36b0df2cf9b49476.html">7715b77c8fa93a486e93dd2e36b0df2cf9b49476</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 18 Aug 2023 15:06:22 +0200
+
+ROM and RAM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">58</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 32 insertions(+), 26 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -228,23 +228,29 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 		prog := &quot;&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-		for _, line := range bi.sections[romCode].sectionBody.Lines {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			prog += line.Operation.GetValue()
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			for _, arg := range line.Elements {
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-				prog += &quot; &quot; + arg.GetValue()
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		romCodeContrib := 0
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		if romCode != &quot;&quot; {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			for _, line := range bi.sections[romCode].sectionBody.Lines {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				prog += line.Operation.GetValue()
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+				for _, arg := range line.Elements {
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+					prog += &quot; &quot; + arg.GetValue()
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+				}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+				prog += &quot;\n&quot;
+</a> 			}
+<a href="#h0-0-17" id="h0-0-17" class="d">-			prog += &quot;\n&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		}
+</a> 
+<a href="#h0-0-20" id="h0-0-20" class="d">-		if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-			myMachine.Program = prog
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-		} else {
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-			return err
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+			if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				myMachine.Program = prog
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			} else {
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+				return err
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			}
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+			romCodeContrib = len(bi.sections[romCode].sectionBody.Lines)
+</a> 		}
+ 
+ 		if romData != &quot;&quot; {
+ 			wordSize := myArch.Max_word()
+<a href="#h0-0-35" id="h0-0-35" class="d">-			fmt.Println(&quot;Word size: &quot;, wordSize)
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			// fmt.Println(&quot;Word size: &quot;, wordSize)
+</a> 			wordPad := &quot;&quot;
+ 			for i := 0; i &lt; int(wordSize); i++ {
+ 				wordPad += &quot;0&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -271,7 +277,7 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 				}
+ 			}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-			myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			myArch.O = uint8(Needed_bits(romCodeContrib + len(data)))
+</a> 			myMachine.Data.Vars = data
+ 
+ 		}
+<a href="#h0-2" id="h0-2" class="h">@@ -748,8 +754,10 @@ outer:
+</a> 	//   - TODO From the indirect opcodes
+ 	// - Check the ROM code size and use it (eventually adding the data section size).
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	romCodeContrib := 0
+</a> 	if cp.GetMeta(&quot;romsize&quot;) != &quot;&quot; {
+ 		if val, err := strconv.Atoi(cp.GetMeta(&quot;romsize&quot;)); err == nil {
+<a href="#h0-2-6" id="h0-2-6" class="i">+			romCodeContrib = 2 ^ val
+</a> 			myArch.O = uint8(val)
+ 			if bi.debug {
+ 				fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;romsize&quot;)))
+<a href="#h0-3" id="h0-3" class="h">@@ -758,19 +766,24 @@ outer:
+</a> 			return nil, err
+ 		}
+ 	} else if romCode != &quot;&quot; {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		romCodeContrib = len(bi.sections[romCode].sectionBody.Lines)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		myArch.O = uint8(Needed_bits(romCodeContrib))
+</a> 		if bi.debug {
+ 			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))))
+ 		}
+ 	} else {
+<a href="#h0-3-10" id="h0-3-10" class="i">+		romCodeContrib = 0
+</a> 		myArch.O = uint8(0)
+ 		if bi.debug {
+ 			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+ 		}
+ 	}
+ 
+<a href="#h0-3-17" id="h0-3-17" class="i">+	ramCodeContrib := 0
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+
+</a> 	if cp.GetMeta(&quot;ramsize&quot;) != &quot;&quot; {
+ 		if val, err := strconv.Atoi(cp.GetMeta(&quot;ramsize&quot;)); err == nil {
+<a href="#h0-3-21" id="h0-3-21" class="i">+			ramCodeContrib = 2 ^ val
+</a> 			myArch.L = uint8(val)
+ 			if bi.debug {
+ 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;ramsize&quot;)))
+<a href="#h0-4" id="h0-4" class="h">@@ -780,12 +793,14 @@ outer:
+</a> 		}
+ 
+ 	} else if ramCode != &quot;&quot; {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		myArch.L = uint8(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines)))
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		ramCodeContrib = len(bi.sections[ramCode].sectionBody.Lines)
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		myArch.L = uint8(Needed_bits(ramCodeContrib))
+</a> 		if bi.debug {
+ 			fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines)))))
+ 		}
+ 	} else {
+ 		myArch.L = uint8(0)
+<a href="#h0-4-11" id="h0-4-11" class="i">+		ramCodeContrib = 0
+</a> 		if bi.debug {
+ 			fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+ 		}
+<a href="#h0-5" id="h0-5" class="h">@@ -838,12 +853,8 @@ outer:
+</a> 				}
+ 			}
+ 		}
+<a href="#h0-5-3" id="h0-5-3" class="d">-		// TODO finire post-data
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		if romCode != &quot;&quot; {
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-			myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-		} else {
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-			myArch.O = uint8(Needed_bits(len(data)))
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-		}
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		myArch.O = uint8(Needed_bits(romCodeContrib + len(data)))
+</a> 	}
+ 
+ 	if ramData != &quot;&quot; {
+<a href="#h0-6" id="h0-6" class="h">@@ -872,12 +883,7 @@ outer:
+</a> 			}
+ 		}
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-		// TODO finire post-data
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		if ramCode != &quot;&quot; {
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-			myArch.L = uint8(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines) + len(data)))
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-		} else {
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-			myArch.L = uint8(Needed_bits(len(data)))
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-		}
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+		myArch.L = uint8(Needed_bits(ramCodeContrib + len(data)))
+</a> 	}
+ 
+ 	return myMachine, nil
+</pre>
+</div>
+</body>
+</html>

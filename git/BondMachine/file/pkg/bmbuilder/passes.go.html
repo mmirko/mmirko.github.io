@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>passes.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> passes.go (1662B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bmbuilder
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;errors&quot;
+<a href="#l5" class="line" id="l5">      5</a> )
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> const (
+<a href="#l8" class="line" id="l8">      8</a> 	passMetaExtractor = uint64(1) &lt;&lt; iota
+<a href="#l9" class="line" id="l9">      9</a> 	passGeneratorsExec
+<a href="#l10" class="line" id="l10">     10</a> 	LAST_PASS = passGeneratorsExec
+<a href="#l11" class="line" id="l11">     11</a> )
+<a href="#l12" class="line" id="l12">     12</a> 
+<a href="#l13" class="line" id="l13">     13</a> func getPassFunction() map[uint64]func(*BMBuilder) error {
+<a href="#l14" class="line" id="l14">     14</a> 	return map[uint64]func(*BMBuilder) error{
+<a href="#l15" class="line" id="l15">     15</a> 		passMetaExtractor:  metaExtractor,
+<a href="#l16" class="line" id="l16">     16</a> 		passGeneratorsExec: generatorsExec,
+<a href="#l17" class="line" id="l17">     17</a> 	}
+<a href="#l18" class="line" id="l18">     18</a> }
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> func getPassFunctionName() map[uint64]string {
+<a href="#l21" class="line" id="l21">     21</a> 	return map[uint64]string{
+<a href="#l22" class="line" id="l22">     22</a> 		passMetaExtractor:  &quot;metaExtractor&quot;,
+<a href="#l23" class="line" id="l23">     23</a> 		passGeneratorsExec: &quot;generatorsExec&quot;,
+<a href="#l24" class="line" id="l24">     24</a> 	}
+<a href="#l25" class="line" id="l25">     25</a> }
+<a href="#l26" class="line" id="l26">     26</a> 
+<a href="#l27" class="line" id="l27">     27</a> func IsOptionalPass() map[uint64]bool {
+<a href="#l28" class="line" id="l28">     28</a> 	return map[uint64]bool{
+<a href="#l29" class="line" id="l29">     29</a> 		passMetaExtractor:  false,
+<a href="#l30" class="line" id="l30">     30</a> 		passGeneratorsExec: true,
+<a href="#l31" class="line" id="l31">     31</a> 	}
+<a href="#l32" class="line" id="l32">     32</a> }
+<a href="#l33" class="line" id="l33">     33</a> 
+<a href="#l34" class="line" id="l34">     34</a> func (bi *BMBuilder) ActivePass(active uint64) bool {
+<a href="#l35" class="line" id="l35">     35</a> 	return (bi.passes &amp; active) != uint64(0)
+<a href="#l36" class="line" id="l36">     36</a> }
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> func GetPassMnemonic() map[uint64]string {
+<a href="#l39" class="line" id="l39">     39</a> 	return map[uint64]string{
+<a href="#l40" class="line" id="l40">     40</a> 		passMetaExtractor:  &quot;metaextractor&quot;,
+<a href="#l41" class="line" id="l41">     41</a> 		passGeneratorsExec: &quot;generatorsexec&quot;,
+<a href="#l42" class="line" id="l42">     42</a> 	}
+<a href="#l43" class="line" id="l43">     43</a> 
+<a href="#l44" class="line" id="l44">     44</a> }
+<a href="#l45" class="line" id="l45">     45</a> 
+<a href="#l46" class="line" id="l46">     46</a> func (bi *BMBuilder) SetActive(pass string) error {
+<a href="#l47" class="line" id="l47">     47</a> 	for passN, v := range GetPassMnemonic() {
+<a href="#l48" class="line" id="l48">     48</a> 		if v == pass {
+<a href="#l49" class="line" id="l49">     49</a> 			if ch, ok := IsOptionalPass()[passN]; ok {
+<a href="#l50" class="line" id="l50">     50</a> 				if ch {
+<a href="#l51" class="line" id="l51">     51</a> 					bi.passes = bi.passes | passN
+<a href="#l52" class="line" id="l52">     52</a> 					return nil
+<a href="#l53" class="line" id="l53">     53</a> 				} else {
+<a href="#l54" class="line" id="l54">     54</a> 					return errors.New(&quot;pass is not optional&quot;)
+<a href="#l55" class="line" id="l55">     55</a> 				}
+<a href="#l56" class="line" id="l56">     56</a> 			} else {
+<a href="#l57" class="line" id="l57">     57</a> 				return errors.New(&quot;pass is not defined&quot;)
+<a href="#l58" class="line" id="l58">     58</a> 			}
+<a href="#l59" class="line" id="l59">     59</a> 		}
+<a href="#l60" class="line" id="l60">     60</a> 	}
+<a href="#l61" class="line" id="l61">     61</a> 	return errors.New(&quot;pass not found&quot;)
+<a href="#l62" class="line" id="l62">     62</a> }
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> func (bi *BMBuilder) UnsetActive(pass string) error {
+<a href="#l65" class="line" id="l65">     65</a> 	for passN, v := range GetPassMnemonic() {
+<a href="#l66" class="line" id="l66">     66</a> 		if v == pass {
+<a href="#l67" class="line" id="l67">     67</a> 			if ch, ok := IsOptionalPass()[passN]; ok {
+<a href="#l68" class="line" id="l68">     68</a> 				if ch {
+<a href="#l69" class="line" id="l69">     69</a> 					bi.passes = bi.passes &amp; ^passN
+<a href="#l70" class="line" id="l70">     70</a> 					return nil
+<a href="#l71" class="line" id="l71">     71</a> 				} else {
+<a href="#l72" class="line" id="l72">     72</a> 					return errors.New(&quot;pass is not optional&quot;)
+<a href="#l73" class="line" id="l73">     73</a> 				}
+<a href="#l74" class="line" id="l74">     74</a> 			} else {
+<a href="#l75" class="line" id="l75">     75</a> 				return errors.New(&quot;pass is not defined&quot;)
+<a href="#l76" class="line" id="l76">     76</a> 			}
+<a href="#l77" class="line" id="l77">     77</a> 		}
+<a href="#l78" class="line" id="l78">     78</a> 	}
+<a href="#l79" class="line" id="l79">     79</a> 	return errors.New(&quot;pass not found&quot;)
+<a href="#l80" class="line" id="l80">     80</a> }
+</pre>
+</div>
+</body>
+</html>

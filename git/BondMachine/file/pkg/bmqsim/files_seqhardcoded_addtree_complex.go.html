@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_seqhardcoded_addtree_complex.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_seqhardcoded_addtree_complex.go (6719B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bmqsim
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	SeqHardcodedAddTreeComplex = `%section matrixmulel .romtext iomode:sync
+<a href="#l5" class="line" id="l5">      5</a>         entry _start    ; Entry point
+<a href="#l6" class="line" id="l6">      6</a> _start:
+<a href="#l7" class="line" id="l7">      7</a> 	rset	r2, {{ .NumGates }} ; the number of matrices
+<a href="#l8" class="line" id="l8">      8</a> 	rset	r1, 0 ; counter
+<a href="#l9" class="line" id="l9">      9</a> mainloop:
+<a href="#l10" class="line" id="l10">     10</a> 	jz	r2, _start
+<a href="#l11" class="line" id="l11">     11</a> 	mov	r3, ram:[r1]
+<a href="#l12" class="line" id="l12">     12</a> 	inc	r1
+<a href="#l13" class="line" id="l13">     13</a> 	mov	r4, ram:[r1]
+<a href="#l14" class="line" id="l14">     14</a> 	mov	r0, i0
+<a href="#l15" class="line" id="l15">     15</a> 	mov	r5, i1
+<a href="#l16" class="line" id="l16">     16</a> 
+<a href="#l17" class="line" id="l17">     17</a> 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r0, r3
+<a href="#l18" class="line" id="l18">     18</a> 	mov	r6, r0
+<a href="#l19" class="line" id="l19">     19</a> 	mov	r7, 0f-1
+<a href="#l20" class="line" id="l20">     20</a> 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r7, r5
+<a href="#l21" class="line" id="l21">     21</a> 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r7, r4
+<a href="#l22" class="line" id="l22">     22</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r6, r7 ; real part now in r6
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r0, r4 ; r0 now is a1*b2
+<a href="#l25" class="line" id="l25">     25</a> 	mov	r7, r3
+<a href="#l26" class="line" id="l26">     26</a> 	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r7, r5 ; r7 now is a2*b1
+<a href="#l27" class="line" id="l27">     27</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r0, r7 ; r0 now is a1*b2 + a2*b1 (imaginary part)
+<a href="#l28" class="line" id="l28">     28</a> 
+<a href="#l29" class="line" id="l29">     29</a> 	mov	o0, r6
+<a href="#l30" class="line" id="l30">     30</a> 	mov	o1, r0
+<a href="#l31" class="line" id="l31">     31</a> 	dec	r2
+<a href="#l32" class="line" id="l32">     32</a> 	inc	r1
+<a href="#l33" class="line" id="l33">     33</a> 	j mainloop
+<a href="#l34" class="line" id="l34">     34</a> 	mov	ram:[r1], r0
+<a href="#l35" class="line" id="l35">     35</a> %endsection
+<a href="#l36" class="line" id="l36">     36</a> 
+<a href="#l37" class="line" id="l37">     37</a> {{- range $i := n 0 .MatrixRows }}
+<a href="#l38" class="line" id="l38">     38</a> {{- range $j := n 0 $.MatrixRows }}
+<a href="#l39" class="line" id="l39">     39</a> %section matrixelement{{ $i }}_{{ $j }} .ramdata
+<a href="#l40" class="line" id="l40">     40</a> {{- range $k := n 0 $.NumGates }}
+<a href="#l41" class="line" id="l41">     41</a> 	step{{ $k }}r dd 0f{{ index (index (index $.MtxReal $k) $i) $j }}
+<a href="#l42" class="line" id="l42">     42</a> 	step{{ $k }}i dd 0f{{ index (index (index $.MtxImag $k) $i) $j }}
+<a href="#l43" class="line" id="l43">     43</a> {{- end }}
+<a href="#l44" class="line" id="l44">     44</a> %endsection
+<a href="#l45" class="line" id="l45">     45</a> {{ end }}
+<a href="#l46" class="line" id="l46">     46</a> {{- end }}
+<a href="#l47" class="line" id="l47">     47</a> 
+<a href="#l48" class="line" id="l48">     48</a> 
+<a href="#l49" class="line" id="l49">     49</a> %section matrixaddel .romtext iomode:sync
+<a href="#l50" class="line" id="l50">     50</a>         entry _start    ; Entry point
+<a href="#l51" class="line" id="l51">     51</a> _start:
+<a href="#l52" class="line" id="l52">     52</a> 	clr	r0 ; real part zero
+<a href="#l53" class="line" id="l53">     53</a> 	clr	r1 ; imag part zero
+<a href="#l54" class="line" id="l54">     54</a> 	mov	r2, i0
+<a href="#l55" class="line" id="l55">     55</a> 	mov	r3, i1
+<a href="#l56" class="line" id="l56">     56</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r0, r2
+<a href="#l57" class="line" id="l57">     57</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r1, r3
+<a href="#l58" class="line" id="l58">     58</a> 	mov	r2, i2
+<a href="#l59" class="line" id="l59">     59</a> 	mov	r3, i3
+<a href="#l60" class="line" id="l60">     60</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r0, r2
+<a href="#l61" class="line" id="l61">     61</a> 	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r1, r3
+<a href="#l62" class="line" id="l62">     62</a> 	mov	o0, r0 ; real part
+<a href="#l63" class="line" id="l63">     63</a> 	mov	o1, r1 ; imag part
+<a href="#l64" class="line" id="l64">     64</a> 	j _start
+<a href="#l65" class="line" id="l65">     65</a> %endsection
+<a href="#l66" class="line" id="l66">     66</a> 
+<a href="#l67" class="line" id="l67">     67</a> %section main .romtext iomode:sync
+<a href="#l68" class="line" id="l68">     68</a> 	entry _start    ; Entry point
+<a href="#l69" class="line" id="l69">     69</a> _start:
+<a href="#l70" class="line" id="l70">     70</a> 
+<a href="#l71" class="line" id="l71">     71</a> 	clr	r1
+<a href="#l72" class="line" id="l72">     72</a> {{- range $i := n 0 (mult 2 .MatrixRows) }}
+<a href="#l73" class="line" id="l73">     73</a> 	mov r0, i{{ $i }}
+<a href="#l74" class="line" id="l74">     74</a> 	mov ram:[r1], r0
+<a href="#l75" class="line" id="l75">     75</a> 	inc r1
+<a href="#l76" class="line" id="l76">     76</a> {{- end }}
+<a href="#l77" class="line" id="l77">     77</a> 	rset	r2, {{ .NumGates }} ; the number of matrices
+<a href="#l78" class="line" id="l78">     78</a> mainloop:
+<a href="#l79" class="line" id="l79">     79</a> 	jz	r2, endloop
+<a href="#l80" class="line" id="l80">     80</a> 
+<a href="#l81" class="line" id="l81">     81</a> 	clr r1
+<a href="#l82" class="line" id="l82">     82</a> {{- range $i := n 0 (mult 2 .MatrixRows) }}
+<a href="#l83" class="line" id="l83">     83</a> 	mov r0, ram:[r1]
+<a href="#l84" class="line" id="l84">     84</a> 	mov o{{ sum (mult 2 $.MatrixRows) $i }}, r0
+<a href="#l85" class="line" id="l85">     85</a> 	inc r1
+<a href="#l86" class="line" id="l86">     86</a> {{- end }}
+<a href="#l87" class="line" id="l87">     87</a> 
+<a href="#l88" class="line" id="l88">     88</a> 	clr	r1
+<a href="#l89" class="line" id="l89">     89</a> {{- range $i := n 0 (mult 2 .MatrixRows) }}
+<a href="#l90" class="line" id="l90">     90</a> 	mov r0, i{{ sum (mult 2 $.MatrixRows) $i }}
+<a href="#l91" class="line" id="l91">     91</a> 	mov ram:[r1], r0
+<a href="#l92" class="line" id="l92">     92</a> 	inc r1
+<a href="#l93" class="line" id="l93">     93</a> {{- end }}
+<a href="#l94" class="line" id="l94">     94</a> 	dec r2
+<a href="#l95" class="line" id="l95">     95</a> 	j mainloop
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> endloop:
+<a href="#l98" class="line" id="l98">     98</a> 	clr r1
+<a href="#l99" class="line" id="l99">     99</a> {{- range $i := n 0 (mult 2 .MatrixRows) }}	
+<a href="#l100" class="line" id="l100">    100</a> 	mov r0, ram:[r1]
+<a href="#l101" class="line" id="l101">    101</a> 	mov o{{ $i }}, r0
+<a href="#l102" class="line" id="l102">    102</a> 	inc r1
+<a href="#l103" class="line" id="l103">    103</a> {{- end }}
+<a href="#l104" class="line" id="l104">    104</a> 	j _start
+<a href="#l105" class="line" id="l105">    105</a> %endsection
+<a href="#l106" class="line" id="l106">    106</a> 
+<a href="#l107" class="line" id="l107">    107</a> %section mainram .ramdata
+<a href="#l108" class="line" id="l108">    108</a> {{- range $i := n 0 .MatrixRows }}
+<a href="#l109" class="line" id="l109">    109</a>         res{{ $i }}r dd 0f0
+<a href="#l110" class="line" id="l110">    110</a> 	res{{ $i }}i dd 0f0
+<a href="#l111" class="line" id="l111">    111</a> {{- end }}
+<a href="#l112" class="line" id="l112">    112</a> %endsection
+<a href="#l113" class="line" id="l113">    113</a> 
+<a href="#l114" class="line" id="l114">    114</a> {{- range $i := n 0 .MatrixRows }}
+<a href="#l115" class="line" id="l115">    115</a> {{- range $j := n 0 $.MatrixRows }}
+<a href="#l116" class="line" id="l116">    116</a> %meta cpdef	mult{{ $i }}_{{ $j }}	romcode: matrixmulel, ramdata: matrixelement{{ $i }}_{{ $j }}, execmode: ha, multop: multf, addop: addf
+<a href="#l117" class="line" id="l117">    117</a> {{- end }}
+<a href="#l118" class="line" id="l118">    118</a> {{- end }}
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> {{/*
+<a href="#l121" class="line" id="l121">    121</a> {{- define &quot;addline&quot; -}}
+<a href="#l122" class="line" id="l122">    122</a> {{- $level := .level -}}
+<a href="#l123" class="line" id="l123">    123</a> {{- $prefix := .prefix -}}
+<a href="#l124" class="line" id="l124">    124</a>  	{{- if eq $level 0 }}
+<a href="#l125" class="line" id="l125">    125</a>  %meta cpdef	add {{ $prefix }} romcode: matrixaddel, execmode: ha, addop: addf
+<a href="#l126" class="line" id="l126">    126</a>  	{{- else -}}
+<a href="#l127" class="line" id="l127">    127</a>  		{{- range $i := n 0 (pow $level 2) -}}
+<a href="#l128" class="line" id="l128">    128</a>  			{{- template &quot;addline&quot; dict &quot;level&quot; (dec $level) &quot;prefix&quot; (printf &quot;%s_%d&quot; $prefix $i) -}}
+<a href="#l129" class="line" id="l129">    129</a>  		{{- end -}}
+<a href="#l130" class="line" id="l130">    130</a>  	{{- end -}}
+<a href="#l131" class="line" id="l131">    131</a>  {{- end -}}
+<a href="#l132" class="line" id="l132">    132</a> 
+<a href="#l133" class="line" id="l133">    133</a> %meta cpdef	add{{- template &quot;addline&quot; dict &quot;level&quot; 3 &quot;prefix&quot; &quot;g&quot; -}}	romcode: matrixaddel, execmode: ha, addop: addf
+<a href="#l134" class="line" id="l134">    134</a> */}}
+<a href="#l135" class="line" id="l135">    135</a> 
+<a href="#l136" class="line" id="l136">    136</a> {{- range $r := n 0 .MatrixRows }}
+<a href="#l137" class="line" id="l137">    137</a> {{- range $i := n 0 $.Qbits }}
+<a href="#l138" class="line" id="l138">    138</a> {{- range $j := n 0 (pow 2 $i) }}
+<a href="#l139" class="line" id="l139">    139</a> %meta cpdef	add{{ $r }}_{{ $i }}_{{ $j }} romcode: matrixaddel, execmode: ha, addop: addf
+<a href="#l140" class="line" id="l140">    140</a> {{- end -}}
+<a href="#l141" class="line" id="l141">    141</a> {{- end -}}
+<a href="#l142" class="line" id="l142">    142</a> {{ end }}
+<a href="#l143" class="line" id="l143">    143</a> 
+<a href="#l144" class="line" id="l144">    144</a> %meta cpdef	main	romcode: main, ramdata:mainram, execmode: ha
+<a href="#l145" class="line" id="l145">    145</a> 
+<a href="#l146" class="line" id="l146">    146</a> {{- range $r := n 0 .MatrixRows }}
+<a href="#l147" class="line" id="l147">    147</a> {{- range $i := n 0 $.Qbits}}
+<a href="#l148" class="line" id="l148">    148</a> {{- range $j := ns 0 (pow 2 $i) 2 }}
+<a href="#l149" class="line" id="l149">    149</a> {{- if ne $i 0 }}
+<a href="#l150" class="line" id="l150">    150</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_r	cp: add{{ $r }}_{{ $i }}_{{ $j }}, index:0, type:output
+<a href="#l151" class="line" id="l151">    151</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_r	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:0, type:input
+<a href="#l152" class="line" id="l152">    152</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_i	cp: add{{ $r }}_{{ $i }}_{{ $j }}, index:1, type:output
+<a href="#l153" class="line" id="l153">    153</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ $j }}_i	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:1, type:input
+<a href="#l154" class="line" id="l154">    154</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ $i }}_{{ inc $j }}, index:0, type:output
+<a href="#l155" class="line" id="l155">    155</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:2, type:input
+<a href="#l156" class="line" id="l156">    156</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ $i }}_{{ inc $j }}, index:1, type:output
+<a href="#l157" class="line" id="l157">    157</a> %meta ioatt	addtree{{ $r }}_{{ $i }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ dec $i }}_{{ div $j 2 }}, index:3, type:input
+<a href="#l158" class="line" id="l158">    158</a> {{- end -}}
+<a href="#l159" class="line" id="l159">    159</a> {{- end -}}
+<a href="#l160" class="line" id="l160">    160</a> {{- end -}}
+<a href="#l161" class="line" id="l161">    161</a> {{ end }}
+<a href="#l162" class="line" id="l162">    162</a> 
+<a href="#l163" class="line" id="l163">    163</a> {{- range $r := n 0 .MatrixRows }}
+<a href="#l164" class="line" id="l164">    164</a> {{- range $j := ns 0 $.MatrixRows 2 }}
+<a href="#l165" class="line" id="l165">    165</a> %meta ioatt	toadd{{ $r }}_{{ $j }}_r	cp: mult{{ $r }}_{{ $j }}, index:0, type:output
+<a href="#l166" class="line" id="l166">    166</a> %meta ioatt     toadd{{ $r }}_{{ $j }}_r	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:0, type:input
+<a href="#l167" class="line" id="l167">    167</a> %meta ioatt	toadd{{ $r }}_{{ $j }}_i	cp: mult{{ $r }}_{{ $j }}, index:1, type:output
+<a href="#l168" class="line" id="l168">    168</a> %meta ioatt     toadd{{ $r }}_{{ $j }}_i	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:1, type:input
+<a href="#l169" class="line" id="l169">    169</a> %meta ioatt	toadd{{ $r }}_{{ inc $j }}_r	cp: mult{{ $r }}_{{ inc $j }}, index:0, type:output
+<a href="#l170" class="line" id="l170">    170</a> %meta ioatt     toadd{{ $r }}_{{ inc $j }}_r	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:2, type:input
+<a href="#l171" class="line" id="l171">    171</a> %meta ioatt	toadd{{ $r }}_{{ inc $j }}_i	cp: mult{{ $r }}_{{ inc $j }}, index:1, type:output
+<a href="#l172" class="line" id="l172">    172</a> %meta ioatt     toadd{{ $r }}_{{ inc $j }}_i	cp: add{{ $r }}_{{ dec $.Qbits }}_{{ div $j 2 }}, index:3, type:input
+<a href="#l173" class="line" id="l173">    173</a> {{- end }}
+<a href="#l174" class="line" id="l174">    174</a> {{- end }}
+<a href="#l175" class="line" id="l175">    175</a> 
+<a href="#l176" class="line" id="l176">    176</a> {{- range $i := n 0 .MatrixRows }}
+<a href="#l177" class="line" id="l177">    177</a> {{- range $j := n 0 $.MatrixRows }}
+<a href="#l178" class="line" id="l178">    178</a> %meta ioatt     tomult{{ $i }}_{{ $j }}_r	cp: main, index:{{ sum (mult 2 $.MatrixRows) (mult 2 $j) }}, type:output
+<a href="#l179" class="line" id="l179">    179</a> %meta ioatt     tomult{{ $i }}_{{ $j }}_i	cp: main, index:{{ sum (mult 2 $.MatrixRows) (sum 1 (mult 2 $j)) }}, type:output
+<a href="#l180" class="line" id="l180">    180</a> %meta ioatt     tomult{{ $i }}_{{ $j }}_r	cp: mult{{ $i }}_{{ $j }}, index:0, type:input
+<a href="#l181" class="line" id="l181">    181</a> %meta ioatt     tomult{{ $i }}_{{ $j }}_i	cp: mult{{ $i }}_{{ $j }}, index:1, type:input
+<a href="#l182" class="line" id="l182">    182</a> {{- end }}
+<a href="#l183" class="line" id="l183">    183</a> {{- end }}
+<a href="#l184" class="line" id="l184">    184</a> 
+<a href="#l185" class="line" id="l185">    185</a> {{- range $i := n 0 .MatrixRows }}
+<a href="#l186" class="line" id="l186">    186</a> %meta ioatt     tomain{{ $i }}_r	cp: add{{ $i }}_0_0, index:0, type:output
+<a href="#l187" class="line" id="l187">    187</a> %meta ioatt     tomain{{ $i }}_i	cp: add{{ $i }}_0_0, index:1, type:output
+<a href="#l188" class="line" id="l188">    188</a> %meta ioatt     tomain{{ $i }}_r	cp: main, index:{{ sum (mult 2 $.MatrixRows) (mult 2 $i) }}, type:input
+<a href="#l189" class="line" id="l189">    189</a> %meta ioatt     tomain{{ $i }}_i	cp: main, index:{{ sum (mult 2 $.MatrixRows) (sum 1 (mult 2 $i)) }}, type:input
+<a href="#l190" class="line" id="l190">    190</a> {{- end }}
+<a href="#l191" class="line" id="l191">    191</a> 
+<a href="#l192" class="line" id="l192">    192</a> {{- range $i := n 0 (mult 2 .MatrixRows ) }}
+<a href="#l193" class="line" id="l193">    193</a> %meta ioatt     bmi{{ $i }}	cp: main, index:{{ $i }}, type:input
+<a href="#l194" class="line" id="l194">    194</a> %meta ioatt     bmi{{ $i }}	cp: bm, index:{{ $i }}, type:input
+<a href="#l195" class="line" id="l195">    195</a> {{- end }}
+<a href="#l196" class="line" id="l196">    196</a> 
+<a href="#l197" class="line" id="l197">    197</a> {{- range $i := n 0 (mult 2 .MatrixRows ) }}
+<a href="#l198" class="line" id="l198">    198</a> %meta ioatt     bmo{{ $i }}	cp: main, index:{{ $i }}, type:output
+<a href="#l199" class="line" id="l199">    199</a> %meta ioatt     bmo{{ $i }}	cp: bm, index:{{ $i }}, type:output
+<a href="#l200" class="line" id="l200">    200</a> {{- end }}
+<a href="#l201" class="line" id="l201">    201</a> 
+<a href="#l202" class="line" id="l202">    202</a> %meta bmdef	global registersize:32
+<a href="#l203" class="line" id="l203">    203</a> `
+<a href="#l204" class="line" id="l204">    204</a> )
+</pre>
+</div>
+</body>
+</html>

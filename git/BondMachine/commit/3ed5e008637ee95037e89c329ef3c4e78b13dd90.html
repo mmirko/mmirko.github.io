@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>modified aximm template - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3ed5e008637ee95037e89c329ef3c4e78b13dd90.html">3ed5e008637ee95037e89c329ef3c4e78b13dd90</a>
+<b>parent</b> <a href="../commit/5a494b3ae54fb9255d167a2830936fa5cb9b4c52.html">5a494b3ae54fb9255d167a2830936fa5cb9b4c52</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Thu,  6 Apr 2023 11:59:54 +0200
+
+modified aximm template
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_aximm_pynq_example.go</a></td><td> | </td><td class="num">90</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 83 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,9 @@ const (
+</a> 		   &quot;import os\n&quot;,
+ 		   &quot;import numpy as np\n&quot;,
+ 		   &quot;import struct\n&quot;,
+<a href="#h0-0-3" id="h0-0-3" class="d">-		   &quot;import time&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		   &quot;import time\n&quot;,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		   &quot;import requests\n&quot;,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		   &quot;import json&quot;
+</a> 		  ]
+ 		 },
+ 		 {
+<a href="#h0-1" id="h0-1" class="h">@@ -25,11 +27,66 @@ const (
+</a> 		  &quot;outputs&quot;: [],
+ 		  &quot;source&quot;: [
+ 		   &quot;# SETTINGS\n&quot;,
+<a href="#h0-1-3" id="h0-1-3" class="d">-		   &quot;project_name  = os.getcwd()+\&quot;firmware\&quot;\n&quot;,
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		   &quot;project_name  = \&quot;firmware\&quot;\n&quot;,
+</a> 		   &quot;firmware_name = project_name+\&quot;.bit\&quot;\n&quot;,
+ 		   &quot;n_input       = 4\n&quot;,
+ 		   &quot;n_output      = 2\n&quot;,
+<a href="#h0-1-8" id="h0-1-8" class="d">-		   &quot;benchcore     = True&quot;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		   &quot;benchcore     = True\n&quot;,
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		   &quot;precision_info = {\n&quot;,
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		   &quot;    \&quot;type\&quot;: \&quot;flpe4f9\&quot;,\n&quot;,
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		   &quot;    \&quot;e\&quot;: 0,\n&quot;,
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		   &quot;    \&quot;f\&quot;: 0,\n&quot;,
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		   &quot;    \&quot;host\&quot;: \&quot;10.2.129.49\&quot;,\n&quot;,
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		   &quot;    \&quot;port\&quot;: \&quot;8080\&quot;\n&quot;,
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		   &quot;}\n&quot;,
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		   &quot;\n&quot;,
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		   &quot;if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		   &quot;    exp = precision_info[\&quot;type\&quot;][4:precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)]\n&quot;,
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		   &quot;    mant = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)+1:len(precision_info[\&quot;type\&quot;])]\n&quot;,
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		   &quot;    precision_info[\&quot;e\&quot;] = exp\n&quot;,
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		   &quot;    precision_info[\&quot;f\&quot;] = mant\n&quot;,
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		   &quot;    \n&quot;,
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		   &quot;print(precision_info)\n&quot;,
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+		   &quot;conversion_url =&#39;http://&#39;+precision_info[\&quot;host\&quot;]+&#39;:&#39;+str(precision_info[\&quot;port\&quot;])+&#39;/bmnumbers&#39;&quot;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		  ]
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		 },
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		 {
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		  &quot;execution_count&quot;: null,
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+		  &quot;metadata&quot;: {},
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+		  &quot;outputs&quot;: [],
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+		  &quot;source&quot;: [
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+		   &quot;def convert_flopoco_float_to_binary(num, e, f):\n&quot;,
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+		   &quot;            \n&quot;,
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+		   &quot;    strNum = \&quot;0flp&lt;\&quot;+str(e)+\&quot;.\&quot;+str(f)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+		   &quot;    reqBody = {&#39;action&#39;: &#39;override&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+		   &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+		   &quot;    convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+		   &quot;    strNumber = convertedNumber[0]+convertedNumber[6:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+		   &quot;    \n&quot;,
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+		   &quot;    return strNumber&quot;
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+		  ]
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+		 },
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+		 {
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+		  &quot;execution_count&quot;: null,
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+		  &quot;metadata&quot;: {},
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+		  &quot;outputs&quot;: [],
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+		  &quot;source&quot;: [
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+		   &quot;def convert_flopoco_binary_to_float(num, e, f):\n&quot;,
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+		   &quot;    \n&quot;,
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+		   &quot;    totLen = precision_info[\&quot;e\&quot;] + precision_info[\&quot;f\&quot;] + 3\n&quot;,
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+		   &quot;    strNum = \&quot;0b&lt;\&quot;+str(totLen)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+		   &quot;    newType = \&quot;flpe\&quot;+str(e)+\&quot;f\&quot;+str(f)\n&quot;,
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+		   &quot;    reqBody = {&#39;action&#39;: &#39;override&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: newType, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+		   &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+		   &quot;    print(xReq)\n&quot;,
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+		   &quot;    try:\n&quot;,
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+		   &quot;        convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+		   &quot;        strNumber = convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+		   &quot;        return float(strNumber)\n&quot;,
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+		   &quot;    except Exception as e:\n&quot;,
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+		   &quot;        print(e)&quot;
+</a> 		  ]
+ 		 },
+ 		 {
+<a href="#h0-2" id="h0-2" class="h">@@ -68,7 +125,10 @@ const (
+</a> 		   &quot;        \n&quot;,
+ 		   &quot;        if benchcore == True:\n&quot;,
+ 		   &quot;            if i != borderRange-1:\n&quot;,
+<a href="#h0-2-3" id="h0-2-3" class="d">-		   &quot;                output = bin_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;))\n&quot;,
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		   &quot;                if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;:\n&quot;,
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		   &quot;                    output = convert_flopoco_binary_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;), precision_info[\&quot;e\&quot;], precision_info[\&quot;f\&quot;])\n&quot;,
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		   &quot;                else:\n&quot;,
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		   &quot;                    output = bin_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;))\n&quot;,
+</a> 		   &quot;            else:\n&quot;,
+ 		   &quot;                output = int(str(bin_res), 2)\n&quot;,
+ 		   &quot;        else:\n&quot;,
+<a href="#h0-3" id="h0-3" class="h">@@ -77,6 +137,7 @@ const (
+</a> 		   &quot;        result_from_bm_ml.append(output) # APPEND THE OUTPUT\n&quot;,
+ 		   &quot;        offset = offset + 4\n&quot;,
+ 		   &quot;    \n&quot;,
+<a href="#h0-3-3" id="h0-3-3" class="i">+		   &quot;    # print(result_from_bm_ml) # VECTOR OF PROBABIBILITES\n&quot;,
+</a> 		   &quot;    return result_from_bm_ml&quot;
+ 		  ]
+ 		 },
+<a href="#h0-4" id="h0-4" class="h">@@ -137,18 +198,26 @@ const (
+</a> 		   &quot;for xSample in X_test:\n&quot;,
+ 		   &quot;    offset = 0\n&quot;,
+ 		   &quot;    for feature in list(xSample): #\n&quot;,
+<a href="#h0-4-3" id="h0-4-3" class="d">-		   &quot;        binToSend = get_binary_from_float(feature)\n&quot;,
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		   &quot;        if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;:\n&quot;,
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		   &quot;            binToSend = convert_flopoco_float_to_binary(feature, precision_info[\&quot;e\&quot;], precision_info[\&quot;f\&quot;])\n&quot;,
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		   &quot;        else:\n&quot;,
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		   &quot;            binToSend = get_binary_from_float(feature)\n&quot;,
+</a> 		   &quot;        decToSend = int(binToSend, 2)\n&quot;,
+ 		   &quot;        spi0.write_mm(offset, decToSend) # WRITE THE FEATURE TO THE CORRESPONDING INPUT\n&quot;,
+ 		   &quot;        offset = offset + 4 # 4 BYTE = 32 BIT\n&quot;,
+ 		   &quot;    time.sleep(0.5)\n&quot;,
+ 		   &quot;    out = np.asarray(read_output())\n&quot;,
+<a href="#h0-4-13" id="h0-4-13" class="i">+		   &quot;    #print(\&quot; #\&quot;,idx,\&quot; -&gt; classification: \&quot;, np.argmax(out[0:2]))\n&quot;,
+</a> 		   &quot;    classification = np.argmax(out[0:2])\n&quot;,
+ 		   &quot;    if (benchcore == True):\n&quot;,
+ 		   &quot;        results_to_dump.append([out[0], out[1], classification, out[2]])\n&quot;,
+ 		   &quot;    else: \n&quot;,
+ 		   &quot;        results_to_dump.append([out[0], out[1], classification])\n&quot;,
+<a href="#h0-4-19" id="h0-4-19" class="d">-		   &quot;    idx = idx + 1&quot;
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+		   &quot;    idx = idx + 1\n&quot;,
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+		   &quot;    #break\n&quot;,
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+		   &quot;\n&quot;,
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+		   &quot;# 01001010100\n&quot;,
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+		   &quot;print(results_to_dump)&quot;
+</a> 		  ]
+ 		 },
+ 		 {
+<a href="#h0-5" id="h0-5" class="h">@@ -160,11 +229,18 @@ const (
+</a> 		   &quot;import csv\n&quot;,
+ 		   &quot;fields = [&#39;probability_0&#39;, &#39;probability_1&#39;, &#39;classification&#39;, &#39;clock_cycles&#39;] \n&quot;,
+ 		   &quot;\n&quot;,
+<a href="#h0-5-3" id="h0-5-3" class="d">-		   &quot;with open(\&quot;predictions.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		   &quot;with open(project_name+\&quot;.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a> 		   &quot;    write = csv.writer(f)\n&quot;,
+ 		   &quot;    write.writerow(fields)\n&quot;,
+ 		   &quot;    write.writerows(results_to_dump)&quot;
+ 		  ]
+<a href="#h0-5-9" id="h0-5-9" class="i">+		 },
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		 {
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+		  &quot;execution_count&quot;: null,
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+		  &quot;metadata&quot;: {},
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+		  &quot;outputs&quot;: [],
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+		  &quot;source&quot;: []
+</a> 		 }
+ 		],
+ 		&quot;metadata&quot;: {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minor - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f74b21e72fa420954569d873173cee6ce0095d30.html">f74b21e72fa420954569d873173cee6ce0095d30</a>
+<b>parent</b> <a href="../commit/a92d508cc2630f78c84d08f29906d4d38eb0949e.html">a92d508cc2630f78c84d08f29906d4d38eb0949e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 17 Apr 2023 16:26:31 +0200
+
+Minor
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmnumbers/serve.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,7 +17,7 @@ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a> 
+ var convertTo = flag.String(&quot;convert&quot;, &quot;&quot;, &quot;Convert to type&quot;)
+ var castTo = flag.String(&quot;cast&quot;, &quot;&quot;, &quot;Cast to type&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="d">-var dumpAs = flag.String(&quot;dump-as&quot;, &quot;native&quot;, &quot;Dump as (native, hex, bin)&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var showAs = flag.String(&quot;show&quot;, &quot;native&quot;, &quot;Show as (native, hex, bin)&quot;)
+</a> 
+ var withSize = flag.Bool(&quot;with-size&quot;, false, &quot;With size&quot;)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -155,7 +155,7 @@ func main() {
+</a> 						}
+ 					}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-					switch *dumpAs {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+					switch *showAs {
+</a> 					case &quot;native&quot;:
+ 						if value, err := output.ExportString(); err != nil {
+ 							fmt.Println(&quot;Error: &quot;, err)
+<a href="#h0-2" id="h0-2" class="h">@@ -175,7 +175,7 @@ func main() {
+</a> 							fmt.Println(value)
+ 						}
+ 					default:
+<a href="#h0-2-3" id="h0-2-3" class="d">-						fmt.Println(&quot;Error: Unknown dump format&quot;)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+						fmt.Println(&quot;Error: Unknown visualization format (native, bin, unsigned)&quot;)
+</a> 					}
+ 				}
+ 			}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a> b/<a href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> // TRY WITH CURL
+<a href="#h1-0-1" id="h1-0-1" class="d">-// curl -X POST -d &#39;{&quot;action&quot;: &quot;cast&quot;, &quot;numbers&quot;: [&quot;0f0.45&quot;, &quot;0f0.30&quot;], &quot;reqType&quot;: &quot;bin&quot;, &quot;dumpMode&quot;: &quot;native&quot;}&#39; http://127.0.0.1:8080/bmnumbers
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+// curl -X POST -d &#39;{&quot;action&quot;: &quot;cast&quot;, &quot;numbers&quot;: [&quot;0f0.45&quot;, &quot;0f0.30&quot;], &quot;reqType&quot;: &quot;bin&quot;, &quot;viewMode&quot;: &quot;native&quot;}&#39; http://127.0.0.1:8080/bmnumbers
+</a> 
+ package bmnumbers
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -16,7 +16,7 @@ type BMNumbersRequest struct {
+</a> 	Action   string   `json:&quot;action&quot;`
+ 	Numbers  []string `json:&quot;numbers&quot;`
+ 	ReqType  string   `json:&quot;reqType&quot;`
+<a href="#h1-1-3" id="h1-1-3" class="d">-	DumpMode string   `json:&quot;dumpMode&quot;`
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	DumpMode string   `json:&quot;viewMode&quot;`
+</a> }
+ 
+ type BMNumbersResponse struct {
+<a href="#h1-2" id="h1-2" class="h">@@ -27,7 +27,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
+</a> 	fmt.Fprintf(w, &quot;Welcome to the BM Numbers server!\n&quot;)
+ 	fmt.Fprintf(w, &quot;There is one endpoint available: \n&quot;)
+ 	fmt.Fprintf(w, &quot;[POST] bmnumbers \n&quot;)
+<a href="#h1-2-3" id="h1-2-3" class="d">-	fmt.Fprintf(w, &quot;[POST] body example: {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [&#39;0f0.45&#39;, &#39;0f0.30&#39;], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;} \n&quot;)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	fmt.Fprintf(w, &quot;[POST] body example: {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [&#39;0f0.45&#39;, &#39;0f0.30&#39;], &#39;reqType&#39;: &#39;bin&#39;, &#39;viewMode&#39;: &#39;native&#39;} \n&quot;)
+</a> }
+ 
+ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+<a href="#h1-3" id="h1-3" class="h">@@ -96,7 +96,7 @@ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a> 					results = append(results, strconv.FormatUint(value, 10)) // add a string to the slice
+ 				}
+ 			default:
+<a href="#h1-3-3" id="h1-3-3" class="d">-				http.Error(w, &quot;Unknown dump format&quot;, http.StatusInternalServerError)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+				http.Error(w, &quot;Unknown visualization format&quot;, http.StatusInternalServerError)
+</a> 				return
+ 			}
+ 		}
+</pre>
+</div>
+</body>
+</html>

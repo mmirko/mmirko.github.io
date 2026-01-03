@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Helper jump function - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d713d84d53f4301364c760104fac10bbfc205d11.html">d713d84d53f4301364c760104fac10bbfc205d11</a>
+<b>parent</b> <a href="../commit/0c628d83bf8ffede588305ee18746f8a0342c882.html">0c628d83bf8ffede588305ee18746f8a0342c882</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  2 Aug 2023 19:31:27 +0200
+
+Helper jump function
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/dynop_flopoco.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_adc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_add.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_addf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_addf16.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_addi.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_addp.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_and.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/op_chc.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/op_chw.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/op_cil.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/procbuilder/op_cilc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h14">pkg/procbuilder/op_cir.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h15">pkg/procbuilder/op_cirn.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h16">pkg/procbuilder/op_clc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h17">pkg/procbuilder/op_clr.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h18">pkg/procbuilder/op_cpy.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h19">pkg/procbuilder/op_cset.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h20">pkg/procbuilder/op_dec.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h21">pkg/procbuilder/op_div.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h22">pkg/procbuilder/op_divf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h23">pkg/procbuilder/op_divf16.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h24">pkg/procbuilder/op_divp.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h25">pkg/procbuilder/op_dpc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h26">pkg/procbuilder/op_expf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h27">pkg/procbuilder/op_hit.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h28">pkg/procbuilder/op_i2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h29">pkg/procbuilder/op_i2rw.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h30">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h31">pkg/procbuilder/op_incc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h32">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h33">pkg/procbuilder/op_jc.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h34">pkg/procbuilder/op_je.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h35">pkg/procbuilder/op_jgt0f.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h36">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h37">pkg/procbuilder/op_k2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h38">pkg/procbuilder/op_lfsr82r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h39">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h40">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h41">pkg/procbuilder/op_mod.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h42">pkg/procbuilder/op_mulc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h43">pkg/procbuilder/op_mult.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h44">pkg/procbuilder/op_multf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h45">pkg/procbuilder/op_multf16.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h46">pkg/procbuilder/op_multp.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h47">pkg/procbuilder/op_nand.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h48">pkg/procbuilder/op_nop.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h49">pkg/procbuilder/op_nor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h50">pkg/procbuilder/op_not.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h51">pkg/procbuilder/op_or.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h52">pkg/procbuilder/op_q2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h53">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h54">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h55">pkg/procbuilder/op_r2o.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h56">pkg/procbuilder/op_r2owa.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h57">pkg/procbuilder/op_r2owaa.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h58">pkg/procbuilder/op_r2q.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h59">pkg/procbuilder/op_r2s.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h60">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h61">pkg/procbuilder/op_r2u.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h62">pkg/procbuilder/op_r2v.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h63">pkg/procbuilder/op_r2vri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h64">pkg/procbuilder/op_ro2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h65">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h66">pkg/procbuilder/op_rsc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h67">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h68">pkg/procbuilder/op_s2r.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h69">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h70">pkg/procbuilder/op_sbc.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h71">pkg/procbuilder/op_sic.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h72">pkg/procbuilder/op_sub.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h73">pkg/procbuilder/op_t2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h74">pkg/procbuilder/op_u2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h75">pkg/procbuilder/op_wrd.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h76">pkg/procbuilder/op_wwr.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h77">pkg/procbuilder/op_xnor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h78">pkg/procbuilder/op_xor.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>79 files changed, 113 insertions(+), 94 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -133,6 +133,26 @@ func (proc *Conproc) Write_opcodes_verilog() string {
+</a> 	return result
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+func NextInstruction(conf *Config, arch *Arch, tabs int, jumpTo string) string {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	result := &quot;&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	tabS := &quot;&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	for i := 0; i &lt; tabs; i++ {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		tabS += &quot;\t&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	switch arch.Modes[0] {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	case &quot;ha&quot;:
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	case &quot;hy&quot;:
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		result += tabS + &quot;if (exec_mode == 1&#39;b1) begin\n&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		result += tabS + &quot;\tvn_state &lt;= FETCH;\n&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		result += tabS + &quot;end\n&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	case &quot;vn&quot;:
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		result += tabS + &quot;vn_state &lt;= FETCH;\n&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		result += tabS + &quot;_pc &lt;= #1 &quot; + jumpTo + &quot;;\n&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	}
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	return result
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+}
+</a> func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_name string, flavor string) string {
+ 	regsize := int(proc.Rsize)
+ 	rom_word := arch.Max_word()
+<a href="#h0-1" id="h0-1" class="h">@@ -417,7 +437,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 
+ 	result += &quot;					default : begin\n&quot;
+ 	result += &quot;						$display(\&quot;Unknown Opcode\&quot;);\n&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	result += &quot;				endcase\n&quot;
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -133,7 +133,7 @@ func (op FloPoCo) Op_instruction_verilog_state_machine(conf *Config, arch *Arch,
+</a> 			result += &quot;							&quot; + op.floPoCoName + &quot;_&quot; + arch.Tag + &quot;_get_out : begin\n&quot;
+ 			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.floPoCoName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 			result += &quot;								&quot; + op.floPoCoName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.floPoCoName + &quot;_&quot; + arch.Tag + &quot;_put_inputs;\n&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+ 			result += &quot;								$display(\&quot;&quot; + op.floPoCoName + &quot; &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -150,7 +150,7 @@ func (op LinearQuantizer) Op_instruction_verilog_state_machine(conf *Config, arc
+</a> 				result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr;\n&quot;
+ 			}
+ 			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put;\n&quot;
+<a href="#h2-0-3" id="h2-0-3" class="d">-			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+ 			result += &quot;								$display(\&quot;&quot; + strings.ToUpper(op.lqName) + &quot; &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a> b/<a href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -76,7 +76,7 @@ func (op Adc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a> b/<a href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -70,7 +70,7 @@ func (op Add) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h4-0-3" id="h4-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a> b/<a href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -124,7 +124,7 @@ func (op Addf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 			result += &quot;									adder_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									adder_&quot; + arch.Tag + &quot;_state &lt;= #1 adder_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h5-0-3" id="h5-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a> b/<a href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -125,7 +125,7 @@ func (op Addf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> 			result += &quot;									adder_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									adder_&quot; + arch.Tag + &quot;_state &lt;= #1 adder_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h6-0-3" id="h6-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a> b/<a href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -130,7 +130,7 @@ func (op Addi) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+ 	}
+<a href="#h7-0-3" id="h7-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a> b/<a href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -99,7 +99,7 @@ func (op Addp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 			result += &quot;							addp_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+ 			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 addp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 			result += &quot;								addp_&quot; + arch.Tag + &quot;_state &lt;= #1 addp_&quot; + arch.Tag + &quot;_put;\n&quot;
+<a href="#h8-0-3" id="h8-0-3" class="d">-			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+ 			result += &quot;								$display(\&quot;ADDP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a> b/<a href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -70,7 +70,7 @@ func (op And) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h9-0-3" id="h9-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a> b/<a href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -168,12 +168,12 @@ func (op Chc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t					if(finish_channel_d2[ch_num_ack]) begin\n&quot;
+ 	result += &quot;\t						reset_flag_ch &lt;= #1 &#39;b0;\n&quot;
+<a href="#h10-0-3" id="h10-0-3" class="d">-	result += &quot;\t						_pc &lt;= #1  _pc + 1&#39;b1;\n&quot;
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+	result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t					if((~(|ch_ready_i)) &amp; (count_chc==2&#39;b11)) begin\n&quot;
+ 	result += &quot;\t						reset_flag_ch &lt;= #1 &#39;b1;\n&quot;
+ 	result += &quot;\t						count_seq_ch &lt;= #1 &#39;b0;\n&quot;
+<a href="#h10-0-9" id="h10-0-9" class="d">-	result += &quot;\t						_pc &lt;= #1  _pc + 1&#39;b1;\n&quot;
+</a><a href="#h10-0-10" id="h10-0-10" class="i">+	result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t				end\n&quot;
+ 
+<b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a> b/<a href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -158,7 +158,7 @@ func (op Chw) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t					if(finish_channel_d2[ch_num_ack]) begin\n&quot;
+ 	result += &quot;\t						reset_flag_ch &lt;= #1 &#39;b0;\n&quot;
+<a href="#h11-0-3" id="h11-0-3" class="d">-	result += &quot;\t						_pc &lt;= #1  _pc + 1&#39;b1;\n&quot;
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+	result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t				end\n&quot;
+ 
+<b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a> b/<a href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -57,7 +57,7 @@ func (op Cil) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h12-0-3" id="h12-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h12-0-4" id="h12-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h13" href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a> b/<a href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -76,7 +76,7 @@ func (op Cilc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h13-0-3" id="h13-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h13-0-4" id="h13-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h14" href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a> b/<a href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a></b>
+<a href="#h14-0" id="h14-0" class="h">@@ -57,7 +57,7 @@ func (op Cir) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h14-0-3" id="h14-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h14-0-4" id="h14-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h15" href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a> b/<a href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a></b>
+<a href="#h15-0" id="h15-0" class="h">@@ -56,7 +56,7 @@ func (op Cirn) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h15-0-3" id="h15-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h15-0-4" id="h15-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h16" href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a> b/<a href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a></b>
+<a href="#h16-0" id="h16-0" class="h">@@ -56,7 +56,7 @@ func (op Clc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;					CLC: begin\n&quot;
+ 	result += &quot;						carryflag &lt;= #1 &#39;b0;\n&quot;
+ 	result += &quot;						$display(\&quot;CLC\&quot;);\n&quot;
+<a href="#h16-0-3" id="h16-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h16-0-4" id="h16-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h17" href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a> b/<a href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a></b>
+<a href="#h17-0" id="h17-0" class="h">@@ -67,7 +67,7 @@ func (op Clr) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h17-0-3" id="h17-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h17-0-4" id="h17-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h18" href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a> b/<a href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a></b>
+<a href="#h18-0" id="h18-0" class="h">@@ -68,7 +68,7 @@ func (op Cpy) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h18-0-3" id="h18-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h18-0-4" id="h18-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h19" href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a> b/<a href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a></b>
+<a href="#h19-0" id="h19-0" class="h">@@ -56,7 +56,7 @@ func (op Cset) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 	result += &quot;					CSET: begin\n&quot;
+ 	result += &quot;						carryflag &lt;= #1 &#39;b1;\n&quot;
+ 	result += &quot;						$display(\&quot;CSET\&quot;);\n&quot;
+<a href="#h19-0-3" id="h19-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h19-0-4" id="h19-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h20" href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a> b/<a href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a></b>
+<a href="#h20-0" id="h20-0" class="h">@@ -68,7 +68,7 @@ func (op Dec) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;					end\n&quot;
+ 	}
+ 	result += &quot;					endcase\n&quot;
+<a href="#h20-0-3" id="h20-0-3" class="d">-	result += &quot;					_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h20-0-4" id="h20-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;				end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h21" href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a> b/<a href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a></b>
+<a href="#h21-0" id="h21-0" class="h">@@ -70,7 +70,7 @@ func (op Div) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h21-0-3" id="h21-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h21-0-4" id="h21-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h22" href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a> b/<a href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a></b>
+<a href="#h22-0" id="h22-0" class="h">@@ -124,7 +124,7 @@ func (op Divf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 			result += &quot;									divider_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									divider_&quot; + arch.Tag + &quot;_state &lt;= #1 divider_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h22-0-3" id="h22-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h22-0-4" id="h22-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h23" href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a> b/<a href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a></b>
+<a href="#h23-0" id="h23-0" class="h">@@ -125,7 +125,7 @@ func (op Divf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> 			result += &quot;									divider_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									divider_&quot; + arch.Tag + &quot;_state &lt;= #1 divider_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h23-0-3" id="h23-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h23-0-4" id="h23-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h24" href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a> b/<a href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a></b>
+<a href="#h24-0" id="h24-0" class="h">@@ -99,7 +99,7 @@ func (op Divp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 			result += &quot;							divp_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+ 			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 divp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 			result += &quot;								divp_&quot; + arch.Tag + &quot;_state &lt;= #1 divp_&quot; + arch.Tag + &quot;_put;\n&quot;
+<a href="#h24-0-3" id="h24-0-3" class="d">-			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h24-0-4" id="h24-0-4" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+ 			result += &quot;								$display(\&quot;DIVP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+<b>diff --git a/<a id="h25" href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a> b/<a href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a></b>
+<a href="#h25-0" id="h25-0" class="h">@@ -45,7 +45,7 @@ func (op Dpc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result := &quot;&quot;
+ 	result += &quot;				DPC: begin\n&quot;
+ 	result += &quot;					$display(\&quot;DPC\&quot;);\n&quot;
+<a href="#h25-0-3" id="h25-0-3" class="d">-	result += &quot;					_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h25-0-4" id="h25-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;				end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h26" href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a> b/<a href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a></b>
+<a href="#h26-0" id="h26-0" class="h">@@ -70,7 +70,7 @@ func (op Expf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h26-0-3" id="h26-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h26-0-4" id="h26-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h27" href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a> b/<a href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a></b>
+<a href="#h27-0" id="h27-0" class="h">@@ -83,7 +83,7 @@ func (op Hit) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h27-0-3" id="h27-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h27-0-4" id="h27-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h28" href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a> b/<a href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a></b>
+<a href="#h28-0" id="h28-0" class="h">@@ -129,7 +129,7 @@ func (op I2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+ 	}
+<a href="#h28-0-3" id="h28-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h28-0-4" id="h28-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h29" href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a> b/<a href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a></b>
+<a href="#h29-0" id="h29-0" class="h">@@ -135,7 +135,7 @@ func (op I2rw) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 				result += pref + &quot;\t\tif (&quot; + strings.ToLower(Get_input_name(j)) + &quot;_valid)\n&quot;
+ 				result += pref + &quot;\t\tbegin\n&quot;
+ 				result += pref + &quot;\t\t\t_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + strings.ToLower(Get_input_name(j)) + &quot;;\n&quot;
+<a href="#h29-0-3" id="h29-0-3" class="d">-				result += pref + &quot;\t\t\t_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h29-0-4" id="h29-0-4" class="i">+				result += pref + NextInstruction(conf, arch, 3, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += pref + &quot;\t\t\t$display(\&quot;I2RW &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_input_name(j)) + &quot;\&quot;);\n&quot;
+ 				result += pref + &quot;\t\tend\n&quot;
+ 				result += &quot;							end\n&quot;
+<b>diff --git a/<a id="h30" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h30-0" id="h30-0" class="h">@@ -69,7 +69,7 @@ func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h30-0-3" id="h30-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h30-0-4" id="h30-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h31" href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a> b/<a href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a></b>
+<a href="#h31-0" id="h31-0" class="h">@@ -76,7 +76,7 @@ func (op Incc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h31-0-3" id="h31-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h31-0-4" id="h31-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h32" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h32-0" id="h32-0" class="h">@@ -56,10 +56,10 @@ func (op J) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *b
+</a> 	result := &quot;&quot;
+ 	result += &quot;					J: begin\n&quot;
+ 	if arch.O == 1 {
+<a href="#h32-0-3" id="h32-0-3" class="d">-		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;];\n&quot;
+</a><a href="#h32-0-4" id="h32-0-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;]&quot;)
+</a> 		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+ 	} else {
+<a href="#h32-0-7" id="h32-0-7" class="d">-		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;];\n&quot;
+</a><a href="#h32-0-8" id="h32-0-8" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O))+&quot;]&quot;)
+</a> 		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+ 	}
+ 	result += &quot;					end\n&quot;
+<b>diff --git a/<a id="h33" href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a> b/<a href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a></b>
+<a href="#h33-0" id="h33-0" class="h">@@ -64,12 +64,12 @@ func (op Jc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 	result += &quot;					JC: begin\n&quot;
+ 	if arch.O == 1 {
+ 		result += &quot;					if(carryflag == &#39;b0) begin\n&quot;
+<a href="#h33-0-3" id="h33-0-3" class="d">-		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;];\n&quot;
+</a><a href="#h33-0-4" id="h33-0-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;]&quot;)
+</a> 		result += &quot;						$display(\&quot;JC \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+ 		result += &quot; end \n&quot;
+ 	} else {
+ 		result += &quot;					if(carryflag == &#39;b0) begin\n&quot;
+<a href="#h33-0-9" id="h33-0-9" class="d">-		result += &quot;						_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;];\n&quot;
+</a><a href="#h33-0-10" id="h33-0-10" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O))+&quot;]&quot;)
+</a> 		result += &quot;						$display(\&quot;JC \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+ 		result += &quot; end \n&quot;
+ 	}
+<b>diff --git a/<a id="h34" href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a> b/<a href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a></b>
+<a href="#h34-0" id="h34-0" class="h">@@ -45,7 +45,7 @@ func (op Je) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 	result := &quot;&quot;
+ 	result += &quot;				JE: begin\n&quot;
+ 	result += &quot;					$display(\&quot;JE\&quot;);\n&quot;
+<a href="#h34-0-3" id="h34-0-3" class="d">-	result += &quot;					_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h34-0-4" id="h34-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;				end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h35" href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a> b/<a href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a></b>
+<a href="#h35-0" id="h35-0" class="h">@@ -56,9 +56,9 @@ func (op Jgt0f) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;							&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;								if(_&quot; + strings.ToLower(Get_register_name(i)) + &quot;[31] == 1&#39;b0)\n&quot;
+<a href="#h35-0-3" id="h35-0-3" class="d">-		result += &quot;									_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R)) + &quot;];\n&quot;
+</a><a href="#h35-0-4" id="h35-0-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1-int(arch.R))+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R))+&quot;]&quot;)
+</a> 		result += &quot;								else\n&quot;
+<a href="#h35-0-6" id="h35-0-6" class="d">-		result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h35-0-7" id="h35-0-7" class="i">+		result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a> 		result += &quot;								$display(\&quot;JGT0F &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;							end\n&quot;
+ 	}
+<b>diff --git a/<a id="h36" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h36-0" id="h36-0" class="h">@@ -55,9 +55,9 @@ func (op Jz) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;							&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;								if(_&quot; + strings.ToLower(Get_register_name(i)) + &quot; == &#39;b0)\n&quot;
+<a href="#h36-0-3" id="h36-0-3" class="d">-		result += &quot;									_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R)) + &quot;];\n&quot;
+</a><a href="#h36-0-4" id="h36-0-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R))+&quot;]&quot;)
+</a> 		result += &quot;								else\n&quot;
+<a href="#h36-0-6" id="h36-0-6" class="d">-		result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h36-0-7" id="h36-0-7" class="i">+		result += NextInstruction(conf, arch, 7, &quot;_pc + 1&#39;b1&quot;)
+</a> 		result += &quot;								$display(\&quot;JZ &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;							end\n&quot;
+ 	}
+<b>diff --git a/<a id="h37" href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a> b/<a href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a></b>
+<a href="#h37-0" id="h37-0" class="h">@@ -99,7 +99,7 @@ func (op K2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								if (&quot; + strings.ToLower(op.getKbdName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+ 				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+<a href="#h37-0-3" id="h37-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h37-0-4" id="h37-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								end\n&quot;
+ 				result += &quot;								else begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+<a href="#h37-1" id="h37-1" class="h">@@ -114,7 +114,7 @@ func (op K2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h37-1-3" id="h37-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h37-1-4" id="h37-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h38" href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a> b/<a href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a></b>
+<a href="#h38-0" id="h38-0" class="h">@@ -94,7 +94,7 @@ func (op Lfsr82r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch,
+</a> 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+ 	}
+<a href="#h38-0-3" id="h38-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h38-0-4" id="h38-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h39" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h39-0" id="h39-0" class="h">@@ -69,7 +69,7 @@ func (Op M2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) s
+</a> 		result += &quot;					end\n&quot;
+ 	}
+ 	result += &quot;				endcase\n&quot;
+<a href="#h39-0-3" id="h39-0-3" class="d">-	result += &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h39-0-4" id="h39-0-4" class="i">+	result += NextInstruction(nil, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t\t\tend\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h40" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h40-0" id="h40-0" class="h">@@ -69,7 +69,7 @@ func (Op M2rri) Op_instruction_verilog_internal_state(arch *Arch, flavor string)
+</a> 	// 	result += &quot;					end\n&quot;
+ 	// }
+ 	// result += &quot;				endcase\n&quot;
+<a href="#h40-0-3" id="h40-0-3" class="d">-	// result += &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h40-0-4" id="h40-0-4" class="i">+	// result += NextInstruction(conf, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+</a> 	// result += &quot;\t\t\tend\n&quot;
+ 
+ 	return result
+<a href="#h40-1" id="h40-1" class="h">@@ -105,7 +105,7 @@ func (op M2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 			result += &quot;								if (state_read_mem_m2rri == 1&#39;b1) begin\n&quot;
+ 			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 ram_dout;\n&quot;
+ 			result += &quot;									state_read_mem_m2rri &lt;= 1&#39;b0;\n&quot;
+<a href="#h40-1-3" id="h40-1-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h40-1-4" id="h40-1-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;								else begin\n&quot;
+ 			result += &quot;									if (wait_read_mem == 1&#39;b1) begin\n&quot;
+<b>diff --git a/<a id="h41" href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a> b/<a href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a></b>
+<a href="#h41-0" id="h41-0" class="h">@@ -70,7 +70,7 @@ func (op Mod) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h41-0-3" id="h41-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h41-0-4" id="h41-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h42" href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a> b/<a href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a></b>
+<a href="#h42-0" id="h42-0" class="h">@@ -76,7 +76,7 @@ func (op Mulc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h42-0-3" id="h42-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h42-0-4" id="h42-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h43" href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a> b/<a href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a></b>
+<a href="#h43-0" id="h43-0" class="h">@@ -70,7 +70,7 @@ func (op Mult) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h43-0-3" id="h43-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h43-0-4" id="h43-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h44" href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a> b/<a href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a></b>
+<a href="#h44-0" id="h44-0" class="h">@@ -123,7 +123,7 @@ func (op Multf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_state &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h44-0-3" id="h44-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h44-0-4" id="h44-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h45" href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a> b/<a href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a></b>
+<a href="#h45-0" id="h45-0" class="h">@@ -124,7 +124,7 @@ func (op Multf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch,
+</a> 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+ 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_state &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+ 			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+<a href="#h45-0-3" id="h45-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h45-0-4" id="h45-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h46" href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a> b/<a href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a></b>
+<a href="#h46-0" id="h46-0" class="h">@@ -99,7 +99,7 @@ func (op Multp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 			result += &quot;							multp_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+ 			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 multp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 			result += &quot;								multp_&quot; + arch.Tag + &quot;_state &lt;= #1 multp_&quot; + arch.Tag + &quot;_put;\n&quot;
+<a href="#h46-0-3" id="h46-0-3" class="d">-			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h46-0-4" id="h46-0-4" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+ 			result += &quot;								$display(\&quot;MULTP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+<b>diff --git a/<a id="h47" href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a> b/<a href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a></b>
+<a href="#h47-0" id="h47-0" class="h">@@ -70,7 +70,7 @@ func (op Nand) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h47-0-3" id="h47-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h47-0-4" id="h47-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h48" href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a> b/<a href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a></b>
+<a href="#h48-0" id="h48-0" class="h">@@ -51,7 +51,7 @@ func (op Nop) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result := &quot;&quot;
+ 	result += &quot;					NOP: begin\n&quot;
+ 	result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h48-0-3" id="h48-0-3" class="d">-	result += &quot;						_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h48-0-4" id="h48-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<a href="#h48-1" id="h48-1" class="h">@@ -140,4 +140,3 @@ func (Op Nop) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> func (Op Nop) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+ 	return nil, nil
+ }
+<a href="#h48-1-3" id="h48-1-3" class="d">-
+</a><b>diff --git a/<a id="h49" href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a> b/<a href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a></b>
+<a href="#h49-0" id="h49-0" class="h">@@ -70,7 +70,7 @@ func (op Nor) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h49-0-3" id="h49-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h49-0-4" id="h49-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h50" href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a> b/<a href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a></b>
+<a href="#h50-0" id="h50-0" class="h">@@ -70,7 +70,7 @@ func (op Not) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h50-0-3" id="h50-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h50-0-4" id="h50-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h51" href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a> b/<a href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a></b>
+<a href="#h51-0" id="h51-0" class="h">@@ -70,7 +70,7 @@ func (op Or) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h51-0-3" id="h51-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h51-0-4" id="h51-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h52" href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a> b/<a href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a></b>
+<a href="#h52-0" id="h52-0" class="h">@@ -99,7 +99,7 @@ func (op Q2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								if (&quot; + strings.ToLower(op.getQueueName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getQueueName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getQueueName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+ 				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getQueueName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+<a href="#h52-0-3" id="h52-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h52-0-4" id="h52-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								end\n&quot;
+ 				result += &quot;								else begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getQueueName(j)) + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+<a href="#h52-1" id="h52-1" class="h">@@ -114,7 +114,7 @@ func (op Q2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h52-1-3" id="h52-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h52-1-4" id="h52-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h53" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h53-0" id="h53-0" class="h">@@ -57,7 +57,7 @@ func (op R2m) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					R2M: begin\n&quot;
+<a href="#h53-0-3" id="h53-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h53-0-4" id="h53-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h54" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h54-0" id="h54-0" class="h">@@ -58,7 +58,7 @@ func (op R2mri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					R2MRI: begin\n&quot;
+<a href="#h54-0-3" id="h54-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h54-0-4" id="h54-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h55" href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a> b/<a href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a></b>
+<a href="#h55-0" id="h55-0" class="h">@@ -136,7 +136,7 @@ func (op R2o) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+ 	}
+<a href="#h55-0-3" id="h55-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h55-0-4" id="h55-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h56" href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a></b>
+<a href="#h56-0" id="h56-0" class="h">@@ -137,7 +137,7 @@ func (op R2owa) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 				result += pref + &quot;\t\t_aux&quot; + strings.ToLower(Get_output_name(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+ 				result += pref + &quot;\t\tif (&quot; + strings.ToLower(Get_output_name(j)) + &quot;_received)\n&quot;
+ 				result += pref + &quot;\t\tbegin\n&quot;
+<a href="#h56-0-3" id="h56-0-3" class="d">-				result += pref + &quot;\t\t\t_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h56-0-4" id="h56-0-4" class="i">+				result += pref + NextInstruction(conf, arch, 3, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += pref + &quot;\t\tend\n&quot;
+ 				result += pref + &quot;\t\t$display(\&quot;R2OWA &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_output_name(j)) + &quot;\&quot;);\n&quot;
+ 
+<b>diff --git a/<a id="h57" href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a></b>
+<a href="#h57-0" id="h57-0" class="h">@@ -139,14 +139,14 @@ func (op R2owaa) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> 				result += pref + &quot;\t\t\tif (&quot; + strings.ToLower(Get_output_name(j)) + &quot;_received)\n&quot;
+ 				result += pref + &quot;\t\t\tbegin\n&quot;
+ 				result += pref + &quot;\t\t\t\t_aux&quot; + strings.ToLower(Get_output_name(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+<a href="#h57-0-3" id="h57-0-3" class="d">-				result += pref + &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h57-0-4" id="h57-0-4" class="i">+				result += pref + NextInstruction(conf, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += pref + &quot;\t\t\t\t$display(\&quot;R2OWAA &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_output_name(j)) + &quot;\&quot;);\n&quot;
+ 				result += pref + &quot;\t\t\tend\n&quot;
+ 				result += pref + &quot;\t\tend\n&quot;
+ 				result += pref + &quot;\t\telse\n&quot;
+ 				result += pref + &quot;\t\tbegin\n&quot;
+ 				result += pref + &quot;\t\t\t\t_aux&quot; + strings.ToLower(Get_output_name(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+<a href="#h57-0-11" id="h57-0-11" class="d">-				result += pref + &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h57-0-12" id="h57-0-12" class="i">+				result += pref + NextInstruction(conf, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += pref + &quot;\t\t\t\t$display(\&quot;R2OWAA &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_output_name(j)) + &quot;\&quot;);\n&quot;
+ 				result += pref + &quot;\t\tend\n&quot;
+ 
+<b>diff --git a/<a id="h58" href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a> b/<a href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a></b>
+<a href="#h58-0" id="h58-0" class="h">@@ -107,7 +107,7 @@ func (op R2q) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								   1&#39;b1: begin\n&quot;
+ 				result += &quot;								     if (&quot; + strings.ToLower(op.getQueueName((j))) + &quot;senderAck) begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getQueueName(j)) + &quot;senderWrite &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h58-0-3" id="h58-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h58-0-4" id="h58-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								       stackqueueSM &lt;= 1&#39;b0;\n&quot;
+ 				result += &quot;								     end\n&quot;
+ 				result += &quot;								   end\n&quot;
+<a href="#h58-1" id="h58-1" class="h">@@ -122,7 +122,7 @@ func (op R2q) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h58-1-3" id="h58-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h58-1-4" id="h58-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h59" href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a> b/<a href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a></b>
+<a href="#h59-0" id="h59-0" class="h">@@ -100,7 +100,7 @@ func (op R2s) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h59-0-3" id="h59-0-3" class="d">-	result += &quot;						_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h59-0-4" id="h59-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h60" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h60-0" id="h60-0" class="h">@@ -107,7 +107,7 @@ func (op R2t) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								   1&#39;b1: begin\n&quot;
+ 				result += &quot;								     if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;senderAck) begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderWrite &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h60-0-3" id="h60-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h60-0-4" id="h60-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								       stackqueueSM &lt;= 1&#39;b0;\n&quot;
+ 				result += &quot;								     end\n&quot;
+ 				result += &quot;								   end\n&quot;
+<a href="#h60-1" id="h60-1" class="h">@@ -122,7 +122,7 @@ func (op R2t) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h60-1-3" id="h60-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h60-1-4" id="h60-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h61" href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a> b/<a href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a></b>
+<a href="#h61-0" id="h61-0" class="h">@@ -107,7 +107,7 @@ func (op R2u) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								   1&#39;b1: begin\n&quot;
+ 				result += &quot;								     if (&quot; + strings.ToLower(op.getUartName((j))) + &quot;senderAck) begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getUartName(j)) + &quot;senderWrite &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h61-0-3" id="h61-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h61-0-4" id="h61-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								       stackqueueSM &lt;= 1&#39;b0;\n&quot;
+ 				result += &quot;								     end\n&quot;
+ 				result += &quot;								   end\n&quot;
+<a href="#h61-1" id="h61-1" class="h">@@ -122,7 +122,7 @@ func (op R2u) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h61-1-3" id="h61-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h61-1-4" id="h61-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h62" href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a> b/<a href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a></b>
+<a href="#h62-0" id="h62-0" class="h">@@ -70,7 +70,7 @@ func (op R2v) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;*/
+<a href="#h62-0-3" id="h62-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h62-0-4" id="h62-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h63" href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a> b/<a href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a></b>
+<a href="#h63-0" id="h63-0" class="h">@@ -63,7 +63,7 @@ func (op R2vri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;*/
+<a href="#h63-0-3" id="h63-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h63-0-4" id="h63-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h64" href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a> b/<a href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a></b>
+<a href="#h64-0" id="h64-0" class="h">@@ -73,7 +73,7 @@ func (op Ro2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;							if (romread_ready == 1&#39;b1) begin\n&quot;
+ 		result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:0];\n&quot;
+ 		result += &quot;								romread_ready &lt;= 1&#39;b0;\n&quot;
+<a href="#h64-0-3" id="h64-0-3" class="d">-		result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h64-0-4" id="h64-0-4" class="i">+		result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 		result += &quot;							end\n&quot;
+ 		result += &quot;							else begin\n&quot;
+ 		result += &quot;								romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= current_instruction[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-int(arch.O)) + &quot;];\n&quot;
+<b>diff --git a/<a id="h65" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h65-0" id="h65-0" class="h">@@ -82,7 +82,7 @@ func (op Ro2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> 			result += &quot;								if (romread_ready == 1&#39;b1) begin\n&quot;
+ 			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:0];\n&quot;
+ 			result += &quot;									romread_ready &lt;= 1&#39;b0;\n&quot;
+<a href="#h65-0-3" id="h65-0-3" class="d">-			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h65-0-4" id="h65-0-4" class="i">+			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;								else begin\n&quot;
+ 			result += &quot;									romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+<b>diff --git a/<a id="h66" href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a> b/<a href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a></b>
+<a href="#h66-0" id="h66-0" class="h">@@ -76,7 +76,7 @@ func (op Rsc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h66-0-3" id="h66-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h66-0-4" id="h66-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h67" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h67-0" id="h67-0" class="h">@@ -61,7 +61,7 @@ func (op Rset) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h67-0-3" id="h67-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h67-0-4" id="h67-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h68" href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a> b/<a href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a></b>
+<a href="#h68-0" id="h68-0" class="h">@@ -78,7 +78,7 @@ func (Op S2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) s
+</a> 		result += &quot;					end\n&quot;
+ 	}
+ 	result += &quot;				endcase\n&quot;
+<a href="#h68-0-3" id="h68-0-3" class="d">-	result += &quot;\t\t\t\t_pc &lt;= #1 _pc + 1&#39;b1;\n&quot;
+</a><a href="#h68-0-4" id="h68-0-4" class="i">+	result += NextInstruction(nil, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t\t\tend\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h69" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h69-0" id="h69-0" class="h">@@ -45,7 +45,7 @@ func (op Saj) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result := &quot;&quot;
+ 	result += &quot;				SAJ: begin\n&quot;
+ 	result += &quot;					$display(\&quot;SAJ\&quot;);\n&quot;
+<a href="#h69-0-3" id="h69-0-3" class="d">-	result += &quot;					_pc &lt;= _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h69-0-4" id="h69-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;				end\n&quot;
+ 
+ 	return result
+<b>diff --git a/<a id="h70" href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a> b/<a href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a></b>
+<a href="#h70-0" id="h70-0" class="h">@@ -76,7 +76,7 @@ func (op Sbc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h70-0-3" id="h70-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h70-0-4" id="h70-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h71" href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a> b/<a href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a></b>
+<a href="#h71-0" id="h71-0" class="h">@@ -88,7 +88,7 @@ func (op Sic) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;									else\n&quot;
+ 				result += &quot;									begin\n&quot;
+ 				result += &quot;										sic_state &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h71-0-3" id="h71-0-3" class="d">-				result += &quot;										_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h71-0-4" id="h71-0-4" class="i">+				result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;									end\n&quot;
+ 				result += &quot;								end\n&quot;
+ 				result += &quot;								else\n&quot;
+<b>diff --git a/<a id="h72" href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a> b/<a href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a></b>
+<a href="#h72-0" id="h72-0" class="h">@@ -69,7 +69,7 @@ func (op Sub) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h72-0-3" id="h72-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h72-0-4" id="h72-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h73" href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a> b/<a href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a></b>
+<a href="#h73-0" id="h73-0" class="h">@@ -99,7 +99,7 @@ func (op T2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+ 				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+<a href="#h73-0-3" id="h73-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h73-0-4" id="h73-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								end\n&quot;
+ 				result += &quot;								else begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+<a href="#h73-1" id="h73-1" class="h">@@ -114,7 +114,7 @@ func (op T2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h73-1-3" id="h73-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h73-1-4" id="h73-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h74" href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a> b/<a href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a></b>
+<a href="#h74-0" id="h74-0" class="h">@@ -99,7 +99,7 @@ func (op U2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				result += &quot;								if (&quot; + strings.ToLower(op.getUartName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+ 				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+<a href="#h74-0-3" id="h74-0-3" class="d">-				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h74-0-4" id="h74-0-4" class="i">+				result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a> 				result += &quot;								end\n&quot;
+ 				result += &quot;								else begin\n&quot;
+ 				result += &quot;								       &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+<a href="#h74-1" id="h74-1" class="h">@@ -114,7 +114,7 @@ func (op U2r) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h74-1-3" id="h74-1-3" class="d">-		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h74-1-4" id="h74-1-4" class="i">+		result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	}
+ 	result += &quot;					end\n&quot;
+ 	return result
+<b>diff --git a/<a id="h75" href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a> b/<a href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a></b>
+<a href="#h75-0" id="h75-0" class="h">@@ -89,7 +89,7 @@ func (op Wrd) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;\t					wrd_ch &lt;= #1 1&#39;b1;\n&quot;
+ 	result += &quot;\t					op_channel[ch_num] &lt;= #1 1&#39;b1;\n&quot;
+ 	result += &quot;\t					if(ack_wrd_i[ch_num] == 1&#39;b1) begin //ack of the chanel for the operation done\n&quot;
+<a href="#h75-0-3" id="h75-0-3" class="d">-	result += &quot;\t                 		_pc &lt;= #1  _pc + 1&#39;b1;\n&quot;
+</a><a href="#h75-0-4" id="h75-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t						count_seq_ch &lt;= #1 count_seq_ch + 1;     //increment the sequence of the channel operation\n&quot;
+ 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t					$display(\&quot;WRD\&quot;);\n&quot;
+<b>diff --git a/<a id="h76" href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a> b/<a href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a></b>
+<a href="#h76-0" id="h76-0" class="h">@@ -138,7 +138,7 @@ func (op Wwr) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 	result += &quot;\t					wwr_ch &lt;= #1 1&#39;b1;\n&quot;
+ 	result += &quot;\t					op_channel[ch_num] &lt;= #1 1&#39;b1;\n&quot;
+ 	result += &quot;\t					if(ack_wwr_i[ch_num] == 1&#39;b1) begin //ack of the chanel for the operation done\n&quot;
+<a href="#h76-0-3" id="h76-0-3" class="d">-	result += &quot;\t                 		_pc &lt;= #1  _pc + 1&#39;b1;\n&quot;
+</a><a href="#h76-0-4" id="h76-0-4" class="i">+	result += NextInstruction(conf, arch, 5, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;\t						count_seq_ch &lt;= #1 count_seq_ch + 1;     //increment the sequence of the channel operation\n&quot;
+ 	result += &quot;\t					end\n&quot;
+ 	result += &quot;\t					$display(\&quot;WWR\&quot;);\n&quot;
+<b>diff --git a/<a id="h77" href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a> b/<a href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a></b>
+<a href="#h77-0" id="h77-0" class="h">@@ -70,7 +70,7 @@ func (op Xnor) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h77-0-3" id="h77-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h77-0-4" id="h77-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h78" href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a> b/<a href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a></b>
+<a href="#h78-0" id="h78-0" class="h">@@ -70,7 +70,7 @@ func (op Xor) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						end\n&quot;
+ 	}
+ 	result += &quot;						endcase\n&quot;
+<a href="#h78-0-3" id="h78-0-3" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h78-0-4" id="h78-0-4" class="i">+	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ }
+</pre>
+</div>
+</body>
+</html>

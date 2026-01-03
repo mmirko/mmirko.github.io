@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>flopoco - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/392b590dbb1cfc40490ea1ef61f43ecc5c6ce12f.html">392b590dbb1cfc40490ea1ef61f43ecc5c6ce12f</a>
+<b>parent</b> <a href="../commit/4dbf81f9e2da65cbc7abb2d27a764c66a32c079a.html">4dbf81f9e2da65cbc7abb2d27a764c66a32c079a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  1 Oct 2024 21:47:53 +0200
+
+flopoco
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/reference/matrix.md</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/dynop_flopoco.go</a></td><td> | </td><td class="num">66</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 42 insertions(+), 40 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/reference/matrix.md.html">pkg/basm/reference/matrix.md</a> b/<a href="../file/pkg/basm/reference/matrix.md.html">pkg/basm/reference/matrix.md</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -123,11 +123,11 @@ The possible support values are shown below:
+</a> 
+ ## Support Matrix for Dynamical Instructions
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-| Instruction |
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-| --- |
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-| [call](call.md) |
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-| [fixed_point](fixed_point.md) |
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-| [flopoco](flopoco.md) |
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-| [linear_quantizer](linear_quantizer.md) |
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-| [rsets](rsets.md) |
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-| [stack](stack.md) |
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+| Instruction | disasm | gosim | asm |
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+| --- | --- | --- | --- |
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+| [call](call.md) | - | - | - |
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+| [fixed_point](fixed_point.md) | - | - | - |
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+| [flopoco](flopoco.md) | ![ok](iconok.png) | ![notapplicable](iconnotapplicable.png) | ![ok](iconok.png) |
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+| [linear_quantizer](linear_quantizer.md) | - | - | - |
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+| [rsets](rsets.md) | - | - | - |
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+| [stack](stack.md) | - | - | - |
+</a><b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -29,17 +29,17 @@ func (op FloPoCo) Op_get_desc() string {
+</a> }
+ 
+ func (op FloPoCo) Op_show_assembler(arch *Arch) string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	result := op.floPoCoName + &quot; [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the sum of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	result := op.floPoCoName + &quot; [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the sum of its value with another register [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op FloPoCo) Op_get_instruction_len(arch *Arch) int {
+<a href="#h1-0-11" id="h1-0-11" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a> }
+ 
+<a href="#h1-0-17" id="h1-0-17" class="d">-func (op FloPoCo) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+func (op FloPoCo) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a> 	regSizeLS := strconv.Itoa(op.regSize - 1)
+ 	result := &quot;&quot;
+ 	result += &quot;\treg [&quot; + regSizeLS + &quot;:0] &quot; + op.floPoCoName + &quot;_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -71,22 +71,22 @@ func (op FloPoCo) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor st
+</a> }
+ 
+ func (op FloPoCo) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	romWord := arch.Max_word()
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	opBits := arch.Opcodes_bits()
+</a> 
+ 	pipBits := Needed_bits(op.pipeline + 1)
+ 	pipelineS := strconv.Itoa(op.pipeline)
+ 
+<a href="#h1-1-11" id="h1-1-11" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					&quot; + strings.ToUpper(op.floPoCoName) + &quot;: begin\n&quot;
+ 	if arch.R == 1 {
+<a href="#h1-1-17" id="h1-1-17" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h1-1-20" id="h1-1-20" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+<a href="#h1-1-23" id="h1-1-23" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 
+ 		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+ 			cp := arch.Tag
+<a href="#h1-2" id="h1-2" class="h">@@ -99,12 +99,12 @@ func (op FloPoCo) Op_instruction_verilog_state_machine(conf *Config, arch *Arch,
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h1-2-3" id="h1-2-3" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a> 		} else {
+<a href="#h1-2-6" id="h1-2-6" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a> 		}
+ 
+<a href="#h1-2-10" id="h1-2-10" class="d">-		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		for j := 0; j &lt; regNum; j++ {
+</a> 
+ 			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+ 				cp := arch.Tag
+<a href="#h1-3" id="h1-3" class="h">@@ -148,22 +148,22 @@ func (op FloPoCo) Op_instruction_verilog_state_machine(conf *Config, arch *Arch,
+</a> }
+ 
+ func (op FloPoCo) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	// TODO
+</a> 	return &quot;&quot;
+ }
+ 
+ func (op FloPoCo) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h1-3-8" id="h1-3-8" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+	// &quot;reference&quot;: {&quot;support_asm&quot;: &quot;ok&quot;}
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	romWord := arch.Max_word()
+</a> 
+<a href="#h1-3-14" id="h1-3-14" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	if len(words) != 2 {
+<a href="#h1-3-18" id="h1-3-18" class="d">-		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+		return &quot;&quot;, errors.New(&quot;wrong arguments number&quot;)
+</a> 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h1-3-23" id="h1-3-23" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-3-24" id="h1-3-24" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[0] == strings.ToLower(Get_register_name(i)) {
+ 			result += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h1-4" id="h1-4" class="h">@@ -171,11 +171,11 @@ func (op FloPoCo) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if result == &quot;&quot; {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		return &quot;&quot;, errors.New(&quot;unknown register name &quot; + words[0])
+</a> 	}
+ 
+ 	partial := &quot;&quot;
+<a href="#h1-4-8" id="h1-4-8" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[1] == strings.ToLower(Get_register_name(i)) {
+ 			partial += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h1-5" id="h1-5" class="h">@@ -183,12 +183,12 @@ func (op FloPoCo) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if partial == &quot;&quot; {
+<a href="#h1-5-3" id="h1-5-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		return &quot;&quot;, errors.New(&quot;unknown register name &quot; + words[1])
+</a> 	}
+ 
+ 	result += partial
+ 
+<a href="#h1-5-9" id="h1-5-9" class="d">-	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+	for i := opBits + 2*int(arch.R); i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -196,18 +196,20 @@ func (op FloPoCo) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op FloPoCo) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	reg_id := get_id(instr[:arch.R])
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	// &quot;reference&quot;: {&quot;support_disasm&quot;: &quot;ok&quot;}
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	regId := get_id(instr[:arch.R])
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+	regId = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+	result += strings.ToLower(Get_register_name(regId))
+</a> 	return result, nil
+ }
+ 
+ func (op FloPoCo) Simulate(vm *VM, instr string) error {
+<a href="#h1-6-16" id="h1-6-16" class="d">-	return errors.New(&quot;unimplemented FloPoCo simulation&quot;)
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+	// &quot;reference&quot;: {&quot;support_gosim&quot;:&quot;notapplicable&quot;}
+</a><a href="#h1-6-18" id="h1-6-18" class="i">+	return errors.New(&quot;FloPoCo simulation not supported&quot;)
+</a> }
+ 
+<a href="#h1-6-21" id="h1-6-21" class="d">-// The random genaration does nothing
+</a><a href="#h1-6-22" id="h1-6-22" class="i">+// The random generation does nothing
+</a> func (op FloPoCo) Generate(arch *Arch) string {
+ 	// TODO
+ 	return &quot;&quot;
+<a href="#h1-7" id="h1-7" class="h">@@ -251,9 +253,9 @@ func (Op FloPoCo) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, 
+</a> 	return result, nil
+ }
+ 
+<a href="#h1-7-3" id="h1-7-3" class="d">-func (Op FloPoCo) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+func (Op FloPoCo) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockName string, objects []string) string {
+</a> 	result := &quot;&quot;
+<a href="#h1-7-6" id="h1-7-6" class="d">-	switch blockname {
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	switch blockName {
+</a> 	default:
+ 		result = &quot;&quot;
+ 	}
+</pre>
+</div>
+</body>
+</html>

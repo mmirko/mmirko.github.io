@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_krnl_bondmachine_rtl_axi_read_master.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_krnl_bondmachine_rtl_axi_read_master.go (11439B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	krnlBondmachineRTLAxiReadMaster = `
+<a href="#l5" class="line" id="l5">      5</a> /**
+<a href="#l6" class="line" id="l6">      6</a> * Copyright (C) 2019-2021 Xilinx, Inc
+<a href="#l7" class="line" id="l7">      7</a> *
+<a href="#l8" class="line" id="l8">      8</a> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+<a href="#l9" class="line" id="l9">      9</a> * not use this file except in compliance with the License. A copy of the
+<a href="#l10" class="line" id="l10">     10</a> * License is located at
+<a href="#l11" class="line" id="l11">     11</a> *
+<a href="#l12" class="line" id="l12">     12</a> *     http://www.apache.org/licenses/LICENSE-2.0
+<a href="#l13" class="line" id="l13">     13</a> *
+<a href="#l14" class="line" id="l14">     14</a> * Unless required by applicable law or agreed to in writing, software
+<a href="#l15" class="line" id="l15">     15</a> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+<a href="#l16" class="line" id="l16">     16</a> * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+<a href="#l17" class="line" id="l17">     17</a> * License for the specific language governing permissions and limitations
+<a href="#l18" class="line" id="l18">     18</a> * under the License.
+<a href="#l19" class="line" id="l19">     19</a> */
+<a href="#l20" class="line" id="l20">     20</a> 
+<a href="#l21" class="line" id="l21">     21</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l22" class="line" id="l22">     22</a> // Description: This is a multi-threaded AXI4 read master.  Each channel will
+<a href="#l23" class="line" id="l23">     23</a> // issue commands on a different IDs.  As a result data may arrive out of 
+<a href="#l24" class="line" id="l24">     24</a> // order.  The amount of data requested is equal to the ctrl_length variable.
+<a href="#l25" class="line" id="l25">     25</a> // Prog full is set and sampled such that the FIFO will never overflow.  Thus 
+<a href="#l26" class="line" id="l26">     26</a> // rready can be always asserted for better timing.
+<a href="#l27" class="line" id="l27">     27</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l28" class="line" id="l28">     28</a> 
+<a href="#l29" class="line" id="l29">     29</a> ` + &quot;`default_nettype none&quot; + `
+<a href="#l30" class="line" id="l30">     30</a> 
+<a href="#l31" class="line" id="l31">     31</a> module krnl_bondmachine_rtl_axi_read_master #( 
+<a href="#l32" class="line" id="l32">     32</a>   parameter integer C_ID_WIDTH         = 1,   // Must be &gt;= $clog2(C_NUM_CHANNELS)
+<a href="#l33" class="line" id="l33">     33</a>   parameter integer C_ADDR_WIDTH       = 64,
+<a href="#l34" class="line" id="l34">     34</a>   parameter integer C_DATA_WIDTH       = 32,
+<a href="#l35" class="line" id="l35">     35</a>   parameter integer C_NUM_CHANNELS     = 1,   // Only 2 tested.
+<a href="#l36" class="line" id="l36">     36</a>   parameter integer C_LENGTH_WIDTH     = 32,  
+<a href="#l37" class="line" id="l37">     37</a>   parameter integer C_BURST_LEN        = 256, // Max AXI burst length for read commands
+<a href="#l38" class="line" id="l38">     38</a>   parameter integer C_LOG_BURST_LEN    = 8,
+<a href="#l39" class="line" id="l39">     39</a>   parameter integer C_MAX_OUTSTANDING  = 3 
+<a href="#l40" class="line" id="l40">     40</a> )
+<a href="#l41" class="line" id="l41">     41</a> (
+<a href="#l42" class="line" id="l42">     42</a>   // System signals
+<a href="#l43" class="line" id="l43">     43</a>   input  wire                                          aclk,
+<a href="#l44" class="line" id="l44">     44</a>   input  wire                                          areset,
+<a href="#l45" class="line" id="l45">     45</a>   // Control signals 
+<a href="#l46" class="line" id="l46">     46</a>   input  wire                                          ctrl_start, 
+<a href="#l47" class="line" id="l47">     47</a>   output wire                                          ctrl_done, 
+<a href="#l48" class="line" id="l48">     48</a>   input  wire [C_NUM_CHANNELS-1:0][C_ADDR_WIDTH-1:0]   ctrl_offset,
+<a href="#l49" class="line" id="l49">     49</a>   input  wire                     [C_LENGTH_WIDTH-1:0] ctrl_length,
+<a href="#l50" class="line" id="l50">     50</a>   input  wire [C_NUM_CHANNELS-1:0]                     ctrl_prog_full,
+<a href="#l51" class="line" id="l51">     51</a>   // AXI4 master interface                             
+<a href="#l52" class="line" id="l52">     52</a>   output wire                                          arvalid,
+<a href="#l53" class="line" id="l53">     53</a>   input  wire                                          arready,
+<a href="#l54" class="line" id="l54">     54</a>   output wire [C_ADDR_WIDTH-1:0]                       araddr,
+<a href="#l55" class="line" id="l55">     55</a>   output wire [C_ID_WIDTH-1:0]                         arid,
+<a href="#l56" class="line" id="l56">     56</a>   output wire [7:0]                                    arlen,
+<a href="#l57" class="line" id="l57">     57</a>   output wire [2:0]                                    arsize,
+<a href="#l58" class="line" id="l58">     58</a>   input  wire                                          rvalid,
+<a href="#l59" class="line" id="l59">     59</a>   output wire                                          rready,
+<a href="#l60" class="line" id="l60">     60</a>   input  wire [C_DATA_WIDTH - 1:0]                     rdata,
+<a href="#l61" class="line" id="l61">     61</a>   input  wire                                          rlast,
+<a href="#l62" class="line" id="l62">     62</a>   input  wire [C_ID_WIDTH - 1:0]                       rid,
+<a href="#l63" class="line" id="l63">     63</a>   input  wire [1:0]                                    rresp,
+<a href="#l64" class="line" id="l64">     64</a>   // AXI4-Stream master interface, 1 interface per channel.
+<a href="#l65" class="line" id="l65">     65</a>   output wire [C_NUM_CHANNELS-1:0]                     m_tvalid,
+<a href="#l66" class="line" id="l66">     66</a>   input  wire [C_NUM_CHANNELS-1:0]                     m_tready,
+<a href="#l67" class="line" id="l67">     67</a>   output wire [C_NUM_CHANNELS-1:0][C_DATA_WIDTH-1:0]   m_tdata
+<a href="#l68" class="line" id="l68">     68</a> );
+<a href="#l69" class="line" id="l69">     69</a> 
+<a href="#l70" class="line" id="l70">     70</a> timeunit 1ps; 
+<a href="#l71" class="line" id="l71">     71</a> timeprecision 1ps; 
+<a href="#l72" class="line" id="l72">     72</a> 
+<a href="#l73" class="line" id="l73">     73</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l74" class="line" id="l74">     74</a> // Local Parameters
+<a href="#l75" class="line" id="l75">     75</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l76" class="line" id="l76">     76</a> localparam integer LP_MAX_OUTSTANDING_CNTR_WIDTH = $clog2(C_MAX_OUTSTANDING+1); 
+<a href="#l77" class="line" id="l77">     77</a> localparam integer LP_TRANSACTION_CNTR_WIDTH = C_LENGTH_WIDTH-C_LOG_BURST_LEN;
+<a href="#l78" class="line" id="l78">     78</a> 
+<a href="#l79" class="line" id="l79">     79</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l80" class="line" id="l80">     80</a> // Variables
+<a href="#l81" class="line" id="l81">     81</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l82" class="line" id="l82">     82</a> // Control logic
+<a href="#l83" class="line" id="l83">     83</a> logic [C_NUM_CHANNELS-1:0]            done = &#39;0;
+<a href="#l84" class="line" id="l84">     84</a> logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_full_bursts;
+<a href="#l85" class="line" id="l85">     85</a> logic                                 num_partial_bursts;
+<a href="#l86" class="line" id="l86">     86</a> logic                                 start    = 1&#39;b0;
+<a href="#l87" class="line" id="l87">     87</a> logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_transactions;
+<a href="#l88" class="line" id="l88">     88</a> logic                                 has_partial_burst;
+<a href="#l89" class="line" id="l89">     89</a> logic [C_LOG_BURST_LEN-1:0]           final_burst_len;
+<a href="#l90" class="line" id="l90">     90</a> logic                                 single_transaction;
+<a href="#l91" class="line" id="l91">     91</a> logic                                 ar_idle = 1&#39;b1;
+<a href="#l92" class="line" id="l92">     92</a> logic                                 ar_done;
+<a href="#l93" class="line" id="l93">     93</a> // AXI Read Address Channel
+<a href="#l94" class="line" id="l94">     94</a> logic                                                         fifo_stall;
+<a href="#l95" class="line" id="l95">     95</a> logic                                                         arxfer;
+<a href="#l96" class="line" id="l96">     96</a> logic                                                         arvalid_r = 1&#39;b0; 
+<a href="#l97" class="line" id="l97">     97</a> logic [C_NUM_CHANNELS-1:0][C_ADDR_WIDTH-1:0]                  addr;
+<a href="#l98" class="line" id="l98">     98</a> logic [C_ID_WIDTH-1:0]                                        id = {C_ID_WIDTH{1&#39;b1}};
+<a href="#l99" class="line" id="l99">     99</a> logic [LP_TRANSACTION_CNTR_WIDTH-1:0]                         ar_transactions_to_go;
+<a href="#l100" class="line" id="l100">    100</a> logic                                                         ar_final_transaction;
+<a href="#l101" class="line" id="l101">    101</a> logic [C_NUM_CHANNELS-1:0]                                    incr_ar_to_r_cnt;
+<a href="#l102" class="line" id="l102">    102</a> logic [C_NUM_CHANNELS-1:0]                                    decr_ar_to_r_cnt;
+<a href="#l103" class="line" id="l103">    103</a> logic [C_NUM_CHANNELS-1:0]                                    stall_ar;
+<a href="#l104" class="line" id="l104">    104</a> logic [C_NUM_CHANNELS-1:0][LP_MAX_OUTSTANDING_CNTR_WIDTH-1:0] outstanding_vacancy_count;
+<a href="#l105" class="line" id="l105">    105</a> // AXI Data Channel
+<a href="#l106" class="line" id="l106">    106</a> logic [C_NUM_CHANNELS-1:0]                                tvalid;
+<a href="#l107" class="line" id="l107">    107</a> logic [C_NUM_CHANNELS-1:0][C_DATA_WIDTH-1:0]              tdata;
+<a href="#l108" class="line" id="l108">    108</a> logic                                                     rxfer;
+<a href="#l109" class="line" id="l109">    109</a> logic [C_NUM_CHANNELS-1:0]                                decr_r_transaction_cntr;
+<a href="#l110" class="line" id="l110">    110</a> logic [C_NUM_CHANNELS-1:0][LP_TRANSACTION_CNTR_WIDTH-1:0] r_transactions_to_go;
+<a href="#l111" class="line" id="l111">    111</a> logic [C_NUM_CHANNELS-1:0]                                r_final_transaction;
+<a href="#l112" class="line" id="l112">    112</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l113" class="line" id="l113">    113</a> // Control Logic 
+<a href="#l114" class="line" id="l114">    114</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a> always @(posedge aclk) begin
+<a href="#l117" class="line" id="l117">    117</a>   for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+<a href="#l118" class="line" id="l118">    118</a>     done[i] &lt;= rxfer &amp; rlast &amp; (rid == i) &amp; r_final_transaction[i] ? 1&#39;b1 : 
+<a href="#l119" class="line" id="l119">    119</a>           ctrl_done ? 1&#39;b0 : done[i]; 
+<a href="#l120" class="line" id="l120">    120</a>   end
+<a href="#l121" class="line" id="l121">    121</a> end
+<a href="#l122" class="line" id="l122">    122</a> assign ctrl_done = &amp;done;
+<a href="#l123" class="line" id="l123">    123</a> 
+<a href="#l124" class="line" id="l124">    124</a> // Determine how many full burst to issue and if there are any partial bursts.
+<a href="#l125" class="line" id="l125">    125</a> assign num_full_bursts = ctrl_length[C_LOG_BURST_LEN+:C_LENGTH_WIDTH-C_LOG_BURST_LEN];
+<a href="#l126" class="line" id="l126">    126</a> assign num_partial_bursts = ctrl_length[0+:C_LOG_BURST_LEN] ? 1&#39;b1 : 1&#39;b0; 
+<a href="#l127" class="line" id="l127">    127</a> 
+<a href="#l128" class="line" id="l128">    128</a> always @(posedge aclk) begin 
+<a href="#l129" class="line" id="l129">    129</a>   start &lt;= ctrl_start;
+<a href="#l130" class="line" id="l130">    130</a>   num_transactions &lt;= (num_partial_bursts == 1&#39;b0) ? num_full_bursts - 1&#39;b1 : num_full_bursts;
+<a href="#l131" class="line" id="l131">    131</a>   has_partial_burst &lt;= num_partial_bursts;
+<a href="#l132" class="line" id="l132">    132</a>   final_burst_len &lt;=  ctrl_length[0+:C_LOG_BURST_LEN] - 1&#39;b1;
+<a href="#l133" class="line" id="l133">    133</a> end
+<a href="#l134" class="line" id="l134">    134</a> 
+<a href="#l135" class="line" id="l135">    135</a> // Special case if there is only 1 AXI transaction. 
+<a href="#l136" class="line" id="l136">    136</a> assign single_transaction = (num_transactions == {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}}) ? 1&#39;b1 : 1&#39;b0;
+<a href="#l137" class="line" id="l137">    137</a> 
+<a href="#l138" class="line" id="l138">    138</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l139" class="line" id="l139">    139</a> // AXI Read Address Channel
+<a href="#l140" class="line" id="l140">    140</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l141" class="line" id="l141">    141</a> assign arvalid = arvalid_r;
+<a href="#l142" class="line" id="l142">    142</a> assign araddr = addr[id];
+<a href="#l143" class="line" id="l143">    143</a> assign arlen  = ar_final_transaction || (start &amp; single_transaction) ? final_burst_len : C_BURST_LEN - 1;
+<a href="#l144" class="line" id="l144">    144</a> assign arsize = $clog2((C_DATA_WIDTH/8));
+<a href="#l145" class="line" id="l145">    145</a> assign arid   = id;
+<a href="#l146" class="line" id="l146">    146</a> 
+<a href="#l147" class="line" id="l147">    147</a> assign arxfer = arvalid &amp; arready;
+<a href="#l148" class="line" id="l148">    148</a> assign fifo_stall = ctrl_prog_full[id];
+<a href="#l149" class="line" id="l149">    149</a> 
+<a href="#l150" class="line" id="l150">    150</a> always @(posedge aclk) begin 
+<a href="#l151" class="line" id="l151">    151</a>   if (areset) begin 
+<a href="#l152" class="line" id="l152">    152</a>     arvalid_r &lt;= 1&#39;b0;
+<a href="#l153" class="line" id="l153">    153</a>   end
+<a href="#l154" class="line" id="l154">    154</a>   else begin
+<a href="#l155" class="line" id="l155">    155</a>     arvalid_r &lt;= ~ar_idle &amp; ~stall_ar[id] &amp; ~arvalid_r &amp; ~fifo_stall ? 1&#39;b1 : 
+<a href="#l156" class="line" id="l156">    156</a>                  arready ? 1&#39;b0 : arvalid_r;
+<a href="#l157" class="line" id="l157">    157</a>   end
+<a href="#l158" class="line" id="l158">    158</a> end
+<a href="#l159" class="line" id="l159">    159</a> 
+<a href="#l160" class="line" id="l160">    160</a> // When ar_idle, there are no transactions to issue.
+<a href="#l161" class="line" id="l161">    161</a> always @(posedge aclk) begin 
+<a href="#l162" class="line" id="l162">    162</a>   if (areset) begin 
+<a href="#l163" class="line" id="l163">    163</a>     ar_idle &lt;= 1&#39;b1; 
+<a href="#l164" class="line" id="l164">    164</a>   end
+<a href="#l165" class="line" id="l165">    165</a>   else begin 
+<a href="#l166" class="line" id="l166">    166</a>     ar_idle &lt;= start   ? 1&#39;b0 :
+<a href="#l167" class="line" id="l167">    167</a>                ar_done ? 1&#39;b1 : 
+<a href="#l168" class="line" id="l168">    168</a>                          ar_idle;
+<a href="#l169" class="line" id="l169">    169</a>   end
+<a href="#l170" class="line" id="l170">    170</a> end
+<a href="#l171" class="line" id="l171">    171</a> 
+<a href="#l172" class="line" id="l172">    172</a> // each channel is assigned a different id. The transactions are interleaved.
+<a href="#l173" class="line" id="l173">    173</a> always @(posedge aclk) begin 
+<a href="#l174" class="line" id="l174">    174</a>   if (start) begin 
+<a href="#l175" class="line" id="l175">    175</a>     id &lt;= {C_ID_WIDTH{1&#39;b1}};
+<a href="#l176" class="line" id="l176">    176</a>   end
+<a href="#l177" class="line" id="l177">    177</a>   else begin
+<a href="#l178" class="line" id="l178">    178</a>     id &lt;= arxfer ? id - 1&#39;b1 : id; 
+<a href="#l179" class="line" id="l179">    179</a>   end
+<a href="#l180" class="line" id="l180">    180</a> end
+<a href="#l181" class="line" id="l181">    181</a> 
+<a href="#l182" class="line" id="l182">    182</a> 
+<a href="#l183" class="line" id="l183">    183</a> // Increment to next address after each transaction is issued.
+<a href="#l184" class="line" id="l184">    184</a> always @(posedge aclk) begin 
+<a href="#l185" class="line" id="l185">    185</a>   for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin
+<a href="#l186" class="line" id="l186">    186</a>     addr[i] &lt;= ctrl_start          ? ctrl_offset[i] :
+<a href="#l187" class="line" id="l187">    187</a>                arxfer &amp;&amp; (id == i) ? addr[i] + C_BURST_LEN*C_DATA_WIDTH/8 : 
+<a href="#l188" class="line" id="l188">    188</a>                                      addr[i];
+<a href="#l189" class="line" id="l189">    189</a>   end
+<a href="#l190" class="line" id="l190">    190</a> end
+<a href="#l191" class="line" id="l191">    191</a> 
+<a href="#l192" class="line" id="l192">    192</a> // Counts down the number of transactions to send.
+<a href="#l193" class="line" id="l193">    193</a> krnl_bondmachine_rtl_counter #(
+<a href="#l194" class="line" id="l194">    194</a>   .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+<a href="#l195" class="line" id="l195">    195</a>   .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+<a href="#l196" class="line" id="l196">    196</a> )
+<a href="#l197" class="line" id="l197">    197</a> inst_ar_transaction_cntr ( 
+<a href="#l198" class="line" id="l198">    198</a>   .clk        ( aclk                   ) ,
+<a href="#l199" class="line" id="l199">    199</a>   .clken      ( 1&#39;b1                   ) ,
+<a href="#l200" class="line" id="l200">    200</a>   .rst        ( areset                 ) ,
+<a href="#l201" class="line" id="l201">    201</a>   .load       ( start                  ) ,
+<a href="#l202" class="line" id="l202">    202</a>   .incr       ( 1&#39;b0                   ) ,
+<a href="#l203" class="line" id="l203">    203</a>   .decr       ( arxfer &amp;&amp; id == &#39;0     ) ,
+<a href="#l204" class="line" id="l204">    204</a>   .load_value ( num_transactions       ) ,
+<a href="#l205" class="line" id="l205">    205</a>   .count      ( ar_transactions_to_go  ) ,
+<a href="#l206" class="line" id="l206">    206</a>   .is_zero    ( ar_final_transaction   ) 
+<a href="#l207" class="line" id="l207">    207</a> );
+<a href="#l208" class="line" id="l208">    208</a> 
+<a href="#l209" class="line" id="l209">    209</a> assign ar_done = ar_final_transaction &amp;&amp; arxfer &amp;&amp; id == 1&#39;b0;
+<a href="#l210" class="line" id="l210">    210</a> 
+<a href="#l211" class="line" id="l211">    211</a> always_comb begin 
+<a href="#l212" class="line" id="l212">    212</a>   for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+<a href="#l213" class="line" id="l213">    213</a>     incr_ar_to_r_cnt[i] = rxfer &amp; rlast &amp; (rid == i);
+<a href="#l214" class="line" id="l214">    214</a>     decr_ar_to_r_cnt[i] = arxfer &amp; (arid == i);
+<a href="#l215" class="line" id="l215">    215</a>   end
+<a href="#l216" class="line" id="l216">    216</a> end
+<a href="#l217" class="line" id="l217">    217</a> 
+<a href="#l218" class="line" id="l218">    218</a> // Keeps track of the number of outstanding transactions. Stalls 
+<a href="#l219" class="line" id="l219">    219</a> // when the value is reached so that the FIFO won&#39;t overflow.
+<a href="#l220" class="line" id="l220">    220</a> krnl_bondmachine_rtl_counter #(
+<a href="#l221" class="line" id="l221">    221</a>   .C_WIDTH ( LP_MAX_OUTSTANDING_CNTR_WIDTH                       ) ,
+<a href="#l222" class="line" id="l222">    222</a>   .C_INIT  ( C_MAX_OUTSTANDING[0+:LP_MAX_OUTSTANDING_CNTR_WIDTH] ) 
+<a href="#l223" class="line" id="l223">    223</a> )
+<a href="#l224" class="line" id="l224">    224</a> inst_ar_to_r_transaction_cntr[C_NUM_CHANNELS-1:0] ( 
+<a href="#l225" class="line" id="l225">    225</a>   .clk        ( aclk                           ) ,
+<a href="#l226" class="line" id="l226">    226</a>   .clken      ( 1&#39;b1                           ) ,
+<a href="#l227" class="line" id="l227">    227</a>   .rst        ( areset                         ) ,
+<a href="#l228" class="line" id="l228">    228</a>   .load       ( 1&#39;b0                           ) ,
+<a href="#l229" class="line" id="l229">    229</a>   .incr       ( incr_ar_to_r_cnt               ) ,
+<a href="#l230" class="line" id="l230">    230</a>   .decr       ( decr_ar_to_r_cnt               ) ,
+<a href="#l231" class="line" id="l231">    231</a>   .load_value ( {LP_MAX_OUTSTANDING_CNTR_WIDTH{1&#39;b0}} ) ,
+<a href="#l232" class="line" id="l232">    232</a>   .count      ( outstanding_vacancy_count      ) ,
+<a href="#l233" class="line" id="l233">    233</a>   .is_zero    ( stall_ar                       ) 
+<a href="#l234" class="line" id="l234">    234</a> );
+<a href="#l235" class="line" id="l235">    235</a> 
+<a href="#l236" class="line" id="l236">    236</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l237" class="line" id="l237">    237</a> // AXI Read Channel
+<a href="#l238" class="line" id="l238">    238</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l239" class="line" id="l239">    239</a> assign m_tvalid = tvalid;
+<a href="#l240" class="line" id="l240">    240</a> assign m_tdata = tdata;
+<a href="#l241" class="line" id="l241">    241</a> 
+<a href="#l242" class="line" id="l242">    242</a> always_comb begin 
+<a href="#l243" class="line" id="l243">    243</a>   for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin
+<a href="#l244" class="line" id="l244">    244</a>     tvalid[i] = rvalid &amp;&amp; (rid == i); 
+<a href="#l245" class="line" id="l245">    245</a>     tdata[i] = rdata;
+<a href="#l246" class="line" id="l246">    246</a>   end
+<a href="#l247" class="line" id="l247">    247</a> end
+<a href="#l248" class="line" id="l248">    248</a> 
+<a href="#l249" class="line" id="l249">    249</a> // rready can remain high for optimal timing because ar transactions are not issued
+<a href="#l250" class="line" id="l250">    250</a> // unless there is enough space in the FIFO.
+<a href="#l251" class="line" id="l251">    251</a> assign rready = 1&#39;b1;
+<a href="#l252" class="line" id="l252">    252</a> assign rxfer = rready &amp; rvalid;
+<a href="#l253" class="line" id="l253">    253</a> 
+<a href="#l254" class="line" id="l254">    254</a> always_comb begin 
+<a href="#l255" class="line" id="l255">    255</a>   for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+<a href="#l256" class="line" id="l256">    256</a>     decr_r_transaction_cntr[i] = rxfer &amp; rlast &amp; (rid == i);
+<a href="#l257" class="line" id="l257">    257</a>   end
+<a href="#l258" class="line" id="l258">    258</a> end
+<a href="#l259" class="line" id="l259">    259</a> krnl_bondmachine_rtl_counter #(
+<a href="#l260" class="line" id="l260">    260</a>   .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+<a href="#l261" class="line" id="l261">    261</a>   .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+<a href="#l262" class="line" id="l262">    262</a> )
+<a href="#l263" class="line" id="l263">    263</a> inst_r_transaction_cntr[C_NUM_CHANNELS-1:0] ( 
+<a href="#l264" class="line" id="l264">    264</a>   .clk        ( aclk                          ) ,
+<a href="#l265" class="line" id="l265">    265</a>   .clken      ( 1&#39;b1                          ) ,
+<a href="#l266" class="line" id="l266">    266</a>   .rst        ( areset                        ) ,
+<a href="#l267" class="line" id="l267">    267</a>   .load       ( start                         ) ,
+<a href="#l268" class="line" id="l268">    268</a>   .incr       ( 1&#39;b0                          ) ,
+<a href="#l269" class="line" id="l269">    269</a>   .decr       ( decr_r_transaction_cntr       ) ,
+<a href="#l270" class="line" id="l270">    270</a>   .load_value ( num_transactions              ) ,
+<a href="#l271" class="line" id="l271">    271</a>   .count      ( r_transactions_to_go          ) ,
+<a href="#l272" class="line" id="l272">    272</a>   .is_zero    ( r_final_transaction           ) 
+<a href="#l273" class="line" id="l273">    273</a> );
+<a href="#l274" class="line" id="l274">    274</a> 
+<a href="#l275" class="line" id="l275">    275</a> 
+<a href="#l276" class="line" id="l276">    276</a> endmodule : krnl_bondmachine_rtl_axi_read_master
+<a href="#l277" class="line" id="l277">    277</a> 
+<a href="#l278" class="line" id="l278">    278</a> ` + &quot;`default_nettype wire&quot; + `
+<a href="#l279" class="line" id="l279">    279</a> 
+<a href="#l280" class="line" id="l280">    280</a> `
+<a href="#l281" class="line" id="l281">    281</a> )
+</pre>
+</div>
+</body>
+</html>

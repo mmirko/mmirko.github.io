@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>readstring.basm - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> readstring.basm (431B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> ; Ths reads a string from the keyboard
+<a href="#l2" class="line" id="l2">      2</a> ; r0 pointer to the buffer beginning (es: mov r0, ram:buff)
+<a href="#l3" class="line" id="l3">      3</a> ; r2 length
+<a href="#l4" class="line" id="l4">      4</a> %fragment readstring
+<a href="#l5" class="line" id="l5">      5</a>         rsets8	r2, 0
+<a href="#l6" class="line" id="l6">      6</a> 	rsets8	r3, 13
+<a href="#l7" class="line" id="l7">      7</a> getchar:
+<a href="#l8" class="line" id="l8">      8</a> 	i2rw	r1, i0
+<a href="#l9" class="line" id="l9">      9</a> 	cmpr	r1, r3
+<a href="#l10" class="line" id="l10">     10</a> 	jcmp	end
+<a href="#l11" class="line" id="l11">     11</a>         mov     vtm0:[r2], r1
+<a href="#l12" class="line" id="l12">     12</a> 	mov	ram:[r0], r1
+<a href="#l13" class="line" id="l13">     13</a>         inc     r0
+<a href="#l14" class="line" id="l14">     14</a>         inc     r2
+<a href="#l15" class="line" id="l15">     15</a>         j getchar
+<a href="#l16" class="line" id="l16">     16</a> end:
+<a href="#l17" class="line" id="l17">     17</a> 	mov	r0,r2
+<a href="#l18" class="line" id="l18">     18</a>         rsets8	r3,0
+<a href="#l19" class="line" id="l19">     19</a> loop:
+<a href="#l20" class="line" id="l20">     20</a> 	mov	vtm0:[r0], r3
+<a href="#l21" class="line" id="l21">     21</a> 	jz	r0, end2
+<a href="#l22" class="line" id="l22">     22</a> 	dec	r0
+<a href="#l23" class="line" id="l23">     23</a> 	j loop
+<a href="#l24" class="line" id="l24">     24</a> end2:
+<a href="#l25" class="line" id="l25">     25</a> 	nop
+<a href="#l26" class="line" id="l26">     26</a> %endfragment
+</pre>
+</div>
+</body>
+</html>

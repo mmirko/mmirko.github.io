@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>pipeline n simulations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/092b30b168affc70858016f82c3584fc23ba0b78.html">092b30b168affc70858016f82c3584fc23ba0b78</a>
+<b>parent</b> <a href="../commit/ebead556c18275dcf112412c7f9e0c586c6a033c.html">ebead556c18275dcf112412c7f9e0c586c6a033c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 15 Apr 2023 16:47:26 +0200
+
+pipeline n simulations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_addp.go</a></td><td> | </td><td class="num">75</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/vm.go</a></td><td> | </td><td class="num">37</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>4 files changed, 97 insertions(+), 45 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -148,8 +148,34 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+ 			vm.Internal_outputs_regs[i] = uint16(0)
+ 		}
+<a href="#h0-0-3" id="h0-0-3" class="i">+	case 32:
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			vm.Inputs_regs[i] = uint32(0)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		for i := 0; i &lt; vm.Bmach.Outputs; i++ {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+			vm.Outputs_regs[i] = uint32(0)
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		for i := 0; i &lt; len(vm.Bmach.Internal_inputs); i++ {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+			vm.Internal_inputs_regs[i] = uint32(0)
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			vm.Internal_outputs_regs[i] = uint32(0)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	case 64:
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		for i := 0; i &lt; vm.Bmach.Inputs; i++ {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			vm.Inputs_regs[i] = uint64(0)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		for i := 0; i &lt; vm.Bmach.Outputs; i++ {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			vm.Outputs_regs[i] = uint64(0)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		}
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		for i := 0; i &lt; len(vm.Bmach.Internal_inputs); i++ {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+			vm.Internal_inputs_regs[i] = uint64(0)
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+		}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		for i := 0; i &lt; len(vm.Bmach.Internal_outputs); i++ {
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+			vm.Internal_outputs_regs[i] = uint64(0)
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		}
+</a> 	default:
+<a href="#h0-0-30" id="h0-0-30" class="d">-		// TODO Fix
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		return errors.New(&quot;invalid register size, must be 8, 16, 32 or 64&quot;)
+</a> 	}
+ 	//	// Set the initial state of the internal outputs registers
+ 	//	for i, bond := range vm.Bmach.Internal_outputs {
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -38,7 +38,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Add{})
+ 	Allopcodes = append(Allopcodes, Addf{})
+ 	Allopcodes = append(Allopcodes, Addi{})
+<a href="#h1-0-3" id="h1-0-3" class="d">-	Allopcodes = append(Allopcodes, Addp{})
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	Allopcodes = append(Allopcodes, Addp{pipeline: new(bool)})
+</a> 	Allopcodes = append(Allopcodes, And{})
+ 	Allopcodes = append(Allopcodes, Chc{})
+ 	Allopcodes = append(Allopcodes, Chw{})
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a> b/<a href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,7 +2,6 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;errors&quot;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	&quot;math&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -10,28 +9,30 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-type Addp struct{}
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+type Addp struct {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	pipeline *bool
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+}
+</a> 
+ func (op Addp) Op_get_name() string {
+ 	return &quot;addp&quot;
+ }
+ 
+ func (op Addp) Op_get_desc() string {
+<a href="#h2-1-13" id="h2-1-13" class="d">-	return &quot;Register pipelined multiplcation&quot;
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+	return &quot;Register pipelined addition&quot;
+</a> }
+ 
+ func (op Addp) Op_show_assembler(arch *Arch) string {
+<a href="#h2-1-18" id="h2-1-18" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-	result := &quot;addp [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the product of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+	result := &quot;addp [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the sum of its value with another register [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op Addp) Op_get_instruction_len(arch *Arch) int {
+<a href="#h2-1-26" id="h2-1-26" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h2-1-27" id="h2-1-27" class="d">-	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h2-1-29" id="h2-1-29" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a> }
+ 
+<a href="#h2-1-32" id="h2-1-32" class="d">-func (op Addp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h2-1-33" id="h2-1-33" class="i">+func (op Addp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a> 	result := &quot;&quot;
+ 	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] addp_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+ 	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] addp_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+<a href="#h2-2" id="h2-2" class="h">@@ -48,16 +49,16 @@ func (op Addp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor strin
+</a> 
+ func (op Addp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	rom_word := arch.Max_word()
+<a href="#h2-2-3" id="h2-2-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+	opBits := arch.Opcodes_bits()
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	result := &quot;&quot;
+ 	result += &quot;					ADDP: begin\n&quot;
+ 	if arch.R == 1 {
+<a href="#h2-2-11" id="h2-2-11" class="d">-		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h2-2-14" id="h2-2-14" class="d">-		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -72,9 +73,9 @@ func (op Addp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h2-3-3" id="h2-3-3" class="d">-			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a> 		} else {
+<a href="#h2-3-6" id="h2-3-6" class="d">-			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a> 		}
+ 
+ 		for j := 0; j &lt; reg_num; j++ {
+<a href="#h2-4" id="h2-4" class="h">@@ -112,12 +113,11 @@ func (op Addp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> }
+ 
+ func (op Addp) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+<a href="#h2-4-3" id="h2-4-3" class="d">-	// TODO
+</a> 	return &quot;&quot;
+ }
+ 
+ func (op Addp) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h2-4-8" id="h2-4-8" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+	opBits := arch.Opcodes_bits()
+</a> 	rom_word := arch.Max_word()
+ 
+ 	reg_num := 1 &lt;&lt; arch.R
+<a href="#h2-5" id="h2-5" class="h">@@ -152,7 +152,7 @@ func (op Addp) Assembler(arch *Arch, words []string) (string, error) {
+</a> 
+ 	result += partial
+ 
+<a href="#h2-5-3" id="h2-5-3" class="d">-	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+	for i := opBits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h2-6" id="h2-6" class="h">@@ -168,39 +168,38 @@ func (op Addp) Disassembler(arch *Arch, instr string) (string, error) {
+</a> }
+ 
+ func (op Addp) Simulate(vm *VM, instr string) error {
+<a href="#h2-6-3" id="h2-6-3" class="d">-	reg_bits := vm.Mach.R
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-	regDest := get_id(instr[:reg_bits])
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h2-6-6" id="h2-6-6" class="d">-	switch vm.Mach.Rsize {
+</a><a href="#h2-6-7" id="h2-6-7" class="d">-	case 32:
+</a><a href="#h2-6-8" id="h2-6-8" class="d">-		var floatDest float32
+</a><a href="#h2-6-9" id="h2-6-9" class="d">-		var floatSrc float32
+</a><a href="#h2-6-10" id="h2-6-10" class="d">-		if v, ok := vm.Registers[regDest].(uint32); ok {
+</a><a href="#h2-6-11" id="h2-6-11" class="d">-			floatDest = math.Float32frombits(v)
+</a><a href="#h2-6-12" id="h2-6-12" class="d">-		} else {
+</a><a href="#h2-6-13" id="h2-6-13" class="d">-			floatDest = float32(0.0)
+</a><a href="#h2-6-14" id="h2-6-14" class="d">-		}
+</a><a href="#h2-6-15" id="h2-6-15" class="d">-		if v, ok := vm.Registers[regSrc].(uint32); ok {
+</a><a href="#h2-6-16" id="h2-6-16" class="d">-			floatSrc = math.Float32frombits(v)
+</a><a href="#h2-6-17" id="h2-6-17" class="d">-		} else {
+</a><a href="#h2-6-18" id="h2-6-18" class="d">-			floatSrc = float32(0.0)
+</a><a href="#h2-6-19" id="h2-6-19" class="i">+	regBits := vm.Mach.R
+</a><a href="#h2-6-20" id="h2-6-20" class="i">+	regDest := get_id(instr[:regBits])
+</a><a href="#h2-6-21" id="h2-6-21" class="i">+	regSrc := get_id(instr[regBits : regBits*2])
+</a><a href="#h2-6-22" id="h2-6-22" class="i">+
+</a><a href="#h2-6-23" id="h2-6-23" class="i">+	if *op.pipeline {
+</a><a href="#h2-6-24" id="h2-6-24" class="i">+		switch vm.Mach.Rsize {
+</a><a href="#h2-6-25" id="h2-6-25" class="i">+		case 8:
+</a><a href="#h2-6-26" id="h2-6-26" class="i">+			vm.Registers[regDest] = vm.Registers[regDest].(uint8) + vm.Registers[regSrc].(uint8)
+</a><a href="#h2-6-27" id="h2-6-27" class="i">+		case 16:
+</a><a href="#h2-6-28" id="h2-6-28" class="i">+			vm.Registers[regDest] = vm.Registers[regDest].(uint16) + vm.Registers[regSrc].(uint16)
+</a><a href="#h2-6-29" id="h2-6-29" class="i">+		case 32:
+</a><a href="#h2-6-30" id="h2-6-30" class="i">+			vm.Registers[regDest] = vm.Registers[regDest].(uint32) + vm.Registers[regSrc].(uint32)
+</a><a href="#h2-6-31" id="h2-6-31" class="i">+		case 64:
+</a><a href="#h2-6-32" id="h2-6-32" class="i">+			vm.Registers[regDest] = vm.Registers[regDest].(uint64) + vm.Registers[regSrc].(uint64)
+</a><a href="#h2-6-33" id="h2-6-33" class="i">+		default:
+</a><a href="#h2-6-34" id="h2-6-34" class="i">+			return errors.New(&quot;invalid register size&quot;)
+</a> 		}
+<a href="#h2-6-36" id="h2-6-36" class="d">-		vm.Registers[regDest] = math.Float32bits(floatDest * floatSrc)
+</a><a href="#h2-6-37" id="h2-6-37" class="d">-	default:
+</a><a href="#h2-6-38" id="h2-6-38" class="d">-		return errors.New(&quot;invalid register size, for float registers has to be 32 bits&quot;)
+</a><a href="#h2-6-39" id="h2-6-39" class="i">+		vm.Pc = vm.Pc + 1
+</a><a href="#h2-6-40" id="h2-6-40" class="i">+		*op.pipeline = false
+</a><a href="#h2-6-41" id="h2-6-41" class="i">+	} else {
+</a><a href="#h2-6-42" id="h2-6-42" class="i">+		*op.pipeline = true
+</a> 	}
+<a href="#h2-6-44" id="h2-6-44" class="d">-	vm.Pc = vm.Pc + 1
+</a> 	return nil
+ }
+ 
+<a href="#h2-6-48" id="h2-6-48" class="d">-// The random genaration does nothing
+</a><a href="#h2-6-49" id="h2-6-49" class="i">+// The random generation does nothing
+</a> func (op Addp) Generate(arch *Arch) string {
+ 	// TODO
+ 	return &quot;&quot;
+ }
+ 
+ func (op Addp) Required_shared() (bool, []string) {
+<a href="#h2-6-56" id="h2-6-56" class="d">-	// TODO
+</a> 	return false, []string{}
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a> b/<a href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,6 +1,7 @@
+</a> package procbuilder
+ 
+ import (
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -108,8 +109,34 @@ func (vm *VM) Init() error {
+</a> 		for i := 0; i &lt; int(vm.Mach.M); i++ {
+ 			vm.Outputs[i] = uint16(0)
+ 		}
+<a href="#h3-1-3" id="h3-1-3" class="i">+	case 32:
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+		for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+			vm.Registers[i] = uint32(0)
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+		}
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+		for i := 0; i &lt; mem_num; i++ {
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+			vm.Memory[i] = uint32(0)
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+		}
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+		for i := 0; i &lt; int(vm.Mach.N); i++ {
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+			vm.Inputs[i] = uint32(0)
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+		}
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+		for i := 0; i &lt; int(vm.Mach.M); i++ {
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+			vm.Outputs[i] = uint32(0)
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+		}
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+	case 64:
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+		for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+			vm.Registers[i] = uint64(0)
+</a><a href="#h3-1-19" id="h3-1-19" class="i">+		}
+</a><a href="#h3-1-20" id="h3-1-20" class="i">+		for i := 0; i &lt; mem_num; i++ {
+</a><a href="#h3-1-21" id="h3-1-21" class="i">+			vm.Memory[i] = uint64(0)
+</a><a href="#h3-1-22" id="h3-1-22" class="i">+		}
+</a><a href="#h3-1-23" id="h3-1-23" class="i">+		for i := 0; i &lt; int(vm.Mach.N); i++ {
+</a><a href="#h3-1-24" id="h3-1-24" class="i">+			vm.Inputs[i] = uint64(0)
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+		}
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+		for i := 0; i &lt; int(vm.Mach.M); i++ {
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+			vm.Outputs[i] = uint64(0)
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+		}
+</a> 	default:
+<a href="#h3-1-30" id="h3-1-30" class="d">-		// TODO Fix
+</a><a href="#h3-1-31" id="h3-1-31" class="i">+		return errors.New(&quot;invalid register size for simulation, must be 8, 16, 32 or 64&quot;)
+</a> 	}
+ 
+ 	vm.Extra_states = make(map[string]interface{})
+<a href="#h3-2" id="h3-2" class="h">@@ -128,7 +155,7 @@ func (vm *VM) Step(psc *Sim_config) (string, error) {
+</a> 
+ 	//	reg_num := 1 &lt;&lt; vm.Mach.R
+ 	num_instr := len(vm.Mach.Program.Slocs)
+<a href="#h3-2-3" id="h3-2-3" class="d">-	opbits := vm.Mach.Opcodes_bits()
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+	opBits := vm.Mach.Opcodes_bits()
+</a> 
+ 	if int(vm.Pc) &gt; num_instr {
+ 		return &quot;&quot;, Prerror{&quot;Program counter outside limits&quot;}
+<a href="#h3-3" id="h3-3" class="h">@@ -152,7 +179,7 @@ func (vm *VM) Step(psc *Sim_config) (string, error) {
+</a> 			if psc != nil {
+ 				if psc.Show_disasm {
+ 					curline := &quot;\t\tDisasm: &quot; + op.Op_get_name() + &quot; &quot;
+<a href="#h3-3-3" id="h3-3-3" class="d">-					if disas, err := op.Disassembler(&amp;vm.Mach.Arch, instr[opbits:]); err != nil {
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+					if disas, err := op.Disassembler(&amp;vm.Mach.Arch, instr[opBits:]); err != nil {
+</a> 						return &quot;&quot;, Prerror{&quot;Disassembling falied&quot;}
+ 					} else {
+ 						result += curline + disas + &quot;\n&quot;
+<a href="#h3-4" id="h3-4" class="h">@@ -168,7 +195,7 @@ func (vm *VM) Step(psc *Sim_config) (string, error) {
+</a> 				}
+ 			}
+ 
+<a href="#h3-4-3" id="h3-4-3" class="d">-			if err := op.Simulate(vm, instr[opbits:]); err != nil {
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+			if err := op.Simulate(vm, instr[opBits:]); err != nil {
+</a> 				return &quot;&quot;, Prerror{&quot;Simulation failed&quot;}
+ 			}
+ 
+<a href="#h3-5" id="h3-5" class="h">@@ -182,7 +209,7 @@ func (vm *VM) Step(psc *Sim_config) (string, error) {
+</a> 			}
+ 
+ 		} else {
+<a href="#h3-5-3" id="h3-5-3" class="d">-			return &quot;&quot;, Prerror{&quot;Unknown opecode&quot;}
+</a><a href="#h3-5-4" id="h3-5-4" class="i">+			return &quot;&quot;, Prerror{&quot;Unknown opcode&quot;}
+</a> 		}
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

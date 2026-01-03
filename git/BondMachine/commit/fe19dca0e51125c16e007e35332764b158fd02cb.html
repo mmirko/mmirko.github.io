@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CPY cleanup - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/fe19dca0e51125c16e007e35332764b158fd02cb.html">fe19dca0e51125c16e007e35332764b158fd02cb</a>
+<b>parent</b> <a href="../commit/1dd3f1662a9e0354ef937a5973c27bb5708017cf.html">1dd3f1662a9e0354ef937a5973c27bb5708017cf</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  2 Oct 2024 00:46:14 +0200
+
+CPY cleanup
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_cpy.go</a></td><td> | </td><td class="num">76</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 42 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a> b/<a href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -21,14 +21,14 @@ func (op Cpy) Op_get_desc() string {
+</a> }
+ 
+ func (op Cpy) Op_show_assembler(arch *Arch) string {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	result := &quot;chc [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Copy the value of a register to another [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	result := &quot;chc [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Copy the value of a register to another [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op Cpy) Op_get_instruction_len(arch *Arch) int {
+<a href="#h0-0-11" id="h0-0-11" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a> }
+ 
+ func (op Cpy) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h0-1" id="h0-1" class="h">@@ -37,24 +37,28 @@ func (op Cpy) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 
+ func (op Cpy) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	romWord := arch.Max_word()
+<a href="#h0-1-3" id="h0-1-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	tabsNum := 5
+</a> 	regNum := 1 &lt;&lt; arch.R
+ 
+ 	result := &quot;&quot;
+<a href="#h0-1-10" id="h0-1-10" class="d">-	result += &quot;					CPY: begin\n&quot;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	result += tabs(tabsNum) + &quot;CPY: begin\n&quot;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	if th := ThreadInstructionStart(conf, arch, tabsNum+1); th != &quot;&quot; {
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		result += th
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		tabsNum++
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	}
+</a> 	if arch.R == 1 {
+<a href="#h0-1-17" id="h0-1-17" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;])\n&quot;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h0-1-20" id="h0-1-20" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+ 	for i := 0; i &lt; regNum; i++ {
+ 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h0-1-27" id="h0-1-27" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a> 		} else {
+<a href="#h0-1-30" id="h0-1-30" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a> 		}
+ 
+ 		for j := 0; j &lt; regNum; j++ {
+<a href="#h0-2" id="h0-2" class="h">@@ -67,9 +71,13 @@ func (op Cpy) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;							endcase\n&quot;
+ 		result += &quot;						end\n&quot;
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="d">-	result += &quot;						endcase\n&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	result += &quot;					end\n&quot;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	result += tabs(tabsNum+1) + &quot;endcase\n&quot;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	result += NextInstruction(conf, arch, tabsNum+1, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	if th := ThreadInstructionEnd(conf, arch, tabsNum); th != &quot;&quot; {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		result += th
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		tabsNum--
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	result += tabs(tabsNum) + &quot;end\n&quot;
+</a> 	return result
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -78,17 +86,18 @@ func (op Cpy) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op Cpy) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	// &quot;reference&quot;: {&quot;support_asm&quot;: &quot;ok&quot;}
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	romWord := arch.Max_word()
+</a> 
+<a href="#h0-3-9" id="h0-3-9" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	if len(words) != 2 {
+<a href="#h0-3-13" id="h0-3-13" class="d">-		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+		return &quot;&quot;, errors.New(&quot;wrong arguments number&quot;)
+</a> 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h0-3-18" id="h0-3-18" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[0] == strings.ToLower(Get_register_name(i)) {
+ 			result += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h0-4" id="h0-4" class="h">@@ -96,11 +105,11 @@ func (op Cpy) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if result == &quot;&quot; {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		return &quot;&quot;, errors.New(&quot;unknown register name &quot; + words[0])
+</a> 	}
+ 
+ 	partial := &quot;&quot;
+<a href="#h0-4-8" id="h0-4-8" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[1] == strings.ToLower(Get_register_name(i)) {
+ 			partial += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h0-5" id="h0-5" class="h">@@ -108,12 +117,12 @@ func (op Cpy) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if partial == &quot;&quot; {
+<a href="#h0-5-3" id="h0-5-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		return &quot;&quot;, errors.New(&quot;unknown register name &quot; + words[1])
+</a> 	}
+ 
+ 	result += partial
+ 
+<a href="#h0-5-9" id="h0-5-9" class="d">-	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	for i := opBits + 2*int(arch.R); i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -121,18 +130,18 @@ func (op Cpy) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op Cpy) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	reg_id := get_id(instr[:arch.R])
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+	regId := get_id(instr[:arch.R])
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+	regId = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	result += strings.ToLower(Get_register_name(regId))
+</a> 	return result, nil
+ }
+ 
+ // The simulation does nothing
+ func (op Cpy) Simulate(vm *VM, instr string) error {
+<a href="#h0-6-16" id="h0-6-16" class="d">-	reg_bits := vm.Mach.R
+</a><a href="#h0-6-17" id="h0-6-17" class="d">-	regDest := get_id(instr[:reg_bits])
+</a><a href="#h0-6-18" id="h0-6-18" class="d">-	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+	regBits := vm.Mach.R
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+	regDest := get_id(instr[:regBits])
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+	regSrc := get_id(instr[regBits : regBits*2])
+</a> 	vm.Registers[regDest] = vm.Registers[regSrc]
+ 	vm.Pc = vm.Pc + 1
+ 	return nil
+<a href="#h0-7" id="h0-7" class="h">@@ -177,13 +186,12 @@ func (Op Cpy) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([
+</a> }
+ 
+ func (Op Cpy) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-	result := make([]UsageNotify, 0)
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	return result, nil
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+	return nil, errors.New(&quot;obsolete&quot;)
+</a> }
+ 
+<a href="#h0-7-8" id="h0-7-8" class="d">-func (Op Cpy) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+func (Op Cpy) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockName string, objects []string) string {
+</a> 	result := &quot;&quot;
+<a href="#h0-7-11" id="h0-7-11" class="d">-	switch blockname {
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+	switch blockName {
+</a> 	default:
+ 		result = &quot;&quot;
+ 	}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Import export requrements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8582b7a758c0864173908f2564bdbf001f7002fb.html">8582b7a758c0864173908f2564bdbf001f7002fb</a>
+<b>parent</b> <a href="../commit/f86948f241250d8b644f8d6b4d1306cacd1f8d82.html">f86948f241250d8b644f8d6b4d1306cacd1f8d82</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 30 Mar 2023 11:19:51 +0200
+
+Import export requrements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmreqs/bmreqs.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmreqs/bmreqs_test.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmreqs/engine.go</a></td><td> | </td><td class="num">39</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmreqs/objectmax.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmreqs/objectset.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 73 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmreqs/bmreqs.go.html">pkg/bmreqs/bmreqs.go</a> b/<a href="../file/pkg/bmreqs/bmreqs.go.html">pkg/bmreqs/bmreqs.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -21,6 +21,7 @@ type bmReqSet interface {
+</a> 
+ 	// Exporting requirements for the current node
+ 	getReqs() string
+<a href="#h0-0-3" id="h0-0-3" class="i">+	importReqs(*ReqRoot, string, string, string) error
+</a> 
+ 	// SubRequirements
+ 	supportSub() bool
+<a href="#h0-1" id="h0-1" class="h">@@ -39,3 +40,12 @@ func (o *bmReqObj) init() {
+</a> func (o *bmReqObj) getMap() bmReqMap {
+ 	return o.bmReqMap
+ }
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+type ExportedReq struct {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	Node string
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	Type uint8
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	Name string
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	Req  string
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+type ExportedReqs []ExportedReq
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmreqs/bmreqs_test.go.html">pkg/bmreqs/bmreqs_test.go</a> b/<a href="../file/pkg/bmreqs/bmreqs_test.go.html">pkg/bmreqs/bmreqs_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -30,11 +30,23 @@ func TestBMReq(t *testing.T) {
+</a> 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, T: ObjectMax, Name: &quot;test3&quot;, Value: &quot;52&quot;, Op: OpAdd}))
+ 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, Name: &quot;test3&quot;, Op: OpGet}))
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, T: ObjectSet, Name: &quot;unaryops&quot;, Value: &quot;clr-r0&quot;, Op: OpAdd}))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, T: ObjectSet, Name: &quot;unaryops&quot;, Value: &quot;clr-r2&quot;, Op: OpAdd}))
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, T: ObjectSet, Name: &quot;binaryops&quot;, Value: &quot;multf-r2-r0&quot;, Op: OpAdd}))
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a> 	fmt.Println(&quot;----&quot;)
+ 
+ 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/&quot;, Op: OpDump}))
+ 	//fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, Op: OpDump}))
+ 
+<a href="#h1-0-13" id="h1-0-13" class="i">+	var r ExportedReqs
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	r = make([]ExportedReq, 0)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	fmt.Println(rg.Export(&amp;r, &quot;/&quot;), r)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	newrg, _ := Import(&amp;r)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	fmt.Println(newrg.Requirement(ReqRequest{Node: &quot;/&quot;, Op: OpDump}))
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+
+</a> 	rg.Close()
+ 
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a> b/<a href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -145,3 +145,42 @@ func (rg *ReqRoot) recursiveDump(node string) (string, error) {
+</a> 		return &quot;&quot;, errors.New(&quot;node decoding failed: &quot; + fmt.Sprint(err))
+ 	}
+ }
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+func (rg *ReqRoot) Export(r *ExportedReqs, node string) error {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	if n, err := rg.decodeNode(node); err == nil {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		for name, set := range n.bmReqMap {
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			*r = append(*r, ExportedReq{Node: node, Type: set.getType(), Req: set.getReqs(), Name: name})
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+			if set.supportSub() {
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+				subs := set.listSub()
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+				for _, sub := range subs {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+					if node == &quot;/&quot; {
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+						node = node[1:]
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+					}
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+					rg.Export(r, node+&quot;/&quot;+name+&quot;:&quot;+sub)
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+				}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+			}
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		}
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+		return nil
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	} else {
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+		return errors.New(&quot;node decoding failed: &quot; + fmt.Sprint(err))
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	}
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+}
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+func Import(r *ExportedReqs) (*ReqRoot, error) {
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	rg := NewReqRoot()
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	for _, req := range *r {
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+		switch req.Type {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+		case ObjectSet:
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+			n := new(objectSet)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+			if err := n.importReqs(rg, req.Node, req.Name, req.Req); err != nil {
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+				return nil, err
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+			}
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+		case ObjectMax:
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+			n := new(objectMax)
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+			if err := n.importReqs(rg, req.Node, req.Name, req.Req); err != nil {
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+				return nil, err
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			}
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+		}
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	}
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	return rg, nil
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bmreqs/objectmax.go.html">pkg/bmreqs/objectmax.go</a> b/<a href="../file/pkg/bmreqs/objectmax.go.html">pkg/bmreqs/objectmax.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -57,6 +57,11 @@ func (o *objectMax) getReqs() string {
+</a> 	return fmt.Sprint(o.value)
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+func (o *objectMax) importReqs(rg *ReqRoot, node string, name string, req string) error {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	rg.Requirement(ReqRequest{Node: node, T: ObjectMax, Name: name, Value: req, Op: OpAdd})
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	return nil
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+}
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a> //
+ 
+ func (o *objectMax) supportSub() bool {
+<b>diff --git a/<a id="h4" href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a> b/<a href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -72,6 +72,13 @@ func (o *objectSet) getReqs() string {
+</a> 	return fmt.Sprint(strings.Join(keys, &quot;,&quot;))
+ }
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+func (o *objectSet) importReqs(rg *ReqRoot, node string, name string, req string) error {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	for _, r := range strings.Split(req, &quot;,&quot;) {
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		rg.Requirement(ReqRequest{Node: node, T: ObjectSet, Name: name, Value: r, Op: OpAdd})
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	}
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	return nil
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+}
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+
+</a> //
+ 
+ func (o *objectSet) supportSub() bool {
+</pre>
+</div>
+</body>
+</html>

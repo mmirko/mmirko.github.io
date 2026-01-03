@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>melbond - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f33f61d84627e674f194d661f5c19d1f97917dc9.html">f33f61d84627e674f194d661f5c19d1f97917dc9</a>
+<b>parent</b> <a href="../commit/236d1b9f22185bf4b9b86036bfe004b0cba4107c.html">236d1b9f22185bf4b9b86036bfe004b0cba4107c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  4 Apr 2023 16:47:43 +0200
+
+melbond
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">cmd/melbond/melbond.go</a></td><td> | </td><td class="num">176</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">go.mod</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">go.sum</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/evolutionary.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bondmachine/evolutionary_test.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">pkg/melbond/basm_test.go</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/melbond/evaluator.go</a></td><td> | </td><td class="num">96</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">pkg/melbond/melbond.go</a></td><td> | </td><td class="num">41</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/evolutionary.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/evolutionary_test.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>10 files changed, 371 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a> b/<a href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,176 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package main
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;flag&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;io/ioutil&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/melbond&quot;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/neuralbond&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	&quot;github.com/mmirko/mel/pkg/m3number&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+)
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+var registerSize = flag.Int(&quot;register-size&quot;, 32, &quot;Number of bits per register (n-bit)&quot;)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+var dataType = flag.String(&quot;data-type&quot;, &quot;float32&quot;, &quot;bmnumbers data types&quot;)
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+var saveBasm = flag.String(&quot;save-basm&quot;, &quot;&quot;, &quot;Create a basm file&quot;)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+var neuronLibPath = flag.String(&quot;neuron-lib-path&quot;, &quot;&quot;, &quot;Path to the neuron library to use&quot;)
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net configuration&quot;)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;JSON description of the BondMachine abstraction&quot;)
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+var iomode = flag.String(&quot;io-mode&quot;, &quot;async&quot;, &quot;IO mode: async, sync&quot;)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+func init() {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	flag.Parse()
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	if *saveBasm == &quot;&quot; {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		*saveBasm = &quot;out.basm&quot;
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	}
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+}
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+func main() {
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	bc := new(melbond.MelBondConfig)
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	bc.RegisterSize = uint8(*registerSize)
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	// Load net from a JSON file the configuration
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+		if netFileJSON, err := ioutil.ReadFile(*configFile); err == nil {
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+			if err := json.Unmarshal(netFileJSON, bc); err != nil {
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+				panic(err)
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+			}
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		} else {
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+			panic(err)
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+		}
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+	} else {
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		bc.Debug = *debug
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+		bc.Verbose = *verbose
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+		bc.Params = make(map[string]string)
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	}
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	// Load or create the Info file
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+	bc.BMinfo = new(bminfo.BMinfo)
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+		if bmInfoJSON, err := ioutil.ReadFile(*bmInfoFile); err == nil {
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+			if err := json.Unmarshal(bmInfoJSON, bc.BMinfo); err != nil {
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+				panic(err)
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+			}
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+		} else {
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+			panic(err)
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+		}
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+	}
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+	if bc.Params == nil {
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+		bc.Params = make(map[string]string)
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+	}
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+	if bc.List == nil {
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+		bc.List = make(map[string]string)
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+	}
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	if bc.Pruned == nil {
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+		bc.Pruned = make([]string, 0)
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	}
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+	if *neuronLibPath != &quot;&quot; {
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+		bc.NeuronLibPath = *neuronLibPath
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	} else {
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+		panic(&quot;No neuron library path specified&quot;)
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+	}
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+	switch *iomode {
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+	case &quot;async&quot;:
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+		bc.IOMode = neuralbond.ASYNC
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+	case &quot;sync&quot;:
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+		bc.IOMode = neuralbond.SYNC
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+	default:
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+		panic(&quot;Unknown IO mode&quot;)
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+	}
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+	if *dataType != &quot;&quot; {
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+		found := false
+</a><a href="#h0-0-96" id="h0-0-96" class="i">+		for _, tpy := range bmnumbers.AllTypes {
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+			if tpy.GetName() == *dataType {
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+				for opType, opName := range tpy.ShowInstructions() {
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+					bc.Params[opType] = opName
+</a><a href="#h0-0-100" id="h0-0-100" class="i">+				}
+</a><a href="#h0-0-101" id="h0-0-101" class="i">+				bc.DataType = *dataType
+</a><a href="#h0-0-102" id="h0-0-102" class="i">+				bc.TypePrefix = tpy.ShowPrefix()
+</a><a href="#h0-0-103" id="h0-0-103" class="i">+				bc.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a><a href="#h0-0-104" id="h0-0-104" class="i">+				found = true
+</a><a href="#h0-0-105" id="h0-0-105" class="i">+				break
+</a><a href="#h0-0-106" id="h0-0-106" class="i">+			}
+</a><a href="#h0-0-107" id="h0-0-107" class="i">+		}
+</a><a href="#h0-0-108" id="h0-0-108" class="i">+		if !found {
+</a><a href="#h0-0-109" id="h0-0-109" class="i">+			if created, err := bmnumbers.EventuallyCreateType(*dataType, nil); err == nil {
+</a><a href="#h0-0-110" id="h0-0-110" class="i">+				if created {
+</a><a href="#h0-0-111" id="h0-0-111" class="i">+					for _, tpy := range bmnumbers.AllTypes {
+</a><a href="#h0-0-112" id="h0-0-112" class="i">+						if tpy.GetName() == *dataType {
+</a><a href="#h0-0-113" id="h0-0-113" class="i">+							for opType, opName := range tpy.ShowInstructions() {
+</a><a href="#h0-0-114" id="h0-0-114" class="i">+								bc.Params[opType] = opName
+</a><a href="#h0-0-115" id="h0-0-115" class="i">+							}
+</a><a href="#h0-0-116" id="h0-0-116" class="i">+							bc.DataType = *dataType
+</a><a href="#h0-0-117" id="h0-0-117" class="i">+							bc.TypePrefix = tpy.ShowPrefix()
+</a><a href="#h0-0-118" id="h0-0-118" class="i">+							bc.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a><a href="#h0-0-119" id="h0-0-119" class="i">+							break
+</a><a href="#h0-0-120" id="h0-0-120" class="i">+						}
+</a><a href="#h0-0-121" id="h0-0-121" class="i">+					}
+</a><a href="#h0-0-122" id="h0-0-122" class="i">+				} else {
+</a><a href="#h0-0-123" id="h0-0-123" class="i">+					panic(&quot;Unknown data type&quot;)
+</a><a href="#h0-0-124" id="h0-0-124" class="i">+				}
+</a><a href="#h0-0-125" id="h0-0-125" class="i">+
+</a><a href="#h0-0-126" id="h0-0-126" class="i">+			} else {
+</a><a href="#h0-0-127" id="h0-0-127" class="i">+				panic(err)
+</a><a href="#h0-0-128" id="h0-0-128" class="i">+			}
+</a><a href="#h0-0-129" id="h0-0-129" class="i">+		}
+</a><a href="#h0-0-130" id="h0-0-130" class="i">+	} else {
+</a><a href="#h0-0-131" id="h0-0-131" class="i">+		if bc.DataType == &quot;&quot; {
+</a><a href="#h0-0-132" id="h0-0-132" class="i">+			panic(&quot;No data type specified&quot;)
+</a><a href="#h0-0-133" id="h0-0-133" class="i">+		}
+</a><a href="#h0-0-134" id="h0-0-134" class="i">+	}
+</a><a href="#h0-0-135" id="h0-0-135" class="i">+
+</a><a href="#h0-0-136" id="h0-0-136" class="i">+	a := new(m3number.M3numberMe3li)
+</a><a href="#h0-0-137" id="h0-0-137" class="i">+	var ep *mel.EvolutionParameters
+</a><a href="#h0-0-138" id="h0-0-138" class="i">+	c := new(mel.MelConfig)
+</a><a href="#h0-0-139" id="h0-0-139" class="i">+	a.Mel3Object.DefaultCreator = bc.BasmCreator
+</a><a href="#h0-0-140" id="h0-0-140" class="i">+	c.Debug = false
+</a><a href="#h0-0-141" id="h0-0-141" class="i">+	a.MelInit(c, ep)
+</a><a href="#h0-0-142" id="h0-0-142" class="i">+
+</a><a href="#h0-0-143" id="h0-0-143" class="i">+	prog := new(melbond.MelBondProgram)
+</a><a href="#h0-0-144" id="h0-0-144" class="i">+	prog.MelBondConfig = bc
+</a><a href="#h0-0-145" id="h0-0-145" class="i">+	prog.M3numberMe3li = a
+</a><a href="#h0-0-146" id="h0-0-146" class="i">+
+</a><a href="#h0-0-147" id="h0-0-147" class="i">+	if *saveBasm != &quot;&quot; {
+</a><a href="#h0-0-148" id="h0-0-148" class="i">+		if basmFile, err := prog.WriteBasm(); err == nil {
+</a><a href="#h0-0-149" id="h0-0-149" class="i">+			ioutil.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a><a href="#h0-0-150" id="h0-0-150" class="i">+		} else {
+</a><a href="#h0-0-151" id="h0-0-151" class="i">+			panic(err)
+</a><a href="#h0-0-152" id="h0-0-152" class="i">+		}
+</a><a href="#h0-0-153" id="h0-0-153" class="i">+	}
+</a><a href="#h0-0-154" id="h0-0-154" class="i">+
+</a><a href="#h0-0-155" id="h0-0-155" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a><a href="#h0-0-156" id="h0-0-156" class="i">+		// Write the info file
+</a><a href="#h0-0-157" id="h0-0-157" class="i">+		if bmInfoFileJSON, err := json.MarshalIndent(bc.BMinfo, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h0-0-158" id="h0-0-158" class="i">+			ioutil.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a><a href="#h0-0-159" id="h0-0-159" class="i">+		} else {
+</a><a href="#h0-0-160" id="h0-0-160" class="i">+			panic(err)
+</a><a href="#h0-0-161" id="h0-0-161" class="i">+		}
+</a><a href="#h0-0-162" id="h0-0-162" class="i">+	}
+</a><a href="#h0-0-163" id="h0-0-163" class="i">+
+</a><a href="#h0-0-164" id="h0-0-164" class="i">+	// Remove the info file from the config prior to saving it
+</a><a href="#h0-0-165" id="h0-0-165" class="i">+	bc.BMinfo = nil
+</a><a href="#h0-0-166" id="h0-0-166" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h0-0-167" id="h0-0-167" class="i">+		// Write the eventually updated config file
+</a><a href="#h0-0-168" id="h0-0-168" class="i">+		if configFileJSON, err := json.MarshalIndent(bc, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h0-0-169" id="h0-0-169" class="i">+			ioutil.WriteFile(*configFile, configFileJSON, 0644)
+</a><a href="#h0-0-170" id="h0-0-170" class="i">+		} else {
+</a><a href="#h0-0-171" id="h0-0-171" class="i">+			panic(err)
+</a><a href="#h0-0-172" id="h0-0-172" class="i">+		}
+</a><a href="#h0-0-173" id="h0-0-173" class="i">+	}
+</a><a href="#h0-0-174" id="h0-0-174" class="i">+
+</a><a href="#h0-0-175" id="h0-0-175" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/go.mod.html">go.mod</a> b/<a href="../file/go.mod.html">go.mod</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,7 +6,7 @@ require (
+</a> 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
+ 	github.com/golang/protobuf v1.5.2
+ 	github.com/mdlayher/raw v0.1.0
+<a href="#h1-0-3" id="h1-0-3" class="d">-	github.com/mmirko/mel v0.0.0-20220919094508-e6077cb608e6
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba
+</a> 	github.com/tfriedel6/canvas v0.12.1
+ 	google.golang.org/protobuf v1.28.1
+ )
+<b>diff --git a/<a id="h2" href="../file/go.sum.html">go.sum</a> b/<a href="../file/go.sum.html">go.sum</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -18,6 +18,12 @@ github.com/mdlayher/socket v0.2.1 h1:F2aaOwb53VsBE+ebRS9bLd7yPOfYUMC8lOODdCBDY6w
+</a> github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
+ github.com/mmirko/mel v0.0.0-20220919094508-e6077cb608e6 h1:fCJ1+Cvo84XF86q3A82d7MpnhDOL1WwNwguIF8LOBco=
+ github.com/mmirko/mel v0.0.0-20220919094508-e6077cb608e6/go.mod h1:OnMuXx2IDU+75CxRNedoYOU120TCpKXMWWsCXxkUEr4=
+<a href="#h2-0-3" id="h2-0-3" class="i">+github.com/mmirko/mel v0.0.0-20230404125109-4a6414e07a9c h1:zCvhTPLpKtivDeMyQNwThkNWSWUvfFkGZNWgYlF00Gk=
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+github.com/mmirko/mel v0.0.0-20230404125109-4a6414e07a9c/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+github.com/mmirko/mel v0.0.0-20230404134429-4b3fee13cf98 h1:ZBezo5hal0SqMQfaRTW2VXEqbxJBIpQjc/PJYq0yEsY=
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+github.com/mmirko/mel v0.0.0-20230404134429-4b3fee13cf98/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba h1:05qR+2gYHFW6Ekh9Kz07AQAuR1xWrG6cSNuWta8Hj34=
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+github.com/mmirko/mel v0.0.0-20230404141137-2be30e03b1ba/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+</a> github.com/tfriedel6/canvas v0.12.1 h1:Oc4gww+cOtix69IaYo8TmRbwpbTl6D1jza2mBM4ZOPo=
+ github.com/tfriedel6/canvas v0.12.1/go.mod h1:WIe1YgsQiKA1awmU6tSs8e5DkceDHC5MHgV5vQQZr/0=
+ github.com/veandco/go-sdl2 v0.4.0 h1:l9q6K+Dvpd/VlZdw2ufApKnWhAQqx9UL8Zrvbjtm3Lw=
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/evolutionary.go.html">pkg/bondmachine/evolutionary.go</a> b/<a href="../file/pkg/bondmachine/evolutionary.go.html">pkg/bondmachine/evolutionary.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,10 +4,10 @@ import (
+</a> 	&quot;fmt&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/simbox&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	&quot;github.com/mmirko/mel&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a> )
+ 
+<a href="#h3-0-7" id="h3-0-7" class="d">-func (mach *Bondmachine) MelInit(ep *mel.EvolutionParameters) {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+func (mach *Bondmachine) MelInit(c *mel.MelConfig, ep *mel.EvolutionParameters) {
+</a> }
+ 
+ func (mach *Bondmachine) MelCopy() mel.Me3li {
+<b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/evolutionary_test.go.html">pkg/bondmachine/evolutionary_test.go</a> b/<a href="../file/pkg/bondmachine/evolutionary_test.go.html">pkg/bondmachine/evolutionary_test.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -6,7 +6,7 @@ import (
+</a> 	&quot;testing&quot;
+ 	&quot;time&quot;
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-	&quot;github.com/mmirko/mel&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a> )
+ 
+ func TestEvolutionaryBondmachine(t *testing.T) {
+<b>diff --git a/<a id="h5" href="../file/pkg/melbond/basm_test.go.html">pkg/melbond/basm_test.go</a> b/<a href="../file/pkg/melbond/basm_test.go.html">pkg/melbond/basm_test.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,44 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package melbond
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+import (
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;testing&quot;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	&quot;github.com/mmirko/mel/pkg/m3number&quot;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+)
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+func TestBasmEvaluator(t *testing.T) {
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+	bc := new(MelBondConfig)
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+	a := new(m3number.M3numberMe3li)
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	var ep *mel.EvolutionParameters
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+	c := new(mel.MelConfig)
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+	a.Mel3Object.DefaultCreator = bc.BasmCreator
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+	c.Debug = false
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+	a.MelInit(c, ep)
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+	tests := []string{`
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+	add(
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+		add(
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+			m3numberconst(1),
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+			m3numberconst(66)
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+		),
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+		add(
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+			m3numberconst(1),
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+			mult(
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+				m3numberconst(2),
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+				m3numberconst(4)
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+			)
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+		)
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+	)`,
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+	}
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+	for _, iString := range tests {
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+		if err := a.MelStringImport(iString); err != nil {
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+			t.Errorf(&quot;Error importing: %s&quot;, err)
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+		} else {
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+			a.Compute()
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+		}
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+	}
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a> b/<a href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,96 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package melbond
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+import (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	&quot;github.com/mmirko/mel/pkg/mel3program&quot;
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+)
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+type BasmEvaluator struct {
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+	*mel3program.Mel3Object
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+	MelBondConfig *MelBondConfig
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+	error
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+	Result *mel3program.Mel3Program
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+	index  string
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+}
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+func (ev *BasmEvaluator) GetName() string {
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+	return &quot;dump&quot;
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+}
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+func (ev *BasmEvaluator) GetMel3Object() *mel3program.Mel3Object {
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+	return ev.Mel3Object
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+}
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+func (ev *BasmEvaluator) SetMel3Object(mel3o *mel3program.Mel3Object) {
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+	ev.Mel3Object = mel3o
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+}
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+func (ev *BasmEvaluator) GetError() error {
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+	return ev.error
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+}
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+func (ev *BasmEvaluator) GetResult() *mel3program.Mel3Program {
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+	return ev.Result
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+}
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3Visitor {
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+	debug := ev.Config.Debug
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+	if debug {
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+		fmt.Println(&quot;basm: Visit: &quot;, iProg)
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+	}
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+	nodeName := &quot;node&quot; + ev.index
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+	implementation := ev.Implementation[iProg.LibraryID]
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+	nodeCodeName := implementation.ImplName + &quot;_&quot; + implementation.ProgramNames[iProg.ProgramID]
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+	fmt.Print(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+	isFunctional := true
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+	if len(implementation.NonVariadicArgs[iProg.ProgramID]) == 0 &amp;&amp; !implementation.IsVariadic[iProg.ProgramID] {
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+		isFunctional = false
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+	}
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+	if !isFunctional {
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+		fmt.Println(&quot;, &quot; + implementation.ProgramNames[iProg.ProgramID] + &quot;:&quot; + iProg.ProgramValue)
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+	} else {
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+		fmt.Println()
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+	}
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+	arg_num := len(iProg.NextPrograms)
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+	evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+	names := make([]string, arg_num)
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+	for i, prog := range iProg.NextPrograms {
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+		evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+		names[i] = nodeName + string(byte(97+i))
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+		evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+		fmt.Println(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + nodeName + &quot;, type:input, index:&quot; + fmt.Sprint(i))
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+		fmt.Println(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+		evaluators[i].Visit(prog)
+</a><a href="#h6-0-72" id="h6-0-72" class="i">+	}
+</a><a href="#h6-0-73" id="h6-0-73" class="i">+
+</a><a href="#h6-0-74" id="h6-0-74" class="i">+	return nil
+</a><a href="#h6-0-75" id="h6-0-75" class="i">+}
+</a><a href="#h6-0-76" id="h6-0-76" class="i">+
+</a><a href="#h6-0-77" id="h6-0-77" class="i">+func (ev *BasmEvaluator) Inspect() string {
+</a><a href="#h6-0-78" id="h6-0-78" class="i">+	obj := ev.GetMel3Object()
+</a><a href="#h6-0-79" id="h6-0-79" class="i">+	implementations := obj.Implementation
+</a><a href="#h6-0-80" id="h6-0-80" class="i">+	if ev.error == nil {
+</a><a href="#h6-0-81" id="h6-0-81" class="i">+		if dump, err := mel3program.ProgDump(implementations, ev.Result); err == nil {
+</a><a href="#h6-0-82" id="h6-0-82" class="i">+			return &quot;Evaluation ok: &quot; + dump
+</a><a href="#h6-0-83" id="h6-0-83" class="i">+		} else {
+</a><a href="#h6-0-84" id="h6-0-84" class="i">+			return &quot;Result export failed:&quot; + fmt.Sprint(err)
+</a><a href="#h6-0-85" id="h6-0-85" class="i">+		}
+</a><a href="#h6-0-86" id="h6-0-86" class="i">+	} else {
+</a><a href="#h6-0-87" id="h6-0-87" class="i">+		return fmt.Sprint(ev.error)
+</a><a href="#h6-0-88" id="h6-0-88" class="i">+	}
+</a><a href="#h6-0-89" id="h6-0-89" class="i">+}
+</a><a href="#h6-0-90" id="h6-0-90" class="i">+
+</a><a href="#h6-0-91" id="h6-0-91" class="i">+func (c *MelBondConfig) BasmCreator() mel3program.Mel3Visitor {
+</a><a href="#h6-0-92" id="h6-0-92" class="i">+	result := new(BasmEvaluator)
+</a><a href="#h6-0-93" id="h6-0-93" class="i">+	result.MelBondConfig = c
+</a><a href="#h6-0-94" id="h6-0-94" class="i">+	return result
+</a><a href="#h6-0-95" id="h6-0-95" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a> b/<a href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,41 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+package melbond
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+import (
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/m3number&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+)
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+type Group []string
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+type MelBondConfig struct {
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+	RegisterSize  uint8
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+	DataType      string
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+	TypePrefix    string
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+	Params        map[string]string
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+	Pruned        []string
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+	Collapsed     []Group
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+	Debug         bool
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+	Verbose       bool
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	NeuronLibPath string
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+	IOMode        uint8
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+	*bminfo.BMinfo
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+}
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+type MelBondProgram struct {
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+	*MelBondConfig
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+	*m3number.M3numberMe3li
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+	Source   string
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+	BasmCode string
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+}
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+func (p *MelBondProgram) WriteBasm() (string, error) {
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+	if err := p.MelStringImport(p.Source); err != nil {
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+		return &quot;&quot;, err
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+	} else {
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+		if err := p.Compute(); err != nil {
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+			return &quot;&quot;, err
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+		} else {
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+			return p.BasmCode, nil
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+		}
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+	}
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/evolutionary.go.html">pkg/procbuilder/evolutionary.go</a> b/<a href="../file/pkg/procbuilder/evolutionary.go.html">pkg/procbuilder/evolutionary.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -6,10 +6,10 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-	&quot;github.com/mmirko/mel&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a> )
+ 
+<a href="#h8-0-7" id="h8-0-7" class="d">-func (mach *Machine) MelInit(ep *mel.EvolutionParameters) {
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+func (mach *Machine) MelInit(c *mel.MelConfig, ep *mel.EvolutionParameters) {
+</a> 
+ 	myarch := new(Arch)
+ 
+<a href="#h8-1" id="h8-1" class="h">@@ -107,7 +107,7 @@ func Machine_Program_Generate(ep *mel.EvolutionParameters) mel.Me3li {
+</a> 	var result mel.Me3li
+ 	var eobj *Machine
+ 	eobj = new(Machine)
+<a href="#h8-1-3" id="h8-1-3" class="d">-	eobj.MelInit(ep)
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+	eobj.MelInit(nil, ep)
+</a> 	eobj.Program = eobj.Program_generate()
+ 	result = eobj
+ 	return result
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/evolutionary_test.go.html">pkg/procbuilder/evolutionary_test.go</a> b/<a href="../file/pkg/procbuilder/evolutionary_test.go.html">pkg/procbuilder/evolutionary_test.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -6,7 +6,7 @@ import (
+</a> 	&quot;testing&quot;
+ 	&quot;time&quot;
+ 
+<a href="#h9-0-3" id="h9-0-3" class="d">-	&quot;github.com/mmirko/mel&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	&quot;github.com/mmirko/mel/pkg/mel&quot;
+</a> )
+ 
+ func TestEvolutionaryMachine(t *testing.T) {
+</pre>
+</div>
+</body>
+</html>

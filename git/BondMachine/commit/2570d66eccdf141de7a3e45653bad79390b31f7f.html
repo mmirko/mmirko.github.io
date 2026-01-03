@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Placeholders for queue and stacks SO - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2570d66eccdf141de7a3e45653bad79390b31f7f.html">2570d66eccdf141de7a3e45653bad79390b31f7f</a>
+<b>parent</b> <a href="../commit/e366eef56424e44f9778e912a05d5f8a5d142293.html">e366eef56424e44f9778e912a05d5f8a5d142293</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 14 Jan 2023 23:29:22 +0100
+
+Placeholders for queue and stacks SO
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/shr_lfsr8.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/shr_queue.go</a></td><td> | </td><td class="num">109</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bondmachine/shr_stack.go</a></td><td> | </td><td class="num">109</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bondmachine/shr_vtextmem.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/procbuilder/shr_queue.go</a></td><td> | </td><td class="num">72</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">pkg/procbuilder/shr_stack.go</a></td><td> | </td><td class="num">72</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>8 files changed, 370 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,6 +25,8 @@ func init() {
+</a> 	Allshared = append(Allshared, Barrier{})
+ 	Allshared = append(Allshared, Lfsr8{})
+ 	Allshared = append(Allshared, Vtextmem{})
+<a href="#h0-0-3" id="h0-0-3" class="i">+	Allshared = append(Allshared, Queue{})
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	Allshared = append(Allshared, Stack{})
+</a> }
+ 
+ func (e Prerror) Error() string {
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/shr_lfsr8.go.html">pkg/bondmachine/shr_lfsr8.go</a> b/<a href="../file/pkg/bondmachine/shr_lfsr8.go.html">pkg/bondmachine/shr_lfsr8.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -25,9 +25,9 @@ func (op Lfsr8) GV_config(element uint8) string {
+</a> 	result := &quot;&quot;
+ 	switch element {
+ 	case GVNODEINPROC:
+<a href="#h1-0-3" id="h1-0-3" class="d">-		result += &quot;style=filled fillcolor=orange color=black&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		result += &quot;style=filled fillcolor=mediumorchid1 color=black&quot;
+</a> 	case GVNODE:
+<a href="#h1-0-6" id="h1-0-6" class="d">-		result += &quot;style=filled fillcolor=orange color=black&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		result += &quot;style=filled fillcolor=mediumorchid1 color=black&quot;
+</a> 	case GVEDGE:
+ 		result += &quot;arrowhead=none&quot;
+ 	case GVCLUS:
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/shr_queue.go.html">pkg/bondmachine/shr_queue.go</a> b/<a href="../file/pkg/bondmachine/shr_queue.go.html">pkg/bondmachine/shr_queue.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,109 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	//&quot;fmt&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;strings&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+)
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+// The placeholder struct
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+type Queue struct{}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+func (op Queue) Shr_get_name() string {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	return &quot;queue&quot;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+func (op Queue) Shr_get_desc() string {
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	return &quot;Queue&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+}
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+func (op Queue) Shortname() string {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	return &quot;q&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+}
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+func (op Queue) GV_config(element uint8) string {
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	switch element {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+	case GVNODEINPROC:
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+		result += &quot;style=filled fillcolor=steelblue1 color=black&quot;
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	case GVNODE:
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+		result += &quot;style=filled fillcolor=steelblue1 color=black&quot;
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	case GVEDGE:
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+		result += &quot;arrowhead=none&quot;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	case GVCLUS:
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey70&quot;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+	case GVCLUSINPROC:
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey70&quot;
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	}
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	return result
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+}
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+func (op Queue) Instantiate(s string) (Shared_instance, bool) {
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	if strings.HasPrefix(s, &quot;queue:&quot;) {
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+		if len(s) &gt; 6 {
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+			if depth, ok := strconv.Atoi(s[6:]); ok == nil {
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+				result := new(Queue_instance)
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+				result.Shared_element = op
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+				result.Depth = depth
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+				return *result, true
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+			}
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+		}
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	}
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+	return nil, false
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+}
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+// The instance struct
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+type Queue_instance struct {
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	Shared_element
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	Depth int
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+}
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+func (sm Queue_instance) String() string {
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+	return &quot;queue:&quot; + strconv.Itoa(sm.Depth)
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+}
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+func (sm Queue_instance) Write_verilog(bmach *Bondmachine, so_index int, queue_name string, flavor string) string {
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+	return result
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+}
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+func (sm Queue_instance) GetPerProcPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;din;\n&quot;
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;dout;\n&quot;
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;addr;\n&quot;
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;wren;\n&quot;
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;en;\n&quot;
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+		result += &quot;\n&quot;
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+	}
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+	return result
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+}
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+func (sm Queue_instance) GetPerProcPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;din&quot;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;dout&quot;
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;addr&quot;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;wren&quot;
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;en&quot;
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+	}
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+	return result
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+}
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+func (sm Queue_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+	return result
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+}
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+func (sm Queue_instance) GetExternalPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	return result
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/shr_stack.go.html">pkg/bondmachine/shr_stack.go</a> b/<a href="../file/pkg/bondmachine/shr_stack.go.html">pkg/bondmachine/shr_stack.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,109 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bondmachine
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	//&quot;fmt&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	&quot;strings&quot;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+)
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+// The placeholder struct
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+type Stack struct{}
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+func (op Stack) Shr_get_name() string {
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	return &quot;stack&quot;
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+}
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+func (op Stack) Shr_get_desc() string {
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	return &quot;Stack&quot;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+}
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+func (op Stack) Shortname() string {
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	return &quot;st&quot;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+}
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+func (op Stack) GV_config(element uint8) string {
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	switch element {
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+	case GVNODEINPROC:
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+		result += &quot;style=filled fillcolor=pink1 color=black&quot;
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+	case GVNODE:
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+		result += &quot;style=filled fillcolor=pink1 color=black&quot;
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+	case GVEDGE:
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+		result += &quot;arrowhead=none&quot;
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	case GVCLUS:
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey70&quot;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	case GVCLUSINPROC:
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey70&quot;
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	}
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	return result
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+}
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+func (op Stack) Instantiate(s string) (Shared_instance, bool) {
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	if strings.HasPrefix(s, &quot;stack:&quot;) {
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+		if len(s) &gt; 6 {
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+			if depth, ok := strconv.Atoi(s[6:]); ok == nil {
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+				result := new(Stack_instance)
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+				result.Shared_element = op
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+				result.Depth = depth
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+				return *result, true
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+			}
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+		}
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	}
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+	return nil, false
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+}
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+// The instance struct
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+type Stack_instance struct {
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+	Shared_element
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+	Depth int
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+}
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+func (sm Stack_instance) String() string {
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+	return &quot;stack:&quot; + strconv.Itoa(sm.Depth)
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+}
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+func (sm Stack_instance) Write_verilog(bmach *Bondmachine, so_index int, stack_name string, flavor string) string {
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+	return result
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+}
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+func (sm Stack_instance) GetPerProcPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;din;\n&quot;
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;dout;\n&quot;
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;addr;\n&quot;
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;wren;\n&quot;
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;en;\n&quot;
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+		result += &quot;\n&quot;
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+	}
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+	return result
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+}
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+func (sm Stack_instance) GetPerProcPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;din&quot;
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;dout&quot;
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;addr&quot;
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;wren&quot;
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;en&quot;
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+	}
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+	return result
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+}
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+func (sm Stack_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+	return result
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+}
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+func (sm Stack_instance) GetExternalPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+	return result
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/shr_vtextmem.go.html">pkg/bondmachine/shr_vtextmem.go</a> b/<a href="../file/pkg/bondmachine/shr_vtextmem.go.html">pkg/bondmachine/shr_vtextmem.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -27,9 +27,9 @@ func (op Vtextmem) GV_config(element uint8) string {
+</a> 	result := &quot;&quot;
+ 	switch element {
+ 	case GVNODEINPROC:
+<a href="#h4-0-3" id="h4-0-3" class="d">-		result += &quot;style=filled fillcolor=cyan color=black&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		result += &quot;style=filled fillcolor=indianred1 color=black&quot;
+</a> 	case GVNODE:
+<a href="#h4-0-6" id="h4-0-6" class="d">-		result += &quot;style=filled fillcolor=cyan color=black&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+		result += &quot;style=filled fillcolor=indianred1 color=black&quot;
+</a> 	case GVEDGE:
+ 		result += &quot;arrowhead=none&quot;
+ 	case GVCLUS:
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -109,6 +109,8 @@ func init() {
+</a> 	Allshared = append(Allshared, Channel{})
+ 	Allshared = append(Allshared, Barrier{})
+ 	Allshared = append(Allshared, Lfsr8{})
+<a href="#h5-0-3" id="h5-0-3" class="i">+	Allshared = append(Allshared, Queue{})
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	Allshared = append(Allshared, Stack{})
+</a> 	Allshared = append(Allshared, Vtextmem{})
+ }
+ 
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a> b/<a href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,72 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package procbuilder
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+import (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;strconv&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	&quot;strings&quot;
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+)
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+type Queue struct{}
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+func (op Queue) Shr_get_name() string {
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+	return &quot;queue&quot;
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+}
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+func (op Queue) Shortname() string {
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+	return &quot;q&quot;
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+}
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+func (op Queue) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+	qName := &quot;q&quot; + strconv.Itoa(seq)
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+	return &quot;, &quot; + qName + &quot;din, &quot; + qName + &quot;dout, &quot; + qName + &quot;addr, &quot; + qName + &quot;wren, &quot; + qName + &quot;en&quot;
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+}
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+func (op Queue) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+	qName := &quot;q&quot; + strconv.Itoa(seq)
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;din;\n&quot;
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;addr;\n&quot;
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+	result += &quot;	output &quot; + qName + &quot;wren;\n&quot;
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+	result += &quot;	output &quot; + qName + &quot;en;\n&quot;
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;dout;\n&quot;
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+	return result
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+}
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+func (op Queue) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+	qNum := 0
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+	if arch.Shared_constraints != &quot;&quot; {
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+		for _, constraint := range constraints {
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+			soname := values[0]
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+			if soname == &quot;queue&quot; {
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+				qNum++
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+			}
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+		}
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+	}
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+	qName := &quot;q&quot; + strconv.Itoa(seq)
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;din;\n&quot;
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;addr;\n&quot;
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+	result += &quot;	output &quot; + qName + &quot;wren;\n&quot;
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+	result += &quot;	output &quot; + qName + &quot;en;\n&quot;
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;dout;\n&quot;
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+	if seq == 0 {
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_din_i[&quot; + strconv.Itoa(qNum-1) + &quot;:0];\n&quot;
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_addr_i [&quot; + strconv.Itoa(qNum-1) + &quot;:0];\n&quot;
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(qNum-1) + &quot;:0] q_wren_i;\n&quot;
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(qNum-1) + &quot;:0] q_en_i;\n&quot;
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_dout_i [&quot; + strconv.Itoa(qNum-1) + &quot;:0];\n&quot;
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+	}
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+	result += &quot;\tassign &quot; + qName + &quot;din = q_din_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+	result += &quot;\tassign &quot; + qName + &quot;addr = q_addr_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+	result += &quot;\tassign &quot; + qName + &quot;wren = q_wren_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+	result += &quot;\tassign &quot; + qName + &quot;en = q_en_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+	result += &quot;\tassign q_dout_i[&quot; + strconv.Itoa(seq) + &quot;] = &quot; + qName + &quot;dout;\n&quot;
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+	return result
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a> b/<a href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,72 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+package procbuilder
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+import (
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+	&quot;strconv&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	&quot;strings&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+)
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+type Stack struct{}
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+func (op Stack) Shr_get_name() string {
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+	return &quot;stack&quot;
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+}
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+func (op Stack) Shortname() string {
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+	return &quot;st&quot;
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+}
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+func (op Stack) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	stackName := &quot;st&quot; + strconv.Itoa(seq)
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+	return &quot;, &quot; + stackName + &quot;din, &quot; + stackName + &quot;dout, &quot; + stackName + &quot;addr, &quot; + stackName + &quot;wren, &quot; + stackName + &quot;en&quot;
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+}
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+func (op Stack) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+	stackName := &quot;st&quot; + strconv.Itoa(seq)
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+	result := &quot;&quot;
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;din;\n&quot;
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;addr;\n&quot;
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+	result += &quot;	output &quot; + stackName + &quot;wren;\n&quot;
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+	result += &quot;	output &quot; + stackName + &quot;en;\n&quot;
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;dout;\n&quot;
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+	return result
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+}
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+func (op Stack) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+	result := &quot;&quot;
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+	stackNum := 0
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+	if arch.Shared_constraints != &quot;&quot; {
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+		for _, constraint := range constraints {
+</a><a href="#h7-0-41" id="h7-0-41" class="i">+			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h7-0-42" id="h7-0-42" class="i">+			soname := values[0]
+</a><a href="#h7-0-43" id="h7-0-43" class="i">+			if soname == &quot;stack&quot; {
+</a><a href="#h7-0-44" id="h7-0-44" class="i">+				stackNum++
+</a><a href="#h7-0-45" id="h7-0-45" class="i">+			}
+</a><a href="#h7-0-46" id="h7-0-46" class="i">+		}
+</a><a href="#h7-0-47" id="h7-0-47" class="i">+	}
+</a><a href="#h7-0-48" id="h7-0-48" class="i">+
+</a><a href="#h7-0-49" id="h7-0-49" class="i">+	stackName := &quot;st&quot; + strconv.Itoa(seq)
+</a><a href="#h7-0-50" id="h7-0-50" class="i">+
+</a><a href="#h7-0-51" id="h7-0-51" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;din;\n&quot;
+</a><a href="#h7-0-52" id="h7-0-52" class="i">+	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;addr;\n&quot;
+</a><a href="#h7-0-53" id="h7-0-53" class="i">+	result += &quot;	output &quot; + stackName + &quot;wren;\n&quot;
+</a><a href="#h7-0-54" id="h7-0-54" class="i">+	result += &quot;	output &quot; + stackName + &quot;en;\n&quot;
+</a><a href="#h7-0-55" id="h7-0-55" class="i">+	result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + stackName + &quot;dout;\n&quot;
+</a><a href="#h7-0-56" id="h7-0-56" class="i">+
+</a><a href="#h7-0-57" id="h7-0-57" class="i">+	if seq == 0 {
+</a><a href="#h7-0-58" id="h7-0-58" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_din_i[&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h7-0-59" id="h7-0-59" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_addr_i [&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h7-0-60" id="h7-0-60" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(stackNum-1) + &quot;:0] q_wren_i;\n&quot;
+</a><a href="#h7-0-61" id="h7-0-61" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(stackNum-1) + &quot;:0] q_en_i;\n&quot;
+</a><a href="#h7-0-62" id="h7-0-62" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] q_dout_i [&quot; + strconv.Itoa(stackNum-1) + &quot;:0];\n&quot;
+</a><a href="#h7-0-63" id="h7-0-63" class="i">+	}
+</a><a href="#h7-0-64" id="h7-0-64" class="i">+
+</a><a href="#h7-0-65" id="h7-0-65" class="i">+	result += &quot;\tassign &quot; + stackName + &quot;din = q_din_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h7-0-66" id="h7-0-66" class="i">+	result += &quot;\tassign &quot; + stackName + &quot;addr = q_addr_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h7-0-67" id="h7-0-67" class="i">+	result += &quot;\tassign &quot; + stackName + &quot;wren = q_wren_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h7-0-68" id="h7-0-68" class="i">+	result += &quot;\tassign &quot; + stackName + &quot;en = q_en_i[&quot; + strconv.Itoa(seq) + &quot;];\n&quot;
+</a><a href="#h7-0-69" id="h7-0-69" class="i">+	result += &quot;\tassign q_dout_i[&quot; + strconv.Itoa(seq) + &quot;] = &quot; + stackName + &quot;dout;\n&quot;
+</a><a href="#h7-0-70" id="h7-0-70" class="i">+	return result
+</a><a href="#h7-0-71" id="h7-0-71" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

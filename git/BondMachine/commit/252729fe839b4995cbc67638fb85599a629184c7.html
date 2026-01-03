@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Basm templates - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/252729fe839b4995cbc67638fb85599a629184c7.html">252729fe839b4995cbc67638fb85599a629184c7</a>
+<b>parent</b> <a href="../commit/620da90e465b306d5ff5215fc5a4effc155e46b3.html">620da90e465b306d5ff5215fc5a4effc155e46b3</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2024 14:46:42 +0100
+
+Basm templates
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">136</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">5</td><td><span class="i"></span><span class="d">-----</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bmqsim/files_seqhardcoded_real.go</a></td><td> | </td><td class="num">147</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmqsim/templates.go</a></td><td> | </td><td class="num">48</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 270 insertions(+), 66 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;log&quot;
+ 	&quot;path/filepath&quot;
+ 	&quot;strconv&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmbuilder&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -129,83 +130,82 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if !startBuilding {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		return
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	}
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if startBuilding {
+</a> 
+<a href="#h0-1-8" id="h0-1-8" class="d">-	if *buildFullHardwareHardcoded != &quot;&quot; {
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		// Build a full hardware BM with hardcoded quantum circuit this is a special case incompatible with the rest of the modes
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		// Matrices won&#39;t be generated, the hardware will be built directly
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		if *buildFullHardwareHardcoded != &quot;&quot; {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			// Build a full hardware BM with hardcoded quantum circuit this is a special case incompatible with the rest of the modes
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			// Matrices won&#39;t be generated, the hardware will be built directly
+</a> 
+<a href="#h0-1-15" id="h0-1-15" class="d">-		// Run the builder with the full set of passes
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		if err := bld.RunBuilder(); err != nil {
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-			bld.Alert(err)
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			return
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-		}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+			// Run the builder with the full set of passes
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+			if err := bld.RunBuilder(); err != nil {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				bld.Alert(err)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+				return
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			}
+</a> 
+<a href="#h0-1-26" id="h0-1-26" class="d">-		// TODO: Finish this
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-		fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	} else {
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-		// All the other modes run the builder with a minimal set of passes only to parse the quantum circuit
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-		// and generate the matrices
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+			// TODO: Finish this
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+			fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+		} else {
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+			// All the other modes run the builder with a minimal set of passes only to parse the quantum circuit
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+			// and generate the matrices
+</a> 
+<a href="#h0-1-37" id="h0-1-37" class="d">-		bld.UnsetActive(&quot;generatorsexec&quot;)
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+			bld.UnsetActive(&quot;generatorsexec&quot;)
+</a> 
+<a href="#h0-1-40" id="h0-1-40" class="d">-		if err := bld.RunBuilder(); err != nil {
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-			bld.Alert(err)
+</a><a href="#h0-1-42" id="h0-1-42" class="d">-			return
+</a><a href="#h0-1-43" id="h0-1-43" class="d">-		}
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+			if err := bld.RunBuilder(); err != nil {
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+				bld.Alert(err)
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+				return
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+			}
+</a> 
+<a href="#h0-1-49" id="h0-1-49" class="d">-		if *debug {
+</a><a href="#h0-1-50" id="h0-1-50" class="d">-			fmt.Println(purple(&quot;BmBuilder completed&quot;))
+</a><a href="#h0-1-51" id="h0-1-51" class="d">-		}
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+			if *debug {
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+				fmt.Println(purple(&quot;BmBuilder completed&quot;))
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+			}
+</a> 
+<a href="#h0-1-56" id="h0-1-56" class="d">-		var body *bmline.BasmBody
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+			var body *bmline.BasmBody
+</a> 
+<a href="#h0-1-59" id="h0-1-59" class="d">-		if *debug {
+</a><a href="#h0-1-60" id="h0-1-60" class="d">-			fmt.Println(purple(&quot;Exporting circuit&quot;))
+</a><a href="#h0-1-61" id="h0-1-61" class="d">-		}
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+			if *debug {
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+				fmt.Println(purple(&quot;Exporting circuit&quot;))
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+			}
+</a> 
+<a href="#h0-1-66" id="h0-1-66" class="d">-		// Export the BasmBody to generate the matrices
+</a><a href="#h0-1-67" id="h0-1-67" class="d">-		if v, err := bld.ExportBasmBody(); err != nil {
+</a><a href="#h0-1-68" id="h0-1-68" class="d">-			bld.Alert(err)
+</a><a href="#h0-1-69" id="h0-1-69" class="d">-			return
+</a><a href="#h0-1-70" id="h0-1-70" class="d">-		} else {
+</a><a href="#h0-1-71" id="h0-1-71" class="d">-			body = v
+</a><a href="#h0-1-72" id="h0-1-72" class="d">-		}
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+			// Export the BasmBody to generate the matrices
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+			if v, err := bld.ExportBasmBody(); err != nil {
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+				bld.Alert(err)
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+				return
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+			} else {
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+				body = v
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+			}
+</a> 
+<a href="#h0-1-81" id="h0-1-81" class="d">-		if *debug {
+</a><a href="#h0-1-82" id="h0-1-82" class="d">-			fmt.Println(purple(&quot;Processing circuit to matrices&quot;))
+</a><a href="#h0-1-83" id="h0-1-83" class="d">-		}
+</a><a href="#h0-1-84" id="h0-1-84" class="d">-		// Get the circuit matrices from the BasmBody
+</a><a href="#h0-1-85" id="h0-1-85" class="d">-		if matrices, err := sim.QasmToBmMatrices(body); err != nil {
+</a><a href="#h0-1-86" id="h0-1-86" class="d">-			bld.Alert(err)
+</a><a href="#h0-1-87" id="h0-1-87" class="d">-			return
+</a><a href="#h0-1-88" id="h0-1-88" class="d">-		} else {
+</a><a href="#h0-1-89" id="h0-1-89" class="d">-			sim.Mtx = make([]*bmmatrix.BmMatrixSquareComplex, len(matrices))
+</a><a href="#h0-1-90" id="h0-1-90" class="d">-			copy(sim.Mtx, matrices)
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+			if *debug {
+</a><a href="#h0-1-92" id="h0-1-92" class="i">+				fmt.Println(purple(&quot;Processing circuit to matrices&quot;))
+</a><a href="#h0-1-93" id="h0-1-93" class="i">+			}
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+			// Get the circuit matrices from the BasmBody
+</a><a href="#h0-1-95" id="h0-1-95" class="i">+			if matrices, err := sim.QasmToBmMatrices(body); err != nil {
+</a><a href="#h0-1-96" id="h0-1-96" class="i">+				bld.Alert(err)
+</a><a href="#h0-1-97" id="h0-1-97" class="i">+				return
+</a><a href="#h0-1-98" id="h0-1-98" class="i">+			} else {
+</a><a href="#h0-1-99" id="h0-1-99" class="i">+				sim.Mtx = make([]*bmmatrix.BmMatrixSquareComplex, len(matrices))
+</a><a href="#h0-1-100" id="h0-1-100" class="i">+				copy(sim.Mtx, matrices)
+</a><a href="#h0-1-101" id="h0-1-101" class="i">+			}
+</a> 		}
+<a href="#h0-1-103" id="h0-1-103" class="d">-	}
+</a> 
+<a href="#h0-1-105" id="h0-1-105" class="d">-	if *showMatrices {
+</a><a href="#h0-1-106" id="h0-1-106" class="d">-		if sim.Mtx == nil {
+</a><a href="#h0-1-107" id="h0-1-107" class="d">-			bld.Alert(&quot;No matrices to show&quot;)
+</a><a href="#h0-1-108" id="h0-1-108" class="d">-			return
+</a><a href="#h0-1-109" id="h0-1-109" class="d">-		} else {
+</a><a href="#h0-1-110" id="h0-1-110" class="d">-			for i, m := range sim.Mtx {
+</a><a href="#h0-1-111" id="h0-1-111" class="d">-				fmt.Println(green(&quot;Matrix:&quot;), yellow(strconv.Itoa(i)))
+</a><a href="#h0-1-112" id="h0-1-112" class="d">-				fmt.Println(m.StringColor(green))
+</a><a href="#h0-1-113" id="h0-1-113" class="i">+		if *showMatrices {
+</a><a href="#h0-1-114" id="h0-1-114" class="i">+			if sim.Mtx == nil {
+</a><a href="#h0-1-115" id="h0-1-115" class="i">+				bld.Alert(&quot;No matrices to show&quot;)
+</a><a href="#h0-1-116" id="h0-1-116" class="i">+				return
+</a><a href="#h0-1-117" id="h0-1-117" class="i">+			} else {
+</a><a href="#h0-1-118" id="h0-1-118" class="i">+				for i, m := range sim.Mtx {
+</a><a href="#h0-1-119" id="h0-1-119" class="i">+					fmt.Println(green(&quot;Matrix:&quot;), yellow(strconv.Itoa(i)))
+</a><a href="#h0-1-120" id="h0-1-120" class="i">+					fmt.Println(m.StringColor(green))
+</a><a href="#h0-1-121" id="h0-1-121" class="i">+				}
+</a> 			}
+ 		}
+<a href="#h0-1-124" id="h0-1-124" class="d">-	}
+</a> 
+<a href="#h0-1-126" id="h0-1-126" class="d">-	if *showCircuitMatrix {
+</a><a href="#h0-1-127" id="h0-1-127" class="d">-		mm := sim.Mtx[len(sim.Mtx)-1]
+</a><a href="#h0-1-128" id="h0-1-128" class="d">-		for i := len(sim.Mtx) - 2; i &gt;= 0; i-- {
+</a><a href="#h0-1-129" id="h0-1-129" class="d">-			mm = bmmatrix.MatrixProductComplex(mm, sim.Mtx[i])
+</a><a href="#h0-1-130" id="h0-1-130" class="i">+		if *showCircuitMatrix {
+</a><a href="#h0-1-131" id="h0-1-131" class="i">+			mm := sim.Mtx[len(sim.Mtx)-1]
+</a><a href="#h0-1-132" id="h0-1-132" class="i">+			for i := len(sim.Mtx) - 2; i &gt;= 0; i-- {
+</a><a href="#h0-1-133" id="h0-1-133" class="i">+				mm = bmmatrix.MatrixProductComplex(mm, sim.Mtx[i])
+</a><a href="#h0-1-134" id="h0-1-134" class="i">+			}
+</a><a href="#h0-1-135" id="h0-1-135" class="i">+			fmt.Println(green(&quot;Whole circuit matrix:&quot;))
+</a><a href="#h0-1-136" id="h0-1-136" class="i">+			fmt.Println(mm.StringColor(green))
+</a> 		}
+<a href="#h0-1-138" id="h0-1-138" class="d">-		fmt.Println(green(&quot;Whole circuit matrix:&quot;))
+</a><a href="#h0-1-139" id="h0-1-139" class="d">-		fmt.Println(mm.StringColor(green))
+</a> 	}
+ 
+ 	if *buildMatrixSeqHardcoded != &quot;&quot; {
+<a href="#h0-2" id="h0-2" class="h">@@ -214,7 +214,21 @@ func main() {
+</a> 
+ 		if *hardwareFlavorList {
+ 			// List of available hardware flavors for the selected operating mode
+<a href="#h0-2-3" id="h0-2-3" class="i">+			for t := range bmqsim.Templates {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				if strings.HasPrefix(t, &quot;seq_hardcoded_&quot;) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+					fmt.Println(t)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+				}
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			}
+</a> 		} else if *hardwareFlavor != &quot;&quot; {
+<a href="#h0-2-9" id="h0-2-9" class="i">+			if startBuilding {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+				if _, ok := bmqsim.Templates[*hardwareFlavor]; ok {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+					fmt.Println(sim.ApplyTemplate(*hardwareFlavor))
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+				} else {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+					bld.Alert(&quot;Hardware flavor not found&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+				}
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+			} else {
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+				bld.Alert(&quot;No quantum circuit to build the matrix sequence&quot;)
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+			}
+</a> 		} else {
+ 			bld.Alert(&quot;Hardware flavor must be selected&quot;)
+ 		}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -323,11 +323,6 @@ func swaps2baseSwaps(s swap, n int) []swap {
+</a> 	return result
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-// Integer to binary string padded with zeros
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-func int2bin(i int, n int) string {
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	return fmt.Sprintf(&quot;%0*b&quot;, n, i)
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-}
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-
+</a> func (sim *BmQSimulator) MatrixFromOp(op string) (*bmmatrix.BmMatrixSquareComplex, error) {
+ 	switch op {
+ 	case &quot;h&quot;, &quot;H&quot;:
+<b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/files_seqhardcoded_real.go.html">pkg/bmqsim/files_seqhardcoded_real.go</a> b/<a href="../file/pkg/bmqsim/files_seqhardcoded_real.go.html">pkg/bmqsim/files_seqhardcoded_real.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,147 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmqsim
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	SeqHardcodedReal = `%section matrixmulel .romtext iomode:sync
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+        entry _start    ; Entry point
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+_start:
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	rset	r2, 2 ; the number of matrices
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	rset	r1, 0 ; counter
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+mainloop:
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	jz	r2, _start
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	mov	r3, ram:[r1]
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	mov	r0, i0
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	{{&quot;{{&quot;}} .Params.multop {{&quot;}}&quot;}}	r0, r3
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	mov	o0, r0
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	dec	r2
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	inc	r1
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	j mainloop
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	mov	ram:[r1], r0
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+%endsection
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+%section matrixelement00 .ramdata
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+        step0 dd 0f2
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	step1 dd 0f-1
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+%endsection
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+%section matrixelement01 .ramdata
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+        step0 dd 0f3
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	step1 dd 0f1.1
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+%endsection
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+%section matrixelement10 .ramdata
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+        step0 dd 0f3
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	step1 dd 0f1.1
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+%endsection
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+%section matrixelement11 .ramdata
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+        step0 dd 0f3
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	step1 dd 0f1.1
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+%endsection
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+%section matrixaddel .romtext iomode:sync
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+        entry _start    ; Entry point
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+_start:
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+	clr	r1
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	mov	r0, i0
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r1, r0
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	mov	r0, i1
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	{{&quot;{{&quot;}} .Params.addop {{&quot;}}&quot;}}	r1, r0
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	mov	o0, r1
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	j _start
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+%endsection
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+%section main .romtext iomode:sync
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+	entry _start    ; Entry point
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+_start:
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+	;clr	r1
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+	mov r0, i0
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+	;mov ram:[r1], r0
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	;inc r1
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	mov r1, i1
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+	;mov ram:[r1], r0
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+;	j endloop
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+	
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+	rset	r2, 2 ; the number of matrices
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+mainloop:
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+	jz	r2, endloop
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+	;clr r1
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+	;mov r0, ram:[r1]
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	mov o2, r0
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+	;inc r1
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+	;mov r0, ram:[r1]
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+	mov o3, r1
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+	;clr r1
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+	mov r0, i2
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+	;mov ram:[r1], r0
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+	;inc r1
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+	mov r1, i3
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+	;mov ram:[r1], r0
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+	dec r2
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+	j mainloop
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+endloop:
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+	;clr r1
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+	;mov r0, ram:[r1]
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+	mov o0, r0
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	;inc r1
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	;mov r0, ram:[r1]
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+	mov o1, r1
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+	j _start
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+%endsection
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+%section mainram .ramdata
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+        res0 dd 0f0
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+        res1 dd 0f0
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+%endsection
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+%meta cpdef	mult00	romcode: matrixmulel, ramdata: matrixelement00, execmode: ha, multop: multf
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+%meta cpdef	mult01	romcode: matrixmulel, ramdata: matrixelement01, execmode: ha, multop: multf
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+%meta cpdef	mult10	romcode: matrixmulel, ramdata: matrixelement10, execmode: ha, multop: multf
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+%meta cpdef	mult11	romcode: matrixmulel, ramdata: matrixelement11, execmode: ha, multop: multf
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+%meta cpdef	add0	romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+%meta cpdef	add1	romcode: matrixaddel, execmode: ha, addop: addf
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+%meta cpdef	main	romcode: main, ramdata:mainram, execmode: ha
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+%meta ioatt     toadd00	cp: mult00, index:0, type:output
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+%meta ioatt     toadd01	cp: mult01, index:0, type:output
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+%meta ioatt     toadd10	cp: mult10, index:0, type:output
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+%meta ioatt     toadd11	cp: mult11, index:0, type:output
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+%meta ioatt     toadd00	cp: add0, index:0, type:input
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+%meta ioatt     toadd01	cp: add0, index:1, type:input
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+%meta ioatt     toadd10	cp: add1, index:0, type:input
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+%meta ioatt     toadd11	cp: add1, index:1, type:input
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+%meta ioatt     tomult00	cp: main, index:2, type:output
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+%meta ioatt     tomult01	cp: main, index:3, type:output
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+%meta ioatt     tomult00	cp: mult00, index:0, type:input
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+%meta ioatt     tomult01	cp: mult01, index:0, type:input
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+%meta ioatt     tomult10	cp: main, index:2, type:output
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+%meta ioatt     tomult11	cp: main, index:3, type:output
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+%meta ioatt     tomult10	cp: mult10, index:0, type:input
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+%meta ioatt     tomult11	cp: mult11, index:0, type:input
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+%meta ioatt     tomain0	cp: add0, index:0, type:output
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+%meta ioatt     tomain1	cp: add1, index:0, type:output
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+%meta ioatt     tomain0	cp: main, index:2, type:input
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+%meta ioatt     tomain1	cp: main, index:3, type:input
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+%meta ioatt     bmi0	cp: main, index:0, type:input
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+%meta ioatt     bmi1	cp: main, index:1, type:input
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+%meta ioatt     bmi0	cp: bm, index:0, type:input
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+%meta ioatt     bmi1	cp: bm, index:1, type:input
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+%meta ioatt     bmo0	cp: main, index:0, type:output
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+%meta ioatt     bmo1	cp: main, index:1, type:output
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+%meta ioatt     bmo0	cp: bm, index:0, type:output
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+%meta ioatt     bmo1	cp: bm, index:1, type:output
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+%meta bmdef	global registersize:32
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+`
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a> b/<a href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,48 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmqsim
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;bytes&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;text/template&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+)
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+// Modes:
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+// seq_hardcoded
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+// seq
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+// full_hw_hardcoded
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+var Templates = map[string]string{
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	&quot;seq_hardcoded_real&quot;: SeqHardcodedReal,
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+}
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+type templateData struct {
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	funcMap template.FuncMap
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+}
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+func (sim *BmQSimulator) createBasicTemplateData() *templateData {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	result := new(templateData)
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	funcMap := template.FuncMap{
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+		&quot;inc&quot;: func(i int) int {
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+			return i + 1
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+		},
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+		&quot;dec&quot;: func(i int) int {
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+			return i - 1
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		},
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	}
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+	result.funcMap = funcMap
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	return result
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+}
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+func (sim *BmQSimulator) ApplyTemplate(mode string) (string, error) {
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	d := Templates[mode]
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	templateData := sim.createBasicTemplateData()
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	t, err := template.New(mode).Funcs(templateData.funcMap).Parse(d)
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	if err != nil {
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+		return &quot;&quot;, err
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	}
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	var f bytes.Buffer
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+	err = t.Execute(&amp;f, *templateData)
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	if err != nil {
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+		return &quot;&quot;, err
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	}
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	return f.String(), nil
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

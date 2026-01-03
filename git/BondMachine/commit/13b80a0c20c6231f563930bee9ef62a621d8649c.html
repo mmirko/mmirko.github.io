@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>kbd - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/13b80a0c20c6231f563930bee9ef62a621d8649c.html">13b80a0c20c6231f563930bee9ef62a621d8649c</a>
+<b>parent</b> <a href="../commit/8e359920a492402e8b6188e2872a406bce5dc10d.html">8e359920a492402e8b6188e2872a406bce5dc10d</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 21 Feb 2023 23:21:25 +0100
+
+kbd
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/shr_kbd.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/procbuilder/op_k2r.go</a></td><td> | </td><td class="num">316</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/procbuilder/shr_kbd.go</a></td><td> | </td><td class="num">103</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 420 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/shr_kbd.go.html">pkg/bondmachine/shr_kbd.go</a> b/<a href="../file/pkg/bondmachine/shr_kbd.go.html">pkg/bondmachine/shr_kbd.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -49,7 +49,7 @@ func (op Kbd) Instantiate(s string) (Shared_instance, bool) {
+</a> 		components := strings.Split(s, &quot;:&quot;)
+ 		componentsN := len(components)
+ 		if componentsN == 2 {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			if depth, ok := strconv.Atoi(components[2]); ok == nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			if depth, ok := strconv.Atoi(components[1]); ok == nil {
+</a> 				result.Depth = depth
+ 			}
+ 			return result, true
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a> b/<a href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,316 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package procbuilder
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+// The  opcode
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+type K2r struct{}
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+func (op K2r) getKbdName(queueId int) string {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	return &quot;k&quot; + strconv.Itoa(queueId)
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+func (op K2r) Op_get_name() string {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	return &quot;k2r&quot;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+}
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+func (op K2r) Op_get_desc() string {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	return &quot;Get a value from a keyboard queue and put it in a register&quot;
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+func (op K2r) Op_show_assembler(arch *Arch) string {
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	qSo := Kbd{}
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	result := &quot;k2r [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(queueBits)) + &quot; (Shared Kbd)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+queueBits) + &quot;]\n&quot;
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+	return result
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+}
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+func (op K2r) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	qSo := Kbd{}
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	return opBits + int(arch.R) + int(queueBits) // The bits for the opcode + bits for a register + bits queues
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+}
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+func (op K2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	qSo := Kbd{}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;k2r&quot;, &quot;r2q&quot;}) {
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+		result += &quot;	reg stackqueueSM;\n&quot;
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	}
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2q&quot;, &quot;k2r&quot;}) {
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+		result += &quot;	localparam &quot;
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		for i := 0; i &lt; queueNum; i++ {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+			result += strings.ToUpper(op.getKbdName(i)) + &quot;=&quot; + strconv.Itoa(int(queueBits)) + &quot;&#39;d&quot; + strconv.Itoa(i)
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+			if i &lt; queueNum-1 {
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+				result += &quot;,\n&quot;
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+			} else {
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+				result += &quot;;\n&quot;
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+			}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+		}
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+	}
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	return result
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+}
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+func (Op K2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+	return result
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+}
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	qSo := Kbd{}
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+	result += &quot;					K2R: begin\n&quot;
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+	if queueNum &gt; 0 {
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+		if arch.R == 1 {
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+		} else {
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+		}
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+		for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+			if queueBits == 1 {
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;])\n&quot;
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+			} else {
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(queueBits)) + &quot;])\n&quot;
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+			}
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+			for j := 0; j &lt; queueNum; j++ {
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+				result += &quot;							&quot; + strings.ToUpper(op.getKbdName(j)) + &quot; : begin\n&quot;
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+				result += &quot;								if (&quot; + strings.ToLower(op.getKbdName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead) begin\n&quot;
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+				result += &quot;								     &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+				result += &quot;								end\n&quot;
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+				result += &quot;								else begin\n&quot;
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+				result += &quot;								       &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+				result += &quot;								end\n&quot;
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+				result += &quot;								$display(\&quot;T2R &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(op.getKbdName(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+				result += &quot;							end\n&quot;
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+			}
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+			result += &quot;						end\n&quot;
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+		}
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+		result += &quot;						endcase\n&quot;
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+	} else {
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+	}
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+	return result
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+}
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+func (op K2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	return result
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+}
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+func (op K2r) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+	qSo := Kbd{}
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+	shortName := qSo.Shortname()
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+	romWord := arch.Max_word()
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+	if len(words) != 2 {
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+	}
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+			break
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+		}
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+	}
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+	if result == &quot;&quot; {
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+	}
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+	if partial, err := Process_shared(shortName, words[1], queueNum); err == nil {
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+		result += zeros_prefix(queueBits, partial)
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+	} else {
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+		return &quot;&quot;, Prerror{err.Error()}
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+	}
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+	for i := opBits + int(arch.R) + queueBits; i &lt; romWord; i++ {
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+		result += &quot;0&quot;
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+	}
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+	return result, nil
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+}
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+func (op K2r) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+	kSo := Kbd{}
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+	queueBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+	shortname := kSo.Shortname()
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+	regId := get_id(instr[:arch.R])
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+	stId := get_id(instr[arch.R : int(arch.R)+queueBits])
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+	result += shortname + strconv.Itoa(stId)
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+	return result, nil
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+}
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+// The simulation does nothing
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+func (op K2r) Simulate(vm *VM, instr string) error {
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+	// TODO
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+	regPay := get_id(instr[:reg_bits])
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+	posS := instr[reg_bits : reg_bits+8]
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+	pos := uint8(get_id(posS))
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+	payload := vm.Registers[regPay].(uint8)
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+	cmd := make([]byte, 0)
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+	cmd = append(cmd, byte(vm.CpID))
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+	cmd = append(cmd, byte(pos))
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+	cmd = append(cmd, byte(payload))
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+	vm.CmdChan &lt;- cmd
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+	return nil
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+}
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+// The random genaration does nothing
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+func (op K2r) Generate(arch *Arch) string {
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+	// TODO
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+	return &quot;&quot;
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+}
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+func (op K2r) Required_shared() (bool, []string) {
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+	// TODO
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+	return false, []string{}
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+}
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+func (op K2r) Required_modes() (bool, []string) {
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+	return false, []string{}
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+}
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+func (op K2r) Forbidden_modes() (bool, []string) {
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+	return false, []string{}
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+}
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+func (Op K2r) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h1-0-221" id="h1-0-221" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-222" id="h1-0-222" class="i">+	return result
+</a><a href="#h1-0-223" id="h1-0-223" class="i">+}
+</a><a href="#h1-0-224" id="h1-0-224" class="i">+
+</a><a href="#h1-0-225" id="h1-0-225" class="i">+func (Op K2r) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h1-0-226" id="h1-0-226" class="i">+	return &quot;&quot;
+</a><a href="#h1-0-227" id="h1-0-227" class="i">+}
+</a><a href="#h1-0-228" id="h1-0-228" class="i">+
+</a><a href="#h1-0-229" id="h1-0-229" class="i">+func (Op K2r) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h1-0-230" id="h1-0-230" class="i">+	return []string{}, []string{}
+</a><a href="#h1-0-231" id="h1-0-231" class="i">+}
+</a><a href="#h1-0-232" id="h1-0-232" class="i">+
+</a><a href="#h1-0-233" id="h1-0-233" class="i">+func (Op K2r) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h1-0-234" id="h1-0-234" class="i">+	// TODO Partial
+</a><a href="#h1-0-235" id="h1-0-235" class="i">+	result := make([]UsageNotify, 1)
+</a><a href="#h1-0-236" id="h1-0-236" class="i">+	newnot := UsageNotify{C_OPCODE, &quot;k2r&quot;, I_NIL}
+</a><a href="#h1-0-237" id="h1-0-237" class="i">+	result[0] = newnot
+</a><a href="#h1-0-238" id="h1-0-238" class="i">+	return result, nil
+</a><a href="#h1-0-239" id="h1-0-239" class="i">+}
+</a><a href="#h1-0-240" id="h1-0-240" class="i">+
+</a><a href="#h1-0-241" id="h1-0-241" class="i">+func (Op K2r) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h1-0-242" id="h1-0-242" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-243" id="h1-0-243" class="i">+	switch blockname {
+</a><a href="#h1-0-244" id="h1-0-244" class="i">+	default:
+</a><a href="#h1-0-245" id="h1-0-245" class="i">+		result = &quot;&quot;
+</a><a href="#h1-0-246" id="h1-0-246" class="i">+	}
+</a><a href="#h1-0-247" id="h1-0-247" class="i">+	return result
+</a><a href="#h1-0-248" id="h1-0-248" class="i">+}
+</a><a href="#h1-0-249" id="h1-0-249" class="i">+func (Op K2r) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h1-0-250" id="h1-0-250" class="i">+	result := make([]string, 0)
+</a><a href="#h1-0-251" id="h1-0-251" class="i">+	result = append(result, &quot;kbd::*--type=reg&quot;)
+</a><a href="#h1-0-252" id="h1-0-252" class="i">+	result = append(result, &quot;k2r::*--type=reg::*--type=somov--sotype=k&quot;)
+</a><a href="#h1-0-253" id="h1-0-253" class="i">+	result = append(result, &quot;mov::*--type=reg::*--type=somov--sotype=k&quot;)
+</a><a href="#h1-0-254" id="h1-0-254" class="i">+	return result
+</a><a href="#h1-0-255" id="h1-0-255" class="i">+}
+</a><a href="#h1-0-256" id="h1-0-256" class="i">+func (Op K2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h1-0-257" id="h1-0-257" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h1-0-258" id="h1-0-258" class="i">+	case &quot;k2r&quot;:
+</a><a href="#h1-0-259" id="h1-0-259" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-260" id="h1-0-260" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-261" id="h1-0-261" class="i">+		soVal := line.Elements[1].GetValue()
+</a><a href="#h1-0-262" id="h1-0-262" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-263" id="h1-0-263" class="i">+		return line, nil
+</a><a href="#h1-0-264" id="h1-0-264" class="i">+	case &quot;kbd&quot;:
+</a><a href="#h1-0-265" id="h1-0-265" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-266" id="h1-0-266" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-267" id="h1-0-267" class="i">+		soVal := &quot;q0&quot; // Pull implicitly uses queue 0
+</a><a href="#h1-0-268" id="h1-0-268" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-269" id="h1-0-269" class="i">+		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+</a><a href="#h1-0-270" id="h1-0-270" class="i">+			newLine := new(bmline.BasmLine)
+</a><a href="#h1-0-271" id="h1-0-271" class="i">+			newOp := new(bmline.BasmElement)
+</a><a href="#h1-0-272" id="h1-0-272" class="i">+			newOp.SetValue(&quot;k2r&quot;)
+</a><a href="#h1-0-273" id="h1-0-273" class="i">+			newLine.Operation = newOp
+</a><a href="#h1-0-274" id="h1-0-274" class="i">+			newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h1-0-275" id="h1-0-275" class="i">+			newArg0 := new(bmline.BasmElement)
+</a><a href="#h1-0-276" id="h1-0-276" class="i">+			newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h1-0-277" id="h1-0-277" class="i">+			newArg0.SetValue(regVal)
+</a><a href="#h1-0-278" id="h1-0-278" class="i">+			newArgs[0] = newArg0
+</a><a href="#h1-0-279" id="h1-0-279" class="i">+			newArg1 := new(bmline.BasmElement)
+</a><a href="#h1-0-280" id="h1-0-280" class="i">+			newArg1.SetValue(soVal)
+</a><a href="#h1-0-281" id="h1-0-281" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+</a><a href="#h1-0-282" id="h1-0-282" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;q&quot;)
+</a><a href="#h1-0-283" id="h1-0-283" class="i">+			newArgs[1] = newArg1
+</a><a href="#h1-0-284" id="h1-0-284" class="i">+			newLine.Elements = newArgs
+</a><a href="#h1-0-285" id="h1-0-285" class="i">+			return newLine, nil
+</a><a href="#h1-0-286" id="h1-0-286" class="i">+		}
+</a><a href="#h1-0-287" id="h1-0-287" class="i">+	case &quot;mov&quot;:
+</a><a href="#h1-0-288" id="h1-0-288" class="i">+		regVal := line.Elements[0].GetValue()
+</a><a href="#h1-0-289" id="h1-0-289" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-290" id="h1-0-290" class="i">+		soVal := line.Elements[1].GetValue()
+</a><a href="#h1-0-291" id="h1-0-291" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+</a><a href="#h1-0-292" id="h1-0-292" class="i">+		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+</a><a href="#h1-0-293" id="h1-0-293" class="i">+			newLine := new(bmline.BasmLine)
+</a><a href="#h1-0-294" id="h1-0-294" class="i">+			newOp := new(bmline.BasmElement)
+</a><a href="#h1-0-295" id="h1-0-295" class="i">+			newOp.SetValue(&quot;k2r&quot;)
+</a><a href="#h1-0-296" id="h1-0-296" class="i">+			newLine.Operation = newOp
+</a><a href="#h1-0-297" id="h1-0-297" class="i">+			newArgs := make([]*bmline.BasmElement, 2)
+</a><a href="#h1-0-298" id="h1-0-298" class="i">+			newArg0 := new(bmline.BasmElement)
+</a><a href="#h1-0-299" id="h1-0-299" class="i">+			newArg0.BasmMeta = newArg0.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+</a><a href="#h1-0-300" id="h1-0-300" class="i">+			newArg0.SetValue(regVal)
+</a><a href="#h1-0-301" id="h1-0-301" class="i">+			newArgs[0] = newArg0
+</a><a href="#h1-0-302" id="h1-0-302" class="i">+			newArg1 := new(bmline.BasmElement)
+</a><a href="#h1-0-303" id="h1-0-303" class="i">+			newArg1.SetValue(soVal)
+</a><a href="#h1-0-304" id="h1-0-304" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+</a><a href="#h1-0-305" id="h1-0-305" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;q&quot;)
+</a><a href="#h1-0-306" id="h1-0-306" class="i">+			newArgs[1] = newArg1
+</a><a href="#h1-0-307" id="h1-0-307" class="i">+			newLine.Elements = newArgs
+</a><a href="#h1-0-308" id="h1-0-308" class="i">+			return newLine, nil
+</a><a href="#h1-0-309" id="h1-0-309" class="i">+		}
+</a><a href="#h1-0-310" id="h1-0-310" class="i">+	}
+</a><a href="#h1-0-311" id="h1-0-311" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h1-0-312" id="h1-0-312" class="i">+}
+</a><a href="#h1-0-313" id="h1-0-313" class="i">+func (Op K2r) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h1-0-314" id="h1-0-314" class="i">+	return []string{}, []string{}
+</a><a href="#h1-0-315" id="h1-0-315" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/shr_kbd.go.html">pkg/procbuilder/shr_kbd.go</a> b/<a href="../file/pkg/procbuilder/shr_kbd.go.html">pkg/procbuilder/shr_kbd.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,103 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package procbuilder
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;strconv&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;strings&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+type Kbd struct{}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+func (op Kbd) Shr_get_name() string {
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	return &quot;uart&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+func (op Kbd) Shortname() string {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	return &quot;u&quot;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+func (op Kbd) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+			result += &quot;, &quot; + uartName + &quot;senderData, &quot; + uartName + &quot;senderWrite, &quot; + uartName + &quot;senderAck&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+			break
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+		}
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	}
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+			result += &quot;, &quot; + uartName + &quot;receiverData, &quot; + uartName + &quot;receiverRead, &quot; + uartName + &quot;receiverAck&quot;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+			break
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+		}
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	}
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	result += &quot;, &quot; + uartName + &quot;empty, &quot; + uartName + &quot;full&quot;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	return result
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+}
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+func (op Kbd) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+			result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;senderData;\n&quot;
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+			result += &quot;	output &quot; + uartName + &quot;senderWrite;\n&quot;
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+			result += &quot;	input &quot; + uartName + &quot;senderAck;\n&quot;
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+			break
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+		}
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	}
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;receiverData;\n&quot;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+			result += &quot;	output &quot; + uartName + &quot;receiverRead;\n&quot;
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+			result += &quot;	input &quot; + uartName + &quot;receiverAck;\n&quot;
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+			break
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+		}
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+	}
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	return result
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+}
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+func (op Kbd) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+	uartNum := 0
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+	if arch.Shared_constraints != &quot;&quot; {
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+		for _, constraint := range constraints {
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+			soname := values[0]
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+			if soname == &quot;uart&quot; {
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+				uartNum++
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+			}
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+		}
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+	}
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+			result += &quot;	output reg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;senderData;\n&quot;
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+			result += &quot;	output reg &quot; + uartName + &quot;senderWrite;\n&quot;
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+			result += &quot;	input &quot; + uartName + &quot;senderAck;\n&quot;
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+			break
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+		}
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	}
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	for _, op := range arch.Op {
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;receiverData;\n&quot;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+			result += &quot;	output reg &quot; + uartName + &quot;receiverRead;\n&quot;
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+			result += &quot;	input &quot; + uartName + &quot;receiverAck;\n&quot;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+			break
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+		}
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+	}
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+	return result
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

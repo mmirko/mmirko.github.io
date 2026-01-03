@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ramtext section - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6f72f8c7da484826b1092779a207e7c106d22f39.html">6f72f8c7da484826b1092779a207e7c106d22f39</a>
+<b>parent</b> <a href="../commit/54706794c06f39addad73ba80aba1126868766e9.html">54706794c06f39addad73ba80aba1126868766e9</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  4 Aug 2023 15:51:34 +0200
+
+ramtext section
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/asmparser.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/basm.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/dynamicalinstructions.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/entrypoints.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/fragmentcomposer.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/labelsresolver.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/basm/labeltagger.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/basm/matcherresolver.go</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/basm/romcomposer.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>10 files changed, 48 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a> b/<a href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -120,7 +120,11 @@ func basmParser(bi *BasmInstance, s string, lineNo uint32) error {
+</a> 				case &quot;.romdata&quot;:
+ 					sectionType = sectRomData
+ 				case &quot;.romtext&quot;:
+<a href="#h0-0-3" id="h0-0-3" class="d">-					sectionType = setcRomText
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+					sectionType = sectRomText
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+				case &quot;.ramdata&quot;:
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+					sectionType = sectRamData
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				case &quot;.ramtext&quot;:
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+					sectionType = sectRamText
+</a> 				default:
+ 					return errors.New(line + &quot;, section definition has an unknown type &quot; + argS[2])
+ 				}
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -13,7 +13,9 @@ import (
+</a> 
+ const (
+ 	sectRomData = uint8(0) + iota
+<a href="#h1-0-3" id="h1-0-3" class="d">-	setcRomText
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	sectRomText
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	sectRamData
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	sectRamText
+</a> )
+ 
+ // The instance
+<a href="#h1-1" id="h1-1" class="h">@@ -197,7 +199,7 @@ func (m *BasmSection) String() string {
+</a> 	switch m.sectionType {
+ 	case sectRomData:
+ 		result += yellow(&quot;[.romdata]&quot;)
+<a href="#h1-1-3" id="h1-1-3" class="d">-	case setcRomText:
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	case sectRomText:
+</a> 		result += yellow(&quot;[.romtext]&quot;)
+ 	}
+ 	result += m.sectionBody.String()
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/dynamicalinstructions.go.html">pkg/basm/dynamicalinstructions.go</a> b/<a href="../file/pkg/basm/dynamicalinstructions.go.html">pkg/basm/dynamicalinstructions.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,7 +11,7 @@ func dynamicalInstructions(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+<a href="#h2-0-3" id="h2-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a> b/<a href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -8,7 +8,7 @@ import (
+</a> // section entry points detection, the pass detects the label used as entry point of the section and sign it as metadata.
+ func entryPoints(bi *BasmInstance) error {
+ 	for sectName, section := range bi.sections {
+<a href="#h3-0-3" id="h3-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\tProcessing section: &quot; + sectName))
+ 			}
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a> b/<a href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -202,7 +202,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 
+ 			newSection := new(BasmSection)
+ 			newSection.sectionName = cpNewSectionName
+<a href="#h4-0-3" id="h4-0-3" class="d">-			newSection.sectionType = setcRomText
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+			newSection.sectionType = sectRomText
+</a> 			newSection.sectionBody = new(bmline.BasmBody)
+ 
+ 			newSection.sectionBody.BasmMeta = newSection.sectionBody.BasmMeta.SetMeta(&quot;entry&quot;, &quot;0&quot;)
+<b>diff --git a/<a id="h5" href="../file/pkg/basm/labelsresolver.go.html">pkg/basm/labelsresolver.go</a> b/<a href="../file/pkg/basm/labelsresolver.go.html">pkg/basm/labelsresolver.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -36,7 +36,7 @@ func labelResolver(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+<a href="#h5-0-3" id="h5-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+<b>diff --git a/<a id="h6" href="../file/pkg/basm/labeltagger.go.html">pkg/basm/labeltagger.go</a> b/<a href="../file/pkg/basm/labeltagger.go.html">pkg/basm/labeltagger.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -35,7 +35,7 @@ func labelTagger(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+<a href="#h6-0-3" id="h6-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+<b>diff --git a/<a id="h7" href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a> b/<a href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -18,12 +18,16 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+<a href="#h7-0-3" id="h7-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+ 
+<a href="#h7-0-9" id="h7-0-9" class="d">-			bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+			if section.sectionType == sectRomText {
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+			} else {
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+			}
+</a> 
+ 			body := section.sectionBody
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -55,16 +59,31 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 
+ 				opname := maching.Op_get_name()
+ 
+<a href="#h7-1-3" id="h7-1-3" class="d">-				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opname, Op: bmreqs.OpAdd})
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+				if section.sectionType == sectRomText {
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opname, Op: bmreqs.OpAdd})
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+				} else {
+</a><a href="#h7-1-7" id="h7-1-7" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opname, Op: bmreqs.OpAdd})
+</a><a href="#h7-1-8" id="h7-1-8" class="i">+				}
+</a> 
+ 				// Normalize instruction
+<a href="#h7-1-11" id="h7-1-11" class="d">-				if normalized, err := maching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:romtexts/sections:&quot;+sectName, line); err != nil {
+</a><a href="#h7-1-12" id="h7-1-12" class="d">-					return err
+</a><a href="#h7-1-13" id="h7-1-13" class="i">+				if section.sectionType == sectRomText {
+</a><a href="#h7-1-14" id="h7-1-14" class="i">+					if normalized, err := maching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:romtexts/sections:&quot;+sectName, line); err != nil {
+</a><a href="#h7-1-15" id="h7-1-15" class="i">+						return err
+</a><a href="#h7-1-16" id="h7-1-16" class="i">+					} else {
+</a><a href="#h7-1-17" id="h7-1-17" class="i">+						if bi.debug {
+</a><a href="#h7-1-18" id="h7-1-18" class="i">+							fmt.Println(green(&quot;\t\t\t\tNormalized line: &quot;) + normalized.String())
+</a><a href="#h7-1-19" id="h7-1-19" class="i">+						}
+</a><a href="#h7-1-20" id="h7-1-20" class="i">+						body.Lines[i] = normalized
+</a><a href="#h7-1-21" id="h7-1-21" class="i">+					}
+</a> 				} else {
+<a href="#h7-1-23" id="h7-1-23" class="d">-					if bi.debug {
+</a><a href="#h7-1-24" id="h7-1-24" class="d">-						fmt.Println(green(&quot;\t\t\t\tNormalized line: &quot;) + normalized.String())
+</a><a href="#h7-1-25" id="h7-1-25" class="i">+					if normalized, err := maching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:ramtexts/sections:&quot;+sectName, line); err != nil {
+</a><a href="#h7-1-26" id="h7-1-26" class="i">+						return err
+</a><a href="#h7-1-27" id="h7-1-27" class="i">+					} else {
+</a><a href="#h7-1-28" id="h7-1-28" class="i">+						if bi.debug {
+</a><a href="#h7-1-29" id="h7-1-29" class="i">+							fmt.Println(green(&quot;\t\t\t\tNormalized line: &quot;) + normalized.String())
+</a><a href="#h7-1-30" id="h7-1-30" class="i">+						}
+</a><a href="#h7-1-31" id="h7-1-31" class="i">+						body.Lines[i] = normalized
+</a> 					}
+<a href="#h7-1-33" id="h7-1-33" class="d">-					body.Lines[i] = normalized
+</a> 				}
+ 			}
+ 		} else {
+<b>diff --git a/<a id="h8" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -207,12 +207,16 @@ func metadataInfer(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+<a href="#h8-0-3" id="h8-0-3" class="d">-		if section.sectionType == setcRomText {
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+ 
+<a href="#h8-0-9" id="h8-0-9" class="d">-			bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+			if section.sectionType == sectRomText {
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+			} else {
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: sectName, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+			}
+</a> 
+ 			body := section.sectionBody
+ 
+<b>diff --git a/<a id="h9" href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a> b/<a href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -39,7 +39,7 @@ func romComposer(bi *BasmInstance) error {
+</a> 
+ 		newSection := new(BasmSection)
+ 		newSection.sectionName = cpNewSectionName
+<a href="#h9-0-3" id="h9-0-3" class="d">-		newSection.sectionType = setcRomText
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+		newSection.sectionType = sectRomText
+</a> 		newSection.sectionBody = sectionCode.sectionBody.Copy()
+ 
+ 		// Collection locations
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmnumber cvs conversion - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7d1ca360250d42b608347b36f15ec68220ce1295.html">7d1ca360250d42b608347b36f15ec68220ce1295</a>
+<b>parent</b> <a href="../commit/4b3b72988f24a80a136aa81dac263ea26ded6a3e.html">4b3b72988f24a80a136aa81dac263ea26ded6a3e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  1 May 2023 15:40:39 +0200
+
+bmnumber cvs conversion
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">61</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 60 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,9 +1,12 @@
+</a> package main
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/csv&quot;
+</a> 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+<a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;io&quot;
+</a> 	&quot;log&quot;
+<a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;os&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+<a href="#h0-1" id="h0-1" class="h">@@ -70,7 +73,63 @@ func main() {
+</a> 
+ 		for _, argTo := range flag.Args() {
+ 			if *useFiles {
+<a href="#h0-1-3" id="h0-1-3" class="d">-				fmt.Println(&quot;Load files&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				// open the file
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				f, err := os.Open(argTo)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				if err != nil {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+					log.Fatal(err)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				of, err := os.Create(argTo + &quot;.out&quot;)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				if err != nil {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+					log.Fatal(err)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+				}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				r := csv.NewReader(f)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+				w := csv.NewWriter(of)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+				for {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+					record, err := r.Read()
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+					if err == io.EOF {
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+						break
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+					}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+					if err != nil {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+						log.Fatal(err)
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+					}
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+					recordC := make([]string, len(record))
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+					for i, v := range record {
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+						if output, err := bmnumbers.ImportString(v); err != nil {
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+							fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+						} else {
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+							if *convertTo != &quot;&quot; {
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+								if err := newType.Convert(output); err != nil {
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+									fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+								}
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+							}
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+							if *castTo != &quot;&quot; {
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+								if err := bmnumbers.CastType(output, newType); err != nil {
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+									fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+								}
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+							}
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+							if value, err := output.ExportString(); err != nil {
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+								fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+							} else {
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+								recordC[i] = value
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+							}
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+						}
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+					}
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+					if err := w.Write(recordC); err != nil {
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+						log.Fatalln(&quot;error writing record to csv:&quot;, err)
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+					}
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+					w.Flush()
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+					if err := w.Error(); err != nil {
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+						log.Fatal(err)
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+					}
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+				}
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+				f.Close()
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+				of.Close()
+</a> 			} else {
+ 				if output, err := bmnumbers.ImportString(argTo); err != nil {
+ 					fmt.Println(&quot;Error: &quot;, err)
+</pre>
+</div>
+</body>
+</html>

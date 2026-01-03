@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dynamical matchers - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/170725c4f61254c3e3f6a415935877b21312d5de.html">170725c4f61254c3e3f6a415935877b21312d5de</a>
+<b>parent</b> <a href="../commit/80ff653b3c9f34ed3da99ebdf3834ca08a8a51ff.html">80ff653b3c9f34ed3da99ebdf3834ca08a8a51ff</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 30 Aug 2023 09:06:59 +0200
+
+Dynamical matchers
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/basm.go</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/datasects2bytes.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/dynamicalinstructions.go</a></td><td> | </td><td class="num">86</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/memcomposer.go</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">pkg/bmconfig/bmconfig.go</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/dynamical_flopoco.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/dynamical_instructions.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/dynamical_linear_quantizer.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/dynamical_rsets.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>10 files changed, 159 insertions(+), 58 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/basm&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -37,13 +38,18 @@ var dumpRequirements = flag.String(&quot;dump-requirements&quot;, &quot;&quot;, &quot;Dump the requiremen
+</a> 
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+// Phases
+</a> var listPasses = flag.Bool(&quot;list-passes&quot;, false, &quot;List the available passes&quot;)
+ var actPasses = flag.String(&quot;activate-passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to activate (default: none)&quot;)
+ var deactPasses = flag.String(&quot;deactivate-passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to deactivate (default: none)&quot;)
+ 
+<a href="#h0-1-8" id="h0-1-8" class="i">+// Optimizations
+</a> var listOptimizations = flag.Bool(&quot;list-optimizations&quot;, false, &quot;List the available optimizations&quot;)
+ var actOptimizations = flag.String(&quot;activate-optimizations&quot;, &quot;&quot;, &quot;List of comma separated optional optimizations to activate (default: none, everything: all)&quot;)
+ 
+<a href="#h0-1-12" id="h0-1-12" class="i">+// Config
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+var disableDynamicalMatching = flag.Bool(&quot;disable-dynamical-matching&quot;, false, &quot;Disable the dynamical matching&quot;)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+
+</a> func init() {
+ 	flag.Parse()
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -121,6 +127,11 @@ func main() {
+</a> 
+ 	bi.BasmInstanceInit(bm)
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	// Config options
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if *disableDynamicalMatching {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		bi.Activate(bmconfig.DisableDynamicalMatching)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	}
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a> 	mne := basm.GetPassMnemonic()
+ 
+ 	if *actPasses != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -23,6 +24,7 @@ const (
+</a> 
+ type BasmInstance struct {
+ 	*bminfo.BMinfo
+<a href="#h1-1-3" id="h1-1-3" class="i">+	*bmconfig.BmConfig
+</a> 	verbose          bool
+ 	debug            bool
+ 	isWithinMacro    string
+<a href="#h1-2" id="h1-2" class="h">@@ -86,6 +88,7 @@ type BasmMacro struct {
+</a> func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+ 
+ 	bi.bm = bm
+<a href="#h1-2-3" id="h1-2-3" class="i">+	bi.BmConfig = bmconfig.NewBmConfig()
+</a> 	// bi.verbose = false
+ 	// bi.debug = false
+ 	bi.isWithinMacro = &quot;&quot;
+<a href="#h1-3" id="h1-3" class="h">@@ -155,7 +158,7 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		if bi.debug {
+ 			fmt.Println(purple(&quot;\tExamining dyn opcode: &quot;) + dyn.GetName())
+ 		}
+<a href="#h1-3-3" id="h1-3-3" class="d">-		for _, line := range dyn.HLAssemblerGeneratorMatch(nil) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		for _, line := range dyn.HLAssemblerGeneratorMatch(bi.BmConfig) {
+</a> 			if mt, err := bmline.Text2BasmLine(line); err == nil {
+ 				bi.dynMatchers = append(bi.dynMatchers, mt)
+ 				bi.dynMatcherOps = append(bi.dynMatcherOps, dyn)
+<a href="#h1-4" id="h1-4" class="h">@@ -191,6 +194,8 @@ func (bi *BasmInstance) RunAssembler() error {
+</a> 
+ 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;code&quot;, Value: &quot;romtexts&quot;, Op: bmreqs.OpAdd})
+ 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;code&quot;, Value: &quot;ramtexts&quot;, Op: bmreqs.OpAdd})
+<a href="#h1-4-3" id="h1-4-3" class="i">+	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;code&quot;, Value: &quot;romdatas&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;code&quot;, Value: &quot;ramdatas&quot;, Op: bmreqs.OpAdd})
+</a> 
+ 	if bi.debug {
+ 		fmt.Println(purple(&quot;Pre phase 1 &quot;) + bi.String())
+<a href="#h1-5" id="h1-5" class="h">@@ -244,6 +249,8 @@ func (m *BasmSection) String() string {
+</a> 		result += yellow(&quot;[.romtext]&quot;)
+ 	case sectRamText:
+ 		result += yellow(&quot;[.ramtext]&quot;)
+<a href="#h1-5-3" id="h1-5-3" class="i">+	case sectRamData:
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		result += yellow(&quot;[.ramdata]&quot;)
+</a> 	}
+ 	result += m.sectionBody.String()
+ 	return result
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a> b/<a href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,8 +3,10 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;strconv&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a> )
+ 
+ func dataSections2Bytes(bi *BasmInstance) error {
+<a href="#h2-1" id="h2-1" class="h">@@ -15,6 +17,12 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 				fmt.Println(green(&quot;\tProcessing section: &quot; + sectName))
+ 			}
+ 
+<a href="#h2-1-3" id="h2-1-3" class="i">+			if section.sectionType == sectRomData {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romdatas&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: section.sectionName, Op: bmreqs.OpAdd})
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+			} else {
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramdatas&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: section.sectionName, Op: bmreqs.OpAdd})
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+			}
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+
+</a> 			varCheck := make(map[string]struct{})
+ 
+ 			body := section.sectionBody
+<a href="#h2-2" id="h2-2" class="h">@@ -67,7 +75,12 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 				default:
+ 					return errors.New(&quot;Unknown data operator &quot; + dataOperator)
+ 				}
+<a href="#h2-2-3" id="h2-2-3" class="i">+			}
+</a> 
+<a href="#h2-2-5" id="h2-2-5" class="i">+			if section.sectionType == sectRomData {
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romdatas/sections:&quot; + section.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(offset), Op: bmreqs.OpAdd})
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+			} else {
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+				bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramdatas/sections:&quot; + section.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(offset), Op: bmreqs.OpAdd})
+</a> 			}
+ 		}
+ 	}
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/dynamicalinstructions.go.html">pkg/basm/dynamicalinstructions.go</a> b/<a href="../file/pkg/basm/dynamicalinstructions.go.html">pkg/basm/dynamicalinstructions.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;fmt&quot;
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ )
+<a href="#h3-1" id="h3-1" class="h">@@ -37,31 +38,32 @@ func dynamicalInstructions(bi *BasmInstance) error {
+</a> 					}
+ 				}
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-				for j, matcher := range bi.dynMatchers {
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-					if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-						if bi.debug {
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-							fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-						}
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-						dyn := bi.dynMatcherOps[j]
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-						for _, op := range dyn.HLAssemblerGeneratorList(nil, line) {
+</a><a href="#h3-1-10" id="h3-1-10" class="d">-							eventualInstruction := op
+</a><a href="#h3-1-11" id="h3-1-11" class="d">-
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-							if created, err := procbuilder.EventuallyCreateInstruction(eventualInstruction); err != nil {
+</a><a href="#h3-1-13" id="h3-1-13" class="d">-								return err
+</a><a href="#h3-1-14" id="h3-1-14" class="d">-							} else {
+</a><a href="#h3-1-15" id="h3-1-15" class="d">-								if created {
+</a><a href="#h3-1-16" id="h3-1-16" class="d">-									op := procbuilder.Allopcodes[len(procbuilder.Allopcodes)-1]
+</a><a href="#h3-1-17" id="h3-1-17" class="d">-									for _, line := range op.HLAssemblerMatch(nil) {
+</a><a href="#h3-1-18" id="h3-1-18" class="d">-										if mt, err := bmline.Text2BasmLine(line); err == nil {
+</a><a href="#h3-1-19" id="h3-1-19" class="d">-											bi.matchers = append(bi.matchers, mt)
+</a><a href="#h3-1-20" id="h3-1-20" class="d">-											bi.matchersOps = append(bi.matchersOps, op)
+</a><a href="#h3-1-21" id="h3-1-21" class="d">-										} else {
+</a><a href="#h3-1-22" id="h3-1-22" class="d">-											bi.Warning(err)
+</a><a href="#h3-1-23" id="h3-1-23" class="i">+				if !bi.IsActive(bmconfig.DisableDynamicalMatching) {
+</a><a href="#h3-1-24" id="h3-1-24" class="i">+					for j, matcher := range bi.dynMatchers {
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+						if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+							if bi.debug {
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+								fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+							}
+</a><a href="#h3-1-29" id="h3-1-29" class="i">+							dyn := bi.dynMatcherOps[j]
+</a><a href="#h3-1-30" id="h3-1-30" class="i">+							for _, op := range dyn.HLAssemblerGeneratorList(bi.BmConfig, line) {
+</a><a href="#h3-1-31" id="h3-1-31" class="i">+								eventualInstruction := op
+</a><a href="#h3-1-32" id="h3-1-32" class="i">+
+</a><a href="#h3-1-33" id="h3-1-33" class="i">+								if created, err := procbuilder.EventuallyCreateInstruction(eventualInstruction); err != nil {
+</a><a href="#h3-1-34" id="h3-1-34" class="i">+									return err
+</a><a href="#h3-1-35" id="h3-1-35" class="i">+								} else {
+</a><a href="#h3-1-36" id="h3-1-36" class="i">+									if created {
+</a><a href="#h3-1-37" id="h3-1-37" class="i">+										op := procbuilder.Allopcodes[len(procbuilder.Allopcodes)-1]
+</a><a href="#h3-1-38" id="h3-1-38" class="i">+										for _, line := range op.HLAssemblerMatch(nil) {
+</a><a href="#h3-1-39" id="h3-1-39" class="i">+											if mt, err := bmline.Text2BasmLine(line); err == nil {
+</a><a href="#h3-1-40" id="h3-1-40" class="i">+												bi.matchers = append(bi.matchers, mt)
+</a><a href="#h3-1-41" id="h3-1-41" class="i">+												bi.matchersOps = append(bi.matchersOps, op)
+</a><a href="#h3-1-42" id="h3-1-42" class="i">+											} else {
+</a><a href="#h3-1-43" id="h3-1-43" class="i">+												bi.Warning(err)
+</a><a href="#h3-1-44" id="h3-1-44" class="i">+											}
+</a> 										}
+ 									}
+ 								}
+ 							}
+<a href="#h3-1-49" id="h3-1-49" class="d">-
+</a> 						}
+ 					}
+ 				}
+<a href="#h3-2" id="h3-2" class="h">@@ -101,31 +103,33 @@ func dynamicalInstructions(bi *BasmInstance) error {
+</a> 				}
+ 			}
+ 
+<a href="#h3-2-3" id="h3-2-3" class="d">-			for j, matcher := range bi.dynMatchers {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-				if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-					if bi.debug {
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-						fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-					}
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-					dyn := bi.dynMatcherOps[j]
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-					for _, op := range dyn.HLAssemblerGeneratorList(nil, line) {
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-						eventualInstruction := op
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+			if !bi.IsActive(bmconfig.DisableDynamicalMatching) {
+</a><a href="#h3-2-12" id="h3-2-12" class="i">+				for j, matcher := range bi.dynMatchers {
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+					if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h3-2-14" id="h3-2-14" class="i">+						if bi.debug {
+</a><a href="#h3-2-15" id="h3-2-15" class="i">+							fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h3-2-16" id="h3-2-16" class="i">+						}
+</a><a href="#h3-2-17" id="h3-2-17" class="i">+						dyn := bi.dynMatcherOps[j]
+</a><a href="#h3-2-18" id="h3-2-18" class="i">+						for _, op := range dyn.HLAssemblerGeneratorList(bi.BmConfig, line) {
+</a><a href="#h3-2-19" id="h3-2-19" class="i">+							eventualInstruction := op
+</a> 
+<a href="#h3-2-21" id="h3-2-21" class="d">-						if created, err := procbuilder.EventuallyCreateInstruction(eventualInstruction); err != nil {
+</a><a href="#h3-2-22" id="h3-2-22" class="d">-							return err
+</a><a href="#h3-2-23" id="h3-2-23" class="d">-						} else {
+</a><a href="#h3-2-24" id="h3-2-24" class="d">-							if created {
+</a><a href="#h3-2-25" id="h3-2-25" class="d">-								op := procbuilder.Allopcodes[len(procbuilder.Allopcodes)-1]
+</a><a href="#h3-2-26" id="h3-2-26" class="d">-								for _, line := range op.HLAssemblerMatch(nil) {
+</a><a href="#h3-2-27" id="h3-2-27" class="d">-									if mt, err := bmline.Text2BasmLine(line); err == nil {
+</a><a href="#h3-2-28" id="h3-2-28" class="d">-										bi.matchers = append(bi.matchers, mt)
+</a><a href="#h3-2-29" id="h3-2-29" class="d">-										bi.matchersOps = append(bi.matchersOps, op)
+</a><a href="#h3-2-30" id="h3-2-30" class="d">-									} else {
+</a><a href="#h3-2-31" id="h3-2-31" class="d">-										bi.Warning(err)
+</a><a href="#h3-2-32" id="h3-2-32" class="i">+							if created, err := procbuilder.EventuallyCreateInstruction(eventualInstruction); err != nil {
+</a><a href="#h3-2-33" id="h3-2-33" class="i">+								return err
+</a><a href="#h3-2-34" id="h3-2-34" class="i">+							} else {
+</a><a href="#h3-2-35" id="h3-2-35" class="i">+								if created {
+</a><a href="#h3-2-36" id="h3-2-36" class="i">+									op := procbuilder.Allopcodes[len(procbuilder.Allopcodes)-1]
+</a><a href="#h3-2-37" id="h3-2-37" class="i">+									for _, line := range op.HLAssemblerMatch(nil) {
+</a><a href="#h3-2-38" id="h3-2-38" class="i">+										if mt, err := bmline.Text2BasmLine(line); err == nil {
+</a><a href="#h3-2-39" id="h3-2-39" class="i">+											bi.matchers = append(bi.matchers, mt)
+</a><a href="#h3-2-40" id="h3-2-40" class="i">+											bi.matchersOps = append(bi.matchersOps, op)
+</a><a href="#h3-2-41" id="h3-2-41" class="i">+										} else {
+</a><a href="#h3-2-42" id="h3-2-42" class="i">+											bi.Warning(err)
+</a><a href="#h3-2-43" id="h3-2-43" class="i">+										}
+</a> 									}
+ 								}
+ 							}
+<a href="#h3-2-47" id="h3-2-47" class="d">-						}
+</a> 
+<a href="#h3-2-49" id="h3-2-49" class="i">+						}
+</a> 					}
+ 				}
+ 			}
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a> b/<a href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -128,12 +128,18 @@ func memComposer(bi *BasmInstance) error {
+</a> 
+ 				var romSectionLength int = 0
+ 				var ramSectionLength int = 0
+<a href="#h4-0-3" id="h4-0-3" class="i">+				var romDataLength int = 0
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+				var ramDataLength int = 0
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+				var romFinalLength int = 0
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+				var ramFinalLength int = 0
+</a> 
+ 				if romCode != nil {
+ 					romSectionLength = len(romCode.sectionBody.Lines)
+<a href="#h4-0-10" id="h4-0-10" class="i">+					romFinalLength = romSectionLength
+</a> 				}
+ 				if ramCode != nil {
+ 					ramSectionLength = len(ramCode.sectionBody.Lines)
+<a href="#h4-0-14" id="h4-0-14" class="i">+					ramFinalLength = ramSectionLength
+</a> 				}
+ 
+ 				if bi.debug {
+<a href="#h4-1" id="h4-1" class="h">@@ -150,6 +156,12 @@ func memComposer(bi *BasmInstance) error {
+</a> 						location += romSectionLength
+ 						bi.symbols[&quot;romdata.romdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+ 					}
+<a href="#h4-1-3" id="h4-1-3" class="i">+					resp := bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romdatas/sections:&quot; + romDataName, Name: &quot;datalength&quot;, Op: bmreqs.OpGet})
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+					if resp.Error != nil {
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+						return resp.Error
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+					}
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+					romDataLength, _ = strconv.Atoi(resp.Value)
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+					romFinalLength += romDataLength
+</a> 				}
+ 
+ 				if ramData != nil {
+<a href="#h4-2" id="h4-2" class="h">@@ -160,6 +172,12 @@ func memComposer(bi *BasmInstance) error {
+</a> 						location += ramSectionLength
+ 						bi.symbols[&quot;ramdata.ramdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+ 					}
+<a href="#h4-2-3" id="h4-2-3" class="i">+					resp := bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramdatas/sections:&quot; + ramDataName, Name: &quot;datalength&quot;, Op: bmreqs.OpGet})
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+					if resp.Error != nil {
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+						return resp.Error
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+					}
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+					ramDataLength, _ = strconv.Atoi(resp.Value)
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+					ramFinalLength += ramDataLength
+</a> 				}
+ 
+ 				// If the original section is not empty, we need to create a new section from it
+<a href="#h4-3" id="h4-3" class="h">@@ -173,6 +191,9 @@ func memComposer(bi *BasmInstance) error {
+</a> 					romAlternatives = append(romAlternatives, newSection.sectionName)
+ 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+ 					bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romSection, &quot;/code:romtexts/sections:&quot;+newSection.sectionName)
+<a href="#h4-3-3" id="h4-3-3" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;codelength&quot;, Value: strconv.Itoa(romSectionLength), Op: bmreqs.OpAdd})
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(romDataLength), Op: bmreqs.OpAdd})
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;finallength&quot;, Value: strconv.Itoa(romFinalLength), Op: bmreqs.OpAdd})
+</a> 				}
+ 
+ 				// Same for RAM code
+<a href="#h4-4" id="h4-4" class="h">@@ -186,6 +207,9 @@ func memComposer(bi *BasmInstance) error {
+</a> 					ramAlternatives = append(ramAlternatives, newSection.sectionName)
+ 					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+ 					bi.rg.Clone(&quot;/code:ramtexts/sections:&quot;+ramSection, &quot;/code:ramtexts/sections:&quot;+newSection.sectionName)
+<a href="#h4-4-3" id="h4-4-3" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;codelength&quot;, Value: strconv.Itoa(ramSectionLength), Op: bmreqs.OpAdd})
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;datalength&quot;, Value: strconv.Itoa(ramDataLength), Op: bmreqs.OpAdd})
+</a><a href="#h4-4-5" id="h4-4-5" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts/sections:&quot; + newSection.sectionName, T: bmreqs.ObjectMax, Name: &quot;finallength&quot;, Value: strconv.Itoa(ramFinalLength), Op: bmreqs.OpAdd})
+</a> 				}
+ 			}
+ 		}
+<b>diff --git a/<a id="h5" href="../file/pkg/bmconfig/bmconfig.go.html">pkg/bmconfig/bmconfig.go</a> b/<a href="../file/pkg/bmconfig/bmconfig.go.html">pkg/bmconfig/bmconfig.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,35 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package bmconfig
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+const (
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	DisableDynamicalMatching = uint64(0) + iota
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+)
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+type BmConfig struct {
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+	config map[uint64]struct{}
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+}
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+func NewBmConfig() *BmConfig {
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+	bmc := new(BmConfig)
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+	bmc.config = make(map[uint64]struct{})
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	return bmc
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+}
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+func (bmc *BmConfig) Activate(key uint64) {
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+	bmc.config[key] = struct{}{}
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+	return
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+}
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+func (bmc *BmConfig) Deactivate(key uint64) {
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+	if _, ok := bmc.config[key]; !ok {
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+		return
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+	}
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+	delete(bmc.config, key)
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+	return
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+}
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+func (bmc *BmConfig) IsActive(key uint64) bool {
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+	if _, ok := bmc.config[key]; !ok {
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+		return false
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+	}
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+	return true
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynamical_flopoco.go.html">pkg/procbuilder/dynamical_flopoco.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ )
+ 
+<a href="#h6-1" id="h6-1" class="h">@@ -107,12 +108,12 @@ func (d DynFloPoCo) CreateInstruction(name string) (Opcode, error) {
+</a> 	return FloPoCo{floPoCoName: name, regSize: regSize, vHDL: vHDL, topEntity: topEntity, entities: entities, pipeline: pipeline}, nil
+ }
+ 
+<a href="#h6-1-3" id="h6-1-3" class="d">-func (d DynFloPoCo) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+func (d DynFloPoCo) HLAssemblerGeneratorMatch(bmc *bmconfig.BmConfig) []string {
+</a> 	result := make([]string, 0)
+ 	return result
+ }
+ 
+<a href="#h6-1-9" id="h6-1-9" class="d">-func (d DynFloPoCo) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+func (d DynFloPoCo) HLAssemblerGeneratorList(bmc *bmconfig.BmConfig, bl *bmline.BasmLine) []string {
+</a> 	result := make([]string, 0)
+ 	return result
+ }
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a> b/<a href="../file/pkg/procbuilder/dynamical_instructions.go.html">pkg/procbuilder/dynamical_instructions.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,16 +1,16 @@
+</a> package procbuilder
+ 
+<a href="#h7-0-2" id="h7-0-2" class="d">-import &quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h7-0-3" id="h7-0-3" class="d">-
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-type DynConfig struct {
+</a><a href="#h7-0-5" id="h7-0-5" class="d">-}
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+import (
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+)
+</a> 
+ type DynamicInstruction interface {
+ 	GetName() string
+ 	MatchName(string) bool
+ 	CreateInstruction(string) (Opcode, error)
+<a href="#h7-0-15" id="h7-0-15" class="d">-	HLAssemblerGeneratorMatch(*DynConfig) []string
+</a><a href="#h7-0-16" id="h7-0-16" class="d">-	HLAssemblerGeneratorList(*DynConfig, *bmline.BasmLine) []string
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+	HLAssemblerGeneratorMatch(*bmconfig.BmConfig) []string
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	HLAssemblerGeneratorList(*bmconfig.BmConfig, *bmline.BasmLine) []string
+</a> }
+ 
+ func EventuallyCreateInstruction(name string) (bool, error) {
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+<a href="#h8-1" id="h8-1" class="h">@@ -87,12 +88,12 @@ func (d DynLinearQuantizer) CreateInstruction(name string) (Opcode, error) {
+</a> 
+ }
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-func (d DynLinearQuantizer) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+func (d DynLinearQuantizer) HLAssemblerGeneratorMatch(bmc *bmconfig.BmConfig) []string {
+</a> 	result := make([]string, 0)
+ 	return result
+ }
+ 
+<a href="#h8-1-9" id="h8-1-9" class="d">-func (d DynLinearQuantizer) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h8-1-10" id="h8-1-10" class="i">+func (d DynLinearQuantizer) HLAssemblerGeneratorList(bmc *bmconfig.BmConfig, bl *bmline.BasmLine) []string {
+</a> 	result := make([]string, 0)
+ 	return result
+ }
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/dynamical_rsets.go.html">pkg/procbuilder/dynamical_rsets.go</a> b/<a href="../file/pkg/procbuilder/dynamical_rsets.go.html">pkg/procbuilder/dynamical_rsets.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ )
+ 
+<a href="#h9-1" id="h9-1" class="h">@@ -30,16 +31,20 @@ func (d DynRsets) CreateInstruction(name string) (Opcode, error) {
+</a> 	return Rsets{rsetsName: name, s: s}, nil
+ 
+ }
+<a href="#h9-1-3" id="h9-1-3" class="d">-func (d DynRsets) HLAssemblerGeneratorMatch(c *DynConfig) []string {
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+func (d DynRsets) HLAssemblerGeneratorMatch(bmc *bmconfig.BmConfig) []string {
+</a> 	result := make([]string, 0)
+<a href="#h9-1-6" id="h9-1-6" class="d">-	result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+</a><a href="#h9-1-7" id="h9-1-7" class="i">+	if !bmc.IsActive(bmconfig.DisableDynamicalMatching) {
+</a><a href="#h9-1-8" id="h9-1-8" class="i">+		result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+</a><a href="#h9-1-9" id="h9-1-9" class="i">+	}
+</a> 	return result
+ }
+ 
+<a href="#h9-1-13" id="h9-1-13" class="d">-func (d DynRsets) HLAssemblerGeneratorList(c *DynConfig, line *bmline.BasmLine) []string {
+</a><a href="#h9-1-14" id="h9-1-14" class="i">+func (d DynRsets) HLAssemblerGeneratorList(bmc *bmconfig.BmConfig, line *bmline.BasmLine) []string {
+</a> 	result := make([]string, 0)
+<a href="#h9-1-16" id="h9-1-16" class="d">-	result = append(result, &quot;rsets5&quot;)
+</a><a href="#h9-1-17" id="h9-1-17" class="d">-	result = append(result, &quot;rsets6&quot;)
+</a><a href="#h9-1-18" id="h9-1-18" class="d">-	result = append(result, &quot;rsets7&quot;)
+</a><a href="#h9-1-19" id="h9-1-19" class="i">+	if !bmc.IsActive(bmconfig.DisableDynamicalMatching) {
+</a><a href="#h9-1-20" id="h9-1-20" class="i">+		result = append(result, &quot;rsets5&quot;)
+</a><a href="#h9-1-21" id="h9-1-21" class="i">+		result = append(result, &quot;rsets6&quot;)
+</a><a href="#h9-1-22" id="h9-1-22" class="i">+		result = append(result, &quot;rsets7&quot;)
+</a><a href="#h9-1-23" id="h9-1-23" class="i">+	}
+</a> 	return result
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>simulation complete - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/db7bb9da7ba7d7e939d7fe4d573eec0ab9a6e950.html">db7bb9da7ba7d7e939d7fe4d573eec0ab9a6e950</a>
+<b>parent</b> <a href="../commit/8af801d1e6c32b9e3e9535b482a5a79b26378a72.html">8af801d1e6c32b9e3e9535b482a5a79b26378a72</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  2 May 2023 16:05:45 +0200
+
+simulation complete
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">146</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmnumbers/type_unsigned.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">77</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/simbox/simbox.go</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>4 files changed, 223 insertions(+), 39 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -867,8 +867,14 @@ func main() {
+</a> 				defer rf.Close()
+ 				reportData = csv.NewWriter(rf)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-				if err := reportData.Write(srep.ReportablesNames); err != nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-					log.Fatalln(&quot;error writing record to csv:&quot;, err)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+				if sconfig.GetTicks {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+					if err := reportData.Write(append([]string{&quot;tick&quot;}, srep.ReportablesNames...)); err != nil {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+						log.Fatalln(&quot;error writing record to csv:&quot;, err)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+					}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+				} else {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+					if err := reportData.Write(srep.ReportablesNames); err != nil {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+						log.Fatalln(&quot;error writing record to csv:&quot;, err)
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+					}
+</a> 				}
+ 
+ 				reportData.Flush()
+<a href="#h0-1" id="h0-1" class="h">@@ -907,10 +913,12 @@ func main() {
+</a> 
+ 				fmt.Print(result)
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+				showList := make([]int, 0, len(srep.Showables))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> 				// This will get value to show on this tick
+ 				if slist, exist_shows := srep.AbsShow[i]; exist_shows {
+ 					for k, _ := range slist {
+<a href="#h0-1-8" id="h0-1-8" class="d">-						fmt.Println(*srep.Showables[k])
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+						showList = append(showList, k)
+</a> 					}
+ 				}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -918,41 +926,115 @@ func main() {
+</a> 				for j, slist := range srep.PerShow {
+ 					if i%j == 0 {
+ 						for k, _ := range slist {
+<a href="#h0-2-3" id="h0-2-3" class="d">-							fmt.Print(*srep.Showables[k], &quot; &quot;)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+							alredtIn := false
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+							for _, v := range showList {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+								if v == k {
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+									alredtIn = true
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+									break
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+								}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+							}
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+							if !alredtIn {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+								showList = append(showList, k)
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+							}
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+						}
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+					}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+				}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+				sort.Ints(showList)
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+				// Show the tick values
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				for _, k := range showList {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+					nType := srep.ShowablesTypes[k]
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+					if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+						log.Fatal(err)
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+					}
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+					if v := bmnumbers.GetType(nType); v == nil {
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+						log.Fatal(&quot;Error: Unknown type&quot;)
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+					} else {
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+						if number, err := bmnumbers.ImportUint(*srep.Showables[k]); err != nil {
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+							log.Fatal(err)
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+						} else {
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+							if err := bmnumbers.CastType(number, v); err != nil {
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+								log.Fatal(err)
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+							} else {
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+								if numberS, err := number.ExportString(); err != nil {
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+									log.Fatal(err)
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+								} else {
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+									fmt.Print(numberS + &quot; &quot;)
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+								}
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+							}
+</a> 						}
+<a href="#h0-2-42" id="h0-2-42" class="d">-						fmt.Println(&quot;&quot;)
+</a> 					}
+ 				}
+<a href="#h0-2-45" id="h0-2-45" class="i">+				if len(showList) &gt; 0 {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+					fmt.Println()
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+				}
+</a> 
+ 				if *simReport != &quot;&quot; {
+<a href="#h0-2-50" id="h0-2-50" class="d">-					if rep, exist_reports := srep.AbsGet[i]; exist_reports {
+</a><a href="#h0-2-51" id="h0-2-51" class="d">-						for k := range rep {
+</a><a href="#h0-2-52" id="h0-2-52" class="d">-							rep[k] = *srep.Reportables[k]
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+					repList := make([]int, 0, len(srep.Reportables))
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+					recordC := make([]string, len(srep.Reportables))
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+					if sconfig.GetTicks {
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+						recordC = append(recordC, &quot;&quot;)
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+						recordC[0] = strconv.FormatUint(i, 10)
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+					}
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+					if sconfig.GetAll || sconfig.GetAllInternal {
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+						for j := range srep.Reportables {
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+							repList = append(repList, j)
+</a> 						}
+<a href="#h0-2-66" id="h0-2-66" class="d">-						keys := make([]int, 0, len(rep))
+</a><a href="#h0-2-67" id="h0-2-67" class="d">-						for k := range rep {
+</a><a href="#h0-2-68" id="h0-2-68" class="d">-							keys = append(keys, k)
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+					} else {
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+						if rep, exist_reports := srep.AbsGet[i]; exist_reports {
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+							for k := range rep {
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+								repList = append(repList, k)
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+							}
+</a> 						}
+<a href="#h0-2-75" id="h0-2-75" class="d">-						sort.Ints(keys)
+</a><a href="#h0-2-76" id="h0-2-76" class="d">-						for _, k := range keys {
+</a><a href="#h0-2-77" id="h0-2-77" class="d">-							nType := srep.ReportablesTypes[k]
+</a><a href="#h0-2-78" id="h0-2-78" class="d">-							if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+</a><a href="#h0-2-79" id="h0-2-79" class="d">-								log.Fatal(err)
+</a><a href="#h0-2-80" id="h0-2-80" class="i">+
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+						// This will get value to show on periodic ticks
+</a><a href="#h0-2-82" id="h0-2-82" class="i">+						for j, rep := range srep.PerGet {
+</a><a href="#h0-2-83" id="h0-2-83" class="i">+							if i%j == 0 {
+</a><a href="#h0-2-84" id="h0-2-84" class="i">+								for k, _ := range rep {
+</a><a href="#h0-2-85" id="h0-2-85" class="i">+									alredtIn := false
+</a><a href="#h0-2-86" id="h0-2-86" class="i">+									for _, v := range repList {
+</a><a href="#h0-2-87" id="h0-2-87" class="i">+										if v == k {
+</a><a href="#h0-2-88" id="h0-2-88" class="i">+											alredtIn = true
+</a><a href="#h0-2-89" id="h0-2-89" class="i">+											break
+</a><a href="#h0-2-90" id="h0-2-90" class="i">+										}
+</a><a href="#h0-2-91" id="h0-2-91" class="i">+									}
+</a><a href="#h0-2-92" id="h0-2-92" class="i">+									if !alredtIn {
+</a><a href="#h0-2-93" id="h0-2-93" class="i">+										repList = append(repList, k)
+</a><a href="#h0-2-94" id="h0-2-94" class="i">+									}
+</a><a href="#h0-2-95" id="h0-2-95" class="i">+								}
+</a> 							}
+<a href="#h0-2-97" id="h0-2-97" class="d">-							if v := bmnumbers.GetType(nType); v == nil {
+</a><a href="#h0-2-98" id="h0-2-98" class="d">-								log.Fatal(&quot;Error: Unknown type&quot;)
+</a><a href="#h0-2-99" id="h0-2-99" class="i">+						}
+</a><a href="#h0-2-100" id="h0-2-100" class="i">+					}
+</a><a href="#h0-2-101" id="h0-2-101" class="i">+
+</a><a href="#h0-2-102" id="h0-2-102" class="i">+					// sort.Ints(repList)
+</a><a href="#h0-2-103" id="h0-2-103" class="i">+
+</a><a href="#h0-2-104" id="h0-2-104" class="i">+					someToReport := false
+</a><a href="#h0-2-105" id="h0-2-105" class="i">+					for _, k := range repList {
+</a><a href="#h0-2-106" id="h0-2-106" class="i">+						nType := srep.ReportablesTypes[k]
+</a><a href="#h0-2-107" id="h0-2-107" class="i">+						if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+</a><a href="#h0-2-108" id="h0-2-108" class="i">+							log.Fatal(err)
+</a><a href="#h0-2-109" id="h0-2-109" class="i">+						}
+</a><a href="#h0-2-110" id="h0-2-110" class="i">+						if v := bmnumbers.GetType(nType); v == nil {
+</a><a href="#h0-2-111" id="h0-2-111" class="i">+							log.Fatal(&quot;Error: Unknown type&quot;)
+</a><a href="#h0-2-112" id="h0-2-112" class="i">+						} else {
+</a><a href="#h0-2-113" id="h0-2-113" class="i">+							if number, err := bmnumbers.ImportUint(*srep.Reportables[k]); err != nil {
+</a><a href="#h0-2-114" id="h0-2-114" class="i">+								log.Fatal(err)
+</a> 							} else {
+<a href="#h0-2-116" id="h0-2-116" class="d">-								if number, err := bmnumbers.ImportUint(rep[k]); err != nil {
+</a><a href="#h0-2-117" id="h0-2-117" class="i">+								if err := bmnumbers.CastType(number, v); err != nil {
+</a> 									log.Fatal(err)
+ 								} else {
+<a href="#h0-2-120" id="h0-2-120" class="d">-									if err := bmnumbers.CastType(number, v); err != nil {
+</a><a href="#h0-2-121" id="h0-2-121" class="i">+									if numberS, err := number.ExportString(); err != nil {
+</a> 										log.Fatal(err)
+ 									} else {
+<a href="#h0-2-124" id="h0-2-124" class="d">-										if numberS, err := number.ExportString(); err != nil {
+</a><a href="#h0-2-125" id="h0-2-125" class="d">-											log.Fatal(err)
+</a><a href="#h0-2-126" id="h0-2-126" class="i">+										someToReport = true
+</a><a href="#h0-2-127" id="h0-2-127" class="i">+										if sconfig.GetTicks {
+</a><a href="#h0-2-128" id="h0-2-128" class="i">+											recordC[k+1] = numberS
+</a> 										} else {
+<a href="#h0-2-130" id="h0-2-130" class="d">-											// TODO better formatting
+</a><a href="#h0-2-131" id="h0-2-131" class="d">-											fmt.Print(numberS)
+</a><a href="#h0-2-132" id="h0-2-132" class="i">+											recordC[k] = numberS
+</a> 										}
+ 									}
+ 								}
+<a href="#h0-3" id="h0-3" class="h">@@ -960,8 +1042,18 @@ func main() {
+</a> 						}
+ 					}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-					// TODO Periodic get
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-					// TODO Write to a yet to be created report data structure
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+					if sconfig.GetTicks || someToReport {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+						if err := reportData.Write(recordC); err != nil {
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+							log.Fatalln(&quot;error writing record to csv:&quot;, err)
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+						}
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+						reportData.Flush()
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+						if err := reportData.Error(); err != nil {
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+							log.Fatal(err)
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+						}
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+					}
+</a> 				}
+ 			}
+ 		} else if *emu {
+<a href="#h0-4" id="h0-4" class="h">@@ -974,7 +1066,7 @@ func main() {
+</a> 					vga := new(bondmachine.Vga800x600Emu)
+ 					emuDrivers = append(emuDrivers, vga)
+ 				} else {
+<a href="#h0-4-3" id="h0-4-3" class="d">-					panic(errors.New(&quot;Unsopported VGA flavor&quot;))
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+					panic(errors.New(&quot;unsopported VGA flavor&quot;))
+</a> 				}
+ 			}
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/type_unsigned.go.html">pkg/bmnumbers/type_unsigned.go</a> b/<a href="../file/pkg/bmnumbers/type_unsigned.go.html">pkg/bmnumbers/type_unsigned.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -62,7 +62,11 @@ func unsignedImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> }
+ 
+ func (d Unsigned) ExportString(n *BMNumber) (string, error) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	return &quot;&quot;, errors.New(&quot;not implemented&quot;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	if result, err := n.ExportUint64(); err == nil {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		return strconv.FormatUint(result, 10), nil
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	} else {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		return &quot;&quot;, err
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	}
+</a> }
+ 
+ func (d Unsigned) ShowInstructions() map[string]string {
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -38,9 +38,12 @@ func (vm *VM) CopyState(vmsource *VM) {
+</a> }
+ 
+ type Sim_config struct {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	Show_ticks   bool
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	Show_io_pre  bool
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	Show_io_post bool
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	Show_ticks     bool
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	Show_io_pre    bool
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	Show_io_post   bool
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	GetTicks       bool
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	GetAll         bool
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	GetAllInternal bool
+</a> }
+ 
+ // Simbox rules are converted in a sim drive when the simulation starts and applied during the simulation
+<a href="#h2-1" id="h2-1" class="h">@@ -406,7 +409,20 @@ func (vm *VM) GetElementLocation(mnemonic string) (*interface{}, error) {
+</a> 		}
+ 	}
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-	// TODO registers
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	re = regexp.MustCompile(&quot;^p(?P&lt;proc&gt;[0-9]+)r(?P&lt;reg&gt;[0-9]+)$&quot;)
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	if re.MatchString(mnemonic) {
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		procNum := re.ReplaceAllString(mnemonic, &quot;${proc}&quot;)
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+		regNum := re.ReplaceAllString(mnemonic, &quot;${reg}&quot;)
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+		if i, err := strconv.Atoi(procNum); err == nil {
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+			if i &lt; len(vm.Processors) {
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+				if j, err := strconv.Atoi(regNum); err == nil {
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+					if j &lt; len(vm.Processors[i].Registers) {
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+						return &amp;vm.Processors[i].Registers[j], nil
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+					}
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+				}
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+			}
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+		}
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+	}
+</a> 
+ 	return nil, errors.New(&quot;unknown mnemonic &quot; + mnemonic)
+ }
+<a href="#h2-2" id="h2-2" class="h">@@ -428,6 +444,12 @@ func (sc *Sim_config) Init(s *simbox.Simbox, vm *VM, conf *Config) error {
+</a> 					sc.Show_io_pre = true
+ 				case &quot;show_io_post&quot;:
+ 					sc.Show_io_post = true
+<a href="#h2-2-3" id="h2-2-3" class="i">+				case &quot;get_ticks&quot;:
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+					sc.GetTicks = true
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+				case &quot;get_all&quot;:
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+					sc.GetAll = true
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+				case &quot;get_all_internal&quot;:
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+					sc.GetAllInternal = true
+</a> 				}
+ 			}
+ 		}
+<a href="#h2-3" id="h2-3" class="h">@@ -567,6 +589,53 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 	pershow := make(map[uint64]Sim_tick_show)
+ 
+ 	for _, rule := range s.Rules {
+<a href="#h2-3-3" id="h2-3-3" class="i">+		// Intercept the get_all rules
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+		if rule.Timec == simbox.TIMEC_NONE &amp;&amp; rule.Action == simbox.ACTION_CONFIG {
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+			objects := make([]string, 0)
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+			switch rule.Object {
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+			case &quot;get_all&quot;:
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+				for i, _ := range vm.Bmach.Internal_inputs {
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+					objects = append(objects, vm.Bmach.Internal_inputs[i].String())
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+				}
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+				for i, _ := range vm.Bmach.Internal_outputs {
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+					objects = append(objects, vm.Bmach.Internal_outputs[i].String())
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+				}
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+			case &quot;get_all_internal&quot;:
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+				for i, _ := range vm.Bmach.Internal_inputs {
+</a><a href="#h2-3-16" id="h2-3-16" class="i">+					objects = append(objects, vm.Bmach.Internal_inputs[i].String())
+</a><a href="#h2-3-17" id="h2-3-17" class="i">+				}
+</a><a href="#h2-3-18" id="h2-3-18" class="i">+				for i, _ := range vm.Bmach.Internal_outputs {
+</a><a href="#h2-3-19" id="h2-3-19" class="i">+					objects = append(objects, vm.Bmach.Internal_outputs[i].String())
+</a><a href="#h2-3-20" id="h2-3-20" class="i">+				}
+</a><a href="#h2-3-21" id="h2-3-21" class="i">+				for i, procVm := range vm.Processors {
+</a><a href="#h2-3-22" id="h2-3-22" class="i">+					for j, _ := range procVm.Registers {
+</a><a href="#h2-3-23" id="h2-3-23" class="i">+						objects = append(objects, fmt.Sprintf(&quot;p%dr%d&quot;, i, j))
+</a><a href="#h2-3-24" id="h2-3-24" class="i">+					}
+</a><a href="#h2-3-25" id="h2-3-25" class="i">+				}
+</a><a href="#h2-3-26" id="h2-3-26" class="i">+
+</a><a href="#h2-3-27" id="h2-3-27" class="i">+			}
+</a><a href="#h2-3-28" id="h2-3-28" class="i">+			for _, obj := range objects {
+</a><a href="#h2-3-29" id="h2-3-29" class="i">+				if loc, err := vm.GetElementLocation(obj); err == nil {
+</a><a href="#h2-3-30" id="h2-3-30" class="i">+					ipos := -1
+</a><a href="#h2-3-31" id="h2-3-31" class="i">+					for i, iloc := range rep {
+</a><a href="#h2-3-32" id="h2-3-32" class="i">+						if iloc == loc {
+</a><a href="#h2-3-33" id="h2-3-33" class="i">+							ipos = i
+</a><a href="#h2-3-34" id="h2-3-34" class="i">+							break
+</a><a href="#h2-3-35" id="h2-3-35" class="i">+						}
+</a><a href="#h2-3-36" id="h2-3-36" class="i">+					}
+</a><a href="#h2-3-37" id="h2-3-37" class="i">+					if ipos == -1 {
+</a><a href="#h2-3-38" id="h2-3-38" class="i">+						rep = append(rep, loc)
+</a><a href="#h2-3-39" id="h2-3-39" class="i">+						repNames = append(repNames, obj)
+</a><a href="#h2-3-40" id="h2-3-40" class="i">+						if rule.Extra == &quot;&quot; {
+</a><a href="#h2-3-41" id="h2-3-41" class="i">+							repTypes = append(repTypes, &quot;unsigned&quot;)
+</a><a href="#h2-3-42" id="h2-3-42" class="i">+						} else {
+</a><a href="#h2-3-43" id="h2-3-43" class="i">+							repTypes = append(repTypes, rule.Extra)
+</a><a href="#h2-3-44" id="h2-3-44" class="i">+						}
+</a><a href="#h2-3-45" id="h2-3-45" class="i">+					}
+</a><a href="#h2-3-46" id="h2-3-46" class="i">+				}
+</a><a href="#h2-3-47" id="h2-3-47" class="i">+			}
+</a><a href="#h2-3-48" id="h2-3-48" class="i">+		}
+</a><a href="#h2-3-49" id="h2-3-49" class="i">+
+</a> 		// Intercept the get rules in absolute time
+ 		if rule.Timec == simbox.TIMEC_ABS &amp;&amp; rule.Action == simbox.ACTION_GET {
+ 			if loc, err := vm.GetElementLocation(rule.Object); err == nil {
+<b>diff --git a/<a id="h3" href="../file/pkg/simbox/simbox.go.html">pkg/simbox/simbox.go</a> b/<a href="../file/pkg/simbox/simbox.go.html">pkg/simbox/simbox.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -51,12 +51,19 @@ func (rule Rule) String() string {
+</a> 		case ACTION_GET:
+ 			return &quot;absolute:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:get:&quot; + rule.Object + &quot;:&quot; + rule.Extra
+ 		case ACTION_SHOW:
+<a href="#h3-0-3" id="h3-0-3" class="d">-			return &quot;absolute:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:show:&quot; + rule.Object
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+			return &quot;absolute:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:show:&quot; + rule.Object + &quot;:&quot; + rule.Extra
+</a> 		}
+ 	case TIMEC_NONE:
+ 		switch rule.Action {
+ 		case ACTION_CONFIG:
+<a href="#h3-0-9" id="h3-0-9" class="d">-			return &quot;config:&quot; + rule.Object
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+			switch rule.Object {
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+			case &quot;get_all&quot;:
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+				return &quot;config:get_all:&quot; + rule.Extra
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+			case &quot;get_all_internal&quot;:
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+				return &quot;config:get_all_internal:&quot; + rule.Extra
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+			default:
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+				return &quot;config:&quot; + rule.Object
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+			}
+</a> 		}
+ 	case TIMEC_REL:
+ 		switch rule.Action {
+<a href="#h3-1" id="h3-1" class="h">@@ -65,7 +72,7 @@ func (rule Rule) String() string {
+</a> 		case ACTION_GET:
+ 			return &quot;relative:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:get:&quot; + rule.Object + &quot;:&quot; + rule.Extra
+ 		case ACTION_SHOW:
+<a href="#h3-1-3" id="h3-1-3" class="d">-			return &quot;relative:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:show:&quot; + rule.Object
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			return &quot;relative:&quot; + strconv.Itoa(int(rule.Tick)) + &quot;:show:&quot; + rule.Object + &quot;:&quot; + rule.Extra
+</a> 		}
+ 	}
+ 	return &quot;&quot;
+<a href="#h3-2" id="h3-2" class="h">@@ -108,26 +115,32 @@ func (r *Simbox) Add(adds string) error {
+</a> 				return nil
+ 			}
+ 		}
+<a href="#h3-2-3" id="h3-2-3" class="i">+		if words[0] == &quot;relative&quot; &amp;&amp; words[2] == &quot;get&quot; {
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+			if every, err := strconv.Atoi(words[1]); err == nil {
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_GET, words[3], words[4]})
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+				return nil
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+			}
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+		}
+</a> 	} else if len(words) == 4 {
+ 		if words[0] == &quot;absolute&quot; &amp;&amp; words[2] == &quot;get&quot; {
+ 			if tick, err := strconv.Atoi(words[1]); err == nil {
+<a href="#h3-2-12" id="h3-2-12" class="d">-				r.Rules = append(r.Rules, Rule{TIMEC_ABS, uint64(tick), ACTION_GET, words[3], &quot;&quot;})
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_ABS, uint64(tick), ACTION_GET, words[3], &quot;unsigned&quot;})
+</a> 				return nil
+ 			}
+ 		} else if words[0] == &quot;absolute&quot; &amp;&amp; words[2] == &quot;show&quot; {
+ 			if tick, err := strconv.Atoi(words[1]); err == nil {
+<a href="#h3-2-18" id="h3-2-18" class="d">-				r.Rules = append(r.Rules, Rule{TIMEC_ABS, uint64(tick), ACTION_SHOW, words[3], &quot;&quot;})
+</a><a href="#h3-2-19" id="h3-2-19" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_ABS, uint64(tick), ACTION_SHOW, words[3], &quot;unsigned&quot;})
+</a> 				return nil
+ 			}
+ 		}
+ 		if words[0] == &quot;relative&quot; &amp;&amp; words[2] == &quot;get&quot; {
+ 			if every, err := strconv.Atoi(words[1]); err == nil {
+<a href="#h3-2-25" id="h3-2-25" class="d">-				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_GET, words[3], &quot;&quot;})
+</a><a href="#h3-2-26" id="h3-2-26" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_GET, words[3], &quot;unsigned&quot;})
+</a> 				return nil
+ 			}
+ 		} else if words[0] == &quot;relative&quot; &amp;&amp; words[2] == &quot;show&quot; {
+ 			if every, err := strconv.Atoi(words[1]); err == nil {
+<a href="#h3-2-31" id="h3-2-31" class="d">-				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_SHOW, words[3], &quot;&quot;})
+</a><a href="#h3-2-32" id="h3-2-32" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_SHOW, words[3], &quot;unsigned&quot;})
+</a> 				return nil
+ 			}
+ 		}
+<a href="#h3-3" id="h3-3" class="h">@@ -137,6 +150,9 @@ func (r *Simbox) Add(adds string) error {
+</a> 			case &quot;get_all&quot;:
+ 				r.Rules = append(r.Rules, Rule{TIMEC_NONE, uint64(0), ACTION_CONFIG, &quot;get_all&quot;, words[2]})
+ 				return nil
+<a href="#h3-3-3" id="h3-3-3" class="i">+			case &quot;get_all_internal&quot;:
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_NONE, uint64(0), ACTION_CONFIG, &quot;get_all_internal&quot;, words[2]})
+</a><a href="#h3-3-5" id="h3-3-5" class="i">+				return nil
+</a> 			}
+ 		}
+ 	} else if len(words) == 2 {
+<a href="#h3-4" id="h3-4" class="h">@@ -154,6 +170,9 @@ func (r *Simbox) Add(adds string) error {
+</a> 			case &quot;show_ticks&quot;:
+ 				r.Rules = append(r.Rules, Rule{TIMEC_NONE, uint64(0), ACTION_CONFIG, &quot;show_ticks&quot;, &quot;&quot;})
+ 				return nil
+<a href="#h3-4-3" id="h3-4-3" class="i">+			case &quot;get_ticks&quot;:
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_NONE, uint64(0), ACTION_CONFIG, &quot;get_ticks&quot;, &quot;&quot;})
+</a><a href="#h3-4-5" id="h3-4-5" class="i">+				return nil
+</a> 			case &quot;show_proc_regs_pre&quot;:
+ 				r.Rules = append(r.Rules, Rule{TIMEC_NONE, uint64(0), ACTION_CONFIG, &quot;show_proc_regs_pre&quot;, &quot;&quot;})
+ 				return nil
+</pre>
+</div>
+</body>
+</html>

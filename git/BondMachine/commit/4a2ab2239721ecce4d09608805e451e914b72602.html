@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>choices - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4a2ab2239721ecce4d09608805e451e914b72602.html">4a2ab2239721ecce4d09608805e451e914b72602</a>
+<b>parent</b> <a href="../commit/c1cdf4de8bc1ecda931bc2f1bcbb8ad25f92dfd4.html">c1cdf4de8bc1ecda931bc2f1bcbb8ad25f92dfd4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 25 Aug 2023 14:10:13 +0200
+
+choices
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/matcherresolver.go</a></td><td> | </td><td class="num">123</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/dynop_rsets.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>2 files changed, 121 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a> b/<a href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,12 +3,20 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strconv&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ )
+ 
+<a href="#h0-0-11" id="h0-0-11" class="i">+type choice struct {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	choiceName string
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	choiceSel  string
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+type choices []choice
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a> func matcherResolver(bi *BasmInstance) error {
+ 	//TODO finish this
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -16,6 +24,105 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 		fmt.Println(green(&quot;\tProcessing sections:&quot;))
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	// sectionsIncoming := make(map[string]*BasmSection)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	// sectionsOutgoing := make(map[string]struct{})
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// Loop over the sections to find eventual alternatives
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	for sectName, section := range bi.sections {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			if bi.debug {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			}
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			// Setup the map of alternatives sections based on the choices
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			sectAlts := make(map[string]choices)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			body := section.sectionBody
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			for _, line := range body.Lines {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				if bi.debug {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+					fmt.Println(green(&quot;\t\t\tLine: &quot;) + line.String())
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				}
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+				matched := false
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				matching := make([]string, 0)
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+				for j, matcher := range bi.matchers {
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+					if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+						if bi.debug {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+							fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+						}
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+						matched = true
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+						matching = append(matching, strconv.Itoa(j))
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+					}
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+				}
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+				// fmt.Println(matching)
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+				if !matched {
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+					return errors.New(&quot;no operator match&quot;)
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+				} else if len(matching) &gt; 1 {
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+					found := false
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+					choiceName := strings.Join(matching, &quot;_&quot;)
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+				sLoop:
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+					for _, cs := range sectAlts {
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+						for _, c := range cs {
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+							if c.choiceName == choiceName {
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+								found = true
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+								break sLoop
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+							}
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+						}
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+					}
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+					// There is a choice to be made, creating the alternatives names and the choices for the sections
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+					if !found {
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+						sectRem := make(map[string]struct{})
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+						if len(sectAlts) == 0 {
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+							for _, c := range matching {
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+								idx := 0
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+							idxLoop1:
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+								// Identify the next available index
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+								for {
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+									if _, ok := bi.sections[sectName+&quot;_&quot;+strconv.Itoa(idx)]; !ok {
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+										if _, ok := sectAlts[sectName+&quot;_&quot;+strconv.Itoa(idx)]; !ok {
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+											break idxLoop1
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+										}
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+									}
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+									idx++
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+								}
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+								// Create the new section with the new name and the choice
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+								sectAlts[sectName+&quot;_&quot;+strconv.Itoa(idx)] = choices{choice{choiceName: choiceName, choiceSel: c}}
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+							}
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+						} else {
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+							for s, cs := range sectAlts {
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+								for _, c := range matching {
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+									idx := 0
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+								idxLoop2:
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+									// Identify the next available index
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+									for {
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+										if _, ok := bi.sections[sectName+&quot;_&quot;+strconv.Itoa(idx)]; !ok {
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+											if _, ok := sectAlts[sectName+&quot;_&quot;+strconv.Itoa(idx)]; !ok {
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+												break idxLoop2
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+											}
+</a><a href="#h0-1-82" id="h0-1-82" class="i">+										}
+</a><a href="#h0-1-83" id="h0-1-83" class="i">+										idx++
+</a><a href="#h0-1-84" id="h0-1-84" class="i">+									}
+</a><a href="#h0-1-85" id="h0-1-85" class="i">+									// Create the new section with the new name and the choice
+</a><a href="#h0-1-86" id="h0-1-86" class="i">+									sectAlts[sectName+&quot;_&quot;+strconv.Itoa(idx)] = append(cs, choice{choiceName: choiceName, choiceSel: c})
+</a><a href="#h0-1-87" id="h0-1-87" class="i">+								}
+</a><a href="#h0-1-88" id="h0-1-88" class="i">+								sectRem[s] = struct{}{}
+</a><a href="#h0-1-89" id="h0-1-89" class="i">+							}
+</a><a href="#h0-1-90" id="h0-1-90" class="i">+
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+							// Remove the old sections
+</a><a href="#h0-1-92" id="h0-1-92" class="i">+							for s := range sectRem {
+</a><a href="#h0-1-93" id="h0-1-93" class="i">+								delete(sectAlts, s)
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+							}
+</a><a href="#h0-1-95" id="h0-1-95" class="i">+						}
+</a><a href="#h0-1-96" id="h0-1-96" class="i">+					}
+</a><a href="#h0-1-97" id="h0-1-97" class="i">+				}
+</a><a href="#h0-1-98" id="h0-1-98" class="i">+			}
+</a><a href="#h0-1-99" id="h0-1-99" class="i">+			// TODO Finire da qui
+</a><a href="#h0-1-100" id="h0-1-100" class="i">+		}
+</a><a href="#h0-1-101" id="h0-1-101" class="i">+	}
+</a> 	// Loop over the sections
+ 	for sectName, section := range bi.sections {
+ 		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+<a href="#h0-2" id="h0-2" class="h">@@ -38,7 +145,7 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 				}
+ 
+ 				matched := false
+<a href="#h0-2-3" id="h0-2-3" class="d">-				var maching procbuilder.Opcode
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				var matching procbuilder.Opcode
+</a> 
+ 				for j, matcher := range bi.matchers {
+ 					if bmline.MatchMatcher(matcher, line) {
+<a href="#h0-3" id="h0-3" class="h">@@ -46,10 +153,10 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 							fmt.Println(yellow(&quot;\t\t\t\tMaching &quot; + matcher.String()))
+ 						}
+ 						if matched {
+<a href="#h0-3-3" id="h0-3-3" class="d">-							return errors.New(&quot;Ambiguous, more than one operator match&quot;)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+							return errors.New(&quot;ambiguous, more than one operator match&quot;)
+</a> 						}
+ 						matched = true
+<a href="#h0-3-7" id="h0-3-7" class="d">-						maching = bi.matchersOps[j]
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+						matching = bi.matchersOps[j]
+</a> 					}
+ 				}
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -57,17 +164,17 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 					return errors.New(&quot;no operator match&quot;)
+ 				}
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-				opname := maching.Op_get_name()
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+				opName := matching.Op_get_name()
+</a> 
+ 				if section.sectionType == sectRomText {
+<a href="#h0-4-7" id="h0-4-7" class="d">-					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opname, Op: bmreqs.OpAdd})
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opName, Op: bmreqs.OpAdd})
+</a> 				} else {
+<a href="#h0-4-10" id="h0-4-10" class="d">-					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opname, Op: bmreqs.OpAdd})
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + sectName, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: opName, Op: bmreqs.OpAdd})
+</a> 				}
+ 
+ 				// Normalize instruction
+ 				if section.sectionType == sectRomText {
+<a href="#h0-4-16" id="h0-4-16" class="d">-					if normalized, err := maching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:romtexts/sections:&quot;+sectName, line); err != nil {
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+					if normalized, err := matching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:romtexts/sections:&quot;+sectName, line); err != nil {
+</a> 						return err
+ 					} else {
+ 						if bi.debug {
+<a href="#h0-5" id="h0-5" class="h">@@ -76,7 +183,7 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 						body.Lines[i] = normalized
+ 					}
+ 				} else {
+<a href="#h0-5-3" id="h0-5-3" class="d">-					if normalized, err := maching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:ramtexts/sections:&quot;+sectName, line); err != nil {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+					if normalized, err := matching.HLAssemblerNormalize(nil, bi.rg, &quot;/code:ramtexts/sections:&quot;+sectName, line); err != nil {
+</a> 						return err
+ 					} else {
+ 						if bi.debug {
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/dynop_rsets.go.html">pkg/procbuilder/dynop_rsets.go</a> b/<a href="../file/pkg/procbuilder/dynop_rsets.go.html">pkg/procbuilder/dynop_rsets.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -202,7 +202,7 @@ func (Op Rsets) Op_instruction_verilog_extra_block(arch *Arch, flavor string, le
+</a> func (Op Rsets) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 0)
+ 	result = append(result, Op.rsetsName+&quot;::*--type=reg::*--type=number&quot;)
+<a href="#h1-0-3" id="h1-0-3" class="d">-	// result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+</a> 	return result
+ }
+ func (Op Rsets) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+<a href="#h1-1" id="h1-1" class="h">@@ -211,11 +211,11 @@ func (Op Rsets) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> 		regNeed := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+ 		return line, nil
+<a href="#h1-1-3" id="h1-1-3" class="d">-		// case &quot;mov&quot;:
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		// 	regNeed := line.Elements[0].GetValue()
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-		// 	rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-		// 	line.Operation.SetValue(&quot;rset&quot;)
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-		// 	return line, nil
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	case &quot;mov&quot;:
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		regNeed := line.Elements[0].GetValue()
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		line.Operation.SetValue(Op.rsetsName)
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		return line, nil
+</a> 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+ }
+</pre>
+</div>
+</body>
+</html>

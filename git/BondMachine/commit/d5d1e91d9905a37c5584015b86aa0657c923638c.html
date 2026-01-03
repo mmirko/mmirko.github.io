@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>connector structure - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d5d1e91d9905a37c5584015b86aa0657c923638c.html">d5d1e91d9905a37c5584015b86aa0657c923638c</a>
+<b>parent</b> <a href="../commit/ca25f721430340c91a5e8783cbf2fc04f4145469.html">ca25f721430340c91a5e8783cbf2fc04f4145469</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 28 May 2024 15:35:08 +0200
+
+connector structure
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmbuilder/creatorbm.go</a></td><td> | </td><td class="num">58</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmbuilder/generators_exec.go</a></td><td> | </td><td class="num">45</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>2 files changed, 60 insertions(+), 43 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a> b/<a href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -76,33 +76,37 @@ func (bi *BMBuilder) BuildSequentialBlock(block *BMBuilderBlock) error {
+</a> 
+ 	for i := 1; i &lt; BMNum; i++ {
+ 		bm2 := block.blockBMs[i]
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		if bm1.Outputs != bm2.Inputs {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			return errors.New(&quot;BM outputs and inputs do not match&quot;)
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		}
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-		con := new(BMConnections)
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-		con.Links = make([]BMLink, 0)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		// Set the bm1 inputs as final inputs
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-		for j := 0; j &lt; bm1.Inputs; j++ {
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-			e1 := BMEndPoint{BType: FinalBMInput, BNum: j}
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			e2 := BMEndPoint{BType: FirstBMInput, BNum: j}
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-		}
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		// Set the bm1 to bm2 connections
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-		for j := 0; j &lt; bm1.Outputs; j++ {
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-			e1 := BMEndPoint{BType: FirstBMOutput, BNum: j}
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-			e2 := BMEndPoint{BType: SecondBMInput, BNum: j}
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		}
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		// Set the bm2 outputs as final outputs
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-		for j := 0; j &lt; bm2.Outputs; j++ {
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-			e1 := BMEndPoint{BType: SecondBMOutput, BNum: j}
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-			e2 := BMEndPoint{BType: FinalBMOutput, BNum: j}
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		con := block.blockConn[i-1]
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		// The connections are not defined, so we need to create them using the default connector
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		if con == nil {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			if bm1.Outputs != bm2.Inputs {
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+				return errors.New(&quot;BM outputs and inputs do not match&quot;)
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			}
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+			con = new(BMConnections)
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+			con.Links = make([]BMLink, 0)
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			// Set the bm1 inputs as final inputs
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+			for j := 0; j &lt; bm1.Inputs; j++ {
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+				e1 := BMEndPoint{BType: FinalBMInput, BNum: j}
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+				e2 := BMEndPoint{BType: FirstBMInput, BNum: j}
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+				con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+			}
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+			// Set the bm1 to bm2 connections
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+			for j := 0; j &lt; bm1.Outputs; j++ {
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+				e1 := BMEndPoint{BType: FirstBMOutput, BNum: j}
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+				e2 := BMEndPoint{BType: SecondBMInput, BNum: j}
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+				con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+			}
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+			// Set the bm2 outputs as final outputs
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+			for j := 0; j &lt; bm2.Outputs; j++ {
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+				e1 := BMEndPoint{BType: SecondBMOutput, BNum: j}
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+				e2 := BMEndPoint{BType: FinalBMOutput, BNum: j}
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+				con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+			}
+</a> 		}
+ 
+ 		// Merge the two bondmachines
+<b>diff --git a/<a id="h1" href="../file/pkg/bmbuilder/generators_exec.go.html">pkg/bmbuilder/generators_exec.go</a> b/<a href="../file/pkg/bmbuilder/generators_exec.go.html">pkg/bmbuilder/generators_exec.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -45,6 +45,7 @@ func generatorsExec(b *BMBuilder) error {
+</a> 
+ 		// Loop over the lines
+ 		body := block.blockBody
+<a href="#h1-0-3" id="h1-0-3" class="i">+		var connDelay *bmline.BasmLine
+</a> 		for _, line := range body.Lines {
+ 			operand := line.Operation.GetValue()
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -56,32 +57,44 @@ func generatorsExec(b *BMBuilder) error {
+</a> 					return err
+ 				} else {
+ 					block.blockBMs = append(block.blockBMs, bm)
+<a href="#h1-1-3" id="h1-1-3" class="d">-					if len(block.blockConn) &lt; len(block.blockBMs) {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-						block.blockConn = append(block.blockConn, nil)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+					if len(block.blockConn) &lt; len(block.blockBMs)-1 {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+						if connDelay == nil {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+							// Fill with the default connector if it is not defined
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+							block.blockConn = append(block.blockConn, nil)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+						} else {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+							connOperand := connDelay.Operation.GetValue()
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+							if c, ok := b.connectors[connOperand]; ok {
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+								if b.debug {
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+									fmt.Println(yellow(&quot;\t\tGenerating connector from line: &quot; + fmt.Sprint(connDelay) + &quot; with&quot; + fmt.Sprint(metaData)))
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+								}
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+								if conn, err := c(b, metaData, connDelay); err != nil {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+									return err
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+								} else {
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+									block.blockConn = append(block.blockConn, conn)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+								}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+							} else {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+								return fmt.Errorf(&quot;unknown connector: %s&quot;, connOperand)
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+							}
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+							connDelay = nil
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+						}
+</a> 					}
+ 					continue
+ 				}
+ 			}
+ 
+<a href="#h1-1-30" id="h1-1-30" class="d">-			if c, ok := b.connectors[operand]; ok {
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-				if len(block.blockConn) &gt; len(block.blockBMs) {
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+			if _, ok := b.connectors[operand]; ok {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+				if connDelay != nil {
+</a> 					return fmt.Errorf(&quot;Connector cannot be called one after another, it should be called after a BM&quot;)
+ 				}
+<a href="#h1-1-36" id="h1-1-36" class="d">-				if b.debug {
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-					fmt.Println(yellow(&quot;\t\tConnecting bm from line: &quot; + fmt.Sprint(line) + &quot; with&quot; + fmt.Sprint(metaData)))
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-				}
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-				if conn, err := c(b, metaData, line); err != nil {
+</a><a href="#h1-1-40" id="h1-1-40" class="d">-					return err
+</a><a href="#h1-1-41" id="h1-1-41" class="d">-				} else {
+</a><a href="#h1-1-42" id="h1-1-42" class="d">-					block.blockConn = append(block.blockConn, conn)
+</a><a href="#h1-1-43" id="h1-1-43" class="d">-					continue
+</a><a href="#h1-1-44" id="h1-1-44" class="d">-				}
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+				connDelay = line
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+				continue
+</a> 			}
+<a href="#h1-1-48" id="h1-1-48" class="d">-			return fmt.Errorf(&quot;Unknown operation: %s&quot;, operand)
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+			return fmt.Errorf(&quot;unknown operation: %s&quot;, operand)
+</a> 		}
+ 
+<a href="#h1-1-53" id="h1-1-53" class="d">-		if len(block.blockConn) == len(block.blockBMs) {
+</a><a href="#h1-1-54" id="h1-1-54" class="d">-			block.blockConn = append(block.blockConn, nil)
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+		if connDelay != nil {
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+			return fmt.Errorf(&quot;Connector cannot be called as last line in the block&quot;)
+</a> 		}
+ 
+ 		if b.debug {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notebook apps - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9ed322a605ca957bba3d71ed8bf756dbeb209d1e.html">9ed322a605ca957bba3d71ed8bf756dbeb209d1e</a>
+<b>parent</b> <a href="../commit/4493e59e3aa754ffd7ca68fae0e81199545179f5.html">4493e59e3aa754ffd7ca68fae0e81199545179f5</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 14 Mar 2023 12:55:21 +0100
+
+Notebook apps
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/bmapi.go</a></td><td> | </td><td class="num">48</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/exmod_bmapi.go</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bondmachine/files_aximm_pynq_example.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/bondmachine/files_axist_pynq_example.go</a></td><td> | </td><td class="num">176</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 245 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -139,6 +139,7 @@ var bmapiModOutDir = flag.String(&quot;bmapi-modoutdir&quot;, &quot;&quot;, &quot;Output directory for th
+</a> var bmapiAuxOutDir = flag.String(&quot;bmapi-auxoutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI auxiliary material.&quot;)
+ var bmapiPackageName = flag.String(&quot;bmapi-packagename&quot;, &quot;&quot;, &quot;GO package name.&quot;)
+ var bmapiModuleName = flag.String(&quot;bmapi-modulename&quot;, &quot;&quot;, &quot;GO module name.&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var bmapiGenerateExample = flag.String(&quot;bmapi-generate-example&quot;, &quot;&quot;, &quot;Generate an example program using the BMAPI.&quot;)
+</a> 
+ var board_slow = flag.Bool(&quot;board-slow&quot;, false, &quot;Board slow support&quot;)
+ var board_slow_factor = flag.Int(&quot;board-slow-factor&quot;, 1, &quot;Board slow factor&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -478,6 +479,7 @@ func main() {
+</a> 				bmapi.AuxOutDir = *bmapiAuxOutDir
+ 				bmapi.ModuleName = *bmapiModuleName
+ 				bmapi.PackageName = *bmapiPackageName
+<a href="#h0-1-3" id="h0-1-3" class="i">+				bmapi.GenerateExample = *bmapiGenerateExample
+</a> 
+ 				bmAPIMap := new(bondmachine.IOmap)
+ 				if *bmapiMapfile != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a> b/<a href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -30,6 +30,7 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 	var bmapiAuxOutDir string
+ 	var bmapiPackageName string
+ 	var bmapiModuleName string
+<a href="#h1-0-3" id="h1-0-3" class="i">+	var bmapiGenerateExample string
+</a> 
+ 	var bmapiParams map[string]string
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -92,6 +93,12 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 				return errors.New(&quot;Missing bmapi modulename&quot;)
+ 			}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+			if val, ok := bmapiParams[&quot;bmapi_generate_example&quot;]; ok {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+				bmapiGenerateExample = val
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+			} else {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+				return errors.New(&quot;Missing bmapi generate example&quot;)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+			}
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+
+</a> 			break
+ 		}
+ 	}
+<a href="#h1-2" id="h1-2" class="h">@@ -186,7 +193,46 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 
+ 			f.Close()
+ 		}
+<a href="#h1-2-3" id="h1-2-3" class="d">-		fmt.Println(bmapiFramework)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		switch bmapiLanguage {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		case &quot;python&quot;:
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+			switch bmapiFramework {
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+			case &quot;pynq&quot;:
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+				if bmapiGenerateExample != &quot;&quot; {
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+					if _, err := os.Stat(bmapiLibOutDir); os.IsNotExist(err) {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+						os.Mkdir(bmapiLibOutDir, 0700)
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+					} else {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+						return errors.New(&quot;BMAPI liboutdir already exists&quot;)
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+					}
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+					// Compiling the data for the templates
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+					bmapiExample := bmach.createBasicTemplateData()
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+					exFiles := make(map[string]string)
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+					exFiles[bmapiGenerateExample] = axistPynqExample
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+					for file, temp := range exFiles {
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+						t, err := template.New(file).Parse(temp)
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+						if err != nil {
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+							return err
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+						}
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+						f, err := os.Create(bmapiLibOutDir + &quot;/&quot; + file)
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+						if err != nil {
+</a><a href="#h1-2-30" id="h1-2-30" class="i">+							return err
+</a><a href="#h1-2-31" id="h1-2-31" class="i">+						}
+</a><a href="#h1-2-32" id="h1-2-32" class="i">+
+</a><a href="#h1-2-33" id="h1-2-33" class="i">+						err = t.Execute(f, bmapiExample)
+</a><a href="#h1-2-34" id="h1-2-34" class="i">+						if err != nil {
+</a><a href="#h1-2-35" id="h1-2-35" class="i">+							return err
+</a><a href="#h1-2-36" id="h1-2-36" class="i">+						}
+</a><a href="#h1-2-37" id="h1-2-37" class="i">+
+</a><a href="#h1-2-38" id="h1-2-38" class="i">+						f.Close()
+</a><a href="#h1-2-39" id="h1-2-39" class="i">+					}
+</a><a href="#h1-2-40" id="h1-2-40" class="i">+				}
+</a><a href="#h1-2-41" id="h1-2-41" class="i">+			}
+</a><a href="#h1-2-42" id="h1-2-42" class="i">+		}
+</a><a href="#h1-2-43" id="h1-2-43" class="i">+
+</a> 	case &quot;aximm&quot;:
+ 
+ 		// This is the generation of the Linux kernel module
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a> b/<a href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -15,17 +15,18 @@ type UartTemplate struct {
+</a> }
+ 
+ type BMAPIExtra struct {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	Maps          *IOmap
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	Language      string
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	Flavor        string // &quot;uartusb&quot; or &quot;aximm&quot; or &quot;axist&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	FlavorVersion string
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	Framework     string // &quot;pynq&quot; or &quot;&quot;
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	LibOutDir     string
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	ModOutDir     string
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	AuxOutDir     string
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	PackageName   string
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	ModuleName    string
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	Rsize         uint8
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	Maps            *IOmap
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	Language        string
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	Flavor          string // &quot;uartusb&quot; or &quot;aximm&quot; or &quot;axist&quot;
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	FlavorVersion   string
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	Framework       string // &quot;pynq&quot; or &quot;&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	LibOutDir       string
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	ModOutDir       string
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	AuxOutDir       string
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	PackageName     string
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	ModuleName      string
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	GenerateExample string
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	Rsize           uint8
+</a> }
+ 
+ func (sl *BMAPIExtra) Get_Name() string {
+<a href="#h2-1" id="h2-1" class="h">@@ -45,6 +46,7 @@ func (sl *BMAPIExtra) Get_Params() *ExtraParams {
+</a> 	result.Params[&quot;bmapi_modoutdir&quot;] = sl.ModOutDir
+ 	result.Params[&quot;bmapi_packagename&quot;] = sl.PackageName
+ 	result.Params[&quot;bmapi_modulename&quot;] = sl.ModuleName
+<a href="#h2-1-3" id="h2-1-3" class="i">+	result.Params[&quot;bmapi_generate_example&quot;] = sl.GenerateExample
+</a> 
+ 	result.Params[&quot;inputs&quot;] = &quot;&quot;
+ 	result.Params[&quot;outputs&quot;] = &quot;&quot;
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,7 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bondmachine
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+const (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	aximmPynqExample = `
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+`
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+)
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/files_axist_pynq_example.go.html">pkg/bondmachine/files_axist_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_axist_pynq_example.go.html">pkg/bondmachine/files_axist_pynq_example.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,176 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package bondmachine
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+const (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	axistPynqExample = `
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+{
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+ &quot;cells&quot;: [
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+  {
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+    &quot;from pynq import Overlay\n&quot;,
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+    &quot;from pynq import MMIO\n&quot;,
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+    &quot;import os\n&quot;,
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+    &quot;import numpy as np\n&quot;,
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+    &quot;import time\n&quot;,
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+    &quot;import sys\n&quot;,
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+    &quot;import csv\n&quot;,
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+    &quot;from datetime import datetime\n&quot;,
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+    &quot;import statistics\n&quot;,
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+    &quot;\n&quot;,
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+    &quot;np.set_printoptions(threshold=sys.maxsize)&quot;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+   ]
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+  },
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+  {
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+   &quot;execution_count&quot;: null,   
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+    &quot;overlay = Overlay(os.getcwd()+\&quot;/firmware.bit\&quot;)&quot;
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+   ]
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+  },
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+  {
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+    &quot;from pynq import DefaultHierarchy, DefaultIP, allocate\n&quot;,
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+    &quot;sendchannel = overlay.axi_dma_0.sendchannel\n&quot;,
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+    &quot;recvchannel = overlay.axi_dma_0.recvchannel&quot;
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+   ]
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+  },
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+  {
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+    &quot;X_test = np.load(&#39;banknote-authentication_X_test.npy&#39;)\n&quot;,
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+    &quot;Y_test = np.load(&#39;banknote-authentication_y_test.npy&#39;)&quot;
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+   ]
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+  },
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+  {
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+    &quot;# COSTANTS\n&quot;,
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+    &quot;SAMPLES = len(X_test)\n&quot;,
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+    &quot; \n&quot;,
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+    &quot;BATCH_SIZE = 16  # SIZE OF THE BATCH TO SEND\n&quot;,
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+    &quot;BM_INPUTS  = 4   # N. OF INPUTS OF THE BONDMACHINE MODULE \n&quot;,
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+    &quot;BM_OUTPUTS = 3   # N. OF OUTPUTS OF THE BONDMACHINE MODULE\n&quot;,
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+    &quot;\n&quot;,
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+    &quot;INPUT_SHAPE  = (BATCH_SIZE, BM_INPUTS)\n&quot;,
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+    &quot;OUTPUT_SHAPE = (BATCH_SIZE, BM_OUTPUTS)&quot;
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+   ]
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+  },
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+  {
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+    &quot;n_batches = 0\n&quot;,
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+    &quot;fill = False\n&quot;,
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+    &quot;if (SAMPLES/BATCH_SIZE % 2 != 0):\n&quot;,
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+    &quot;    n_batches = int(SAMPLES/BATCH_SIZE) + 1\n&quot;,
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+    &quot;    fill = True\n&quot;,
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+    &quot;else:\n&quot;,
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+    &quot;    n_batches = int(SAMPLES/BATCH_SIZE)&quot;
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+   ]
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+  },
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+  {
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-92" id="h4-0-92" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-93" id="h4-0-93" class="i">+    &quot;def random_pad(vec, pad_width, *_, **__):\n&quot;,
+</a><a href="#h4-0-94" id="h4-0-94" class="i">+    &quot;    vec[:pad_width[0]] = np.random.uniform(0, 1, size=pad_width[0])\n&quot;,
+</a><a href="#h4-0-95" id="h4-0-95" class="i">+    &quot;    vec[vec.size-pad_width[1]:] = np.random.uniform(0,1, size=pad_width[1])&quot;
+</a><a href="#h4-0-96" id="h4-0-96" class="i">+   ]
+</a><a href="#h4-0-97" id="h4-0-97" class="i">+  },
+</a><a href="#h4-0-98" id="h4-0-98" class="i">+  {
+</a><a href="#h4-0-99" id="h4-0-99" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-100" id="h4-0-100" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-101" id="h4-0-101" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-102" id="h4-0-102" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-103" id="h4-0-103" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-104" id="h4-0-104" class="i">+    &quot;batches = []\n&quot;,
+</a><a href="#h4-0-105" id="h4-0-105" class="i">+    &quot;last_batch_size = 0\n&quot;,
+</a><a href="#h4-0-106" id="h4-0-106" class="i">+    &quot;for i in range(0, n_batches):\n&quot;,
+</a><a href="#h4-0-107" id="h4-0-107" class="i">+    &quot;    new_batch = X_test[i*BATCH_SIZE:(i+1)*BATCH_SIZE]\n&quot;,
+</a><a href="#h4-0-108" id="h4-0-108" class="i">+    &quot;    if (len(new_batch) &lt; BATCH_SIZE):\n&quot;,
+</a><a href="#h4-0-109" id="h4-0-109" class="i">+    &quot;        last_batch_size = len(new_batch)\n&quot;,
+</a><a href="#h4-0-110" id="h4-0-110" class="i">+    &quot;        new_batch = np.pad(new_batch,  [(0, BATCH_SIZE-len(new_batch)), (0,0)], mode=random_pad)\n&quot;,
+</a><a href="#h4-0-111" id="h4-0-111" class="i">+    &quot;    batches.append(new_batch)&quot;
+</a><a href="#h4-0-112" id="h4-0-112" class="i">+   ]
+</a><a href="#h4-0-113" id="h4-0-113" class="i">+  },
+</a><a href="#h4-0-114" id="h4-0-114" class="i">+  {
+</a><a href="#h4-0-115" id="h4-0-115" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-116" id="h4-0-116" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-117" id="h4-0-117" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-118" id="h4-0-118" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-119" id="h4-0-119" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-120" id="h4-0-120" class="i">+    &quot;outputs = []\n&quot;,
+</a><a href="#h4-0-121" id="h4-0-121" class="i">+    &quot;inference_times = []\n&quot;,
+</a><a href="#h4-0-122" id="h4-0-122" class="i">+    &quot;for i in range(0, len(batches)):\n&quot;,
+</a><a href="#h4-0-123" id="h4-0-123" class="i">+    &quot;    input_buffer = allocate(shape=INPUT_SHAPE, dtype=np.float32)\n&quot;,
+</a><a href="#h4-0-124" id="h4-0-124" class="i">+    &quot;    output_buffer = allocate(shape=OUTPUT_SHAPE, dtype=np.float32)\n&quot;,
+</a><a href="#h4-0-125" id="h4-0-125" class="i">+    &quot;    input_buffer[:]=batches[i]\n&quot;,
+</a><a href="#h4-0-126" id="h4-0-126" class="i">+    &quot;    start_time = datetime.now()\n&quot;,
+</a><a href="#h4-0-127" id="h4-0-127" class="i">+    &quot;    sendchannel.transfer(input_buffer)\n&quot;,
+</a><a href="#h4-0-128" id="h4-0-128" class="i">+    &quot;    recvchannel.transfer(output_buffer)\n&quot;,
+</a><a href="#h4-0-129" id="h4-0-129" class="i">+    &quot;    sendchannel.wait()\n&quot;,
+</a><a href="#h4-0-130" id="h4-0-130" class="i">+    &quot;    recvchannel.wait()\n&quot;,
+</a><a href="#h4-0-131" id="h4-0-131" class="i">+    &quot;    end_time = datetime.now()\n&quot;,
+</a><a href="#h4-0-132" id="h4-0-132" class="i">+    &quot;    diff_in_ms = (end_time - start_time).total_seconds() * 1000\n&quot;,
+</a><a href="#h4-0-133" id="h4-0-133" class="i">+    &quot;    inference_times.append(diff_in_ms)\n&quot;,
+</a><a href="#h4-0-134" id="h4-0-134" class="i">+    &quot;    if fill == True and i == len(batches) - 1:\n&quot;,
+</a><a href="#h4-0-135" id="h4-0-135" class="i">+    &quot;        outputs.append(output_buffer[0:last_batch_size])\n&quot;,
+</a><a href="#h4-0-136" id="h4-0-136" class="i">+    &quot;    else:\n&quot;,
+</a><a href="#h4-0-137" id="h4-0-137" class="i">+    &quot;        outputs.append(output_buffer)&quot;
+</a><a href="#h4-0-138" id="h4-0-138" class="i">+   ]
+</a><a href="#h4-0-139" id="h4-0-139" class="i">+  },
+</a><a href="#h4-0-140" id="h4-0-140" class="i">+  {
+</a><a href="#h4-0-141" id="h4-0-141" class="i">+   &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h4-0-142" id="h4-0-142" class="i">+   &quot;execution_count&quot;: null,
+</a><a href="#h4-0-143" id="h4-0-143" class="i">+   &quot;metadata&quot;: {},
+</a><a href="#h4-0-144" id="h4-0-144" class="i">+   &quot;outputs&quot;: [],
+</a><a href="#h4-0-145" id="h4-0-145" class="i">+   &quot;source&quot;: [
+</a><a href="#h4-0-146" id="h4-0-146" class="i">+    &quot;ms_median = statistics.median(inference_times)\n&quot;,
+</a><a href="#h4-0-147" id="h4-0-147" class="i">+    &quot;print(\&quot;median:            \&quot;, ms_median, \&quot; ms\&quot;)\n&quot;,
+</a><a href="#h4-0-148" id="h4-0-148" class="i">+    &quot;print(\&quot;median time for a sample: \&quot;, statistics.median(inference_times)/BATCH_SIZE, \&quot; ms\&quot;)&quot;
+</a><a href="#h4-0-149" id="h4-0-149" class="i">+   ]
+</a><a href="#h4-0-150" id="h4-0-150" class="i">+  }
+</a><a href="#h4-0-151" id="h4-0-151" class="i">+ ],
+</a><a href="#h4-0-152" id="h4-0-152" class="i">+ &quot;metadata&quot;: {
+</a><a href="#h4-0-153" id="h4-0-153" class="i">+  &quot;kernelspec&quot;: {
+</a><a href="#h4-0-154" id="h4-0-154" class="i">+   &quot;display_name&quot;: &quot;Python 3&quot;,
+</a><a href="#h4-0-155" id="h4-0-155" class="i">+   &quot;language&quot;: &quot;python&quot;,
+</a><a href="#h4-0-156" id="h4-0-156" class="i">+   &quot;name&quot;: &quot;python3&quot;
+</a><a href="#h4-0-157" id="h4-0-157" class="i">+  },
+</a><a href="#h4-0-158" id="h4-0-158" class="i">+  &quot;language_info&quot;: {
+</a><a href="#h4-0-159" id="h4-0-159" class="i">+   &quot;codemirror_mode&quot;: {
+</a><a href="#h4-0-160" id="h4-0-160" class="i">+    &quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h4-0-161" id="h4-0-161" class="i">+    &quot;version&quot;: 3
+</a><a href="#h4-0-162" id="h4-0-162" class="i">+   },
+</a><a href="#h4-0-163" id="h4-0-163" class="i">+   &quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h4-0-164" id="h4-0-164" class="i">+   &quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h4-0-165" id="h4-0-165" class="i">+   &quot;name&quot;: &quot;python&quot;,
+</a><a href="#h4-0-166" id="h4-0-166" class="i">+   &quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h4-0-167" id="h4-0-167" class="i">+   &quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h4-0-168" id="h4-0-168" class="i">+   &quot;version&quot;: &quot;3.6.5&quot;
+</a><a href="#h4-0-169" id="h4-0-169" class="i">+  }
+</a><a href="#h4-0-170" id="h4-0-170" class="i">+ },
+</a><a href="#h4-0-171" id="h4-0-171" class="i">+ &quot;nbformat&quot;: 4,
+</a><a href="#h4-0-172" id="h4-0-172" class="i">+ &quot;nbformat_minor&quot;: 2
+</a><a href="#h4-0-173" id="h4-0-173" class="i">+}
+</a><a href="#h4-0-174" id="h4-0-174" class="i">+`
+</a><a href="#h4-0-175" id="h4-0-175" class="i">+)
+</a></pre>
+</div>
+</body>
+</html>

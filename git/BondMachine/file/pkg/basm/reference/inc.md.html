@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>inc.md - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../../"><img src="../../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../../log.html">Log</a> | <a href="../../../../files.html">Files</a> | <a href="../../../../refs.html">Refs</a> | <a href="../../../../file/README.md.html">README</a> | <a href="../../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> inc.md (1178B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> # inc
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> **Instruction**: inc
+<a href="#l4" class="line" id="l4">      4</a> 
+<a href="#l5" class="line" id="l5">      5</a> **Length**: opBits + regBits
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> **Description**:
+<a href="#l8" class="line" id="l8">      8</a> 
+<a href="#l9" class="line" id="l9">      9</a> The INC instruction increments a register by 1. It assumes that the register is a positive integer and it will overflow to 0 if the maximum value is reached. The length of the register is defined by the architecture.        
+<a href="#l10" class="line" id="l10">     10</a> 
+<a href="#l11" class="line" id="l11">     11</a> **Snippet**:
+<a href="#l12" class="line" id="l12">     12</a> 
+<a href="#l13" class="line" id="l13">     13</a> 
+<a href="#l14" class="line" id="l14">     14</a> ```asm
+<a href="#l15" class="line" id="l15">     15</a> %section code .romtext  ; The section name is code and it is a ROM program
+<a href="#l16" class="line" id="l16">     16</a>         entry _start    ; Entry point
+<a href="#l17" class="line" id="l17">     17</a> _start:
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a>         clr     r0      ; Clear register r0
+<a href="#l20" class="line" id="l20">     20</a> loop:
+<a href="#l21" class="line" id="l21">     21</a>         inc	r0      ; Increment register r0
+<a href="#l22" class="line" id="l22">     22</a> 	r2o	r0,o0   ; Output register r0 to the special output register o0
+<a href="#l23" class="line" id="l23">     23</a>         j	loop    ; Jump to loop
+<a href="#l24" class="line" id="l24">     24</a> 
+<a href="#l25" class="line" id="l25">     25</a> %endsection
+<a href="#l26" class="line" id="l26">     26</a> 
+<a href="#l27" class="line" id="l27">     27</a> %meta cpdef	cpu	romcode: code, ramsize:8        ; Define a CPU with the code section as program 256 bytes of RAM
+<a href="#l28" class="line" id="l28">     28</a> %meta ioatt     testio cp: cpu, index:0, type:output    ; Define an output bond to the CP (outgoing, CP endpoint)
+<a href="#l29" class="line" id="l29">     29</a> %meta ioatt     testio cp: bm, index:0, type:output     ; Define an output bond to the BM (outgoing, BM endpoint)
+<a href="#l30" class="line" id="l30">     30</a> %meta bmdef	global registersize:8                   ; Define the register size of the BM to 8 bits
+<a href="#l31" class="line" id="l31">     31</a> ```
+<a href="#l32" class="line" id="l32">     32</a> 
+<a href="#l33" class="line" id="l33">     33</a> An example of the INC instruction. Here, used to implement a simple counter.
+</pre>
+</div>
+</body>
+</html>

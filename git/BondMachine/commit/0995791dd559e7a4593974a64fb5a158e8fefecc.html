@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Valid and recvs for simulation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0995791dd559e7a4593974a64fb5a158e8fefecc.html">0995791dd559e7a4593974a64fb5a158e8fefecc</a>
+<b>parent</b> <a href="../commit/c44047e63dfc9c308eba55ed1033ca28e118195c.html">c44047e63dfc9c308eba55ed1033ca28e118195c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 26 May 2023 10:12:26 +0200
+
+Valid and recvs for simulation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/vm.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>3 files changed, 51 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -13,6 +13,13 @@ import (
+</a> 
+ //reorg {&quot;name&quot;: &quot;Init&quot;, &quot;descr&quot;: &quot;Initialization functions&quot;}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+const (
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	BMINPUT  = uint8(0)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	BMOUTPUT = uint8(1)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	CPINPUT  = uint8(2)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	CPOUTPUT = uint8(3)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+)
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> type Prerror struct {
+ 	string
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -150,13 +157,13 @@ func (c *Config) ProcbuilderConfig() *procbuilder.Config {
+</a> 
+ func (b *Bond) String() string {
+ 	result := &quot;&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if b.Map_to == 0 {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if b.Map_to == BMINPUT {
+</a> 		result += &quot;i&quot; + strconv.Itoa(b.Res_id)
+<a href="#h0-1-6" id="h0-1-6" class="d">-	} else if b.Map_to == 1 {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	} else if b.Map_to == BMOUTPUT {
+</a> 		result += &quot;o&quot; + strconv.Itoa(b.Res_id)
+<a href="#h0-1-9" id="h0-1-9" class="d">-	} else if b.Map_to == 2 {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	} else if b.Map_to == CPINPUT {
+</a> 		result += &quot;p&quot; + strconv.Itoa(b.Res_id) + &quot;i&quot; + strconv.Itoa(b.Ext_id)
+<a href="#h0-1-12" id="h0-1-12" class="d">-	} else if b.Map_to == 3 {
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	} else if b.Map_to == CPOUTPUT {
+</a> 		result += &quot;p&quot; + strconv.Itoa(b.Res_id) + &quot;o&quot; + strconv.Itoa(b.Ext_id)
+ 	}
+ 	return result
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,6 +18,16 @@ type VM struct {
+</a> 	Internal_inputs_regs  []interface{}
+ 	Internal_outputs_regs []interface{}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	InputsValid          []bool
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	OutputsValid         []bool
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	InternalInputsValid  []bool
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	InternalOutputsValid []bool
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	InputsRecv          []bool
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	OutputsRecv         []bool
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	InternalInputsRecv  []bool
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	InternalOutputsRecv []bool
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+
+</a> 	EmuDrivers []EmuDriver
+ 	cmdChan    chan []byte
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -93,6 +103,13 @@ func (vm *VM) Init() error {
+</a> 	vm.Outputs_regs = make([]interface{}, vm.Bmach.Outputs)
+ 	vm.Internal_inputs_regs = make([]interface{}, len(vm.Bmach.Internal_inputs))
+ 	vm.Internal_outputs_regs = make([]interface{}, len(vm.Bmach.Internal_outputs))
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	vm.InputsValid = make([]bool, vm.Bmach.Inputs)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	vm.OutputsValid = make([]bool, vm.Bmach.Outputs)
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	vm.InternalInputsValid = make([]bool, len(vm.Bmach.Internal_inputs))
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	vm.InternalOutputsValid = make([]bool, len(vm.Bmach.Internal_outputs))
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+
+</a> 	vm.abs_tick = uint64(0)
+ 
+ 	if vm.EmuDrivers == nil {
+<a href="#h1-2" id="h1-2" class="h">@@ -238,10 +255,8 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 	// Set the internal outputs registers
+ 	for i, bond := range vm.Bmach.Internal_outputs {
+ 		switch bond.Map_to {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		case 0:
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		case BMINPUT:
+</a> 			vm.Internal_outputs_regs[i] = vm.Inputs_regs[bond.Res_id]
+<a href="#h1-2-6" id="h1-2-6" class="d">-			//		case 3:
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-			//			vm.Internal_outputs_regs[i] = vm.Processors[bond.Res_id].Outputs[bond.Ext_id]
+</a> 		}
+ 	}
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -255,9 +270,7 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 	// Transfer internal inputs registers to their destination
+ 	for i, bond := range vm.Bmach.Internal_inputs {
+ 		switch bond.Map_to {
+<a href="#h1-3-3" id="h1-3-3" class="d">-		//		case 1:
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-		//			vm.Outputs_regs[bond.Res_id] = vm.Internal_inputs_regs[i]
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-		case 2:
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+		case CPINPUT:
+</a> 			vm.Processors[bond.Res_id].Inputs[bond.Ext_id] = vm.Internal_inputs_regs[i]
+ 		}
+ 	}
+<a href="#h1-4" id="h1-4" class="h">@@ -296,9 +309,7 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 	// Set the internal outputs registers
+ 	for i, bond := range vm.Bmach.Internal_outputs {
+ 		switch bond.Map_to {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		//		case 0:
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-		//			vm.Internal_outputs_regs[i] = vm.Inputs_regs[bond.Res_id]
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-		case 3:
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+		case CPOUTPUT:
+</a> 			vm.Internal_outputs_regs[i] = vm.Processors[bond.Res_id].Outputs[bond.Ext_id]
+ 		}
+ 	}
+<a href="#h1-5" id="h1-5" class="h">@@ -313,10 +324,8 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 	// Transfer internal inputs registers to their destination
+ 	for i, bond := range vm.Bmach.Internal_inputs {
+ 		switch bond.Map_to {
+<a href="#h1-5-3" id="h1-5-3" class="d">-		case 1:
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		case BMOUTPUT:
+</a> 			vm.Outputs_regs[bond.Res_id] = vm.Internal_inputs_regs[i]
+<a href="#h1-5-6" id="h1-5-6" class="d">-			//		case 2:
+</a><a href="#h1-5-7" id="h1-5-7" class="d">-			//			vm.Processors[bond.Res_id].Inputs[bond.Ext_id] = vm.Internal_inputs_regs[i]
+</a> 		}
+ 	}
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a> b/<a href="../file/pkg/procbuilder/vm.go.html">pkg/procbuilder/vm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -9,12 +9,19 @@ import (
+</a> )
+ 
+ type VM struct {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	CpID         uint32
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	Mach         *Machine
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	Registers    []interface{}
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	Memory       []interface{}
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	Inputs       []interface{}
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	Outputs      []interface{}
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	CpID      uint32
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	Mach      *Machine
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	Registers []interface{}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	Memory    []interface{}
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	Inputs    []interface{}
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	Outputs   []interface{}
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	InputsValid  []bool
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	OutputsValid []bool
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	InputsRecv  []bool
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	OutputsRecv []bool
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a> 	Pc           uint64
+ 	Extra_states map[string]interface{}
+ 	CmdChan      chan []byte
+<a href="#h2-1" id="h2-1" class="h">@@ -80,6 +87,12 @@ func (vm *VM) Init() error {
+</a> 	vm.Memory = make([]interface{}, mem_num)
+ 	vm.Inputs = make([]interface{}, vm.Mach.N)
+ 	vm.Outputs = make([]interface{}, vm.Mach.M)
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	vm.InputsValid = make([]bool, vm.Mach.N)
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	vm.OutputsValid = make([]bool, vm.Mach.M)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	vm.InputsRecv = make([]bool, vm.Mach.N)
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	vm.OutputsRecv = make([]bool, vm.Mach.M)
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+
+</a> 	vm.Pc = 0
+ 
+ 	if vm.Mach.Rsize &lt;= 8 {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>pipelined operations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7ac62569ae37f24a1944253536166fd537b1c1cc.html">7ac62569ae37f24a1944253536166fd537b1c1cc</a>
+<b>parent</b> <a href="../commit/5fa6b8070ee53c042dfa6ba65f4898d71183df4f.html">5fa6b8070ee53c042dfa6ba65f4898d71183df4f</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 15 Apr 2023 10:02:06 +0200
+
+pipelined operations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmnumbers/dyntype_linear_quantizer.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/procbuilder/op_addp.go</a></td><td> | </td><td class="num">283</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/procbuilder/op_divp.go</a></td><td> | </td><td class="num">283</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/procbuilder/op_multp.go</a></td><td> | </td><td class="num">283</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 855 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a> b/<a href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -143,9 +143,9 @@ func (d LinearQuantizer) ExportString(n *BMNumber) (string, error) {
+</a> 
+ func (d LinearQuantizer) ShowInstructions() map[string]string {
+ 	result := make(map[string]string)
+<a href="#h0-0-3" id="h0-0-3" class="d">-	result[&quot;addop&quot;] = &quot;add&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	result[&quot;multop&quot;] = &quot;mult&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	result[&quot;divop&quot;] = &quot;div&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	result[&quot;addop&quot;] = &quot;addp&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	result[&quot;multop&quot;] = &quot;multp&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	result[&quot;divop&quot;] = &quot;divp&quot;
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -38,6 +38,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Add{})
+ 	Allopcodes = append(Allopcodes, Addf{})
+ 	Allopcodes = append(Allopcodes, Addi{})
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Allopcodes = append(Allopcodes, Addp{})
+</a> 	Allopcodes = append(Allopcodes, And{})
+ 	Allopcodes = append(Allopcodes, Chc{})
+ 	Allopcodes = append(Allopcodes, Chw{})
+<a href="#h1-1" id="h1-1" class="h">@@ -52,6 +53,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Dec{})
+ 	Allopcodes = append(Allopcodes, Div{})
+ 	Allopcodes = append(Allopcodes, Divf{})
+<a href="#h1-1-3" id="h1-1-3" class="i">+	Allopcodes = append(Allopcodes, Divp{})
+</a> 	Allopcodes = append(Allopcodes, Dpc{})
+ 	Allopcodes = append(Allopcodes, Expf{})
+ 	Allopcodes = append(Allopcodes, Hit{})
+<a href="#h1-2" id="h1-2" class="h">@@ -75,6 +77,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Mulc{})
+ 	Allopcodes = append(Allopcodes, Mult{})
+ 	Allopcodes = append(Allopcodes, Multf{})
+<a href="#h1-2-3" id="h1-2-3" class="i">+	Allopcodes = append(Allopcodes, Multp{})
+</a> 	Allopcodes = append(Allopcodes, Nand{})
+ 	Allopcodes = append(Allopcodes, Nop{})
+ 	Allopcodes = append(Allopcodes, Nor{})
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a> b/<a href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,283 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package procbuilder
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;math&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;strings&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+)
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+type Addp struct{}
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+func (op Addp) Op_get_name() string {
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	return &quot;addp&quot;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+}
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+func (op Addp) Op_get_desc() string {
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	return &quot;Register pipelined multiplcation&quot;
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+}
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+func (op Addp) Op_show_assembler(arch *Arch) string {
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	result := &quot;addp [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the product of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	return result
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+}
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+func (op Addp) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+}
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+func (op Addp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] addp_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] addp_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] addp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	result += &quot;\treg	[1:0] addp_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	result += &quot;parameter addp_&quot; + arch.Tag + &quot;_put         = 2&#39;d0,\n&quot;
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+	result += &quot;          addp_&quot; + arch.Tag + &quot;_get         = 2&#39;d1;\n&quot;
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	result += &quot;\taddp_&quot; + arch.Tag + &quot; addp_&quot; + arch.Tag + &quot;_inst (addp_&quot; + arch.Tag + &quot;_input_a, addp_&quot; + arch.Tag + &quot;_input_b,  addp_&quot; + arch.Tag + &quot;_output_z);\n\n&quot;
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	return result
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+}
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+func (op Addp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+	result += &quot;					ADDP: begin\n&quot;
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+	if arch.R == 1 {
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+	} else {
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	}
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+			cp := arch.Tag
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+				continue
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+			}
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+		}
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		if arch.R == 1 {
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+		} else {
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		}
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+				cp := arch.Tag
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+					continue
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+				}
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+			}
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+			result += &quot;							case (addp_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+			result += &quot;							addp_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+			result += &quot;								addp_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+			result += &quot;								addp_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+			result += &quot;								addp_&quot; + arch.Tag + &quot;_state &lt;= #1 addp_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+			result += &quot;							addp&quot; + arch.Tag + &quot;_get : begin\n&quot;
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 addp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+			result += &quot;								addp_&quot; + arch.Tag + &quot;_state &lt;= #1 addp_&quot; + arch.Tag + &quot;_put;\n&quot;
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+			result += &quot;								$display(\&quot;ADDP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+		}
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	}
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+	return result
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+}
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+func (op Addp) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+	// TODO
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+}
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+func (op Addp) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+	if len(words) != 2 {
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+	}
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+			break
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+		}
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+	}
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+	if result == &quot;&quot; {
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+	}
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+	partial := &quot;&quot;
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+			break
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+		}
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+	}
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+	}
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+	result += partial
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+		result += &quot;0&quot;
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+	}
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+	return result, nil
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+}
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+func (op Addp) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+	return result, nil
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+}
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+func (op Addp) Simulate(vm *VM, instr string) error {
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+	case 32:
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+		var floatDest float32
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+		var floatSrc float32
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+		if v, ok := vm.Registers[regDest].(uint32); ok {
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+			floatDest = math.Float32frombits(v)
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+		} else {
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+			floatDest = float32(0.0)
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+		}
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+		if v, ok := vm.Registers[regSrc].(uint32); ok {
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+			floatSrc = math.Float32frombits(v)
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+		} else {
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+			floatSrc = float32(0.0)
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+		}
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+		vm.Registers[regDest] = math.Float32bits(floatDest * floatSrc)
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+	default:
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 32 bits&quot;)
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+	}
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+	return nil
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+}
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+// The random genaration does nothing
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+func (op Addp) Generate(arch *Arch) string {
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+	// TODO
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+}
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+func (op Addp) Required_shared() (bool, []string) {
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+	// TODO
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+	return false, []string{}
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+}
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+func (op Addp) Required_modes() (bool, []string) {
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+	return false, []string{}
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+}
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+func (op Addp) Forbidden_modes() (bool, []string) {
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+	return false, []string{}
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+}
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+func (op Addp) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+}
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+func (Op Addp) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+}
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+func (Op Addp) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+}
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+func (Op Addp) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+}
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+func (Op Addp) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+	result += &quot;module addp_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+	result += &quot;        output_z);\n&quot;
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+	result += &quot;\n&quot;
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+	result += &quot;  output    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+	result += &quot;  assign output_z = input_a + input_b;\n&quot;
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+	result += &quot;\n&quot;
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+	return []string{&quot;multiplier&quot;}, []string{result}
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+}
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+func (Op Addp) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+	return result, nil
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+}
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+func (Op Addp) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+	result := &quot;&quot;
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+	switch blockname {
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+	default:
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+		result = &quot;&quot;
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+	}
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+	return result
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+}
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+func (Op Addp) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+	result := make([]string, 0)
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+	result = append(result, &quot;addp::*--type=reg::*--type=reg&quot;)
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+	return result
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+}
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+func (Op Addp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+	case &quot;addp&quot;:
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;addp&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+		return line, nil
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+	}
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+}
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+func (Op Addp) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+	return []string{}, []string{}
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a> b/<a href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,283 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package procbuilder
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;math&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	&quot;strings&quot;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+)
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+type Divp struct{}
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+func (op Divp) Op_get_name() string {
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	return &quot;divp&quot;
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+}
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+func (op Divp) Op_get_desc() string {
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	return &quot;Register pipelined multiplcation&quot;
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+}
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+func (op Divp) Op_show_assembler(arch *Arch) string {
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	result := &quot;divp [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the product of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	return result
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+}
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+func (op Divp) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+}
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+func (op Divp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] divp_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] divp_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] divp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	result += &quot;\treg	[1:0] divp_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	result += &quot;parameter divp_&quot; + arch.Tag + &quot;_put         = 2&#39;d0,\n&quot;
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	result += &quot;          divp_&quot; + arch.Tag + &quot;_get         = 2&#39;d1;\n&quot;
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	result += &quot;\tdivp_&quot; + arch.Tag + &quot; divp_&quot; + arch.Tag + &quot;_inst (divp_&quot; + arch.Tag + &quot;_input_a, divp_&quot; + arch.Tag + &quot;_input_b,  divp_&quot; + arch.Tag + &quot;_output_z);\n\n&quot;
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	return result
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+}
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+func (op Divp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+	result += &quot;					DIVP: begin\n&quot;
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+	if arch.R == 1 {
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+	} else {
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+	}
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+			cp := arch.Tag
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+				continue
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+			}
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+		}
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+		if arch.R == 1 {
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+		} else {
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+		}
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+				cp := arch.Tag
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+					continue
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+				}
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+			}
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+			result += &quot;							case (divp_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+			result += &quot;							divp_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+			result += &quot;								divp_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+			result += &quot;								divp_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+			result += &quot;								divp_&quot; + arch.Tag + &quot;_state &lt;= #1 divp_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+			result += &quot;							divp&quot; + arch.Tag + &quot;_get : begin\n&quot;
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 divp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+			result += &quot;								divp_&quot; + arch.Tag + &quot;_state &lt;= #1 divp_&quot; + arch.Tag + &quot;_put;\n&quot;
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+			result += &quot;								$display(\&quot;DIVP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+		}
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+	}
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+	return result
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+}
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+func (op Divp) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+	// TODO
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+}
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+func (op Divp) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+	if len(words) != 2 {
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+	}
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+			break
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+		}
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+	}
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+	if result == &quot;&quot; {
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+	}
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+	partial := &quot;&quot;
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+			break
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+		}
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+	}
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+	}
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+	result += partial
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+		result += &quot;0&quot;
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+	}
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+	return result, nil
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+}
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+func (op Divp) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h3-0-163" id="h3-0-163" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h3-0-164" id="h3-0-164" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h3-0-165" id="h3-0-165" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h3-0-166" id="h3-0-166" class="i">+	return result, nil
+</a><a href="#h3-0-167" id="h3-0-167" class="i">+}
+</a><a href="#h3-0-168" id="h3-0-168" class="i">+
+</a><a href="#h3-0-169" id="h3-0-169" class="i">+func (op Divp) Simulate(vm *VM, instr string) error {
+</a><a href="#h3-0-170" id="h3-0-170" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h3-0-171" id="h3-0-171" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h3-0-172" id="h3-0-172" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h3-0-173" id="h3-0-173" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h3-0-174" id="h3-0-174" class="i">+	case 32:
+</a><a href="#h3-0-175" id="h3-0-175" class="i">+		var floatDest float32
+</a><a href="#h3-0-176" id="h3-0-176" class="i">+		var floatSrc float32
+</a><a href="#h3-0-177" id="h3-0-177" class="i">+		if v, ok := vm.Registers[regDest].(uint32); ok {
+</a><a href="#h3-0-178" id="h3-0-178" class="i">+			floatDest = math.Float32frombits(v)
+</a><a href="#h3-0-179" id="h3-0-179" class="i">+		} else {
+</a><a href="#h3-0-180" id="h3-0-180" class="i">+			floatDest = float32(0.0)
+</a><a href="#h3-0-181" id="h3-0-181" class="i">+		}
+</a><a href="#h3-0-182" id="h3-0-182" class="i">+		if v, ok := vm.Registers[regSrc].(uint32); ok {
+</a><a href="#h3-0-183" id="h3-0-183" class="i">+			floatSrc = math.Float32frombits(v)
+</a><a href="#h3-0-184" id="h3-0-184" class="i">+		} else {
+</a><a href="#h3-0-185" id="h3-0-185" class="i">+			floatSrc = float32(0.0)
+</a><a href="#h3-0-186" id="h3-0-186" class="i">+		}
+</a><a href="#h3-0-187" id="h3-0-187" class="i">+		vm.Registers[regDest] = math.Float32bits(floatDest * floatSrc)
+</a><a href="#h3-0-188" id="h3-0-188" class="i">+	default:
+</a><a href="#h3-0-189" id="h3-0-189" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 32 bits&quot;)
+</a><a href="#h3-0-190" id="h3-0-190" class="i">+	}
+</a><a href="#h3-0-191" id="h3-0-191" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h3-0-192" id="h3-0-192" class="i">+	return nil
+</a><a href="#h3-0-193" id="h3-0-193" class="i">+}
+</a><a href="#h3-0-194" id="h3-0-194" class="i">+
+</a><a href="#h3-0-195" id="h3-0-195" class="i">+// The random genaration does nothing
+</a><a href="#h3-0-196" id="h3-0-196" class="i">+func (op Divp) Generate(arch *Arch) string {
+</a><a href="#h3-0-197" id="h3-0-197" class="i">+	// TODO
+</a><a href="#h3-0-198" id="h3-0-198" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-199" id="h3-0-199" class="i">+}
+</a><a href="#h3-0-200" id="h3-0-200" class="i">+
+</a><a href="#h3-0-201" id="h3-0-201" class="i">+func (op Divp) Required_shared() (bool, []string) {
+</a><a href="#h3-0-202" id="h3-0-202" class="i">+	// TODO
+</a><a href="#h3-0-203" id="h3-0-203" class="i">+	return false, []string{}
+</a><a href="#h3-0-204" id="h3-0-204" class="i">+}
+</a><a href="#h3-0-205" id="h3-0-205" class="i">+
+</a><a href="#h3-0-206" id="h3-0-206" class="i">+func (op Divp) Required_modes() (bool, []string) {
+</a><a href="#h3-0-207" id="h3-0-207" class="i">+	return false, []string{}
+</a><a href="#h3-0-208" id="h3-0-208" class="i">+}
+</a><a href="#h3-0-209" id="h3-0-209" class="i">+
+</a><a href="#h3-0-210" id="h3-0-210" class="i">+func (op Divp) Forbidden_modes() (bool, []string) {
+</a><a href="#h3-0-211" id="h3-0-211" class="i">+	return false, []string{}
+</a><a href="#h3-0-212" id="h3-0-212" class="i">+}
+</a><a href="#h3-0-213" id="h3-0-213" class="i">+
+</a><a href="#h3-0-214" id="h3-0-214" class="i">+func (op Divp) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h3-0-215" id="h3-0-215" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-216" id="h3-0-216" class="i">+}
+</a><a href="#h3-0-217" id="h3-0-217" class="i">+
+</a><a href="#h3-0-218" id="h3-0-218" class="i">+func (Op Divp) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h3-0-219" id="h3-0-219" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-220" id="h3-0-220" class="i">+}
+</a><a href="#h3-0-221" id="h3-0-221" class="i">+
+</a><a href="#h3-0-222" id="h3-0-222" class="i">+func (Op Divp) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h3-0-223" id="h3-0-223" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-224" id="h3-0-224" class="i">+}
+</a><a href="#h3-0-225" id="h3-0-225" class="i">+
+</a><a href="#h3-0-226" id="h3-0-226" class="i">+func (Op Divp) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h3-0-227" id="h3-0-227" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-228" id="h3-0-228" class="i">+}
+</a><a href="#h3-0-229" id="h3-0-229" class="i">+
+</a><a href="#h3-0-230" id="h3-0-230" class="i">+func (Op Divp) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h3-0-231" id="h3-0-231" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h3-0-232" id="h3-0-232" class="i">+
+</a><a href="#h3-0-233" id="h3-0-233" class="i">+	result += &quot;module divp_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h3-0-234" id="h3-0-234" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h3-0-235" id="h3-0-235" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h3-0-236" id="h3-0-236" class="i">+	result += &quot;        output_z);\n&quot;
+</a><a href="#h3-0-237" id="h3-0-237" class="i">+	result += &quot;\n&quot;
+</a><a href="#h3-0-238" id="h3-0-238" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h3-0-239" id="h3-0-239" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h3-0-240" id="h3-0-240" class="i">+	result += &quot;  output    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h3-0-241" id="h3-0-241" class="i">+	result += &quot;  assign output_z = input_a * input_b;\n&quot;
+</a><a href="#h3-0-242" id="h3-0-242" class="i">+	result += &quot;\n&quot;
+</a><a href="#h3-0-243" id="h3-0-243" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h3-0-244" id="h3-0-244" class="i">+
+</a><a href="#h3-0-245" id="h3-0-245" class="i">+	return []string{&quot;divider&quot;}, []string{result}
+</a><a href="#h3-0-246" id="h3-0-246" class="i">+}
+</a><a href="#h3-0-247" id="h3-0-247" class="i">+
+</a><a href="#h3-0-248" id="h3-0-248" class="i">+func (Op Divp) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h3-0-249" id="h3-0-249" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h3-0-250" id="h3-0-250" class="i">+	return result, nil
+</a><a href="#h3-0-251" id="h3-0-251" class="i">+}
+</a><a href="#h3-0-252" id="h3-0-252" class="i">+
+</a><a href="#h3-0-253" id="h3-0-253" class="i">+func (Op Divp) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h3-0-254" id="h3-0-254" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-255" id="h3-0-255" class="i">+	switch blockname {
+</a><a href="#h3-0-256" id="h3-0-256" class="i">+	default:
+</a><a href="#h3-0-257" id="h3-0-257" class="i">+		result = &quot;&quot;
+</a><a href="#h3-0-258" id="h3-0-258" class="i">+	}
+</a><a href="#h3-0-259" id="h3-0-259" class="i">+	return result
+</a><a href="#h3-0-260" id="h3-0-260" class="i">+}
+</a><a href="#h3-0-261" id="h3-0-261" class="i">+func (Op Divp) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h3-0-262" id="h3-0-262" class="i">+	result := make([]string, 0)
+</a><a href="#h3-0-263" id="h3-0-263" class="i">+	result = append(result, &quot;divp::*--type=reg::*--type=reg&quot;)
+</a><a href="#h3-0-264" id="h3-0-264" class="i">+	return result
+</a><a href="#h3-0-265" id="h3-0-265" class="i">+}
+</a><a href="#h3-0-266" id="h3-0-266" class="i">+func (Op Divp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h3-0-267" id="h3-0-267" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h3-0-268" id="h3-0-268" class="i">+	case &quot;divp&quot;:
+</a><a href="#h3-0-269" id="h3-0-269" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h3-0-270" id="h3-0-270" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h3-0-271" id="h3-0-271" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-272" id="h3-0-272" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-273" id="h3-0-273" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;divp&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-274" id="h3-0-274" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-275" id="h3-0-275" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h3-0-276" id="h3-0-276" class="i">+		return line, nil
+</a><a href="#h3-0-277" id="h3-0-277" class="i">+	}
+</a><a href="#h3-0-278" id="h3-0-278" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h3-0-279" id="h3-0-279" class="i">+}
+</a><a href="#h3-0-280" id="h3-0-280" class="i">+func (Op Divp) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h3-0-281" id="h3-0-281" class="i">+	return []string{}, []string{}
+</a><a href="#h3-0-282" id="h3-0-282" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a> b/<a href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,283 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package procbuilder
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+import (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	&quot;math&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	&quot;strings&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+)
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+type Multp struct{}
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+func (op Multp) Op_get_name() string {
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	return &quot;multp&quot;
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+}
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+func (op Multp) Op_get_desc() string {
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	return &quot;Register pipelined multiplcation&quot;
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+}
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+func (op Multp) Op_show_assembler(arch *Arch) string {
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+	result := &quot;multp [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the product of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	return result
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+}
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+func (op Multp) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+}
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+func (op Multp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	result := &quot;&quot;
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] multp_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] multp_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] multp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+	result += &quot;\treg	[1:0] multp_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+	result += &quot;parameter multp_&quot; + arch.Tag + &quot;_put         = 2&#39;d0,\n&quot;
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+	result += &quot;          multp_&quot; + arch.Tag + &quot;_get         = 2&#39;d1;\n&quot;
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+	result += &quot;\tmultp_&quot; + arch.Tag + &quot; multp_&quot; + arch.Tag + &quot;_inst (multp_&quot; + arch.Tag + &quot;_input_a, multp_&quot; + arch.Tag + &quot;_input_b,  multp_&quot; + arch.Tag + &quot;_output_z);\n\n&quot;
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+	return result
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+}
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+func (op Multp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+	result := &quot;&quot;
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+	result += &quot;					MULTP: begin\n&quot;
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+	if arch.R == 1 {
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+	} else {
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+	}
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+			cp := arch.Tag
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+				continue
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+			}
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+		}
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+		if arch.R == 1 {
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+		} else {
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+		}
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+				cp := arch.Tag
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+					continue
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+				}
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+			}
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+			result += &quot;							case (multp_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+			result += &quot;							multp_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+</a><a href="#h4-0-92" id="h4-0-92" class="i">+			result += &quot;								multp_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h4-0-93" id="h4-0-93" class="i">+			result += &quot;								multp_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h4-0-94" id="h4-0-94" class="i">+			result += &quot;								multp_&quot; + arch.Tag + &quot;_state &lt;= #1 multp_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h4-0-95" id="h4-0-95" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h4-0-96" id="h4-0-96" class="i">+			result += &quot;							multp&quot; + arch.Tag + &quot;_get : begin\n&quot;
+</a><a href="#h4-0-97" id="h4-0-97" class="i">+			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 multp_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h4-0-98" id="h4-0-98" class="i">+			result += &quot;								multp_&quot; + arch.Tag + &quot;_state &lt;= #1 multp_&quot; + arch.Tag + &quot;_put;\n&quot;
+</a><a href="#h4-0-99" id="h4-0-99" class="i">+			result += &quot;								_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h4-0-100" id="h4-0-100" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h4-0-101" id="h4-0-101" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h4-0-102" id="h4-0-102" class="i">+			result += &quot;								$display(\&quot;MULTP &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h4-0-103" id="h4-0-103" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h4-0-104" id="h4-0-104" class="i">+		}
+</a><a href="#h4-0-105" id="h4-0-105" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h4-0-106" id="h4-0-106" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h4-0-107" id="h4-0-107" class="i">+	}
+</a><a href="#h4-0-108" id="h4-0-108" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h4-0-109" id="h4-0-109" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h4-0-110" id="h4-0-110" class="i">+	return result
+</a><a href="#h4-0-111" id="h4-0-111" class="i">+}
+</a><a href="#h4-0-112" id="h4-0-112" class="i">+
+</a><a href="#h4-0-113" id="h4-0-113" class="i">+func (op Multp) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h4-0-114" id="h4-0-114" class="i">+	// TODO
+</a><a href="#h4-0-115" id="h4-0-115" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-116" id="h4-0-116" class="i">+}
+</a><a href="#h4-0-117" id="h4-0-117" class="i">+
+</a><a href="#h4-0-118" id="h4-0-118" class="i">+func (op Multp) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h4-0-119" id="h4-0-119" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h4-0-120" id="h4-0-120" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h4-0-121" id="h4-0-121" class="i">+
+</a><a href="#h4-0-122" id="h4-0-122" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h4-0-123" id="h4-0-123" class="i">+
+</a><a href="#h4-0-124" id="h4-0-124" class="i">+	if len(words) != 2 {
+</a><a href="#h4-0-125" id="h4-0-125" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h4-0-126" id="h4-0-126" class="i">+	}
+</a><a href="#h4-0-127" id="h4-0-127" class="i">+
+</a><a href="#h4-0-128" id="h4-0-128" class="i">+	result := &quot;&quot;
+</a><a href="#h4-0-129" id="h4-0-129" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h4-0-130" id="h4-0-130" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h4-0-131" id="h4-0-131" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h4-0-132" id="h4-0-132" class="i">+			break
+</a><a href="#h4-0-133" id="h4-0-133" class="i">+		}
+</a><a href="#h4-0-134" id="h4-0-134" class="i">+	}
+</a><a href="#h4-0-135" id="h4-0-135" class="i">+
+</a><a href="#h4-0-136" id="h4-0-136" class="i">+	if result == &quot;&quot; {
+</a><a href="#h4-0-137" id="h4-0-137" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h4-0-138" id="h4-0-138" class="i">+	}
+</a><a href="#h4-0-139" id="h4-0-139" class="i">+
+</a><a href="#h4-0-140" id="h4-0-140" class="i">+	partial := &quot;&quot;
+</a><a href="#h4-0-141" id="h4-0-141" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h4-0-142" id="h4-0-142" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h4-0-143" id="h4-0-143" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h4-0-144" id="h4-0-144" class="i">+			break
+</a><a href="#h4-0-145" id="h4-0-145" class="i">+		}
+</a><a href="#h4-0-146" id="h4-0-146" class="i">+	}
+</a><a href="#h4-0-147" id="h4-0-147" class="i">+
+</a><a href="#h4-0-148" id="h4-0-148" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h4-0-149" id="h4-0-149" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h4-0-150" id="h4-0-150" class="i">+	}
+</a><a href="#h4-0-151" id="h4-0-151" class="i">+
+</a><a href="#h4-0-152" id="h4-0-152" class="i">+	result += partial
+</a><a href="#h4-0-153" id="h4-0-153" class="i">+
+</a><a href="#h4-0-154" id="h4-0-154" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h4-0-155" id="h4-0-155" class="i">+		result += &quot;0&quot;
+</a><a href="#h4-0-156" id="h4-0-156" class="i">+	}
+</a><a href="#h4-0-157" id="h4-0-157" class="i">+
+</a><a href="#h4-0-158" id="h4-0-158" class="i">+	return result, nil
+</a><a href="#h4-0-159" id="h4-0-159" class="i">+}
+</a><a href="#h4-0-160" id="h4-0-160" class="i">+
+</a><a href="#h4-0-161" id="h4-0-161" class="i">+func (op Multp) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h4-0-162" id="h4-0-162" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h4-0-163" id="h4-0-163" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h4-0-164" id="h4-0-164" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h4-0-165" id="h4-0-165" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h4-0-166" id="h4-0-166" class="i">+	return result, nil
+</a><a href="#h4-0-167" id="h4-0-167" class="i">+}
+</a><a href="#h4-0-168" id="h4-0-168" class="i">+
+</a><a href="#h4-0-169" id="h4-0-169" class="i">+func (op Multp) Simulate(vm *VM, instr string) error {
+</a><a href="#h4-0-170" id="h4-0-170" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h4-0-171" id="h4-0-171" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h4-0-172" id="h4-0-172" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h4-0-173" id="h4-0-173" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h4-0-174" id="h4-0-174" class="i">+	case 32:
+</a><a href="#h4-0-175" id="h4-0-175" class="i">+		var floatDest float32
+</a><a href="#h4-0-176" id="h4-0-176" class="i">+		var floatSrc float32
+</a><a href="#h4-0-177" id="h4-0-177" class="i">+		if v, ok := vm.Registers[regDest].(uint32); ok {
+</a><a href="#h4-0-178" id="h4-0-178" class="i">+			floatDest = math.Float32frombits(v)
+</a><a href="#h4-0-179" id="h4-0-179" class="i">+		} else {
+</a><a href="#h4-0-180" id="h4-0-180" class="i">+			floatDest = float32(0.0)
+</a><a href="#h4-0-181" id="h4-0-181" class="i">+		}
+</a><a href="#h4-0-182" id="h4-0-182" class="i">+		if v, ok := vm.Registers[regSrc].(uint32); ok {
+</a><a href="#h4-0-183" id="h4-0-183" class="i">+			floatSrc = math.Float32frombits(v)
+</a><a href="#h4-0-184" id="h4-0-184" class="i">+		} else {
+</a><a href="#h4-0-185" id="h4-0-185" class="i">+			floatSrc = float32(0.0)
+</a><a href="#h4-0-186" id="h4-0-186" class="i">+		}
+</a><a href="#h4-0-187" id="h4-0-187" class="i">+		vm.Registers[regDest] = math.Float32bits(floatDest * floatSrc)
+</a><a href="#h4-0-188" id="h4-0-188" class="i">+	default:
+</a><a href="#h4-0-189" id="h4-0-189" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 32 bits&quot;)
+</a><a href="#h4-0-190" id="h4-0-190" class="i">+	}
+</a><a href="#h4-0-191" id="h4-0-191" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h4-0-192" id="h4-0-192" class="i">+	return nil
+</a><a href="#h4-0-193" id="h4-0-193" class="i">+}
+</a><a href="#h4-0-194" id="h4-0-194" class="i">+
+</a><a href="#h4-0-195" id="h4-0-195" class="i">+// The random genaration does nothing
+</a><a href="#h4-0-196" id="h4-0-196" class="i">+func (op Multp) Generate(arch *Arch) string {
+</a><a href="#h4-0-197" id="h4-0-197" class="i">+	// TODO
+</a><a href="#h4-0-198" id="h4-0-198" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-199" id="h4-0-199" class="i">+}
+</a><a href="#h4-0-200" id="h4-0-200" class="i">+
+</a><a href="#h4-0-201" id="h4-0-201" class="i">+func (op Multp) Required_shared() (bool, []string) {
+</a><a href="#h4-0-202" id="h4-0-202" class="i">+	// TODO
+</a><a href="#h4-0-203" id="h4-0-203" class="i">+	return false, []string{}
+</a><a href="#h4-0-204" id="h4-0-204" class="i">+}
+</a><a href="#h4-0-205" id="h4-0-205" class="i">+
+</a><a href="#h4-0-206" id="h4-0-206" class="i">+func (op Multp) Required_modes() (bool, []string) {
+</a><a href="#h4-0-207" id="h4-0-207" class="i">+	return false, []string{}
+</a><a href="#h4-0-208" id="h4-0-208" class="i">+}
+</a><a href="#h4-0-209" id="h4-0-209" class="i">+
+</a><a href="#h4-0-210" id="h4-0-210" class="i">+func (op Multp) Forbidden_modes() (bool, []string) {
+</a><a href="#h4-0-211" id="h4-0-211" class="i">+	return false, []string{}
+</a><a href="#h4-0-212" id="h4-0-212" class="i">+}
+</a><a href="#h4-0-213" id="h4-0-213" class="i">+
+</a><a href="#h4-0-214" id="h4-0-214" class="i">+func (op Multp) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h4-0-215" id="h4-0-215" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-216" id="h4-0-216" class="i">+}
+</a><a href="#h4-0-217" id="h4-0-217" class="i">+
+</a><a href="#h4-0-218" id="h4-0-218" class="i">+func (Op Multp) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h4-0-219" id="h4-0-219" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-220" id="h4-0-220" class="i">+}
+</a><a href="#h4-0-221" id="h4-0-221" class="i">+
+</a><a href="#h4-0-222" id="h4-0-222" class="i">+func (Op Multp) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h4-0-223" id="h4-0-223" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-224" id="h4-0-224" class="i">+}
+</a><a href="#h4-0-225" id="h4-0-225" class="i">+
+</a><a href="#h4-0-226" id="h4-0-226" class="i">+func (Op Multp) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h4-0-227" id="h4-0-227" class="i">+	return &quot;&quot;
+</a><a href="#h4-0-228" id="h4-0-228" class="i">+}
+</a><a href="#h4-0-229" id="h4-0-229" class="i">+
+</a><a href="#h4-0-230" id="h4-0-230" class="i">+func (Op Multp) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h4-0-231" id="h4-0-231" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h4-0-232" id="h4-0-232" class="i">+
+</a><a href="#h4-0-233" id="h4-0-233" class="i">+	result += &quot;module multp_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h4-0-234" id="h4-0-234" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h4-0-235" id="h4-0-235" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h4-0-236" id="h4-0-236" class="i">+	result += &quot;        output_z);\n&quot;
+</a><a href="#h4-0-237" id="h4-0-237" class="i">+	result += &quot;\n&quot;
+</a><a href="#h4-0-238" id="h4-0-238" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h4-0-239" id="h4-0-239" class="i">+	result += &quot;  input     [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h4-0-240" id="h4-0-240" class="i">+	result += &quot;  output    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h4-0-241" id="h4-0-241" class="i">+	result += &quot;  assign output_z = input_a * input_b;\n&quot;
+</a><a href="#h4-0-242" id="h4-0-242" class="i">+	result += &quot;\n&quot;
+</a><a href="#h4-0-243" id="h4-0-243" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h4-0-244" id="h4-0-244" class="i">+
+</a><a href="#h4-0-245" id="h4-0-245" class="i">+	return []string{&quot;adder&quot;}, []string{result}
+</a><a href="#h4-0-246" id="h4-0-246" class="i">+}
+</a><a href="#h4-0-247" id="h4-0-247" class="i">+
+</a><a href="#h4-0-248" id="h4-0-248" class="i">+func (Op Multp) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h4-0-249" id="h4-0-249" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h4-0-250" id="h4-0-250" class="i">+	return result, nil
+</a><a href="#h4-0-251" id="h4-0-251" class="i">+}
+</a><a href="#h4-0-252" id="h4-0-252" class="i">+
+</a><a href="#h4-0-253" id="h4-0-253" class="i">+func (Op Multp) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h4-0-254" id="h4-0-254" class="i">+	result := &quot;&quot;
+</a><a href="#h4-0-255" id="h4-0-255" class="i">+	switch blockname {
+</a><a href="#h4-0-256" id="h4-0-256" class="i">+	default:
+</a><a href="#h4-0-257" id="h4-0-257" class="i">+		result = &quot;&quot;
+</a><a href="#h4-0-258" id="h4-0-258" class="i">+	}
+</a><a href="#h4-0-259" id="h4-0-259" class="i">+	return result
+</a><a href="#h4-0-260" id="h4-0-260" class="i">+}
+</a><a href="#h4-0-261" id="h4-0-261" class="i">+func (Op Multp) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h4-0-262" id="h4-0-262" class="i">+	result := make([]string, 0)
+</a><a href="#h4-0-263" id="h4-0-263" class="i">+	result = append(result, &quot;multp::*--type=reg::*--type=reg&quot;)
+</a><a href="#h4-0-264" id="h4-0-264" class="i">+	return result
+</a><a href="#h4-0-265" id="h4-0-265" class="i">+}
+</a><a href="#h4-0-266" id="h4-0-266" class="i">+func (Op Multp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h4-0-267" id="h4-0-267" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h4-0-268" id="h4-0-268" class="i">+	case &quot;multp&quot;:
+</a><a href="#h4-0-269" id="h4-0-269" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h4-0-270" id="h4-0-270" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h4-0-271" id="h4-0-271" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h4-0-272" id="h4-0-272" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h4-0-273" id="h4-0-273" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;multp&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h4-0-274" id="h4-0-274" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:multp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h4-0-275" id="h4-0-275" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:multp&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h4-0-276" id="h4-0-276" class="i">+		return line, nil
+</a><a href="#h4-0-277" id="h4-0-277" class="i">+	}
+</a><a href="#h4-0-278" id="h4-0-278" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h4-0-279" id="h4-0-279" class="i">+}
+</a><a href="#h4-0-280" id="h4-0-280" class="i">+func (Op Multp) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h4-0-281" id="h4-0-281" class="i">+	return []string{}, []string{}
+</a><a href="#h4-0-282" id="h4-0-282" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

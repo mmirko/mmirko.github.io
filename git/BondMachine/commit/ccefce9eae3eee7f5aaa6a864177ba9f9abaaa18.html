@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>kbd - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ccefce9eae3eee7f5aaa6a864177ba9f9abaaa18.html">ccefce9eae3eee7f5aaa6a864177ba9f9abaaa18</a>
+<b>parent</b> <a href="../commit/13b80a0c20c6231f563930bee9ef62a621d8649c.html">13b80a0c20c6231f563930bee9ef62a621d8649c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 22 Feb 2023 00:27:58 +0100
+
+kbd
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_k2r.go</a></td><td> | </td><td class="num">73</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/shr_kbd.go</a></td><td> | </td><td class="num">68</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">---------------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 59 insertions(+), 82 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a> b/<a href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,9 +12,8 @@ import (
+</a> // The  opcode
+ type K2r struct{}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-func (op K2r) getKbdName(queueId int) string {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	return &quot;k&quot; + strconv.Itoa(queueId)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+func (op K2r) getKbdName(kbdId int) string {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	return &quot;k&quot; + strconv.Itoa(kbdId)
+</a> }
+ 
+ func (op K2r) Op_get_name() string {
+<a href="#h0-1" id="h0-1" class="h">@@ -26,34 +25,34 @@ func (op K2r) Op_get_desc() string {
+</a> }
+ 
+ func (op K2r) Op_show_assembler(arch *Arch) string {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	qSo := Kbd{}
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	kSo := Kbd{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h0-1-6" id="h0-1-6" class="d">-	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	result := &quot;k2r [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(queueBits)) + &quot; (Shared Kbd)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+queueBits) + &quot;]\n&quot;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	result := &quot;k2r [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(kbdBits)) + &quot; (Kbd)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+kbdBits) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op K2r) Op_get_instruction_len(arch *Arch) int {
+<a href="#h0-1-14" id="h0-1-14" class="d">-	qSo := Kbd{}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	kSo := Kbd{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h0-1-17" id="h0-1-17" class="d">-	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	return opBits + int(arch.R) + int(queueBits) // The bits for the opcode + bits for a register + bits queues
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	return opBits + int(arch.R) + int(kbdBits) // The bits for the opcode + bits for a register + bits kbds
+</a> }
+ 
+ func (op K2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+<a href="#h0-1-24" id="h0-1-24" class="d">-	qSo := Kbd{}
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	kSo := Kbd{}
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	kbdNum := arch.Shared_num(kSo.Shr_get_name())
+</a> 
+ 	result := &quot;&quot;
+<a href="#h0-1-32" id="h0-1-32" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;k2r&quot;, &quot;r2q&quot;}) {
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;q2r&quot;, &quot;r2q&quot;, &quot;k2r&quot;, &quot;u2r&quot;, &quot;r2u&quot;}) {
+</a> 		result += &quot;	reg stackqueueSM;\n&quot;
+ 	}
+<a href="#h0-1-36" id="h0-1-36" class="d">-	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2q&quot;, &quot;k2r&quot;}) {
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;k2r&quot;}) {
+</a> 		result += &quot;	localparam &quot;
+<a href="#h0-1-39" id="h0-1-39" class="d">-		for i := 0; i &lt; queueNum; i++ {
+</a><a href="#h0-1-40" id="h0-1-40" class="d">-			result += strings.ToUpper(op.getKbdName(i)) + &quot;=&quot; + strconv.Itoa(int(queueBits)) + &quot;&#39;d&quot; + strconv.Itoa(i)
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-			if i &lt; queueNum-1 {
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+		for i := 0; i &lt; kbdNum; i++ {
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+			result += strings.ToUpper(op.getKbdName(i)) + &quot;=&quot; + strconv.Itoa(int(kbdBits)) + &quot;&#39;d&quot; + strconv.Itoa(i)
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+			if i &lt; kbdNum-1 {
+</a> 				result += &quot;,\n&quot;
+ 			} else {
+ 				result += &quot;;\n&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -69,9 +68,9 @@ func (Op K2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	qSo := Kbd{}
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	kSo := Kbd{}
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	kbdNum := arch.Shared_num(kSo.Shr_get_name())
+</a> 	rom_word := arch.Max_word()
+ 	opBits := arch.Opcodes_bits()
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -79,7 +78,7 @@ func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					K2R: begin\n&quot;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if queueNum &gt; 0 {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if kbdNum &gt; 0 {
+</a> 		if arch.R == 1 {
+ 			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+ 		} else {
+<a href="#h0-4" id="h0-4" class="h">@@ -88,13 +87,13 @@ func (op K2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if queueBits == 1 {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;])\n&quot;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+			if kbdBits == 1 {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-kbdBits-1) + &quot;])\n&quot;
+</a> 			} else {
+<a href="#h0-4-8" id="h0-4-8" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(queueBits)) + &quot;])\n&quot;
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-kbdBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(kbdBits)) + &quot;])\n&quot;
+</a> 			}
+ 
+<a href="#h0-4-12" id="h0-4-12" class="d">-			for j := 0; j &lt; queueNum; j++ {
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+			for j := 0; j &lt; kbdNum; j++ {
+</a> 				result += &quot;							&quot; + strings.ToUpper(op.getKbdName(j)) + &quot; : begin\n&quot;
+ 				result += &quot;								if (&quot; + strings.ToLower(op.getKbdName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getKbdName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h0-5" id="h0-5" class="h">@@ -128,10 +127,10 @@ func (op K2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 
+ func (op K2r) Assembler(arch *Arch, words []string) (string, error) {
+ 	opBits := arch.Opcodes_bits()
+<a href="#h0-5-3" id="h0-5-3" class="d">-	qSo := Kbd{}
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-	shortName := qSo.Shortname()
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	kSo := Kbd{}
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	kbdNum := arch.Shared_num(kSo.Shr_get_name())
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	shortName := kSo.Shortname()
+</a> 	romWord := arch.Max_word()
+ 
+ 	regNum := 1 &lt;&lt; arch.R
+<a href="#h0-6" id="h0-6" class="h">@@ -152,13 +151,13 @@ func (op K2r) Assembler(arch *Arch, words []string) (string, error) {
+</a> 		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+ 	}
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-	if partial, err := Process_shared(shortName, words[1], queueNum); err == nil {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		result += zeros_prefix(queueBits, partial)
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	if partial, err := Process_shared(shortName, words[1], kbdNum); err == nil {
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		result += zeros_prefix(kbdBits, partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h0-6-11" id="h0-6-11" class="d">-	for i := opBits + int(arch.R) + queueBits; i &lt; romWord; i++ {
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+	for i := opBits + int(arch.R) + kbdBits; i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -167,11 +166,11 @@ func (op K2r) Assembler(arch *Arch, words []string) (string, error) {
+</a> 
+ func (op K2r) Disassembler(arch *Arch, instr string) (string, error) {
+ 	kSo := Kbd{}
+<a href="#h0-7-3" id="h0-7-3" class="d">-	queueBits := arch.Shared_bits(kSo.Shr_get_name())
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	kbdBits := arch.Shared_bits(kSo.Shr_get_name())
+</a> 	shortname := kSo.Shortname()
+ 	regId := get_id(instr[:arch.R])
+ 	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+<a href="#h0-7-8" id="h0-7-8" class="d">-	stId := get_id(instr[arch.R : int(arch.R)+queueBits])
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+	stId := get_id(instr[arch.R : int(arch.R)+kbdBits])
+</a> 	result += shortname + strconv.Itoa(stId)
+ 	return result, nil
+ }
+<a href="#h0-8" id="h0-8" class="h">@@ -265,7 +264,7 @@ func (Op K2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 	case &quot;kbd&quot;:
+ 		regVal := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+<a href="#h0-8-3" id="h0-8-3" class="d">-		soVal := &quot;q0&quot; // Pull implicitly uses queue 0
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+		soVal := &quot;kbd0&quot; // Pull implicitly uses keyboard 0
+</a> 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+ 		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+ 			newLine := new(bmline.BasmLine)
+<a href="#h0-9" id="h0-9" class="h">@@ -280,7 +279,7 @@ func (Op K2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 			newArg1 := new(bmline.BasmElement)
+ 			newArg1.SetValue(soVal)
+ 			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+<a href="#h0-9-3" id="h0-9-3" class="d">-			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;q&quot;)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;k&quot;)
+</a> 			newArgs[1] = newArg1
+ 			newLine.Elements = newArgs
+ 			return newLine, nil
+<a href="#h0-10" id="h0-10" class="h">@@ -303,7 +302,7 @@ func (Op K2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 			newArg1 := new(bmline.BasmElement)
+ 			newArg1.SetValue(soVal)
+ 			newArg1.BasmMeta = newArg1.SetMeta(&quot;type&quot;, &quot;somov&quot;)
+<a href="#h0-10-3" id="h0-10-3" class="d">-			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;q&quot;)
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+			newArg1.BasmMeta = newArg1.SetMeta(&quot;sotype&quot;, &quot;k&quot;)
+</a> 			newArgs[1] = newArg1
+ 			newLine.Elements = newArgs
+ 			return newLine, nil
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/shr_kbd.go.html">pkg/procbuilder/shr_kbd.go</a> b/<a href="../file/pkg/procbuilder/shr_kbd.go.html">pkg/procbuilder/shr_kbd.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,55 +8,41 @@ import (
+</a> type Kbd struct{}
+ 
+ func (op Kbd) Shr_get_name() string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	return &quot;uart&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	return &quot;kbd&quot;
+</a> }
+ 
+ func (op Kbd) Shortname() string {
+<a href="#h1-0-8" id="h1-0-8" class="d">-	return &quot;u&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	return &quot;k&quot;
+</a> }
+ 
+ func (op Kbd) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+ 	result := &quot;&quot;
+<a href="#h1-0-14" id="h1-0-14" class="d">-	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	kbdName := &quot;k&quot; + strconv.Itoa(seq)
+</a> 	for _, op := range arch.Op {
+<a href="#h1-0-17" id="h1-0-17" class="d">-		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-			result += &quot;, &quot; + uartName + &quot;senderData, &quot; + uartName + &quot;senderWrite, &quot; + uartName + &quot;senderAck&quot;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		if op.Op_get_name() == &quot;k2r&quot; {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			result += &quot;, &quot; + kbdName + &quot;receiverData, &quot; + kbdName + &quot;receiverRead, &quot; + kbdName + &quot;receiverAck&quot;
+</a> 			break
+ 		}
+ 	}
+<a href="#h1-0-24" id="h1-0-24" class="d">-	for _, op := range arch.Op {
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-			result += &quot;, &quot; + uartName + &quot;receiverData, &quot; + uartName + &quot;receiverRead, &quot; + uartName + &quot;receiverAck&quot;
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-			break
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-		}
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-	}
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-	result += &quot;, &quot; + uartName + &quot;empty, &quot; + uartName + &quot;full&quot;
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	result += &quot;, &quot; + kbdName + &quot;empty, &quot; + kbdName + &quot;full&quot;
+</a> 	return result
+ }
+ 
+ func (op Kbd) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+<a href="#h1-0-36" id="h1-0-36" class="d">-	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	kbdName := &quot;k&quot; + strconv.Itoa(seq)
+</a> 	result := &quot;&quot;
+ 
+ 	for _, op := range arch.Op {
+<a href="#h1-0-41" id="h1-0-41" class="d">-		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-			result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;senderData;\n&quot;
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-			result += &quot;	output &quot; + uartName + &quot;senderWrite;\n&quot;
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-			result += &quot;	input &quot; + uartName + &quot;senderAck;\n&quot;
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-			break
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-		}
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-	}
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-	for _, op := range arch.Op {
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;receiverData;\n&quot;
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-			result += &quot;	output &quot; + uartName + &quot;receiverRead;\n&quot;
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-			result += &quot;	input &quot; + uartName + &quot;receiverAck;\n&quot;
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		if op.Op_get_name() == &quot;k2r&quot; {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + kbdName + &quot;receiverData;\n&quot;
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+			result += &quot;	output &quot; + kbdName + &quot;receiverRead;\n&quot;
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+			result += &quot;	input &quot; + kbdName + &quot;receiverAck;\n&quot;
+</a> 			break
+ 		}
+ 	}
+ 
+<a href="#h1-0-61" id="h1-0-61" class="d">-	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h1-0-62" id="h1-0-62" class="d">-	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+	result += &quot;	input &quot; + kbdName + &quot;empty;\n&quot;
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+	result += &quot;	input &quot; + kbdName + &quot;full;\n&quot;
+</a> 
+ 	return result
+ }
+<a href="#h1-1" id="h1-1" class="h">@@ -65,39 +51,31 @@ func (op Kbd) GetCPParams(arch *Arch, shared_constraint string, seq int) string 
+</a> 
+ 	result := &quot;&quot;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	uartNum := 0
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	kbdNum := 0
+</a> 	if arch.Shared_constraints != &quot;&quot; {
+ 		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+ 		for _, constraint := range constraints {
+ 			values := strings.Split(constraint, &quot;:&quot;)
+ 			soname := values[0]
+<a href="#h1-1-10" id="h1-1-10" class="d">-			if soname == &quot;uart&quot; {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-				uartNum++
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+			if soname == &quot;kbd&quot; {
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+				kbdNum++
+</a> 			}
+ 		}
+ 	}
+ 
+<a href="#h1-1-18" id="h1-1-18" class="d">-	uartName := &quot;u&quot; + strconv.Itoa(seq)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	kbdName := &quot;u&quot; + strconv.Itoa(seq)
+</a> 
+ 	for _, op := range arch.Op {
+<a href="#h1-1-22" id="h1-1-22" class="d">-		if op.Op_get_name() == &quot;r2u&quot; {
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-			result += &quot;	output reg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;senderData;\n&quot;
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-			result += &quot;	output reg &quot; + uartName + &quot;senderWrite;\n&quot;
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-			result += &quot;	input &quot; + uartName + &quot;senderAck;\n&quot;
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-			break
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-		}
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-	}
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-	for _, op := range arch.Op {
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-		if op.Op_get_name() == &quot;u2r&quot; {
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + uartName + &quot;receiverData;\n&quot;
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-			result += &quot;	output reg &quot; + uartName + &quot;receiverRead;\n&quot;
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-			result += &quot;	input &quot; + uartName + &quot;receiverAck;\n&quot;
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+		if op.Op_get_name() == &quot;k2r&quot; {
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+			result += &quot;	input [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + kbdName + &quot;receiverData;\n&quot;
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+			result += &quot;	output reg &quot; + kbdName + &quot;receiverRead;\n&quot;
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+			result += &quot;	input &quot; + kbdName + &quot;receiverAck;\n&quot;
+</a> 			break
+ 		}
+ 	}
+ 
+<a href="#h1-1-42" id="h1-1-42" class="d">-	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h1-1-43" id="h1-1-43" class="d">-	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+	result += &quot;	input &quot; + kbdName + &quot;empty;\n&quot;
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+	result += &quot;	input &quot; + kbdName + &quot;full;\n&quot;
+</a> 
+ 	return result
+ }
+</pre>
+</div>
+</body>
+</html>

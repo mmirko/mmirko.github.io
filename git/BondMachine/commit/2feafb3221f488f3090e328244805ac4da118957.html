@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fixed bmanalysis template - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2feafb3221f488f3090e328244805ac4da118957.html">2feafb3221f488f3090e328244805ac4da118957</a>
+<b>parent</b> <a href="../commit/62821e5eb928cc5775ab3961f5494bd3b4858fb9.html">62821e5eb928cc5775ab3961f5494bd3b4858fb9</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Thu, 16 Mar 2023 15:06:58 +0100
+
+fixed bmanalysis template
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmanalysis/bmanalysis.go</a></td><td> | </td><td class="num">56</td><td><span class="i">+++++++++</span><span class="d">-----------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmanalysis/bmanalysis_test.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmanalysis/jupiterfile.go</a></td><td> | </td><td class="num">296</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 309 insertions(+), 60 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmanalysis/bmanalysis.go.html">pkg/bmanalysis/bmanalysis.go</a> b/<a href="../file/pkg/bmanalysis/bmanalysis.go.html">pkg/bmanalysis/bmanalysis.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,49 +5,21 @@ import (
+</a> 	&quot;text/template&quot;
+ )
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-type BmStack struct {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	ModuleName string
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	DataSize   int
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	Depth      int
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	Senders    []string
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	Receivers  []string
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	MemType    string
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	funcMap    template.FuncMap
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+type BmAnalysis struct {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	ProjectLists    []string
+</a> }
+ 
+<a href="#h0-0-15" id="h0-0-15" class="d">-func CreateBasicStack() *BmStack {
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	result := new(BmStack)
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	funcMap := template.FuncMap{
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		&quot;inc&quot;: func(i int) int {
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-			return i + 1
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-		},
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-		&quot;dec&quot;: func(i int) int {
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-			return i - 1
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		},
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-		&quot;next&quot;: func(i int, max int) int {
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-			if i &lt; max-1 {
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-				return i + 1
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-			} else {
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-				return 0
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-			}
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-		},
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-		&quot;bits&quot;: func(i int) int {
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-			return NeededBits(i)
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-		},
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-	}
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	result.funcMap = funcMap
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	// Default values
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	result.ModuleName = &quot;bmstack&quot;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+func CreateAnalysisTemplate() *BmAnalysis {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	result := new(BmAnalysis)
+</a> 	return result
+ }
+ 
+<a href="#h0-0-45" id="h0-0-45" class="d">-func (s *BmStack) WriteHDL() (string, error) {
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+func (s *BmAnalysis) WritePython() (string, error) {
+</a> 
+ 	var f bytes.Buffer
+ 
+<a href="#h0-0-50" id="h0-0-50" class="d">-	t, err := template.New(&quot;stack&quot;).Funcs(s.funcMap).Parse(notebook)
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+	t, err := template.New(&quot;analysis&quot;).Parse(notebook)
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+	
+</a> 	if err != nil {
+ 		return &quot;&quot;, err
+ 	}
+<a href="#h0-1" id="h0-1" class="h">@@ -59,15 +31,4 @@ func (s *BmStack) WriteHDL() (string, error) {
+</a> 
+ 	return f.String(), nil
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-}
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-func NeededBits(num int) int {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	if num &gt; 0 {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		for bits := 1; true; bits++ {
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			if 1&lt;&lt;uint8(bits) &gt;= num {
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-				return bits
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		}
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	}
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-	return 0
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+}
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmanalysis/bmanalysis_test.go.html">pkg/bmanalysis/bmanalysis_test.go</a> b/<a href="../file/pkg/bmanalysis/bmanalysis_test.go.html">pkg/bmanalysis/bmanalysis_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,23 +5,16 @@ import (
+</a> 	&quot;testing&quot;
+ )
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-func TestStack(t *testing.T) {
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	s := CreateBasicStack()
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	s.DataSize = 32
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	s.Depth = 8
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	s.MemType = &quot;FIFO&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	s.Senders = []string{&quot;sender1&quot;, &quot;sender2&quot;}
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	s.Receivers = []string{&quot;receiver1&quot;}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+func TestNotebookGeneration(t *testing.T) {
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	s := CreateAnalysisTemplate()
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	s.ProjectLists = []string{&quot;proj_zedboard_1&quot;, &quot;proj_zedboard_2&quot;}
+</a> 
+<a href="#h1-0-14" id="h1-0-14" class="d">-	// s.SaveJSON(&quot;stack.json&quot;)
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-	// s.LoadJSON(&quot;stack.json&quot;)
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-	f, err := os.Create(&quot;stack.v&quot;)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	f, err := os.Create(&quot;test.ipynb&quot;)
+</a> 	if err != nil {
+ 		t.Error(err)
+ 	}
+ 	defer f.Close()
+<a href="#h1-0-23" id="h1-0-23" class="d">-	if r, err := s.WriteHDL(); err != nil {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	if r, err := s.WritePython(); err != nil {
+</a> 		t.Error(err)
+ 	} else {
+ 		f.WriteString(r)
+<b>diff --git a/<a id="h2" href="../file/pkg/bmanalysis/jupiterfile.go.html">pkg/bmanalysis/jupiterfile.go</a> b/<a href="../file/pkg/bmanalysis/jupiterfile.go.html">pkg/bmanalysis/jupiterfile.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,6 +2,300 @@ package bmanalysis
+</a> 
+ const (
+ 	notebook = `
+<a href="#h2-0-3" id="h2-0-3" class="d">-
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	{
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		&quot;cells&quot;: [
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		 {
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+		  &quot;execution_count&quot;: 9,
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+		  &quot;id&quot;: &quot;6293e6e8-1433-4161-9e04-6c3d670b0e8c&quot;,
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+		  &quot;metadata&quot;: {},
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		  &quot;outputs&quot;: [],
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+		  &quot;source&quot;: [
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		   &quot;!pip install pandas\n&quot;,
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+		   &quot;!pip install matplotlib\n&quot;,
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+		   &quot;!pip install scipy&quot;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+		  ]
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		 },
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+		{
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+			&quot;execution_count&quot;: 17,
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+			&quot;id&quot;: &quot;ff7dc30b-f076-446f-977d-5534a4120f20&quot;,
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+			 &quot;import pandas as pd\n&quot;,
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+			 &quot;import json\n&quot;,
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+			 &quot;import numpy as np\n&quot;,
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+			 &quot;import matplotlib.pyplot as plt\n&quot;,
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+			 &quot;import matplotlib.image as mpimg\n&quot;,
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+			 &quot;from scipy.stats import norm&quot;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+			]
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+		},
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+		{
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+			&quot;execution_count&quot;: 18,
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+			&quot;id&quot;: &quot;1cf6e3c0-5f9f-48ac-99c5-a074ffc955a0&quot;,
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+			 &quot;class colors:\n&quot;,
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+			 &quot;    WHITE = &#39;\\033[97m&#39;\n&quot;,
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+			 &quot;    BLACK = &#39;\\033[90m&#39;\n&quot;,
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+			 &quot;    HEADER = &#39;\\033[95m&#39;\n&quot;,
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+			 &quot;    BLUE = &#39;\\033[94m&#39;\n&quot;,
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+			 &quot;    CYAN = &#39;\\033[96m&#39;\n&quot;,
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+			 &quot;    GREEN = &#39;\\033[92m&#39;\n&quot;,
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+			 &quot;    YELLOW = &#39;\\033[93m&#39;\n&quot;,
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+			 &quot;    RED = &#39;\\033[91m&#39;\n&quot;,
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+			 &quot;    ENDC = &#39;\\033[0m&#39;\n&quot;,
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+			 &quot;    BOLD = &#39;\\033[1m&#39;\n&quot;,
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+			 &quot;    UNDERLINE = &#39;\\033[4m&#39;\n&quot;,
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+			 &quot;def blue(text):\n&quot;,
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+			 &quot;    return colors.BLUE+text+colors.BLACK\n&quot;,
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+			 &quot;def green(text):\n&quot;,
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+			 &quot;    return colors.GREEN+text+colors.BLACK\n&quot;,
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+			 &quot;def red(text):\n&quot;,
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+			 &quot;    return colors.RED+text+colors.BLACK\n&quot;,
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+			 &quot;def yellow(text):\n&quot;,
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+			 &quot;    return colors.YELLOW+text+colors.BLACK&quot;
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+			]
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+		},
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+		{
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+			&quot;execution_count&quot;: 122,
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+			&quot;id&quot;: &quot;c9269fa0-2479-47ee-a261-1981ab82ddf2&quot;,
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+			 &quot;def load_run(runname):\n&quot;,
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+			 &quot;    rundata=pd.read_csv(runname+&#39;.csv&#39;)\n&quot;,
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+			 &quot;    with open(runname+&#39;.json&#39;) as f:\n&quot;,
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+			 &quot;        runinfo=json.load(f)\n&quot;,
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+			 &quot;    if &#39;clock_freq&#39; in runinfo:\n&quot;,
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+			 &quot;        clock_freq=runinfo[&#39;clock_freq&#39;]\n&quot;,
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+			 &quot;    else:\n&quot;,
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+			 &quot;        clock_freq=None\n&quot;,
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+			 &quot;    if &#39;clock_cycles&#39; in rundata:\n&quot;,
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+			 &quot;        clock_mean=rundata[&#39;clock_cycles&#39;].mean()\n&quot;,
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+			 &quot;        clock_std=rundata[&#39;clock_cycles&#39;].std()\n&quot;,
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+			 &quot;        inference_time_mean=clock_mean/(clock_freq)\n&quot;,
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+			 &quot;        \n&quot;,
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+			 &quot;        fig, ax = plt.subplots(1, 3, gridspec_kw={&#39;width_ratios&#39;: [3, 1, 2]}, figsize=(15, 4))\n&quot;,
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+			 &quot;            \n&quot;,
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+			 &quot;        ax[0].set_title(\&quot;Clock cicles distribution\&quot;)\n&quot;,
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+			 &quot;        ax[0].set_facecolor(&#39;#aaaaaa&#39;)\n&quot;,
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+			 &quot;        rundata.plot.hist(ax=ax[0],column=[\&quot;clock_cycles\&quot;], bins=50,density=True)\n&quot;,
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+			 &quot;        x = np.linspace(0, 20000, 100)\n&quot;,
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+			 &quot;        p = norm.pdf(x, clock_mean, clock_std)\n&quot;,
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+			 &quot;        ax[0].plot(x, p, &#39;k&#39;, linewidth=2)\n&quot;,
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+			 &quot;        \n&quot;,
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+			 &quot;        ax[1].set_title(\&quot;Run report\&quot;)\n&quot;,
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+			 &quot;        ax[1].set_axis_off()\n&quot;,
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+			 &quot;        pos=0.9\n&quot;,
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+			 &quot;        for key,value in sorted(runinfo.items()):\n&quot;,
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+			 &quot;            ax[1].text(0.0, pos, key+\&quot;: \&quot;+str(value))\n&quot;,
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+			 &quot;            pos-=0.1\n&quot;,
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+			 &quot;        ax[1].text(0.0, pos, \&quot;clock_mean: \&quot;+str(clock_mean)[:10])\n&quot;,
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+			 &quot;        pos-=0.1\n&quot;,
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+			 &quot;        ax[1].text(0.0, pos, \&quot;clock_std: \&quot;+str(clock_std)[:10])\n&quot;,
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+			 &quot;        pos-=0.1\n&quot;,
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+			 &quot;        ax[1].text(0.0, pos, \&quot;inference_time_mean: \&quot;+str(inference_time_mean)[:10]+\&quot; us\&quot;)\n&quot;,
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+			 &quot;        ax[2].set_title(\&quot;BondMachine diagram\&quot;)\n&quot;,
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+			 &quot;        ax[2].set_axis_off()\n&quot;,
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+			 &quot;        img = mpimg.imread(runname+&#39;.png&#39;)\n&quot;,
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+			 &quot;        ax[2].imshow(img)\n&quot;,
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+			 &quot;        \n&quot;,
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+			 &quot;    else:\n&quot;,
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+			 &quot;        clock_mean=None\n&quot;,
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+			 &quot;        clock_std=None\n&quot;,
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+			 &quot;        inference_time_mean=None\n&quot;,
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+			 &quot;        \n&quot;,
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+			 &quot;    runinfo[\&quot;runname\&quot;]=runname\n&quot;,
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+			 &quot;    runinfo[\&quot;rundata\&quot;]=rundata\n&quot;,
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+			 &quot;    runinfo[\&quot;clock_freq\&quot;]=clock_freq\n&quot;,
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+			 &quot;    runinfo[\&quot;clock_mean\&quot;]=clock_mean\n&quot;,
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+			 &quot;    runinfo[\&quot;clock_std\&quot;]=clock_std\n&quot;,
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+			 &quot;    runinfo[\&quot;inference_time_mean\&quot;]=inference_time_mean\n&quot;,
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+			 &quot;    return runinfo&quot;
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+			]
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+		},
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+		{
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+			&quot;execution_count&quot;: 216,
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+			&quot;id&quot;: &quot;5d8e2b9f-f5d0-41b7-9a44-e46f5e1462b8&quot;,
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+			 &quot;def runplot(runs, pivot_run, x_param, y_param, title):\n&quot;,
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+			 &quot;    x=[]\n&quot;,
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+			 &quot;    y=[]\n&quot;,
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+			 &quot;    names=[]\n&quot;,
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+			 &quot;    for i in range(len(runs)):\n&quot;,
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+			 &quot;        if x_param in runs[i] and y_param in runs[i]:\n&quot;,
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+			 &quot;            x.append(runs[i][x_param])\n&quot;,
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+			 &quot;            y.append(runs[i][y_param])\n&quot;,
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+			 &quot;            names.append(runs[i][\&quot;runname\&quot;])\n&quot;,
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+			 &quot;    if len(names) &lt; 2:\n&quot;,
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+			 &quot;        print (\&quot;Not enought data to plot\&quot;)\n&quot;,
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+			 &quot;        return\n&quot;,
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+			 &quot;            \n&quot;,
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+			 &quot;    fig, ax = plt.subplots(1, 2, gridspec_kw={&#39;width_ratios&#39;: [3, 1]}, figsize=(15, 4))\n&quot;,
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+			 &quot;    style = dict(size=10, color=&#39;black&#39;)\n&quot;,
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+			 &quot;    if title != None:\n&quot;,
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+			 &quot;        ax[0].set_title(title)\n&quot;,
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+			 &quot;    else:\n&quot;,
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+			 &quot;        ax[0].set_title(x_param + \&quot; vs \&quot;+ y_param)\n&quot;,
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+			 &quot;    ax[0].set_facecolor(&#39;#aaaaaa&#39;)\n&quot;,
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+			 &quot;    for i in range(len(runs)):\n&quot;,
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+			 &quot;        if x_param in runs[i] and y_param in runs[i]:            \n&quot;,
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+			 &quot;            ax[0].text(runs[i][x_param], runs[i][y_param], runs[i][\&quot;runname\&quot;], **style)\n&quot;,
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+			 &quot;    ax[0].plot(x, y ,linewidth=2)\n&quot;,
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+			 &quot;    ax[1].set_title(\&quot;Data\&quot;)\n&quot;,
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+			 &quot;    ax[1].set_axis_off()\n&quot;,
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+			 &quot;    pos=0.9\n&quot;,
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+			 &quot;    ax[1].text(0.0, pos, \&quot;run name - \&quot;+x_param+\&quot; - \&quot;+y_param)\n&quot;,
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+			 &quot;    pos-=0.1\n&quot;,
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+			 &quot;    for i in range(len(names)):\n&quot;,
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+			 &quot;        ax[1].text(0.0, pos, names[i]+\&quot; - \&quot;+str(x[i])+\&quot; - \&quot;+str(y[i]))\n&quot;,
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+			 &quot;        pos-=0.1\n&quot;,
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+			 &quot;        \n&quot;,
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+			 &quot;    display(fig)\n&quot;,
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+			 &quot;    plt.close()&quot;
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+			]
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+		},
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+		   {
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+			&quot;execution_count&quot;: 217,
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+			&quot;id&quot;: &quot;ddcd0fd8-3352-437b-8560-aa4865c2aeeb&quot;,
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+			 &quot;def consistency(runs, pivot_run):\n&quot;,
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+			 &quot;    # Result consistency, compare to pivot run every other run by mean and std\n&quot;,
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+			 &quot;    for i in range(len(runs)):\n&quot;,
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+			 &quot;        if i!= pivot_run:\n&quot;,
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+			 &quot;            runname=runs[i][\&quot;runname\&quot;]\n&quot;,
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+			 &quot;            rundata0=abs(runs[i][\&quot;rundata\&quot;][\&quot;probability_0\&quot;]-runs[pivot_run][\&quot;rundata\&quot;][\&quot;probability_0\&quot;])\n&quot;,
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+			 &quot;            rundata0_mean=rundata0.mean()\n&quot;,
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+			 &quot;            rundata0_std=rundata0.std()\n&quot;,
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+			 &quot;            rundata1=abs(runs[i][\&quot;rundata\&quot;][\&quot;probability_1\&quot;]-runs[pivot_run][\&quot;rundata\&quot;][\&quot;probability_1\&quot;])\n&quot;,
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+			 &quot;            rundata1_mean=rundata1.mean()\n&quot;,
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+			 &quot;            rundata1_std=rundata1.std()\n&quot;,
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+			 &quot;            prediction=runs[i][\&quot;rundata\&quot;][\&quot;classification\&quot;]==runs[pivot_run][\&quot;rundata\&quot;][\&quot;classification\&quot;]\n&quot;,
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+			 &quot;           \n&quot;,
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+			 &quot;            print (blue(runname)+\&quot; - probability_0 - mean: \&quot;+str(rundata0_mean)+ \&quot; std: \&quot;+str(rundata0_std))\n&quot;,
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+			 &quot;            print (blue(runname)+\&quot; - probability_1 - mean: \&quot;+str(rundata1_mean)+ \&quot; std: \&quot;+str(rundata1_std))\n&quot;,
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+			 &quot;            print (blue(runname)+\&quot; - prediction    - \&quot;+ green(str(prediction.value_counts(normalize=True)[True]*100)+ \&quot;%\&quot;)+\&quot; equal\&quot;)\n&quot;,
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+			 &quot;            print ()&quot;
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+			]
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+		},
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+		   {
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+			&quot;execution_count&quot;: 234,
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+			&quot;id&quot;: &quot;3fdf043c-fba9-41bf-ad47-11b2cbcb9454&quot;,
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+			 &quot;def analyze(runs, pivot_run):\n&quot;,
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+			 &quot;    pivot_name=runs[pivot_run][\&quot;runname\&quot;]\n&quot;,
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+			 &quot;    print (\&quot;Pivot run \&quot;+ blue(pivot_name))\n&quot;,
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+			 &quot;    print ()\n&quot;,
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+			 &quot;    print (red(\&quot;Consistency, compare to pivot run every other run\&quot;))\n&quot;,
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+			 &quot;    consistency(runs, pivot_run)\n&quot;,
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+			 &quot;    print (red(\&quot;Inference time mean\&quot;))\n&quot;,
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+			 &quot;    runplot(runs, pivot_run, \&quot;expprec\&quot;, \&quot;inference_time_mean\&quot;, \&quot;\&quot;)\n&quot;,
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+			 &quot;    \n&quot;,
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+			 &quot;#     print (red(\&quot;Occupancy\&quot;))\n&quot;,
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+			 &quot;#     runplot(runs, pivot_run, \&quot;cps\&quot;, \&quot;luts\&quot;, \&quot;Occupancy (cps vs luts)\&quot;)\n&quot;,
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+			 &quot;\n&quot;,
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+			 &quot;#     print (red(\&quot;Power consumption\&quot;))\n&quot;,
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+			 &quot;#     runplot(runs, pivot_run, \&quot;cps\&quot;, \&quot;power\&quot;, \&quot;Power consumption (cps vs power)\&quot;)&quot;
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+			]
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+		   },
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+		   {
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+			&quot;execution_count&quot;: 226,
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+			&quot;id&quot;: &quot;a2f43b12-5cf2-4e63-b646-c525a573adc9&quot;,
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+			 &quot;soft=load_run(\&quot;sw\&quot;)\n&quot;,
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+			 &quot;sim=load_run(\&quot;sim\&quot;)&quot;
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+			]
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+		},
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+		{{- if .ProjectLists }}
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+    	{{- range .ProjectLists }}
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+		{
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+			&quot;execution_count&quot;: 232,
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+			&quot;id&quot;: &quot;976bd531-2a31-4a80-b1d9-0cc7f4cc9ce8&quot;,
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+			 &quot;expanded_{{ . }}=load_run(\&quot;expanded_{{ . }}\&quot;)&quot;
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+			]
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+		},
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+		{{- end }}
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+    	{{- end }}
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+		{
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+			&quot;execution_count&quot;: 250,
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+			&quot;id&quot;: &quot;42a2b462-4534-4475-83d4-cb691c758894&quot;,
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+			&quot;source&quot;: [
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+			 &quot;analyze([soft, sim {{- if .ProjectLists }} {{- range .ProjectLists }},expanded_{{ . }} {{- end }} {{- end }}],0)&quot;
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+			]
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+		},
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+		{
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+			&quot;execution_count&quot;: null,
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+			&quot;id&quot;: &quot;059800fc-01dc-49cd-a64e-1aa506d08db0&quot;,
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+			&quot;metadata&quot;: {},
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+			&quot;outputs&quot;: [],
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+			&quot;source&quot;: []
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+		   }
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+		  ],
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+		  &quot;metadata&quot;: {
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+		   &quot;kernelspec&quot;: {
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+			&quot;display_name&quot;: &quot;Python 3 (ipykernel)&quot;,
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+			&quot;language&quot;: &quot;python&quot;,
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+			&quot;name&quot;: &quot;python3&quot;
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+		   },
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+		   &quot;language_info&quot;: {
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+			&quot;codemirror_mode&quot;: {
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+			 &quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+			 &quot;version&quot;: 3
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+			},
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+			&quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+			&quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+			&quot;name&quot;: &quot;python&quot;,
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+			&quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+			&quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+			&quot;version&quot;: &quot;3.10.6&quot;
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+		   },
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+		   &quot;vscode&quot;: {
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+			&quot;interpreter&quot;: {
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+			 &quot;hash&quot;: &quot;97b4c6de4695f1fe6bfabfed1e13c8c763fcd1e15536b82de4b874cda1fc74b7&quot;
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+			}
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+		   }
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+		  },
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+		  &quot;nbformat&quot;: 4,
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+		  &quot;nbformat_minor&quot;: 5
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+	}
+</a> `
+ )
+</pre>
+</div>
+</body>
+</html>

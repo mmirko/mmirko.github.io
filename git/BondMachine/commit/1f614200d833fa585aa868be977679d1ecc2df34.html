@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f614200d833fa585aa868be977679d1ecc2df34.html">1f614200d833fa585aa868be977679d1ecc2df34</a>
+<b>parent</b> <a href="../commit/7e36657966eaa9314965d2d16d5c89a03667b7d4.html">7e36657966eaa9314965d2d16d5c89a03667b7d4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 13 Aug 2023 00:15:43 +0200
+
+RAM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">pkg/basm/creatormem.go</a></td><td> | </td><td class="num">7</td><td><span class="i"></span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 32 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -554,22 +554,45 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 	myArch.Modes = make([]string, 1)
+ 	myArch.Modes[0] = execMode
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	resp := bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	if resp.Error != nil {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		return nil, resp.Error
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	var resp bmreqs.ReqResponse
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	// Processing Code sections: CP has to have at least one code section
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	// Getting the ROM code requirements
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	if romCode != &quot;&quot; {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		if resp.Error != nil {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			return nil, resp.Error
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-0-18" id="h0-0-18" class="d">-	bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romCode, &quot;/bm:cps/id:&quot;+strconv.Itoa(procid))
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	opCodesROM := strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	// Getting the RAM code requirements
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	if ramCode != &quot;&quot; {
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		if resp.Error != nil {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			return nil, resp.Error
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	}
+</a> 
+<a href="#h0-0-29" id="h0-0-29" class="d">-	opCodesS := strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	opCodesRAM := strings.Split(resp.Value, &quot;,&quot;)
+</a> 
+<a href="#h0-0-32" id="h0-0-32" class="i">+	// The final list of opcodes is the union of the two lists
+</a> 	opcodes := make([]procbuilder.Opcode, 0)
+ 
+<a href="#h0-0-35" id="h0-0-35" class="i">+outer:
+</a> 	for _, op := range procbuilder.Allopcodes {
+<a href="#h0-0-37" id="h0-0-37" class="d">-		for _, opn := range opCodesS {
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+		for _, opn := range opCodesROM {
+</a> 			if opn == op.Op_get_name() {
+ 				opcodes = append(opcodes, op)
+<a href="#h0-0-41" id="h0-0-41" class="d">-				break
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				continue outer
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+			}
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		}
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+		for _, opn := range opCodesRAM {
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+			if opn == op.Op_get_name() {
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+				opcodes = append(opcodes, op)
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+				continue outer
+</a> 			}
+ 		}
+ 	}
+<a href="#h0-1" id="h0-1" class="h">@@ -578,6 +601,8 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 
+ 	myArch.Op = opcodes
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romCode, &quot;/bm:cps/id:&quot;+strconv.Itoa(procid))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> 	// Getting the registers requirements on the ROM code
+ 	resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+ 	if resp.Error != nil {
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/creatormem.go.html">pkg/basm/creatormem.go</a> b/<a href="../file/pkg/basm/creatormem.go.html">pkg/basm/creatormem.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-package basm
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-// Assembler2MEM transform an assembled instance into a MEM file
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-func (bi *BasmInstance) Assembler2MEM() error {
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	//TODO
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	return nil
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-}
+</a></pre>
+</div>
+</body>
+</html>

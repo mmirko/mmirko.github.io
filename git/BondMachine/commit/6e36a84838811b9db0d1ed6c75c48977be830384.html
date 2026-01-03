@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>templates filled - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6e36a84838811b9db0d1ed6c75c48977be830384.html">6e36a84838811b9db0d1ed6c75c48977be830384</a>
+<b>parent</b> <a href="../commit/cb708d3efcf02b59b6a7d6924679c691f39fbee1.html">cb708d3efcf02b59b6a7d6924679c691f39fbee1</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  6 Sep 2022 17:29:00 +0200
+
+templates filled
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -86,9 +86,9 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+ 		} else if node.Type == &quot;linear&quot; {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d\n&quot;, node.Layer, node.Pos, node.Inputs)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d, bias:%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a> 		} else if node.Type == &quot;softmax&quot; {
+<a href="#h0-0-6" id="h0-0-6" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d\n&quot;, node.Layer, node.Pos, node.Inputs)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d, bias:%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a> 		} else if node.Type == &quot;output&quot; {
+ 			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+<a href="#h0-1" id="h0-1" class="h">@@ -103,8 +103,7 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 		weightCP := fmt.Sprintf(&quot;weightcp_%d_%d__%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer, weight.Layer, weight.PosCurrLayer)
+ 		downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+ 		upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+<a href="#h0-1-3" id="h0-1-3" class="d">-		// result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:%f\n&quot;, weightCP, weight.Value)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight\n&quot;, weightCP)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:0f%f\n&quot;, weightCP, weight.Value)
+</a> 		result += fmt.Sprintf(&quot;%%meta iodef up%s type:io\n&quot;, weightCP)
+ 		result += fmt.Sprintf(&quot;%%meta iodef down%s type:io\n&quot;, weightCP)
+ 		result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:input, index:0\n&quot;, weightCP, weightCP)
+</pre>
+</div>
+</body>
+</html>

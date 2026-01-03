@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multiple symbols - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/84d26c24fc8b6ca0e65c0cba09eb1206914e1cd7.html">84d26c24fc8b6ca0e65c0cba09eb1206914e1cd7</a>
+<b>parent</b> <a href="../commit/e1db5fbae393e34e894020444779e2da446a8d20.html">e1db5fbae393e34e894020444779e2da446a8d20</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 30 Sep 2023 11:42:47 +0200
+
+Multiple symbols
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">library/fragments/comparestring.basm</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/asmparser.go</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/callresolver.go</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/entrypoints.go</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/fragmentanalyzer.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/symboltagger.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>6 files changed, 76 insertions(+), 48 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a> b/<a href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,6 @@
+</a> ; r1 pointer to the ROM string
+ ; r2 is the lenght
+ %fragment comparestring default_mem1:ram default_mem2:rom
+<a href="#h0-0-3" id="h0-0-3" class="d">-	nop
+</a> cmpchar:
+ 	mov	r3, {{ .Params.mem1 }}:[r0]
+ 	mov	r4, {{ .Params.mem2 }}:[r1]
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a> b/<a href="../file/pkg/basm/asmparser.go.html">pkg/basm/asmparser.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -255,12 +255,16 @@ func basmParser(bi *BasmInstance, s string, lineNo uint32) error {
+</a> 				if bi.isWithinMacro != &quot;&quot; || bi.isWithinSection != &quot;&quot; || bi.isWithinFragment != &quot;&quot; || bi.isWithinChunk != &quot;&quot; {
+ 					// Processing symbols
+ 					if strings.HasSuffix(operand, &quot;:&quot;) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+						newSymbol := strings.TrimSuffix(operand, &quot;:&quot;)
+</a> 						if bi.isSymbolled != &quot;&quot; {
+<a href="#h1-0-5" id="h1-0-5" class="d">-							return errors.New(line + &quot;, Multiple symbol&quot;)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+							newSymbol += &quot;:&quot; + bi.isSymbolled
+</a> 						}
+<a href="#h1-0-8" id="h1-0-8" class="d">-						newSymbol := strings.TrimSuffix(operand, &quot;:&quot;)
+</a> 						bi.isSymbolled = newSymbol
+<a href="#h1-0-10" id="h1-0-10" class="d">-						bi.lineMeta = strings.Join(argS[1:], &quot;&quot;)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+						if bi.lineMeta != &quot;&quot; {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+							bi.lineMeta += &quot;,&quot; + strings.Join(argS[1:], &quot;&quot;)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+						} else {
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+							bi.lineMeta = strings.Join(argS[1:], &quot;&quot;)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+						}
+</a> 						if bi.debug {
+ 							fmt.Print(yellow(&quot; --&gt; Symbol set&quot;))
+ 						}
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a> b/<a href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;fmt&quot;
+ 	&quot;regexp&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;golang.org/x/exp/maps&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -63,8 +64,6 @@ func callResolver(bi *BasmInstance) error {
+</a> 					if _, ok := bi.fragments[arg.GetValue()]; ok {
+ 						fragName := arg.GetValue()
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-						// TODO  handle start and end metadata
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-
+</a> 						// Make a copy of the fragment body
+ 						fBody := bi.fragments[fragName].fragmentBody.Copy()
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -85,11 +84,24 @@ func callResolver(bi *BasmInstance) error {
+</a> 						for j, appLine := range fBody.Lines {
+ 							newLine := appLine.Copy()
+ 							if j == 0 {
+<a href="#h2-2-3" id="h2-2-3" class="d">-								newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName)
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+								if symbols := newLine.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+									newSymbols := make([]string, len(strings.Split(symbols, &quot;:&quot;))+1)
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+									for k, s := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+										newSymbols[k] = fragName + s
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+									}
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+									newSymbols[len(newSymbols)-1] = fragName
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+									newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, strings.Join(newSymbols, &quot;:&quot;))
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+								} else {
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+									newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName)
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+								}
+</a> 								bi.symbols[symbolPrefix+sectName+&quot;.&quot;+fragName] = -1
+ 							} else {
+<a href="#h2-2-16" id="h2-2-16" class="d">-								if s := newLine.GetMeta(&quot;symbol&quot;); s != &quot;&quot; {
+</a><a href="#h2-2-17" id="h2-2-17" class="d">-									newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName+s)
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+								if symbols := newLine.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h2-2-19" id="h2-2-19" class="i">+									newSymbols := make([]string, len(strings.Split(symbols, &quot;:&quot;)))
+</a><a href="#h2-2-20" id="h2-2-20" class="i">+									for k, s := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+										newSymbols[k] = fragName + s
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+									}
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+									newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, strings.Join(newSymbols, &quot;:&quot;))
+</a> 								}
+ 							}
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -99,7 +111,6 @@ func callResolver(bi *BasmInstance) error {
+</a> 								if _, ok := bi.symbols[&quot;frag.&quot;+fragName+&quot;.&quot;+s]; ok {
+ 									el.SetValue(fragName + s)
+ 								}
+<a href="#h2-3-3" id="h2-3-3" class="d">-
+</a> 							}
+ 
+ 							newCode = append(newCode, newLine)
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a> b/<a href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;strings&quot;
+</a> )
+ 
+ // section entry points detection, the pass detects the symbol used as entry point of the section and sign it as metadata.
+<a href="#h3-1" id="h3-1" class="h">@@ -51,19 +52,23 @@ func entryPoints(bi *BasmInstance) error {
+</a> 				}
+ 
+ 				if checkEntry {
+<a href="#h3-1-3" id="h3-1-3" class="d">-					if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-						if symbol == checkSymbol {
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-							if checkExistence {
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-								return errors.New(&quot;multiple entry points detected&quot;)
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-							} else {
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-								checkExistence = true
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-								checkPosition = i - 1
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+					if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+						for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+							if symbol == checkSymbol {
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+								if checkExistence {
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+									return errors.New(&quot;multiple entry points detected&quot;)
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+								} else {
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+									checkExistence = true
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+									checkPosition = i - 1
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+								}
+</a> 							}
+ 						}
+ 					}
+ 				} else {
+<a href="#h3-1-23" id="h3-1-23" class="d">-					if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h3-1-24" id="h3-1-24" class="d">-						prevSymbols = append(prevSymbols, symbol)
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+					if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+						for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+							prevSymbols = append(prevSymbols, symbol)
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+						}
+</a> 					}
+ 				}
+ 			}
+<a href="#h3-2" id="h3-2" class="h">@@ -94,10 +99,12 @@ func entryPoints(bi *BasmInstance) error {
+</a> 
+ 			if checkPosition &lt; 0 {
+ 				for i, line := range body.Lines {
+<a href="#h3-2-3" id="h3-2-3" class="d">-					if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-						if symbol == checkSymbol {
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-							checkPosition = i
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-							break
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+					if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+						for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+							if symbol == checkSymbol {
+</a><a href="#h3-2-10" id="h3-2-10" class="i">+								checkPosition = i
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+								break
+</a><a href="#h3-2-12" id="h3-2-12" class="i">+							}
+</a> 						}
+ 					}
+ 				}
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a> b/<a href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -240,15 +240,17 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 		// use the symbol.
+ 		// This will only work with symbols, not with numbers. For this reason, it will execute after symboltagger and before symbolresolver.
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-		// Map all the symbols
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-		symbols := make(map[string]int)
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		// Map all the symbolList
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+		symbolList := make(map[string]int)
+</a> 
+ 		for i, line := range fBody.Lines {
+<a href="#h4-0-9" id="h4-0-9" class="d">-			if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-				if _, exists := symbols[symbol]; exists {
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-					return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-				} else {
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-					symbols[symbol] = i
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+			if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+				for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+					if _, exists := symbolList[symbol]; exists {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+						return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+					} else {
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+						symbolList[symbol] = i
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+					}
+</a> 				}
+ 			}
+ 		}
+<a href="#h4-1" id="h4-1" class="h">@@ -261,7 +263,7 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 				if bmline.MatchMatcher(matcher, line) {
+ 					// TODO Handling the operand
+ 					for _, arg := range line.Elements {
+<a href="#h4-1-3" id="h4-1-3" class="d">-						if j, ok := symbols[arg.GetValue()]; ok {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+						if j, ok := symbolList[arg.GetValue()]; ok {
+</a> 							fmt.Println(&quot;the branch is at line&quot;, i, &quot;and the symbol is at line&quot;, j)
+ 
+ 							if i &gt; j {
+<b>diff --git a/<a id="h5" href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a> b/<a href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;strings&quot;
+</a> )
+ 
+ func symbolTagger(bi *BasmInstance) error {
+<a href="#h5-1" id="h5-1" class="h">@@ -25,17 +26,19 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 				symbolPrefix = &quot;ram.&quot; + sectName + &quot;.&quot;
+ 			}
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-			// Map all the symbols
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-			symbols := make(map[string]struct{})
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+			// Map all the symbolList
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+			symbolList := make(map[string]struct{})
+</a> 
+ 			body := section.sectionBody
+ 			for i, line := range body.Lines {
+<a href="#h5-1-10" id="h5-1-10" class="d">-				if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h5-1-11" id="h5-1-11" class="d">-					if _, exists := symbols[symbol]; exists {
+</a><a href="#h5-1-12" id="h5-1-12" class="d">-						return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h5-1-13" id="h5-1-13" class="d">-					} else {
+</a><a href="#h5-1-14" id="h5-1-14" class="d">-						symbols[symbol] = struct{}{}
+</a><a href="#h5-1-15" id="h5-1-15" class="d">-						bi.symbols[symbolPrefix+symbol] = int64(i)
+</a><a href="#h5-1-16" id="h5-1-16" class="i">+				if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h5-1-17" id="h5-1-17" class="i">+					for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h5-1-18" id="h5-1-18" class="i">+						if _, exists := symbolList[symbol]; exists {
+</a><a href="#h5-1-19" id="h5-1-19" class="i">+							return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h5-1-20" id="h5-1-20" class="i">+						} else {
+</a><a href="#h5-1-21" id="h5-1-21" class="i">+							symbolList[symbol] = struct{}{}
+</a><a href="#h5-1-22" id="h5-1-22" class="i">+							bi.symbols[symbolPrefix+symbol] = int64(i)
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+						}
+</a> 					}
+ 				}
+ 			}
+<a href="#h5-2" id="h5-2" class="h">@@ -63,17 +66,19 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 
+ 		symbolPrefix := &quot;frag.&quot; + fragName + &quot;.&quot;
+ 
+<a href="#h5-2-3" id="h5-2-3" class="d">-		// Map all the symbols
+</a><a href="#h5-2-4" id="h5-2-4" class="d">-		symbols := make(map[string]struct{})
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+		// Map all the symbolList
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+		symbolList := make(map[string]struct{})
+</a> 
+ 		body := fragment.fragmentBody
+ 		for i, line := range body.Lines {
+<a href="#h5-2-10" id="h5-2-10" class="d">-			if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+</a><a href="#h5-2-11" id="h5-2-11" class="d">-				if _, exists := symbols[symbol]; exists {
+</a><a href="#h5-2-12" id="h5-2-12" class="d">-					return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h5-2-13" id="h5-2-13" class="d">-				} else {
+</a><a href="#h5-2-14" id="h5-2-14" class="d">-					symbols[symbol] = struct{}{}
+</a><a href="#h5-2-15" id="h5-2-15" class="d">-					bi.symbols[symbolPrefix+symbol] = int64(i)
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+			if symbols := line.GetMeta(&quot;symbol&quot;); symbols != &quot;&quot; {
+</a><a href="#h5-2-17" id="h5-2-17" class="i">+				for _, symbol := range strings.Split(symbols, &quot;:&quot;) {
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+					if _, exists := symbolList[symbol]; exists {
+</a><a href="#h5-2-19" id="h5-2-19" class="i">+						return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+</a><a href="#h5-2-20" id="h5-2-20" class="i">+					} else {
+</a><a href="#h5-2-21" id="h5-2-21" class="i">+						symbolList[symbol] = struct{}{}
+</a><a href="#h5-2-22" id="h5-2-22" class="i">+						bi.symbols[symbolPrefix+symbol] = int64(i)
+</a><a href="#h5-2-23" id="h5-2-23" class="i">+					}
+</a> 				}
+ 			}
+ 		}
+<a href="#h5-3" id="h5-3" class="h">@@ -81,7 +86,7 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 		for _, line := range body.Lines {
+ 
+ 			for _, arg := range line.Elements {
+<a href="#h5-3-3" id="h5-3-3" class="d">-				if _, ok := symbols[arg.GetValue()]; ok {
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+				if _, ok := symbolList[arg.GetValue()]; ok {
+</a> 					arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+ 				}
+ 			}
+</pre>
+</div>
+</body>
+</html>

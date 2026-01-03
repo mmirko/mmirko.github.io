@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quantum gates for rotations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d9aa0a9c7d7922391940f5c8e99ad9dd4a3e9786.html">d9aa0a9c7d7922391940f5c8e99ad9dd4a3e9786</a>
+<b>parent</b> <a href="../commit/36faf91d28e8b2e34601b415d98fede01b23ef93.html">36faf91d28e8b2e34601b415d98fede01b23ef93</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 17 May 2024 18:15:38 +0200
+
+Quantum gates for rotations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmmatrix/identity.go</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmqsim/parametric.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 84 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a> b/<a href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -29,6 +29,33 @@ func PhaseShift(phase float32) *BmMatrixSquareComplex {
+</a> 	return m
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+func RX(phase float32) *BmMatrixSquareComplex {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	m.Data[0][0] = Complex32{float32(math.Cos(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	m.Data[0][1] = Complex32{0.0, -float32(math.Sin(float64(phase / 2)))}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	m.Data[1][0] = Complex32{0.0, -float32(math.Sin(float64(phase / 2)))}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	m.Data[1][1] = Complex32{float32(math.Cos(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	return m
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+}
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+func RY(phase float32) *BmMatrixSquareComplex {
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	m.Data[0][0] = Complex32{float32(math.Cos(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	m.Data[0][1] = Complex32{-float32(math.Sin(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	m.Data[1][0] = Complex32{float32(math.Sin(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	m.Data[1][1] = Complex32{float32(math.Cos(float64(phase / 2))), 0.0}
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	return m
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+func RZ(phase float32) *BmMatrixSquareComplex {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	m := NewBmMatrixSquareComplex(2)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	m.Data[0][0] = Complex32{float32(math.Cos(-float64(phase / 2))), float32(math.Sin(-float64(phase / 2)))}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	m.Data[0][1] = Complex32{0.0, 0.0}
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	m.Data[1][0] = Complex32{0.0, 0.0}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	m.Data[1][1] = Complex32{float32(math.Cos(float64(phase / 2))), float32(math.Sin(float64(phase / 2)))}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	return m
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+}
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a> func T() *BmMatrixSquareComplex {
+ 	return PhaseShift(math.Pi / 4)
+ }
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -417,6 +417,12 @@ func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrix
+</a> 		return sim.Phase(line)
+ 	case &quot;r&quot;:
+ 		return sim.P(line)
+<a href="#h1-0-3" id="h1-0-3" class="i">+	case &quot;rx&quot;:
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		return sim.RX(line)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	case &quot;ry&quot;:
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		return sim.RY(line)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	case &quot;rz&quot;:
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		return sim.RZ(line)
+</a> 	case &quot;zero&quot;, &quot;input&quot;:
+ 	// Ignore the zero and the input operations
+ 	default:
+<b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/parametric.go.html">pkg/bmqsim/parametric.go</a> b/<a href="../file/pkg/bmqsim/parametric.go.html">pkg/bmqsim/parametric.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -41,3 +41,54 @@ func (sim *BmQSimulator) P(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareCompl
+</a> 		return bmmatrix.PhaseShift(float32(phaseFloat)), nil
+ 	}
+ }
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+func (sim *BmQSimulator) RX(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	// The first parameter is the qbit, we can safely ignore it since it has been already treated
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	// The second parameter is the phase
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	if len(line.Elements) != 2 {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+		return nil, fmt.Errorf(&quot;RX: wrong number of parameters&quot;)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	phase := line.Elements[1].GetValue()
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	// Convert the phase to a float32
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	if phaseFloat, err := strconv.ParseFloat(phase, 32); err != nil {
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+		return nil, fmt.Errorf(&quot;RX: error parsing phase %s&quot;, phase)
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	} else {
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		return bmmatrix.RX(float32(phaseFloat)), nil
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	}
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+}
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+func (sim *BmQSimulator) RY(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	// The first parameter is the qbit, we can safely ignore it since it has been already treated
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	// The second parameter is the phase
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	if len(line.Elements) != 2 {
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+		return nil, fmt.Errorf(&quot;RY: wrong number of parameters&quot;)
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	}
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+	phase := line.Elements[1].GetValue()
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	// Convert the phase to a float32
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	if phaseFloat, err := strconv.ParseFloat(phase, 32); err != nil {
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+		return nil, fmt.Errorf(&quot;RY: error parsing phase %s&quot;, phase)
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	} else {
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+		return bmmatrix.RY(float32(phaseFloat)), nil
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+	}
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+}
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+func (sim *BmQSimulator) RZ(line *bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	// The first parameter is the qbit, we can safely ignore it since it has been already treated
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	// The second parameter is the phase
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+	if len(line.Elements) != 2 {
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+		return nil, fmt.Errorf(&quot;RZ: wrong number of parameters&quot;)
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	}
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	phase := line.Elements[1].GetValue()
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	// Convert the phase to a float32
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	if phaseFloat, err := strconv.ParseFloat(phase, 32); err != nil {
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+		return nil, fmt.Errorf(&quot;RZ: error parsing phase %s&quot;, phase)
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	} else {
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+		return bmmatrix.RZ(float32(phaseFloat)), nil
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	}
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

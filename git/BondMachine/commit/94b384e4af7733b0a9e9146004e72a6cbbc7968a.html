@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>brvgasdl lib - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/94b384e4af7733b0a9e9146004e72a6cbbc7968a.html">94b384e4af7733b0a9e9146004e72a6cbbc7968a</a>
+<b>parent</b> <a href="../commit/67901805cb83c42be6a7ee542b84da71a8024e62.html">67901805cb83c42be6a7ee542b84da71a8024e62</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  7 Sep 2022 12:21:26 +0200
+
+brvgasdl lib
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">brvga/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 19 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a> b/<a href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,17 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package brvgasdl
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import &quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+type BrvgaSdl struct {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	*brvga.BrvgaTextMemory
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+func NewBrvgaSdl(constraint string) (*BrvgaSdl, error) {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	result := new(BrvgaSdl)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	textMem, err := brvga.NewBrvgaTextMemory(constraint)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	if err != nil {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		return nil, err
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	result.BrvgaTextMemory = textMem
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	return result, nil
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/cmd/brvgasdl/brvgasdl.go.html">cmd/brvgasdl/brvgasdl.go</a> b/<a href="../file/cmd/brvgasdl/brvgasdl.go.html">cmd/brvgasdl/brvgasdl.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,7 +4,7 @@ import (
+</a> 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/brvgasdl&quot;
+</a> )
+ 
+ var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+<a href="#h1-1" id="h1-1" class="h">@@ -21,7 +21,7 @@ func init() {
+</a> }
+ 
+ func main() {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if mem, err := brvga.NewBrvgaTextMemory(*constraint); err != nil {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if mem, err := brvgasdl.NewBrvgaSdl(*constraint); err != nil {
+</a> 		panic(err)
+ 	} else {
+ 		fmt.Print(mem.Dump())
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rom and Ram improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8ff3022cba5b36814e68fcaf17c157b2b892b2c1.html">8ff3022cba5b36814e68fcaf17c157b2b892b2c1</a>
+<b>parent</b> <a href="../commit/f875ceb036653698a07469b60e0c659d4045dac8.html">f875ceb036653698a07469b60e0c659d4045dac8</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 21 Jul 2023 18:00:40 +0200
+
+Rom and Ram improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/arch.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/rom.go</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>5 files changed, 41 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -546,6 +546,7 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 
+ 	myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	// TODO remove it, just for testing purposes	myArch.WordSize = uint8(8)
+</a> 	// The shared constrains will be populated later from the basm metadata
+ 	myArch.Shared_constraints = &quot;&quot;
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -56,6 +56,27 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 				regAddr := re.ReplaceAllString(arg.GetValue(), &quot;${reg}&quot;)
+ 				arg.BasmMeta = arg.SetMeta(&quot;romregister&quot;, regAddr)
+ 			}
+<a href="#h1-0-3" id="h1-0-3" class="i">+			re = regexp.MustCompile(&quot;^ram:\\[(?P&lt;location&gt;[0-9]+)\\]$&quot;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			if re.MatchString(arg.GetValue()) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;ram&quot;)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;ramaddressing&quot;, &quot;immediate&quot;)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+				location := re.ReplaceAllString(arg.GetValue(), &quot;${location}&quot;)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;location&quot;, location)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			re = regexp.MustCompile(&quot;^ram:(?P&lt;var&gt;[0-9a-zA-Z_]+)$&quot;)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+			if re.MatchString(arg.GetValue()) {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;ram&quot;)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;ramaddressing&quot;, &quot;variable&quot;)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+				variable := re.ReplaceAllString(arg.GetValue(), &quot;${var}&quot;)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;variable&quot;, variable)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+			}
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+			re = regexp.MustCompile(&quot;^ram:\\[(?P&lt;reg&gt;r[0-9]+)\\]$&quot;)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+			if re.MatchString(arg.GetValue()) {
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;ram&quot;)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;ramaddressing&quot;, &quot;register&quot;)
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+				regAddr := re.ReplaceAllString(arg.GetValue(), &quot;${reg}&quot;)
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;ramregister&quot;, regAddr)
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+			}
+</a> 			re = regexp.MustCompile(&quot;^(?P&lt;input&gt;i[0-9]+):?$&quot;)
+ 			if re.MatchString(arg.GetValue()) {
+ 				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;input&quot;)
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a> b/<a href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -15,6 +15,7 @@ type Arch struct {
+</a> 	Ram
+ 	Shared_constraints string
+ 	Tag                string
+<a href="#h2-0-3" id="h2-0-3" class="i">+	WordSize           uint8 // 0 means automatic computed, otherwise it is the size in bits of the word
+</a> }
+ 
+ func (arch *Arch) Shared_num(soname string) int {
+<a href="#h2-1" id="h2-1" class="h">@@ -64,22 +65,18 @@ func (arch *Arch) String() string {
+</a> }
+ 
+ func (arch *Arch) Max_word() int {
+<a href="#h2-1-3" id="h2-1-3" class="d">-	now := 1
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	for _, op := range arch.Op {
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-		neww := op.Op_get_instruction_len(arch)
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-		if neww &gt; now {
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-			now = neww
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	if arch.WordSize == 0 {
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+		now := 1
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+		for _, op := range arch.Op {
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+			neww := op.Op_get_instruction_len(arch)
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+			if neww &gt; now {
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+				now = neww
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+			}
+</a> 		}
+<a href="#h2-1-16" id="h2-1-16" class="i">+		return now
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+	} else {
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+		return int(arch.WordSize)
+</a> 	}
+<a href="#h2-1-20" id="h2-1-20" class="d">-
+</a><a href="#h2-1-21" id="h2-1-21" class="d">-	//	served := 1
+</a><a href="#h2-1-22" id="h2-1-22" class="d">-	//	for bits := 1; bits &lt; 16; bits++ {
+</a><a href="#h2-1-23" id="h2-1-23" class="d">-	//		if served&lt;&lt;uint8(bits) &gt;= now {
+</a><a href="#h2-1-24" id="h2-1-24" class="d">-	//			return int(served &lt;&lt; uint8(bits))
+</a><a href="#h2-1-25" id="h2-1-25" class="d">-	//		}
+</a><a href="#h2-1-26" id="h2-1-26" class="d">-	//	}
+</a><a href="#h2-1-27" id="h2-1-27" class="d">-
+</a><a href="#h2-1-28" id="h2-1-28" class="d">-	return now
+</a> }
+ 
+ func (arch *Arch) Write_verilog(arch_module_name string, modules_names map[string]string, flavor string) string {
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -15,6 +15,7 @@ type Machine struct {
+</a> type Machine_json struct {
+ 	Modes              []string
+ 	Rsize              uint8
+<a href="#h3-0-3" id="h3-0-3" class="i">+	WordSize           uint8
+</a> 	R                  uint8 // Number of n-bit registers
+ 	N                  uint8 // Number of n-bit inputs
+ 	M                  uint8 // Number of n-bit outputs
+<a href="#h3-1" id="h3-1" class="h">@@ -158,6 +159,7 @@ func (mach *Machine) Jsoner() *Machine_json {
+</a> 	result.M = mach.M
+ 	result.L = mach.L
+ 	result.O = mach.O
+<a href="#h3-1-3" id="h3-1-3" class="i">+	result.WordSize = mach.WordSize
+</a> 	result.Shared_constraints = mach.Shared_constraints
+ 	result.Slocs = make([]string, len(mach.Slocs))
+ 	result.Vars = make([]string, len(mach.Vars))
+<a href="#h3-2" id="h3-2" class="h">@@ -186,6 +188,7 @@ func (machj *Machine_json) Dejsoner() *Machine {
+</a> 	result.M = machj.M
+ 	result.L = machj.L
+ 	result.O = machj.O
+<a href="#h3-2-3" id="h3-2-3" class="i">+	result.WordSize = machj.WordSize
+</a> 	result.Shared_constraints = machj.Shared_constraints
+ 	result.Slocs = make([]string, len(machj.Slocs))
+ 	result.Vars = make([]string, len(machj.Vars))
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/rom.go.html">pkg/procbuilder/rom.go</a> b/<a href="../file/pkg/procbuilder/rom.go.html">pkg/procbuilder/rom.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -14,26 +14,26 @@ func (rom *Rom) String() string {
+</a> }
+ 
+ func (rom *Rom) Write_verilog(mach *Machine, rom_module_name string, flavor string) string {
+<a href="#h4-0-3" id="h4-0-3" class="d">-	rom_word := mach.Max_word()
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	wordSize := mach.Max_word()
+</a> 
+ 	result := &quot;&quot;
+ 
+ 	// Module header
+ 	result += &quot;`timescale 1ns/1ps\n&quot;
+<a href="#h4-0-10" id="h4-0-10" class="d">-	result += &quot;module &quot; + rom_module_name + &quot;(input [&quot; + strconv.Itoa(int(rom.O)-1) + &quot;:0] rom_bus, output [&quot; + strconv.Itoa(rom_word-1) + &quot;:0] rom_value);\n&quot;
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	result += &quot;module &quot; + rom_module_name + &quot;(input [&quot; + strconv.Itoa(int(rom.O)-1) + &quot;:0] rom_bus, output [&quot; + strconv.Itoa(wordSize-1) + &quot;:0] rom_value);\n&quot;
+</a> 
+<a href="#h4-0-13" id="h4-0-13" class="d">-	result += &quot;\treg [&quot; + strconv.Itoa(rom_word-1) + &quot;:0] _rom [0:&quot; + strconv.Itoa((1&lt;&lt;rom.O)-1) + &quot;];\n&quot;
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(wordSize-1) + &quot;:0] _rom [0:&quot; + strconv.Itoa((1&lt;&lt;rom.O)-1) + &quot;];\n&quot;
+</a> 	result += &quot;\tinitial\n&quot;
+ 	result += &quot;\tbegin\n&quot;
+ 
+ 	i := 0
+ 	for _, inst := range mach.Program.Slocs {
+<a href="#h4-0-20" id="h4-0-20" class="d">-		result += &quot;\t_rom[&quot; + strconv.Itoa(i) + &quot;] = &quot; + strconv.Itoa(rom_word) + &quot;&#39;b&quot; + inst + &quot;;\n&quot;
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+		result += &quot;\t_rom[&quot; + strconv.Itoa(i) + &quot;] = &quot; + strconv.Itoa(wordSize) + &quot;&#39;b&quot; + inst + &quot;;\n&quot;
+</a> 		i++
+ 	}
+ 
+ 	for _, inst := range mach.Data.Vars {
+<a href="#h4-0-26" id="h4-0-26" class="d">-		result += &quot;\t_rom[&quot; + strconv.Itoa(i) + &quot;] = &quot; + strconv.Itoa(rom_word) + &quot;&#39;b&quot; + inst + &quot;;\n&quot;
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+		result += &quot;\t_rom[&quot; + strconv.Itoa(i) + &quot;] = &quot; + strconv.Itoa(wordSize) + &quot;&#39;b&quot; + inst + &quot;;\n&quot;
+</a> 		i++
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

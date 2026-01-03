@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmnumbers integrated in simulation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/24f9fd2486fa9b8b5bf495248a24386abf2ee5dd.html">24f9fd2486fa9b8b5bf495248a24386abf2ee5dd</a>
+<b>parent</b> <a href="../commit/a0e36456f9c4449d801b606d9db2a9a9f9ed11ed.html">a0e36456f9c4449d801b606d9db2a9a9f9ed11ed</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 29 Apr 2023 15:13:06 +0200
+
+bmnumbers integrated in simulation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/utils.go</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 48 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -229,41 +229,41 @@ func (op LinearQuantizer) Simulate(vm *VM, instr string) error {
+</a> 		case LQADD:
+ 			switch vm.Mach.Rsize {
+ 			case 8:
+<a href="#h0-0-3" id="h0-0-3" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int8) + vm.Registers[regSrc].(int8)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) + Int8FromBits(vm.Registers[regSrc].(uint8)))
+</a> 			case 16:
+<a href="#h0-0-6" id="h0-0-6" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int16) + vm.Registers[regSrc].(int16)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) + Int16FromBits(vm.Registers[regSrc].(uint16)))
+</a> 			case 32:
+<a href="#h0-0-9" id="h0-0-9" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int32) + vm.Registers[regSrc].(int32)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) + Int32FromBits(vm.Registers[regSrc].(uint32)))
+</a> 			case 64:
+<a href="#h0-0-12" id="h0-0-12" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int64) + vm.Registers[regSrc].(int64)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) + Int64FromBits(vm.Registers[regSrc].(uint64)))
+</a> 			default:
+<a href="#h0-0-15" id="h0-0-15" class="d">-				return errors.New(&quot;invalid register size&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a> 			}
+ 		case LQMULT:
+ 			switch vm.Mach.Rsize {
+ 			case 8:
+<a href="#h0-0-21" id="h0-0-21" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int8) * vm.Registers[regSrc].(int8) / int8(s)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * Int8FromBits(vm.Registers[regSrc].(uint8)) / int8(s))
+</a> 			case 16:
+<a href="#h0-0-24" id="h0-0-24" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int16) * vm.Registers[regSrc].(int16) / int16(s)
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * Int16FromBits(vm.Registers[regSrc].(uint16)) / int16(s))
+</a> 			case 32:
+<a href="#h0-0-27" id="h0-0-27" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int32) * vm.Registers[regSrc].(int32) / int32(s)
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * Int32FromBits(vm.Registers[regSrc].(uint32)) / int32(s))
+</a> 			case 64:
+<a href="#h0-0-30" id="h0-0-30" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int64) * vm.Registers[regSrc].(int64) / int64(s)
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * Int64FromBits(vm.Registers[regSrc].(uint64)) / int64(s))
+</a> 			default:
+<a href="#h0-0-33" id="h0-0-33" class="d">-				return errors.New(&quot;invalid register size&quot;)
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a> 			}
+ 		case LQDIV:
+ 			switch vm.Mach.Rsize {
+ 			case 8:
+<a href="#h0-0-39" id="h0-0-39" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int8) / vm.Registers[regSrc].(int8) * int8(s)
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * int8(s) / Int8FromBits(vm.Registers[regSrc].(uint8)))
+</a> 			case 16:
+<a href="#h0-0-42" id="h0-0-42" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int16) / vm.Registers[regSrc].(int16) * int16(s)
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * int16(s) / Int16FromBits(vm.Registers[regSrc].(uint16)))
+</a> 			case 32:
+<a href="#h0-0-45" id="h0-0-45" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int32) / vm.Registers[regSrc].(int32) * int32(s)
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * int32(s) / Int32FromBits(vm.Registers[regSrc].(uint32)))
+</a> 			case 64:
+<a href="#h0-0-48" id="h0-0-48" class="d">-				vm.Registers[regDest] = vm.Registers[regDest].(int64) / vm.Registers[regSrc].(int64) * int64(s)
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * int64(s) / Int64FromBits(vm.Registers[regSrc].(uint64)))
+</a> 			default:
+<a href="#h0-0-51" id="h0-0-51" class="d">-				return errors.New(&quot;invalid register size&quot;)
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+				return errors.New(&quot;invalid register size, 8, 16, 32 and 64 bits are allowed&quot;)
+</a> 			}
+ 		}
+ 		vm.Pc = vm.Pc + 1
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a> b/<a href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;sort&quot;
+ 	&quot;strconv&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;unsafe&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+<a href="#h1-1" id="h1-1" class="h">@@ -247,3 +248,35 @@ func (arch *Arch) OnlyOne(curOp string, ops []string) bool {
+</a> 	}
+ 	return false
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+func Int8bits(f int8) uint8 {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	return *(*uint8)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+}
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+func Int16bits(f int16) uint16 {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	return *(*uint16)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+func Int32bits(f int32) uint32 {
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	return *(*uint32)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+}
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+func Int64bits(f int64) uint64 {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	return *(*uint64)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+func Int8FromBits(f uint8) int8 {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	return *(*int8)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+}
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+func Int16FromBits(f uint16) int16 {
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+	return *(*int16)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+}
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+func Int32FromBits(f uint32) int32 {
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+	return *(*int32)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+func Int64FromBits(f uint64) int64 {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+	return *(*int64)(unsafe.Pointer(&amp;f))
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

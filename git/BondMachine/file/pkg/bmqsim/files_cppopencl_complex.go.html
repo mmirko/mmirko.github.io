@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_cppopencl_complex.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_cppopencl_complex.go (8072B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bmqsim
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	CppOpenCLComplex = `#include &quot;xcl2.hpp&quot;
+<a href="#l5" class="line" id="l5">      5</a> #include &lt;vector&gt;
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> #define BATCH_SIZE 16
+<a href="#l8" class="line" id="l8">      8</a> #define BM_INPUT {{ mult 2 .MatrixRows }}
+<a href="#l9" class="line" id="l9">      9</a> #define BM_OUTPUT {{ mult 2 .MatrixRows }}
+<a href="#l10" class="line" id="l10">     10</a> #define PRECISION 32
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> #define TOTIN BATCH_SIZE*BM_INPUT
+<a href="#l13" class="line" id="l13">     13</a> #define TOTOUT BATCH_SIZE*BM_OUTPUT
+<a href="#l14" class="line" id="l14">     14</a> 
+<a href="#l15" class="line" id="l15">     15</a> int main(int argc, char *argv[])
+<a href="#l16" class="line" id="l16">     16</a> {
+<a href="#l17" class="line" id="l17">     17</a>         FILE *fp;
+<a href="#l18" class="line" id="l18">     18</a>         char *line = NULL;
+<a href="#l19" class="line" id="l19">     19</a>         size_t len = 0;
+<a href="#l20" class="line" id="l20">     20</a>         ssize_t read;
+<a href="#l21" class="line" id="l21">     21</a>         int i = 0;
+<a href="#l22" class="line" id="l22">     22</a>         int total = 0;
+<a href="#l23" class="line" id="l23">     23</a>         int offset = 0;
+<a href="#l24" class="line" id="l24">     24</a>         int threshold = 0;
+<a href="#l25" class="line" id="l25">     25</a> 
+<a href="#l26" class="line" id="l26">     26</a>         std::string bmFirmwareFile = &quot;firmware.xclbin&quot;;
+<a href="#l27" class="line" id="l27">     27</a> 
+<a href="#l28" class="line" id="l28">     28</a>         // Allocate Memory in Host Memory
+<a href="#l29" class="line" id="l29">     29</a>         auto vector_size_bytes_in = sizeof(float) * TOTIN;
+<a href="#l30" class="line" id="l30">     30</a>         auto vector_size_bytes_out = sizeof(float) * TOTOUT;
+<a href="#l31" class="line" id="l31">     31</a> 
+<a href="#l32" class="line" id="l32">     32</a>         std::vector&lt;float, aligned_allocator&lt;float&gt;&gt; source_input(TOTIN);
+<a href="#l33" class="line" id="l33">     33</a>         std::vector&lt;float, aligned_allocator&lt;float&gt;&gt; source_output(TOTOUT);
+<a href="#l34" class="line" id="l34">     34</a> 
+<a href="#l35" class="line" id="l35">     35</a>         // OpenCL context, device, program, kernel
+<a href="#l36" class="line" id="l36">     36</a>         cl_int err;
+<a href="#l37" class="line" id="l37">     37</a>         cl::CommandQueue q;
+<a href="#l38" class="line" id="l38">     38</a>         cl::Context context;
+<a href="#l39" class="line" id="l39">     39</a>         cl::Program program;
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a>         auto devices = xcl::get_xil_devices();
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a>         // load the BM firmware and return the pointer to file buffer.
+<a href="#l44" class="line" id="l44">     44</a>         auto fileBuf = xcl::read_binary_file(bmFirmwareFile);
+<a href="#l45" class="line" id="l45">     45</a>         cl::Program::Binaries bins{{&quot;{{&quot;}}fileBuf.data(), fileBuf.size(){{&quot;}}&quot;}};
+<a href="#l46" class="line" id="l46">     46</a>         bool valid_device = false;
+<a href="#l47" class="line" id="l47">     47</a>         for (unsigned int i = 0; i &lt; devices.size(); i++)
+<a href="#l48" class="line" id="l48">     48</a>         {
+<a href="#l49" class="line" id="l49">     49</a>                 auto device = devices[i];
+<a href="#l50" class="line" id="l50">     50</a> 
+<a href="#l51" class="line" id="l51">     51</a>                 // Creating Context and Command Queue for selected Device
+<a href="#l52" class="line" id="l52">     52</a>                 OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, &amp;err));
+<a href="#l53" class="line" id="l53">     53</a>                 OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &amp;err));
+<a href="#l54" class="line" id="l54">     54</a> 
+<a href="#l55" class="line" id="l55">     55</a>                 // std::cout &lt;&lt; &quot;Trying to program device[&quot; &lt;&lt; i &lt;&lt; &quot;]: &quot; &lt;&lt; device.getInfo&lt;CL_DEVICE_NAME&gt;() &lt;&lt; std::endl;
+<a href="#l56" class="line" id="l56">     56</a>                 program = cl::Program(context, {device}, bins, nullptr, &amp;err);
+<a href="#l57" class="line" id="l57">     57</a>                 if (err != CL_SUCCESS)
+<a href="#l58" class="line" id="l58">     58</a>                 {
+<a href="#l59" class="line" id="l59">     59</a>                         std::cout &lt;&lt; &quot;Failed to program device[&quot; &lt;&lt; i &lt;&lt; &quot;] with xclbin file!\n&quot;;
+<a href="#l60" class="line" id="l60">     60</a>                 }
+<a href="#l61" class="line" id="l61">     61</a>                 else
+<a href="#l62" class="line" id="l62">     62</a>                 {
+<a href="#l63" class="line" id="l63">     63</a>                         std::cout &lt;&lt; &quot;Device[&quot; &lt;&lt; i &lt;&lt; &quot;]: program successful!\n&quot;;
+<a href="#l64" class="line" id="l64">     64</a>                         valid_device = true;
+<a href="#l65" class="line" id="l65">     65</a>                         break; // we break because we found a valid device
+<a href="#l66" class="line" id="l66">     66</a>                 }
+<a href="#l67" class="line" id="l67">     67</a>         }
+<a href="#l68" class="line" id="l68">     68</a>         if (!valid_device)
+<a href="#l69" class="line" id="l69">     69</a>         {
+<a href="#l70" class="line" id="l70">     70</a>                 std::cout &lt;&lt; &quot;Failed to program any device found, exit!\n&quot;;
+<a href="#l71" class="line" id="l71">     71</a>                 exit(EXIT_FAILURE);
+<a href="#l72" class="line" id="l72">     72</a>         }
+<a href="#l73" class="line" id="l73">     73</a> 
+<a href="#l74" class="line" id="l74">     74</a>         OCL_CHECK(err, cl::Kernel krnl_bondmachine(program, &quot;krnl_bondmachine_rtl&quot;, &amp;err));
+<a href="#l75" class="line" id="l75">     75</a> 
+<a href="#l76" class="line" id="l76">     76</a>         if (argc == 3) // argv[1] is the input file, argv[2] is the output file
+<a href="#l77" class="line" id="l77">     77</a>         {
+<a href="#l78" class="line" id="l78">     78</a>                 fp = fopen(argv[1], &quot;r&quot;);
+<a href="#l79" class="line" id="l79">     79</a>                 if (fp == NULL)
+<a href="#l80" class="line" id="l80">     80</a>                         printf(&quot;Input file %s not found\n&quot;, argv[1]), exit(EXIT_FAILURE);
+<a href="#l81" class="line" id="l81">     81</a>                 while ((read = getline(&amp;line, &amp;len, fp)) != -1)
+<a href="#l82" class="line" id="l82">     82</a>                         i++;
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a>                 if (i % BM_INPUT != 0)
+<a href="#l85" class="line" id="l85">     85</a>                         printf(&quot;Input file %s has wrong number of elements\n&quot;, argv[1]), exit(EXIT_FAILURE);
+<a href="#l86" class="line" id="l86">     86</a> 
+<a href="#l87" class="line" id="l87">     87</a>                 rewind(fp);
+<a href="#l88" class="line" id="l88">     88</a> 
+<a href="#l89" class="line" id="l89">     89</a>                 float *data = (float *)malloc(sizeof(float) * i);
+<a href="#l90" class="line" id="l90">     90</a>                 i = 0;
+<a href="#l91" class="line" id="l91">     91</a> 
+<a href="#l92" class="line" id="l92">     92</a>                 while ((read = getline(&amp;line, &amp;len, fp)) != -1)
+<a href="#l93" class="line" id="l93">     93</a>                 {
+<a href="#l94" class="line" id="l94">     94</a>                         data[i] = atof(line);
+<a href="#l95" class="line" id="l95">     95</a>                         // printf(&quot;%f\n&quot;, data[i]);
+<a href="#l96" class="line" id="l96">     96</a>                         i++;
+<a href="#l97" class="line" id="l97">     97</a>                 }
+<a href="#l98" class="line" id="l98">     98</a>                 fclose(fp);
+<a href="#l99" class="line" id="l99">     99</a>                 total = i;
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a>                 fp = fopen(argv[2], &quot;w&quot;);
+<a href="#l102" class="line" id="l102">    102</a>                 if (fp == NULL)
+<a href="#l103" class="line" id="l103">    103</a>                         printf(&quot;Output file %s cannot be opened\n&quot;, argv[2]), exit(EXIT_FAILURE);
+<a href="#l104" class="line" id="l104">    104</a> 
+<a href="#l105" class="line" id="l105">    105</a>                 threshold = BATCH_SIZE;
+<a href="#l106" class="line" id="l106">    106</a>                 for (offset = 0; offset &lt; total; offset += TOTIN)
+<a href="#l107" class="line" id="l107">    107</a>                 {
+<a href="#l108" class="line" id="l108">    108</a>                         for (int i = 0; i &lt; TOTIN; i++)
+<a href="#l109" class="line" id="l109">    109</a>                                 if (i + offset &lt; total)
+<a href="#l110" class="line" id="l110">    110</a>                                         source_input[i] = data[i + offset];
+<a href="#l111" class="line" id="l111">    111</a>                                 else
+<a href="#l112" class="line" id="l112">    112</a>                                 {
+<a href="#l113" class="line" id="l113">    113</a>                                         if (threshold == BATCH_SIZE)
+<a href="#l114" class="line" id="l114">    114</a>                                                 threshold = i / BM_INPUT;
+<a href="#l115" class="line" id="l115">    115</a>                                         source_input[i] = 0;
+<a href="#l116" class="line" id="l116">    116</a>                                 }
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a>                         // Allocate Buffer in Global Memory
+<a href="#l119" class="line" id="l119">    119</a>                         OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+<a href="#l120" class="line" id="l120">    120</a>                         OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+<a href="#l121" class="line" id="l121">    121</a> 
+<a href="#l122" class="line" id="l122">    122</a>                         // Set the Kernel Arguments
+<a href="#l123" class="line" id="l123">    123</a>                         OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+<a href="#l124" class="line" id="l124">    124</a>                         OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+<a href="#l125" class="line" id="l125">    125</a> 
+<a href="#l126" class="line" id="l126">    126</a>                         // Copy input data to device global memory
+<a href="#l127" class="line" id="l127">    127</a>                         cl::Event write_event;
+<a href="#l128" class="line" id="l128">    128</a>                         OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+<a href="#l129" class="line" id="l129">    129</a> 
+<a href="#l130" class="line" id="l130">    130</a>                         // Launch the Kernel
+<a href="#l131" class="line" id="l131">    131</a>                         std::vector&lt;cl::Event&gt; eventVec;
+<a href="#l132" class="line" id="l132">    132</a>                         eventVec.push_back(write_event);
+<a href="#l133" class="line" id="l133">    133</a>                         OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+<a href="#l134" class="line" id="l134">    134</a> 
+<a href="#l135" class="line" id="l135">    135</a>                         // wait for all kernels to finish their operations
+<a href="#l136" class="line" id="l136">    136</a>                         OCL_CHECK(err, err = q.finish());
+<a href="#l137" class="line" id="l137">    137</a> 
+<a href="#l138" class="line" id="l138">    138</a>                         // Copy Result from Device Global Memory to Host Local Memory
+<a href="#l139" class="line" id="l139">    139</a>                         OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+<a href="#l140" class="line" id="l140">    140</a>                         OCL_CHECK(err, err = q.finish());
+<a href="#l141" class="line" id="l141">    141</a>                         for (int i = 0; i &lt; TOTOUT; i++)
+<a href="#l142" class="line" id="l142">    142</a>                                 if (i &lt; threshold * BM_OUTPUT)
+<a href="#l143" class="line" id="l143">    143</a>                                         fprintf(fp, &quot;%.12f\n&quot;, source_output[i]);
+<a href="#l144" class="line" id="l144">    144</a>                 }
+<a href="#l145" class="line" id="l145">    145</a> 
+<a href="#l146" class="line" id="l146">    146</a>                 fclose(fp);
+<a href="#l147" class="line" id="l147">    147</a>         }
+<a href="#l148" class="line" id="l148">    148</a> 
+<a href="#l149" class="line" id="l149">    149</a>         else // If a file is not provided, compute the zero state
+<a href="#l150" class="line" id="l150">    150</a>         {
+<a href="#l151" class="line" id="l151">    151</a>                 for (int i = 0; i &lt; TOTIN; i++)
+<a href="#l152" class="line" id="l152">    152</a>                         source_input[i] = 0;
+<a href="#l153" class="line" id="l153">    153</a>                 source_input[0] = 1.0;
+<a href="#l154" class="line" id="l154">    154</a> 
+<a href="#l155" class="line" id="l155">    155</a>                 printf(&quot;%f %f %f %f %f %f %f %f \n&quot;, source_input[0], source_input[1], source_input[2], source_input[3], source_input[4], source_input[5], source_input[6], source_input[7]);
+<a href="#l156" class="line" id="l156">    156</a> 
+<a href="#l157" class="line" id="l157">    157</a>                 // Allocate Buffer in Global Memory
+<a href="#l158" class="line" id="l158">    158</a>                 OCL_CHECK(err, cl::Buffer buffer_input(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, vector_size_bytes_in, source_input.data(), &amp;err));
+<a href="#l159" class="line" id="l159">    159</a>                 OCL_CHECK(err, cl::Buffer buffer_output(context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, vector_size_bytes_out, source_output.data(), &amp;err));
+<a href="#l160" class="line" id="l160">    160</a> 
+<a href="#l161" class="line" id="l161">    161</a>                 // Set the Kernel Arguments
+<a href="#l162" class="line" id="l162">    162</a>                 OCL_CHECK(err, err = krnl_bondmachine.setArg(0, buffer_input));
+<a href="#l163" class="line" id="l163">    163</a>                 OCL_CHECK(err, err = krnl_bondmachine.setArg(1, buffer_output));
+<a href="#l164" class="line" id="l164">    164</a> 
+<a href="#l165" class="line" id="l165">    165</a>                 // Copy input data to device global memory
+<a href="#l166" class="line" id="l166">    166</a>                 cl::Event write_event;
+<a href="#l167" class="line" id="l167">    167</a>                 OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_input}, 0 /* 0 means from host*/, nullptr, &amp;write_event));
+<a href="#l168" class="line" id="l168">    168</a> 
+<a href="#l169" class="line" id="l169">    169</a>                 // Launch the Kernel
+<a href="#l170" class="line" id="l170">    170</a>                 std::vector&lt;cl::Event&gt; eventVec;
+<a href="#l171" class="line" id="l171">    171</a>                 eventVec.push_back(write_event);
+<a href="#l172" class="line" id="l172">    172</a>                 OCL_CHECK(err, err = q.enqueueTask(krnl_bondmachine, &amp;eventVec));
+<a href="#l173" class="line" id="l173">    173</a> 
+<a href="#l174" class="line" id="l174">    174</a>                 // wait for all kernels to finish their operations
+<a href="#l175" class="line" id="l175">    175</a>                 OCL_CHECK(err, err = q.finish());
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a>                 // Copy Result from Device Global Memory to Host Local Memory
+<a href="#l178" class="line" id="l178">    178</a>                 OCL_CHECK(err, err = q.enqueueMigrateMemObjects({buffer_output}, CL_MIGRATE_MEM_OBJECT_HOST));
+<a href="#l179" class="line" id="l179">    179</a>                 OCL_CHECK(err, err = q.finish());
+<a href="#l180" class="line" id="l180">    180</a> 
+<a href="#l181" class="line" id="l181">    181</a> 	        for (int i = 0; i &lt; BM_OUTPUT; i++) {
+<a href="#l182" class="line" id="l182">    182</a> 	                std::cout &lt;&lt; source_output[i] &lt;&lt; std::endl;
+<a href="#l183" class="line" id="l183">    183</a>                 }
+<a href="#l184" class="line" id="l184">    184</a>         }
+<a href="#l185" class="line" id="l185">    185</a>         return 0;
+<a href="#l186" class="line" id="l186">    186</a> }
+<a href="#l187" class="line" id="l187">    187</a> `
+<a href="#l188" class="line" id="l188">    188</a> )
+</pre>
+</div>
+</body>
+</html>

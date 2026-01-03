@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Symbols resolver - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b69063b3bdb559a09bd5ab4588478cc62bec39c9.html">b69063b3bdb559a09bd5ab4588478cc62bec39c9</a>
+<b>parent</b> <a href="../commit/170725c4f61254c3e3f6a415935877b21312d5de.html">170725c4f61254c3e3f6a415935877b21312d5de</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 31 Aug 2023 11:24:56 +0200
+
+Symbols resolver
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">34</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">79</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/symboltagger.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+</table></pre><pre>5 files changed, 147 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -68,8 +68,13 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 		if bi.debug {
+ 			fmt.Println(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+ 		}
+<a href="#h0-0-3" id="h0-0-3" class="d">-		romCode := cp.GetMeta(&quot;romcode&quot;)
+</a> 
+<a href="#h0-0-5" id="h0-0-5" class="i">+		// Check for the ROM and RAM alternatives and select the right one by rewriting the meta romcode and ramcode
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		if err := bi.CodeChoice(i); err != nil {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			return err
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		romCode := cp.GetMeta(&quot;romcode&quot;)
+</a> 		if bi.debug {
+ 			if romCode != &quot;&quot; {
+ 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom code: &quot;) + yellow(romCode))
+<a href="#h0-1" id="h0-1" class="h">@@ -79,7 +84,6 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 		}
+ 
+ 		romData := cp.GetMeta(&quot;romdata&quot;)
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a> 		if bi.debug {
+ 			if romData != &quot;&quot; {
+ 				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom data: &quot;) + yellow(romData))
+<a href="#h0-2" id="h0-2" class="h">@@ -894,3 +898,22 @@ outer:
+</a> func (bi *BasmInstance) GetBondMachine() *bondmachine.Bondmachine {
+ 	return bi.result
+ }
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+func (bi *BasmInstance) CodeChoice(i int) error {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	if i &gt;= len(bi.cps) || i &lt; 0 {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		return errors.New(&quot;index out of range&quot;)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	cp := bi.cps[i]
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	if cp.GetMeta(&quot;romalternatives&quot;) != &quot;&quot; || cp.GetMeta(&quot;ramalternatives&quot;) != &quot;&quot; {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		romAlts := strings.Split(cp.GetMeta(&quot;romalternatives&quot;), &quot;:&quot;)
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		ramAlts := strings.Split(cp.GetMeta(&quot;ramalternatives&quot;), &quot;:&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		_ = romAlts
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		_ = ramAlts
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		// TODO: implement the code choice
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	}
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	return nil
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -11,7 +11,19 @@ import (
+</a> )
+ 
+ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []string) error {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	symbolFilteredMatchers := make([]*bmline.BasmLine, 0)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	for _, matcher := range bi.matchers {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		if bmline.FilterMatcher(matcher, &quot;symbol&quot;) {
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			symbolFilteredMatchers = append(symbolFilteredMatchers, matcher)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	}
+</a> 
+<a href="#h1-0-10" id="h1-0-10" class="i">+	revSymbolFilteredMatchers := make([]*bmline.BasmLine, 0)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	for _, matcher := range bi.matchers {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		if bmline.FilterMatcher(matcher, &quot;revsymbol&quot;) {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			revSymbolFilteredMatchers = append(symbolFilteredMatchers, matcher)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	}
+</a> 	for _, line := range body.Lines {
+ 
+ 		if bi.debug {
+<a href="#h1-1" id="h1-1" class="h">@@ -186,6 +198,28 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 				arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, bmNumber.GetTypeName())
+ 			}
+ 		}
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		// Every unknown arg is a symbol if the operation is a symbol matcher
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		for _, matcher := range symbolFilteredMatchers {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+			if bmline.MatchArg(matcher.Operation, line.Operation) {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+				for _, arg := range line.Elements {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+					if arg.GetMeta(&quot;type&quot;) == &quot;&quot; {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+						arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+					}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+				}
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+			}
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		}
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+		// Every unknown arg is a revsymbol if the operation is a revsymbol matcher
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		for _, matcher := range revSymbolFilteredMatchers {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+			if bmline.MatchArg(matcher.Operation, line.Operation) {
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+				for _, arg := range line.Elements {
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+					if arg.GetMeta(&quot;type&quot;) == &quot;&quot; {
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+						arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;revsymbol&quot;)
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+					}
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+				}
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			}
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+		}
+</a> 	}
+ 
+ 	//TODO add more meta data
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,6 +3,7 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;regexp&quot;
+</a> 	&quot;strconv&quot;
+ )
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -67,6 +68,45 @@ func (bi *BasmInstance) resolveSymbols(section *BasmSection, name string) error 
+</a> 				}
+ 			}
+ 
+<a href="#h2-1-3" id="h2-1-3" class="i">+			// Search the revsymbols
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			if arg.GetMeta(&quot;type&quot;) == &quot;revsymbol&quot; {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+				symbol := arg.GetValue()
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+				localSymbol := &quot;&quot;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+				if name == &quot;&quot; {
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+					// To catch the revsymbol, a guess is made on the name
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+					guessedName := &quot;&quot;
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+					re := regexp.MustCompile(&quot;^romcode(?P&lt;name&gt;[0-9a-zA-Z_]+)$&quot;)
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+					if re.MatchString(section.sectionName) {
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+						guessedName = re.ReplaceAllString(section.sectionName, &quot;${name}&quot;)
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+					}
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+					re = regexp.MustCompile(&quot;^ramcode(?P&lt;name&gt;[0-9a-zA-Z_]+)$&quot;)
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+					if re.MatchString(section.sectionName) {
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+						guessedName = re.ReplaceAllString(section.sectionName, &quot;${name}&quot;)
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+					}
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+					if guessedName != &quot;&quot; {
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+						if section.sectionType == sectRomText {
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+							localSymbol = &quot;ram.ramcode&quot; + guessedName + &quot;.&quot; + symbol
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+						} else {
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+							localSymbol = &quot;rom.romcode&quot; + guessedName + &quot;.&quot; + symbol
+</a><a href="#h2-1-24" id="h2-1-24" class="i">+						}
+</a><a href="#h2-1-25" id="h2-1-25" class="i">+					}
+</a><a href="#h2-1-26" id="h2-1-26" class="i">+				} else {
+</a><a href="#h2-1-27" id="h2-1-27" class="i">+					if section.sectionType == sectRomText {
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+						localSymbol = &quot;ram.ramcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h2-1-29" id="h2-1-29" class="i">+					} else {
+</a><a href="#h2-1-30" id="h2-1-30" class="i">+						localSymbol = &quot;rom.romcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h2-1-31" id="h2-1-31" class="i">+					}
+</a><a href="#h2-1-32" id="h2-1-32" class="i">+				}
+</a><a href="#h2-1-33" id="h2-1-33" class="i">+
+</a><a href="#h2-1-34" id="h2-1-34" class="i">+				if loc, ok := bi.symbols[localSymbol]; ok {
+</a><a href="#h2-1-35" id="h2-1-35" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h2-1-36" id="h2-1-36" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h2-1-37" id="h2-1-37" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h2-1-38" id="h2-1-38" class="i">+					continue
+</a><a href="#h2-1-39" id="h2-1-39" class="i">+				}
+</a><a href="#h2-1-40" id="h2-1-40" class="i">+			}
+</a><a href="#h2-1-41" id="h2-1-41" class="i">+
+</a> 			// Search the symbol in rom
+ 			if arg.GetMeta(&quot;type&quot;) == &quot;rom&quot; &amp;&amp; arg.GetMeta(&quot;romaddressing&quot;) == &quot;symbol&quot; {
+ 				symbol := arg.GetMeta(&quot;symbol&quot;)
+<a href="#h2-2" id="h2-2" class="h">@@ -107,7 +147,46 @@ func (bi *BasmInstance) resolveSymbols(section *BasmSection, name string) error 
+</a> 				}
+ 
+ 				// return errors.New(&quot;symbol not found: &quot; + symbol)
+<a href="#h2-2-3" id="h2-2-3" class="i">+			}
+</a> 
+<a href="#h2-2-5" id="h2-2-5" class="i">+			// Search the symbol in ram
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+			if arg.GetMeta(&quot;type&quot;) == &quot;ram&quot; &amp;&amp; arg.GetMeta(&quot;ramaddressing&quot;) == &quot;symbol&quot; {
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+				symbol := arg.GetMeta(&quot;symbol&quot;)
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+				if symbol == &quot;&quot; {
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+					return errors.New(&quot;RAM symbol cannot be empty&quot;)
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+				}
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+				// In ramdata
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+				ramSymbol := &quot;&quot;
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+				if name == &quot;&quot; {
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+					ramSymbol = &quot;ramdata.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+				} else {
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+					ramSymbol = &quot;ramdata.ramdata&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+				}
+</a><a href="#h2-2-19" id="h2-2-19" class="i">+				if loc, ok := bi.symbols[ramSymbol]; ok {
+</a><a href="#h2-2-20" id="h2-2-20" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+					arg.BasmMeta.RmMeta(&quot;ramaddressing&quot;)
+</a><a href="#h2-2-24" id="h2-2-24" class="i">+					arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a><a href="#h2-2-25" id="h2-2-25" class="i">+					continue
+</a><a href="#h2-2-26" id="h2-2-26" class="i">+				}
+</a><a href="#h2-2-27" id="h2-2-27" class="i">+
+</a><a href="#h2-2-28" id="h2-2-28" class="i">+				// In ramcode
+</a><a href="#h2-2-29" id="h2-2-29" class="i">+				ramSymbol = &quot;&quot;
+</a><a href="#h2-2-30" id="h2-2-30" class="i">+				if name == &quot;&quot; {
+</a><a href="#h2-2-31" id="h2-2-31" class="i">+					ramSymbol = &quot;ram.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a><a href="#h2-2-32" id="h2-2-32" class="i">+				} else {
+</a><a href="#h2-2-33" id="h2-2-33" class="i">+					ramSymbol = &quot;ramcode.ramcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h2-2-34" id="h2-2-34" class="i">+				}
+</a><a href="#h2-2-35" id="h2-2-35" class="i">+				if loc, ok := bi.symbols[ramSymbol]; ok {
+</a><a href="#h2-2-36" id="h2-2-36" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h2-2-37" id="h2-2-37" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h2-2-38" id="h2-2-38" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h2-2-39" id="h2-2-39" class="i">+					arg.BasmMeta.RmMeta(&quot;ramaddressing&quot;)
+</a><a href="#h2-2-40" id="h2-2-40" class="i">+					arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a><a href="#h2-2-41" id="h2-2-41" class="i">+					continue
+</a><a href="#h2-2-42" id="h2-2-42" class="i">+				}
+</a> 			}
+ 		}
+ 	}
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a> b/<a href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -40,14 +40,14 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 				}
+ 			}
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-			for _, line := range body.Lines {
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-				for _, arg := range line.Elements {
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-					if _, ok := symbols[arg.GetValue()]; ok {
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-						arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-					}
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-				}
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-			}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+			// for _, line := range body.Lines {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+			// 	for _, arg := range line.Elements {
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+			// 		if _, ok := symbols[arg.GetValue()]; ok {
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+			// 			arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+			// 		}
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+			// 	}
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+			// }
+</a> 		} else {
+ 			if bi.debug {
+ 				fmt.Println(yellow(&quot;\t\tSection type not handled: &quot;) + sectName)
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -224,8 +224,7 @@ func (Op Saj) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> func (Op Saj) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 2)
+ 	result[0] = &quot;saj::*--type=number&quot;
+<a href="#h4-0-3" id="h4-0-3" class="d">-	result[0] = &quot;saj::*--type=number--numbertype=unsigned&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	result[1] = &quot;saj::*--type=symbol&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	result[1] = &quot;saj::*--type=revsymbol&quot;
+</a> 	return result
+ }
+ func (Op Saj) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</pre>
+</div>
+</body>
+</html>

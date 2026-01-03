@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>serializers - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e82f36028d584a76e8b1aaf157e21fd2e8932423.html">e82f36028d584a76e8b1aaf157e21fd2e8932423</a>
+<b>parent</b> <a href="../commit/9256b6e0b48a11525de61d6802886f1b49312d67.html">9256b6e0b48a11525de61d6802886f1b49312d67</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 26 Feb 2023 09:21:42 +0100
+
+serializers
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmserialize/bmserialize.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmserialize/bmserialize_test.go</a></td><td> | </td><td class="num">14</td><td><span class="i">+++</span><span class="d">-----------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">pkg/bmserialize/serializefile.go</a></td><td> | </td><td class="num">228</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmserialize/serializefiles.go</a></td><td> | </td><td class="num">380</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 393 insertions(+), 241 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmserialize/bmserialize.go.html">pkg/bmserialize/bmserialize.go</a> b/<a href="../file/pkg/bmserialize/bmserialize.go.html">pkg/bmserialize/bmserialize.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -61,6 +61,14 @@ func CreateBasicSerializer() *BmSerialize {
+</a> 		&quot;bits&quot;: func(i int) int {
+ 			return NeededBits(i)
+ 		},
+<a href="#h0-0-3" id="h0-0-3" class="i">+		&quot;intRange&quot;: func(start, end int) []int {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			n := end - start
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			result := make([]int, n)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			for i := 0; i &lt; n; i++ {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				result[i] = start + i
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+			}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			return result
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		},
+</a> 	}
+ 	result.funcMap = funcMap
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -76,9 +84,9 @@ func (s *BmSerialize) WriteHDL() (string, error) {
+</a> 	var source string
+ 
+ 	if s.Direction == &quot;serialize&quot; {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		source = &quot;serialize&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		source = serializer
+</a> 	} else if s.Direction == &quot;deserialize&quot; {
+<a href="#h0-1-6" id="h0-1-6" class="d">-		source = &quot;deserialize&quot;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		source = deserializer
+</a> 	} else {
+ 		return &quot;&quot;, errors.New(&quot;direction must be &#39;serialize&#39; or &#39;deserialize&#39;&quot;)
+ 	}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmserialize/bmserialize_test.go.html">pkg/bmserialize/bmserialize_test.go</a> b/<a href="../file/pkg/bmserialize/bmserialize_test.go.html">pkg/bmserialize/bmserialize_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,18 +8,10 @@ import (
+</a> func TestStack(t *testing.T) {
+ 	s := CreateBasicSerializer()
+ 	s.TerminalDataSize = 32
+<a href="#h1-0-3" id="h1-0-3" class="i">+	s.SerialDataSize = 32
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	s.Terminals = 2
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	s.Direction = &quot;serialize&quot;
+</a> 	s.Depth = 8
+<a href="#h1-0-7" id="h1-0-7" class="d">-	s.MemType = &quot;FIFO&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	s.Senders = []string{&quot;sender1&quot;, &quot;sender2&quot;}
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	s.Receivers = []string{&quot;receiver1&quot;}
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	s.Pushes = []Push{
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-		Push{&quot;sender1&quot;, 200, &quot;32&#39;d1&quot;},
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	}
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-	s.Pops = []Pop{
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-		Pop{&quot;receiver1&quot;, 60},
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-	}
+</a> 
+ 	f, err := os.Create(&quot;stack.v&quot;)
+ 	if err != nil {
+<b>diff --git a/<a id="h2" href="../file/pkg/bmserialize/serializefile.go.html">pkg/bmserialize/serializefile.go</a> b/<a href="../file/pkg/bmserialize/serializefile.go.html">pkg/bmserialize/serializefile.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,228 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-package bmserialize
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-const (
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-	serializer = `
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-module {{ .ModuleName }}(clk,
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-     reset,
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-`
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	deserializer = `
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-module {{ .ModuleName }}(clk,
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-        reset,
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-`
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-//     {{- if .Senders }}
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-//     {{- range .Senders }}
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-//     {{ . }}Data,
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-//     {{ . }}Write,
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-//     {{ . }}Ack,
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-//     {{- end }}
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-//     {{- end }}
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-//     {{- if .Receivers }}
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-//     {{- range .Receivers }}
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-//     {{ . }}Data,
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-//     {{ . }}Read,
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-//     {{ . }}Ack,
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-//     {{- end }}
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-//     {{- end }}
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-//     empty,
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-//     full
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-// );
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-//     input clk;
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-//     input reset;
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-//     output empty;
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-//     output full;
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-//     {{- if .Senders }}
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-//     {{- range .Senders }}
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-//     input [{{ dec $.DataSize }}:0] {{ . }}Data;
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-//     input {{ . }}Write;
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-//     output reg {{ . }}Ack;
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-//     {{- end }}
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-//     {{- end }}
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-//     {{- if .Receivers }}
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-//     {{- range .Receivers }}
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-//     output reg [{{ dec $.DataSize }}:0] {{ . }}Data;
+</a><a href="#h2-0-44" id="h2-0-44" class="d">-//     input {{ . }}Read;
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-//     output reg {{ . }}Ack;
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-//     {{- end }}
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-//     {{- end }}
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-//     reg [{{ dec $.DataSize }}:0] memory[{{ dec $.Depth }}:0];
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-//     reg [{{ dec (bits (inc $.Depth)) }}:0] sp;
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-//     {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h2-0-52" id="h2-0-52" class="d">-//     reg [{{ dec (bits (inc $.Depth)) }}:0] readsp;
+</a><a href="#h2-0-53" id="h2-0-53" class="d">-//     reg [{{ dec (bits (inc $.Depth)) }}:0] writesp;
+</a><a href="#h2-0-54" id="h2-0-54" class="d">-//     {{- end }}
+</a><a href="#h2-0-55" id="h2-0-55" class="d">-
+</a><a href="#h2-0-56" id="h2-0-56" class="d">-//     assign empty = (sp==0)? 1&#39;b1:1&#39;b0;
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-//     assign full = (sp=={{ $.Depth }})? 1&#39;b1:1&#39;b0;
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-
+</a><a href="#h2-0-59" id="h2-0-59" class="d">-//     wire readneed;
+</a><a href="#h2-0-60" id="h2-0-60" class="d">-//     wire writeneed;
+</a><a href="#h2-0-61" id="h2-0-61" class="d">-
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-//     assign writeneed = ( 1&#39;b0
+</a><a href="#h2-0-63" id="h2-0-63" class="d">-//     {{- if .Senders }}
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-//     {{- range .Senders }}
+</a><a href="#h2-0-65" id="h2-0-65" class="d">-//             | {{ . }}Write
+</a><a href="#h2-0-66" id="h2-0-66" class="d">-//     {{- end }}
+</a><a href="#h2-0-67" id="h2-0-67" class="d">-//     {{- end }} );
+</a><a href="#h2-0-68" id="h2-0-68" class="d">-
+</a><a href="#h2-0-69" id="h2-0-69" class="d">-//     assign readneed = ( 1&#39;b0
+</a><a href="#h2-0-70" id="h2-0-70" class="d">-//     {{- if .Receivers }}
+</a><a href="#h2-0-71" id="h2-0-71" class="d">-//     {{- range .Receivers }}
+</a><a href="#h2-0-72" id="h2-0-72" class="d">-//             | {{ . }}Read
+</a><a href="#h2-0-73" id="h2-0-73" class="d">-//     {{- end }}
+</a><a href="#h2-0-74" id="h2-0-74" class="d">-//     {{- end }} );
+</a><a href="#h2-0-75" id="h2-0-75" class="d">-
+</a><a href="#h2-0-76" id="h2-0-76" class="d">-//     reg [{{ dec ( bits (len .Senders) ) }}:0] sendSM;
+</a><a href="#h2-0-77" id="h2-0-77" class="d">-//     //{{- range $key, $value := .Senders }}
+</a><a href="#h2-0-78" id="h2-0-78" class="d">-//     //localparam sendSM{{ . }} = {{ bits (len $.Senders) }}&#39;d{{ $key }};
+</a><a href="#h2-0-79" id="h2-0-79" class="d">-//     //{{- end }}
+</a><a href="#h2-0-80" id="h2-0-80" class="d">-
+</a><a href="#h2-0-81" id="h2-0-81" class="d">-//     reg [{{ dec ( bits (len .Receivers) ) }}:0] recvSM;
+</a><a href="#h2-0-82" id="h2-0-82" class="d">-//     //{{- range $key, $value := .Receivers }}
+</a><a href="#h2-0-83" id="h2-0-83" class="d">-//     //localparam recvSM{{ . }} = {{ bits (len $.Receivers) }}&#39;d{{ $key }};
+</a><a href="#h2-0-84" id="h2-0-84" class="d">-//     //{{- end }}
+</a><a href="#h2-0-85" id="h2-0-85" class="d">-
+</a><a href="#h2-0-86" id="h2-0-86" class="d">-//     integer i;
+</a><a href="#h2-0-87" id="h2-0-87" class="d">-
+</a><a href="#h2-0-88" id="h2-0-88" class="d">-//     always @(posedge clk) begin
+</a><a href="#h2-0-89" id="h2-0-89" class="d">-//         if (reset) begin
+</a><a href="#h2-0-90" id="h2-0-90" class="d">-//             sp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h2-0-91" id="h2-0-91" class="d">-//             {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h2-0-92" id="h2-0-92" class="d">-//             readsp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h2-0-93" id="h2-0-93" class="d">-//             writesp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h2-0-94" id="h2-0-94" class="d">-//             {{- end }}
+</a><a href="#h2-0-95" id="h2-0-95" class="d">-//             {{- range $key, $value := .Receivers }}
+</a><a href="#h2-0-96" id="h2-0-96" class="d">-//             {{ $value }}Data &lt;= {{ $.DataSize}}&#39;d0;
+</a><a href="#h2-0-97" id="h2-0-97" class="d">-//             {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-98" id="h2-0-98" class="d">-//             {{- end }}
+</a><a href="#h2-0-99" id="h2-0-99" class="d">-//             {{- range $key, $value := .Senders }}
+</a><a href="#h2-0-100" id="h2-0-100" class="d">-//             {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-101" id="h2-0-101" class="d">-//             {{- end }}
+</a><a href="#h2-0-102" id="h2-0-102" class="d">-//             sendSM &lt;= {{bits (len .Receivers)}}&#39;d0;
+</a><a href="#h2-0-103" id="h2-0-103" class="d">-//             recvSM &lt;= {{bits (len .Receivers)}}&#39;d0;
+</a><a href="#h2-0-104" id="h2-0-104" class="d">-//             for (i=0;i&lt;{{ .Depth }};i=i+1) begin
+</a><a href="#h2-0-105" id="h2-0-105" class="d">-//                 memory[i]&lt;={{ $.DataSize}}&#39;d0;
+</a><a href="#h2-0-106" id="h2-0-106" class="d">-//             end
+</a><a href="#h2-0-107" id="h2-0-107" class="d">-//         end
+</a><a href="#h2-0-108" id="h2-0-108" class="d">-//         else begin
+</a><a href="#h2-0-109" id="h2-0-109" class="d">-//             // Read state machine part
+</a><a href="#h2-0-110" id="h2-0-110" class="d">-//             if (readneed &amp;&amp; !empty) begin
+</a><a href="#h2-0-111" id="h2-0-111" class="d">-//                 case (recvSM)
+</a><a href="#h2-0-112" id="h2-0-112" class="d">-//                 {{- range $key, $value := .Receivers }}
+</a><a href="#h2-0-113" id="h2-0-113" class="d">-//                 {{ bits (len $.Receivers) }}&#39;d{{ $key }}: begin
+</a><a href="#h2-0-114" id="h2-0-114" class="d">-//                     if ({{ $value }}Read &amp;&amp; !{{ $value }}Ack) begin
+</a><a href="#h2-0-115" id="h2-0-115" class="d">-//                         {{- if eq $.MemType &quot;LIFO&quot; }}
+</a><a href="#h2-0-116" id="h2-0-116" class="d">-//                         {{ $value }}Data[{{ dec $.DataSize }}:0] &lt;= memory[sp-1];
+</a><a href="#h2-0-117" id="h2-0-117" class="d">-//                         sp &lt;= sp - 1;
+</a><a href="#h2-0-118" id="h2-0-118" class="d">-//                         {{- end }}
+</a><a href="#h2-0-119" id="h2-0-119" class="d">-//                         {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h2-0-120" id="h2-0-120" class="d">-//                         {{ $value }}Data[{{ dec $.DataSize }}:0] &lt;= memory[readsp];
+</a><a href="#h2-0-121" id="h2-0-121" class="d">-//                         if (readsp=={{ dec $.Depth }}) begin
+</a><a href="#h2-0-122" id="h2-0-122" class="d">-//                             readsp &lt;= 0;
+</a><a href="#h2-0-123" id="h2-0-123" class="d">-//                             sp &lt;=  writesp;
+</a><a href="#h2-0-124" id="h2-0-124" class="d">-//                         end
+</a><a href="#h2-0-125" id="h2-0-125" class="d">-//                         else begin
+</a><a href="#h2-0-126" id="h2-0-126" class="d">-//                             readsp &lt;= readsp + 1;
+</a><a href="#h2-0-127" id="h2-0-127" class="d">-//                             if (writesp &lt; readsp + 1) begin
+</a><a href="#h2-0-128" id="h2-0-128" class="d">-//                                 sp &lt;= {{ $.Depth }} - readsp -1 + writesp;
+</a><a href="#h2-0-129" id="h2-0-129" class="d">-//                             end
+</a><a href="#h2-0-130" id="h2-0-130" class="d">-//                             else begin
+</a><a href="#h2-0-131" id="h2-0-131" class="d">-//                                 sp &lt;= writesp - readsp - 1;
+</a><a href="#h2-0-132" id="h2-0-132" class="d">-//                             end
+</a><a href="#h2-0-133" id="h2-0-133" class="d">-//                         end
+</a><a href="#h2-0-134" id="h2-0-134" class="d">-//                         {{- end }}
+</a><a href="#h2-0-135" id="h2-0-135" class="d">-//                     end
+</a><a href="#h2-0-136" id="h2-0-136" class="d">-//                     recvSM &lt;= {{ bits (len $.Receivers) }}&#39;d{{ next $key (len $.Receivers) }};
+</a><a href="#h2-0-137" id="h2-0-137" class="d">-//                 end
+</a><a href="#h2-0-138" id="h2-0-138" class="d">-//                 {{- end }}
+</a><a href="#h2-0-139" id="h2-0-139" class="d">-//                 endcase
+</a><a href="#h2-0-140" id="h2-0-140" class="d">-//             end
+</a><a href="#h2-0-141" id="h2-0-141" class="d">-//             // Write state machine part
+</a><a href="#h2-0-142" id="h2-0-142" class="d">-//             else if (writeneed &amp;&amp; !full) begin
+</a><a href="#h2-0-143" id="h2-0-143" class="d">-//                 case (sendSM)
+</a><a href="#h2-0-144" id="h2-0-144" class="d">-//                 {{- range $key, $value := .Senders }}
+</a><a href="#h2-0-145" id="h2-0-145" class="d">-//                 {{ bits (len $.Senders) }}&#39;d{{ $key }}: begin
+</a><a href="#h2-0-146" id="h2-0-146" class="d">-//                     if ({{ $value }}Write &amp;&amp; !{{ $value }}Ack) begin
+</a><a href="#h2-0-147" id="h2-0-147" class="d">-//                         {{- if eq $.MemType &quot;LIFO&quot; }}
+</a><a href="#h2-0-148" id="h2-0-148" class="d">-//                         memory[sp] &lt;= {{ $value }}Data[{{ dec $.DataSize }}:0];
+</a><a href="#h2-0-149" id="h2-0-149" class="d">-//                         sp &lt;= sp + 1;
+</a><a href="#h2-0-150" id="h2-0-150" class="d">-//                         {{- end }}
+</a><a href="#h2-0-151" id="h2-0-151" class="d">-//                         {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h2-0-152" id="h2-0-152" class="d">-//                         memory[writesp] &lt;= {{ $value }}Data[{{ dec $.DataSize }}:0];
+</a><a href="#h2-0-153" id="h2-0-153" class="d">-//                         if (writesp=={{ dec $.Depth }}) begin
+</a><a href="#h2-0-154" id="h2-0-154" class="d">-//                             writesp &lt;= 0;
+</a><a href="#h2-0-155" id="h2-0-155" class="d">-//                             sp &lt;= {{ $.Depth }} - readsp;
+</a><a href="#h2-0-156" id="h2-0-156" class="d">-//                         end
+</a><a href="#h2-0-157" id="h2-0-157" class="d">-//                         else begin
+</a><a href="#h2-0-158" id="h2-0-158" class="d">-//                             writesp &lt;= writesp + 1;
+</a><a href="#h2-0-159" id="h2-0-159" class="d">-//                             if (writesp + 1 &gt; readsp) begin
+</a><a href="#h2-0-160" id="h2-0-160" class="d">-//                                 sp &lt;= writesp - readsp + 1;
+</a><a href="#h2-0-161" id="h2-0-161" class="d">-//                             end
+</a><a href="#h2-0-162" id="h2-0-162" class="d">-//                             else begin
+</a><a href="#h2-0-163" id="h2-0-163" class="d">-//                                 sp &lt;= {{ $.Depth }} - readsp + writesp + 1;
+</a><a href="#h2-0-164" id="h2-0-164" class="d">-//                             end
+</a><a href="#h2-0-165" id="h2-0-165" class="d">-//                         end
+</a><a href="#h2-0-166" id="h2-0-166" class="d">-//                         {{- end }}
+</a><a href="#h2-0-167" id="h2-0-167" class="d">-//                     end
+</a><a href="#h2-0-168" id="h2-0-168" class="d">-//                     sendSM &lt;= {{ bits (len $.Senders) }}&#39;d{{ next $key (len $.Senders) }};
+</a><a href="#h2-0-169" id="h2-0-169" class="d">-//                 end
+</a><a href="#h2-0-170" id="h2-0-170" class="d">-//                 {{- end }}
+</a><a href="#h2-0-171" id="h2-0-171" class="d">-//                 endcase
+</a><a href="#h2-0-172" id="h2-0-172" class="d">-//             end
+</a><a href="#h2-0-173" id="h2-0-173" class="d">-
+</a><a href="#h2-0-174" id="h2-0-174" class="d">-//             // Read ack process
+</a><a href="#h2-0-175" id="h2-0-175" class="d">-//             {{- range $key, $value := .Receivers }}
+</a><a href="#h2-0-176" id="h2-0-176" class="d">-//             if ({{ $value }}Read &amp;&amp; !{{ $value }}Ack &amp;&amp; recvSM=={{ bits (len $.Senders) }}&#39;d{{ $key }} &amp;&amp; !empty) begin
+</a><a href="#h2-0-177" id="h2-0-177" class="d">-//                 {{ $value }}Ack &lt;= 1&#39;b1;
+</a><a href="#h2-0-178" id="h2-0-178" class="d">-//             end
+</a><a href="#h2-0-179" id="h2-0-179" class="d">-//             else begin
+</a><a href="#h2-0-180" id="h2-0-180" class="d">-//                 if (!{{ $value }}Read) begin
+</a><a href="#h2-0-181" id="h2-0-181" class="d">-//                     {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-182" id="h2-0-182" class="d">-//                 end
+</a><a href="#h2-0-183" id="h2-0-183" class="d">-//             end
+</a><a href="#h2-0-184" id="h2-0-184" class="d">-//             {{- end }}
+</a><a href="#h2-0-185" id="h2-0-185" class="d">-
+</a><a href="#h2-0-186" id="h2-0-186" class="d">-//             // Write ack process
+</a><a href="#h2-0-187" id="h2-0-187" class="d">-//             {{- range $key, $value := .Senders }}
+</a><a href="#h2-0-188" id="h2-0-188" class="d">-//             if ({{ $value }}Write &amp;&amp; !{{ $value }}Ack &amp;&amp; sendSM=={{ bits (len $.Receivers) }}&#39;d{{ $key }} &amp;&amp; !full) begin
+</a><a href="#h2-0-189" id="h2-0-189" class="d">-//                 {{ $value }}Ack &lt;= 1&#39;b1;
+</a><a href="#h2-0-190" id="h2-0-190" class="d">-//             end
+</a><a href="#h2-0-191" id="h2-0-191" class="d">-//             else begin
+</a><a href="#h2-0-192" id="h2-0-192" class="d">-//                 if (!{{ $value }}Write) begin
+</a><a href="#h2-0-193" id="h2-0-193" class="d">-//                     {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-194" id="h2-0-194" class="d">-//                 end
+</a><a href="#h2-0-195" id="h2-0-195" class="d">-//             end
+</a><a href="#h2-0-196" id="h2-0-196" class="d">-//             {{- end }}
+</a><a href="#h2-0-197" id="h2-0-197" class="d">-//         end
+</a><a href="#h2-0-198" id="h2-0-198" class="d">-//     end
+</a><a href="#h2-0-199" id="h2-0-199" class="d">-// endmodule
+</a><a href="#h2-0-200" id="h2-0-200" class="d">-// `
+</a><a href="#h2-0-201" id="h2-0-201" class="d">-
+</a><a href="#h2-0-202" id="h2-0-202" class="d">-// {{- $smindex:= 0 }}
+</a><a href="#h2-0-203" id="h2-0-203" class="d">-// {{- if .Inputs }}
+</a><a href="#h2-0-204" id="h2-0-204" class="d">-// {{- range .Inputs }}
+</a><a href="#h2-0-205" id="h2-0-205" class="d">-// assign {{ . }} = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h2-0-206" id="h2-0-206" class="d">-// {{- $smindex = inc $smindex }}
+</a><a href="#h2-0-207" id="h2-0-207" class="d">-// {{- end }}
+</a><a href="#h2-0-208" id="h2-0-208" class="d">-// {{- end }}
+</a><a href="#h2-0-209" id="h2-0-209" class="d">-// assign DVDR_PS2PL = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h2-0-210" id="h2-0-210" class="d">-// {{- $smindex = inc $smindex }}
+</a><a href="#h2-0-211" id="h2-0-211" class="d">-// assign states = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h2-0-212" id="h2-0-212" class="d">-// {{- $smindex = inc $smindex }}
+</a><a href="#h2-0-213" id="h2-0-213" class="d">-
+</a><a href="#h2-0-214" id="h2-0-214" class="d">-// always @( posedge S_AXI_ACLK )
+</a><a href="#h2-0-215" id="h2-0-215" class="d">-// begin
+</a><a href="#h2-0-216" id="h2-0-216" class="d">-// {{- if .Outputs }}
+</a><a href="#h2-0-217" id="h2-0-217" class="d">-// {{- range .Outputs }}
+</a><a href="#h2-0-218" id="h2-0-218" class="d">-//     slv_reg{{ $smindex }} &lt;= {{ . }}[31:0];
+</a><a href="#h2-0-219" id="h2-0-219" class="d">-//     {{- $smindex = inc $smindex }}
+</a><a href="#h2-0-220" id="h2-0-220" class="d">-// {{- end }}
+</a><a href="#h2-0-221" id="h2-0-221" class="d">-// {{- end }}
+</a><a href="#h2-0-222" id="h2-0-222" class="d">-//     slv_reg{{ $smindex }} &lt;= DVDR_PL2PS[31:0];
+</a><a href="#h2-0-223" id="h2-0-223" class="d">-// {{- $smindex = inc $smindex }}
+</a><a href="#h2-0-224" id="h2-0-224" class="d">-//     slv_reg{{ $smindex }} &lt;= changes[31:0];
+</a><a href="#h2-0-225" id="h2-0-225" class="d">-// end
+</a><a href="#h2-0-226" id="h2-0-226" class="d">-
+</a><a href="#h2-0-227" id="h2-0-227" class="d">-)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bmserialize/serializefiles.go.html">pkg/bmserialize/serializefiles.go</a> b/<a href="../file/pkg/bmserialize/serializefiles.go.html">pkg/bmserialize/serializefiles.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,380 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmserialize
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+const (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	serializer = `
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+module {{ .ModuleName }}(
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	input clk,
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	input reset,
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	{{- range $y := intRange 0 .Terminals }}
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	input [{{ dec $.TerminalDataSize }}:0] o{{ $y }},
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	input o{{ $y }}_valid,
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	output o{{ $y }}_recv,
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	{{- end }}
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	input ack,
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	output [{{ dec .SerialDataSize }}:0] data,
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	output reg ready,
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	);
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	reg [1:0] output_index;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	reg [1:0] SM;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+    
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+    reg [31:0] localdata;
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+    wire [1:0] valids;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+    reg [1:0] recvs;
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+    
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+    wire [31:0]outputs;
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+    
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+    localparam SMIDLE=2&#39;b00,
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+                SMRES=2&#39;b01,
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+                SMBM=2&#39;b10;
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+	always @( posedge clk) begin
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	   if (reset) begin
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	       output_index &lt;= 2&#39;b00;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	       recvs[1:0] &lt;= 2&#39;b00;
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	   end 
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	   else begin
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	       case (SM)
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	       SMIDLE: begin
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+	               if (valids[output_index]) begin
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+	                   localdata[31:0] &lt;= outputs[31:0];
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	                   SM&lt;=SMRES;
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	               end
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+	               else begin
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+	               end
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	           end
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+	       SMRES: begin
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	           if (ack) begin
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+	               SM&lt;=SMBM;
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+	           end   
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+	       end
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+	       SMBM: begin
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+	           if (!valids[output_index]) begin
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+	               if (output_index + 1 == 2&#39;d1) begin
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+	                   output_index &lt;= 0;
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+	               end
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+	               else begin
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+	                   output_index &lt;= output_index + 1;
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+	               end
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+	               recvs[output_index] &lt;= 1&#39;b0;
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+	               SM&lt;=SMIDLE;           
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+	           end
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+	           else
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+	           begin
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+	               recvs[output_index] &lt;= 1&#39;b1;
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+	           end
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+	       end
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+	       endcase
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+	   end
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+	end
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+	
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+	assign data[31:0] = localdata[31:0];
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+	assign outputs={o0[31:0]};
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+	assign o0_recv=recvs[0];
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+	assign valids[0] = o0_valid;	
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+	
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+endmodule 
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+`
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+	deserializer = `
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+module {{ .ModuleName }}(
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+	   input clk,
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+	   input reset,
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+	   input impulse,
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+	   input [31:0] data,
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+	   output reg ready,
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+	   
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+	   output wire [31:0] i0,
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+	   output i0_valid,
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+	   input i0_recv,
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+	   
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+	   output wire [31:0] i1,
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+	   output i1_valid,
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+	   input i1_recv,
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+	   
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+	   output wire [31:0] i2,
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+	   output i2_valid,
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+	   input i2_recv,
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+	   
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+	   output wire [31:0] i3,
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+	   output i3_valid,
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+	   input i3_recv	   	   
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+	);
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+	
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+	reg [2:0] input_index;
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+    reg [0:0] SM;
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+    
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+    reg [31:0] localdata;
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+    reg [3:0] valids;
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+    wire [3:0] recvs;
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+    
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+    localparam SMIDLE=1&#39;b0,
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+                SMBM=1&#39;b1;
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+	
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+	always @( posedge clk) begin
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+	   if (reset) begin
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+	       input_index &lt;= 3&#39;b000;
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+	       localdata[31:0] &lt;= 32&#39;b0;
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+	       valids[3:0] &lt;= 4&#39;b0000;
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+	   end 
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+	   else begin
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+	       case (SM)
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+	       SMIDLE: begin
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+	               if (impulse) begin
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+	                   localdata[31:0] &lt;= data[31:0];
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+	                   SM&lt;=SMBM;
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+	               end
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+	               else begin
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+	               end
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+	           end
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+	       SMBM: begin
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+	           if (recvs[input_index] == 1&#39;b0) begin
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+	               valids[input_index] &lt;= 1&#39;b1;
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+	           end
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+	           else begin
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+	               valids[input_index] &lt;= 1&#39;b0;
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+	               if (input_index + 1 == 4&#39;d4) begin
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+	                   input_index &lt;= 0;
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+	               end
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+	               else begin
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+	                   input_index &lt;= input_index + 1;
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+	               end
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+	               SM&lt;=SMIDLE;
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+	               ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+	           end
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+	       end
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+	       endcase
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+	   end
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+	end
+</a><a href="#h3-0-163" id="h3-0-163" class="i">+	
+</a><a href="#h3-0-164" id="h3-0-164" class="i">+	assign i0[31:0] = localdata[31:0];
+</a><a href="#h3-0-165" id="h3-0-165" class="i">+	assign i1[31:0] = localdata[31:0];
+</a><a href="#h3-0-166" id="h3-0-166" class="i">+	assign i2[31:0] = localdata[31:0];
+</a><a href="#h3-0-167" id="h3-0-167" class="i">+	assign i3[31:0] = localdata[31:0];
+</a><a href="#h3-0-168" id="h3-0-168" class="i">+	
+</a><a href="#h3-0-169" id="h3-0-169" class="i">+	assign i0_valid=valids[0];
+</a><a href="#h3-0-170" id="h3-0-170" class="i">+	assign i1_valid=valids[1];
+</a><a href="#h3-0-171" id="h3-0-171" class="i">+	assign i2_valid=valids[2];
+</a><a href="#h3-0-172" id="h3-0-172" class="i">+	assign i3_valid=valids[3];
+</a><a href="#h3-0-173" id="h3-0-173" class="i">+	
+</a><a href="#h3-0-174" id="h3-0-174" class="i">+	assign recvs[3:0] = {i3_recv, i2_recv, i1_recv, i0_recv};
+</a><a href="#h3-0-175" id="h3-0-175" class="i">+	
+</a><a href="#h3-0-176" id="h3-0-176" class="i">+	endmodule
+</a><a href="#h3-0-177" id="h3-0-177" class="i">+`
+</a><a href="#h3-0-178" id="h3-0-178" class="i">+
+</a><a href="#h3-0-179" id="h3-0-179" class="i">+//     empty,
+</a><a href="#h3-0-180" id="h3-0-180" class="i">+//     full
+</a><a href="#h3-0-181" id="h3-0-181" class="i">+// );
+</a><a href="#h3-0-182" id="h3-0-182" class="i">+//     input clk;
+</a><a href="#h3-0-183" id="h3-0-183" class="i">+//     input reset;
+</a><a href="#h3-0-184" id="h3-0-184" class="i">+//     output empty;
+</a><a href="#h3-0-185" id="h3-0-185" class="i">+//     output full;
+</a><a href="#h3-0-186" id="h3-0-186" class="i">+//     {{- if .Senders }}
+</a><a href="#h3-0-187" id="h3-0-187" class="i">+//     {{- range .Senders }}
+</a><a href="#h3-0-188" id="h3-0-188" class="i">+//     input [{{ dec $.DataSize }}:0] {{ . }}Data;
+</a><a href="#h3-0-189" id="h3-0-189" class="i">+//     input {{ . }}Write;
+</a><a href="#h3-0-190" id="h3-0-190" class="i">+//     output reg {{ . }}Ack;
+</a><a href="#h3-0-191" id="h3-0-191" class="i">+//     {{- end }}
+</a><a href="#h3-0-192" id="h3-0-192" class="i">+//     {{- end }}
+</a><a href="#h3-0-193" id="h3-0-193" class="i">+//     {{- if .Receivers }}
+</a><a href="#h3-0-194" id="h3-0-194" class="i">+//     {{- range .Receivers }}
+</a><a href="#h3-0-195" id="h3-0-195" class="i">+//     output reg [{{ dec $.DataSize }}:0] {{ . }}Data;
+</a><a href="#h3-0-196" id="h3-0-196" class="i">+//     input {{ . }}Read;
+</a><a href="#h3-0-197" id="h3-0-197" class="i">+//     output reg {{ . }}Ack;
+</a><a href="#h3-0-198" id="h3-0-198" class="i">+//     {{- end }}
+</a><a href="#h3-0-199" id="h3-0-199" class="i">+//     {{- end }}
+</a><a href="#h3-0-200" id="h3-0-200" class="i">+
+</a><a href="#h3-0-201" id="h3-0-201" class="i">+//     reg [{{ dec $.DataSize }}:0] memory[{{ dec $.Depth }}:0];
+</a><a href="#h3-0-202" id="h3-0-202" class="i">+//     reg [{{ dec (bits (inc $.Depth)) }}:0] sp;
+</a><a href="#h3-0-203" id="h3-0-203" class="i">+//     {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h3-0-204" id="h3-0-204" class="i">+//     reg [{{ dec (bits (inc $.Depth)) }}:0] readsp;
+</a><a href="#h3-0-205" id="h3-0-205" class="i">+//     reg [{{ dec (bits (inc $.Depth)) }}:0] writesp;
+</a><a href="#h3-0-206" id="h3-0-206" class="i">+//     {{- end }}
+</a><a href="#h3-0-207" id="h3-0-207" class="i">+
+</a><a href="#h3-0-208" id="h3-0-208" class="i">+//     assign empty = (sp==0)? 1&#39;b1:1&#39;b0;
+</a><a href="#h3-0-209" id="h3-0-209" class="i">+//     assign full = (sp=={{ $.Depth }})? 1&#39;b1:1&#39;b0;
+</a><a href="#h3-0-210" id="h3-0-210" class="i">+
+</a><a href="#h3-0-211" id="h3-0-211" class="i">+//     wire readneed;
+</a><a href="#h3-0-212" id="h3-0-212" class="i">+//     wire writeneed;
+</a><a href="#h3-0-213" id="h3-0-213" class="i">+
+</a><a href="#h3-0-214" id="h3-0-214" class="i">+//     assign writeneed = ( 1&#39;b0
+</a><a href="#h3-0-215" id="h3-0-215" class="i">+//     {{- if .Senders }}
+</a><a href="#h3-0-216" id="h3-0-216" class="i">+//     {{- range .Senders }}
+</a><a href="#h3-0-217" id="h3-0-217" class="i">+//             | {{ . }}Write
+</a><a href="#h3-0-218" id="h3-0-218" class="i">+//     {{- end }}
+</a><a href="#h3-0-219" id="h3-0-219" class="i">+//     {{- end }} );
+</a><a href="#h3-0-220" id="h3-0-220" class="i">+
+</a><a href="#h3-0-221" id="h3-0-221" class="i">+//     assign readneed = ( 1&#39;b0
+</a><a href="#h3-0-222" id="h3-0-222" class="i">+//     {{- if .Receivers }}
+</a><a href="#h3-0-223" id="h3-0-223" class="i">+//     {{- range .Receivers }}
+</a><a href="#h3-0-224" id="h3-0-224" class="i">+//             | {{ . }}Read
+</a><a href="#h3-0-225" id="h3-0-225" class="i">+//     {{- end }}
+</a><a href="#h3-0-226" id="h3-0-226" class="i">+//     {{- end }} );
+</a><a href="#h3-0-227" id="h3-0-227" class="i">+
+</a><a href="#h3-0-228" id="h3-0-228" class="i">+//     reg [{{ dec ( bits (len .Senders) ) }}:0] sendSM;
+</a><a href="#h3-0-229" id="h3-0-229" class="i">+//     //{{- range $key, $value := .Senders }}
+</a><a href="#h3-0-230" id="h3-0-230" class="i">+//     //localparam sendSM{{ . }} = {{ bits (len $.Senders) }}&#39;d{{ $key }};
+</a><a href="#h3-0-231" id="h3-0-231" class="i">+//     //{{- end }}
+</a><a href="#h3-0-232" id="h3-0-232" class="i">+
+</a><a href="#h3-0-233" id="h3-0-233" class="i">+//     reg [{{ dec ( bits (len .Receivers) ) }}:0] recvSM;
+</a><a href="#h3-0-234" id="h3-0-234" class="i">+//     //{{- range $key, $value := .Receivers }}
+</a><a href="#h3-0-235" id="h3-0-235" class="i">+//     //localparam recvSM{{ . }} = {{ bits (len $.Receivers) }}&#39;d{{ $key }};
+</a><a href="#h3-0-236" id="h3-0-236" class="i">+//     //{{- end }}
+</a><a href="#h3-0-237" id="h3-0-237" class="i">+
+</a><a href="#h3-0-238" id="h3-0-238" class="i">+//     integer i;
+</a><a href="#h3-0-239" id="h3-0-239" class="i">+
+</a><a href="#h3-0-240" id="h3-0-240" class="i">+//     always @(posedge clk) begin
+</a><a href="#h3-0-241" id="h3-0-241" class="i">+//         if (reset) begin
+</a><a href="#h3-0-242" id="h3-0-242" class="i">+//             sp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h3-0-243" id="h3-0-243" class="i">+//             {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h3-0-244" id="h3-0-244" class="i">+//             readsp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h3-0-245" id="h3-0-245" class="i">+//             writesp &lt;= {{ bits (inc $.Depth) }}&#39;d0;
+</a><a href="#h3-0-246" id="h3-0-246" class="i">+//             {{- end }}
+</a><a href="#h3-0-247" id="h3-0-247" class="i">+//             {{- range $key, $value := .Receivers }}
+</a><a href="#h3-0-248" id="h3-0-248" class="i">+//             {{ $value }}Data &lt;= {{ $.DataSize}}&#39;d0;
+</a><a href="#h3-0-249" id="h3-0-249" class="i">+//             {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-250" id="h3-0-250" class="i">+//             {{- end }}
+</a><a href="#h3-0-251" id="h3-0-251" class="i">+//             {{- range $key, $value := .Senders }}
+</a><a href="#h3-0-252" id="h3-0-252" class="i">+//             {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-253" id="h3-0-253" class="i">+//             {{- end }}
+</a><a href="#h3-0-254" id="h3-0-254" class="i">+//             sendSM &lt;= {{bits (len .Receivers)}}&#39;d0;
+</a><a href="#h3-0-255" id="h3-0-255" class="i">+//             recvSM &lt;= {{bits (len .Receivers)}}&#39;d0;
+</a><a href="#h3-0-256" id="h3-0-256" class="i">+//             for (i=0;i&lt;{{ .Depth }};i=i+1) begin
+</a><a href="#h3-0-257" id="h3-0-257" class="i">+//                 memory[i]&lt;={{ $.DataSize}}&#39;d0;
+</a><a href="#h3-0-258" id="h3-0-258" class="i">+//             end
+</a><a href="#h3-0-259" id="h3-0-259" class="i">+//         end
+</a><a href="#h3-0-260" id="h3-0-260" class="i">+//         else begin
+</a><a href="#h3-0-261" id="h3-0-261" class="i">+//             // Read state machine part
+</a><a href="#h3-0-262" id="h3-0-262" class="i">+//             if (readneed &amp;&amp; !empty) begin
+</a><a href="#h3-0-263" id="h3-0-263" class="i">+//                 case (recvSM)
+</a><a href="#h3-0-264" id="h3-0-264" class="i">+//                 {{- range $key, $value := .Receivers }}
+</a><a href="#h3-0-265" id="h3-0-265" class="i">+//                 {{ bits (len $.Receivers) }}&#39;d{{ $key }}: begin
+</a><a href="#h3-0-266" id="h3-0-266" class="i">+//                     if ({{ $value }}Read &amp;&amp; !{{ $value }}Ack) begin
+</a><a href="#h3-0-267" id="h3-0-267" class="i">+//                         {{- if eq $.MemType &quot;LIFO&quot; }}
+</a><a href="#h3-0-268" id="h3-0-268" class="i">+//                         {{ $value }}Data[{{ dec $.DataSize }}:0] &lt;= memory[sp-1];
+</a><a href="#h3-0-269" id="h3-0-269" class="i">+//                         sp &lt;= sp - 1;
+</a><a href="#h3-0-270" id="h3-0-270" class="i">+//                         {{- end }}
+</a><a href="#h3-0-271" id="h3-0-271" class="i">+//                         {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h3-0-272" id="h3-0-272" class="i">+//                         {{ $value }}Data[{{ dec $.DataSize }}:0] &lt;= memory[readsp];
+</a><a href="#h3-0-273" id="h3-0-273" class="i">+//                         if (readsp=={{ dec $.Depth }}) begin
+</a><a href="#h3-0-274" id="h3-0-274" class="i">+//                             readsp &lt;= 0;
+</a><a href="#h3-0-275" id="h3-0-275" class="i">+//                             sp &lt;=  writesp;
+</a><a href="#h3-0-276" id="h3-0-276" class="i">+//                         end
+</a><a href="#h3-0-277" id="h3-0-277" class="i">+//                         else begin
+</a><a href="#h3-0-278" id="h3-0-278" class="i">+//                             readsp &lt;= readsp + 1;
+</a><a href="#h3-0-279" id="h3-0-279" class="i">+//                             if (writesp &lt; readsp + 1) begin
+</a><a href="#h3-0-280" id="h3-0-280" class="i">+//                                 sp &lt;= {{ $.Depth }} - readsp -1 + writesp;
+</a><a href="#h3-0-281" id="h3-0-281" class="i">+//                             end
+</a><a href="#h3-0-282" id="h3-0-282" class="i">+//                             else begin
+</a><a href="#h3-0-283" id="h3-0-283" class="i">+//                                 sp &lt;= writesp - readsp - 1;
+</a><a href="#h3-0-284" id="h3-0-284" class="i">+//                             end
+</a><a href="#h3-0-285" id="h3-0-285" class="i">+//                         end
+</a><a href="#h3-0-286" id="h3-0-286" class="i">+//                         {{- end }}
+</a><a href="#h3-0-287" id="h3-0-287" class="i">+//                     end
+</a><a href="#h3-0-288" id="h3-0-288" class="i">+//                     recvSM &lt;= {{ bits (len $.Receivers) }}&#39;d{{ next $key (len $.Receivers) }};
+</a><a href="#h3-0-289" id="h3-0-289" class="i">+//                 end
+</a><a href="#h3-0-290" id="h3-0-290" class="i">+//                 {{- end }}
+</a><a href="#h3-0-291" id="h3-0-291" class="i">+//                 endcase
+</a><a href="#h3-0-292" id="h3-0-292" class="i">+//             end
+</a><a href="#h3-0-293" id="h3-0-293" class="i">+//             // Write state machine part
+</a><a href="#h3-0-294" id="h3-0-294" class="i">+//             else if (writeneed &amp;&amp; !full) begin
+</a><a href="#h3-0-295" id="h3-0-295" class="i">+//                 case (sendSM)
+</a><a href="#h3-0-296" id="h3-0-296" class="i">+//                 {{- range $key, $value := .Senders }}
+</a><a href="#h3-0-297" id="h3-0-297" class="i">+//                 {{ bits (len $.Senders) }}&#39;d{{ $key }}: begin
+</a><a href="#h3-0-298" id="h3-0-298" class="i">+//                     if ({{ $value }}Write &amp;&amp; !{{ $value }}Ack) begin
+</a><a href="#h3-0-299" id="h3-0-299" class="i">+//                         {{- if eq $.MemType &quot;LIFO&quot; }}
+</a><a href="#h3-0-300" id="h3-0-300" class="i">+//                         memory[sp] &lt;= {{ $value }}Data[{{ dec $.DataSize }}:0];
+</a><a href="#h3-0-301" id="h3-0-301" class="i">+//                         sp &lt;= sp + 1;
+</a><a href="#h3-0-302" id="h3-0-302" class="i">+//                         {{- end }}
+</a><a href="#h3-0-303" id="h3-0-303" class="i">+//                         {{- if eq $.MemType &quot;FIFO&quot; }}
+</a><a href="#h3-0-304" id="h3-0-304" class="i">+//                         memory[writesp] &lt;= {{ $value }}Data[{{ dec $.DataSize }}:0];
+</a><a href="#h3-0-305" id="h3-0-305" class="i">+//                         if (writesp=={{ dec $.Depth }}) begin
+</a><a href="#h3-0-306" id="h3-0-306" class="i">+//                             writesp &lt;= 0;
+</a><a href="#h3-0-307" id="h3-0-307" class="i">+//                             sp &lt;= {{ $.Depth }} - readsp;
+</a><a href="#h3-0-308" id="h3-0-308" class="i">+//                         end
+</a><a href="#h3-0-309" id="h3-0-309" class="i">+//                         else begin
+</a><a href="#h3-0-310" id="h3-0-310" class="i">+//                             writesp &lt;= writesp + 1;
+</a><a href="#h3-0-311" id="h3-0-311" class="i">+//                             if (writesp + 1 &gt; readsp) begin
+</a><a href="#h3-0-312" id="h3-0-312" class="i">+//                                 sp &lt;= writesp - readsp + 1;
+</a><a href="#h3-0-313" id="h3-0-313" class="i">+//                             end
+</a><a href="#h3-0-314" id="h3-0-314" class="i">+//                             else begin
+</a><a href="#h3-0-315" id="h3-0-315" class="i">+//                                 sp &lt;= {{ $.Depth }} - readsp + writesp + 1;
+</a><a href="#h3-0-316" id="h3-0-316" class="i">+//                             end
+</a><a href="#h3-0-317" id="h3-0-317" class="i">+//                         end
+</a><a href="#h3-0-318" id="h3-0-318" class="i">+//                         {{- end }}
+</a><a href="#h3-0-319" id="h3-0-319" class="i">+//                     end
+</a><a href="#h3-0-320" id="h3-0-320" class="i">+//                     sendSM &lt;= {{ bits (len $.Senders) }}&#39;d{{ next $key (len $.Senders) }};
+</a><a href="#h3-0-321" id="h3-0-321" class="i">+//                 end
+</a><a href="#h3-0-322" id="h3-0-322" class="i">+//                 {{- end }}
+</a><a href="#h3-0-323" id="h3-0-323" class="i">+//                 endcase
+</a><a href="#h3-0-324" id="h3-0-324" class="i">+//             end
+</a><a href="#h3-0-325" id="h3-0-325" class="i">+
+</a><a href="#h3-0-326" id="h3-0-326" class="i">+//             // Read ack process
+</a><a href="#h3-0-327" id="h3-0-327" class="i">+//             {{- range $key, $value := .Receivers }}
+</a><a href="#h3-0-328" id="h3-0-328" class="i">+//             if ({{ $value }}Read &amp;&amp; !{{ $value }}Ack &amp;&amp; recvSM=={{ bits (len $.Senders) }}&#39;d{{ $key }} &amp;&amp; !empty) begin
+</a><a href="#h3-0-329" id="h3-0-329" class="i">+//                 {{ $value }}Ack &lt;= 1&#39;b1;
+</a><a href="#h3-0-330" id="h3-0-330" class="i">+//             end
+</a><a href="#h3-0-331" id="h3-0-331" class="i">+//             else begin
+</a><a href="#h3-0-332" id="h3-0-332" class="i">+//                 if (!{{ $value }}Read) begin
+</a><a href="#h3-0-333" id="h3-0-333" class="i">+//                     {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-334" id="h3-0-334" class="i">+//                 end
+</a><a href="#h3-0-335" id="h3-0-335" class="i">+//             end
+</a><a href="#h3-0-336" id="h3-0-336" class="i">+//             {{- end }}
+</a><a href="#h3-0-337" id="h3-0-337" class="i">+
+</a><a href="#h3-0-338" id="h3-0-338" class="i">+//             // Write ack process
+</a><a href="#h3-0-339" id="h3-0-339" class="i">+//             {{- range $key, $value := .Senders }}
+</a><a href="#h3-0-340" id="h3-0-340" class="i">+//             if ({{ $value }}Write &amp;&amp; !{{ $value }}Ack &amp;&amp; sendSM=={{ bits (len $.Receivers) }}&#39;d{{ $key }} &amp;&amp; !full) begin
+</a><a href="#h3-0-341" id="h3-0-341" class="i">+//                 {{ $value }}Ack &lt;= 1&#39;b1;
+</a><a href="#h3-0-342" id="h3-0-342" class="i">+//             end
+</a><a href="#h3-0-343" id="h3-0-343" class="i">+//             else begin
+</a><a href="#h3-0-344" id="h3-0-344" class="i">+//                 if (!{{ $value }}Write) begin
+</a><a href="#h3-0-345" id="h3-0-345" class="i">+//                     {{ $value }}Ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-346" id="h3-0-346" class="i">+//                 end
+</a><a href="#h3-0-347" id="h3-0-347" class="i">+//             end
+</a><a href="#h3-0-348" id="h3-0-348" class="i">+//             {{- end }}
+</a><a href="#h3-0-349" id="h3-0-349" class="i">+//         end
+</a><a href="#h3-0-350" id="h3-0-350" class="i">+//     end
+</a><a href="#h3-0-351" id="h3-0-351" class="i">+// endmodule
+</a><a href="#h3-0-352" id="h3-0-352" class="i">+// `
+</a><a href="#h3-0-353" id="h3-0-353" class="i">+
+</a><a href="#h3-0-354" id="h3-0-354" class="i">+// {{- $smindex:= 0 }}
+</a><a href="#h3-0-355" id="h3-0-355" class="i">+// {{- if .Inputs }}
+</a><a href="#h3-0-356" id="h3-0-356" class="i">+// {{- range .Inputs }}
+</a><a href="#h3-0-357" id="h3-0-357" class="i">+// assign {{ . }} = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h3-0-358" id="h3-0-358" class="i">+// {{- $smindex = inc $smindex }}
+</a><a href="#h3-0-359" id="h3-0-359" class="i">+// {{- end }}
+</a><a href="#h3-0-360" id="h3-0-360" class="i">+// {{- end }}
+</a><a href="#h3-0-361" id="h3-0-361" class="i">+// assign DVDR_PS2PL = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h3-0-362" id="h3-0-362" class="i">+// {{- $smindex = inc $smindex }}
+</a><a href="#h3-0-363" id="h3-0-363" class="i">+// assign states = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h3-0-364" id="h3-0-364" class="i">+// {{- $smindex = inc $smindex }}
+</a><a href="#h3-0-365" id="h3-0-365" class="i">+
+</a><a href="#h3-0-366" id="h3-0-366" class="i">+// always @( posedge S_AXI_ACLK )
+</a><a href="#h3-0-367" id="h3-0-367" class="i">+// begin
+</a><a href="#h3-0-368" id="h3-0-368" class="i">+// {{- if .Outputs }}
+</a><a href="#h3-0-369" id="h3-0-369" class="i">+// {{- range .Outputs }}
+</a><a href="#h3-0-370" id="h3-0-370" class="i">+//     slv_reg{{ $smindex }} &lt;= {{ . }}[31:0];
+</a><a href="#h3-0-371" id="h3-0-371" class="i">+//     {{- $smindex = inc $smindex }}
+</a><a href="#h3-0-372" id="h3-0-372" class="i">+// {{- end }}
+</a><a href="#h3-0-373" id="h3-0-373" class="i">+// {{- end }}
+</a><a href="#h3-0-374" id="h3-0-374" class="i">+//     slv_reg{{ $smindex }} &lt;= DVDR_PL2PS[31:0];
+</a><a href="#h3-0-375" id="h3-0-375" class="i">+// {{- $smindex = inc $smindex }}
+</a><a href="#h3-0-376" id="h3-0-376" class="i">+//     slv_reg{{ $smindex }} &lt;= changes[31:0];
+</a><a href="#h3-0-377" id="h3-0-377" class="i">+// end
+</a><a href="#h3-0-378" id="h3-0-378" class="i">+
+</a><a href="#h3-0-379" id="h3-0-379" class="i">+)
+</a></pre>
+</div>
+</body>
+</html>

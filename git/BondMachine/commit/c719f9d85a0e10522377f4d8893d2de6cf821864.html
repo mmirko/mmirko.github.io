@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Export - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c719f9d85a0e10522377f4d8893d2de6cf821864.html">c719f9d85a0e10522377f4d8893d2de6cf821864</a>
+<b>parent</b> <a href="../commit/6b9e9d7cf720919ff3cc66e052fe9ebd138ac317.html">6b9e9d7cf720919ff3cc66e052fe9ebd138ac317</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 12 Dec 2022 14:35:50 +0100
+
+Export
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">bmnumbers/dyntype_flopoco.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">bmnumbers/export.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">bmnumbers/type_bin.go</a></td><td> | </td><td class="num">58</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">bmnumbers/type_float32.go</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">bmnumbers/type_hex.go</a></td><td> | </td><td class="num">64</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">bmnumbers/type_unsigned.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">34</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>8 files changed, 209 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a> b/<a href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,7 @@
+</a> package bmnumbers
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 	&quot;regexp&quot;
+ )
+<a href="#h0-1" id="h0-1" class="h">@@ -10,8 +11,10 @@ type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+</a> type BMNumberType interface {
+ 	getName() string
+ 	getInfo() string
+<a href="#h0-1-3" id="h0-1-3" class="i">+	getSize() int
+</a> 	importMatchers() map[string]ImportFunc
+ 	Convert(*BMNumber) error
+<a href="#h0-1-6" id="h0-1-6" class="i">+	ExportString(*BMNumber) (string, error)
+</a> }
+ 
+ // BMNumber is a binary representation of a number as a slice of bytes
+<a href="#h0-2" id="h0-2" class="h">@@ -60,3 +63,16 @@ func GetType(name string) BMNumberType {
+</a> 	}
+ 	return nil
+ }
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+func OverrideType(n *BMNumber, t BMNumberType) error {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	if n == nil || n.number == nil {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		return errors.New(&quot;Cannot override type of nil number&quot;)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	if t.getSize() != -1 &amp;&amp; t.getSize() != n.bits {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		return errors.New(&quot;Cannot override number of type &quot; + n.nType.getName() + &quot; with type &quot; + t.getName() + &quot; because they have different sizes&quot;)
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+	n.nType = t
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	return nil
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/bmnumbers/dyntype_flopoco.go.html">bmnumbers/dyntype_flopoco.go</a> b/<a href="../file/bmnumbers/dyntype_flopoco.go.html">bmnumbers/dyntype_flopoco.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -23,6 +23,10 @@ func (d FloPoCo) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+func (d FloPoCo) getSize() int {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	return d.e + d.f + 3
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> func (d FloPoCo) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -103,3 +107,7 @@ func floPoCoImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 
+ 	return nil, nil
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+func (d FloPoCo) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	return &quot;&quot;, errors.New(&quot;export not implemented&quot;)
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a> b/<a href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,6 +5,14 @@ import (
+</a> 	&quot;strconv&quot;
+ )
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+func (n *BMNumber) ExportString() (string, error) {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	if n == nil || n.number == nil {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	}
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	return n.nType.ExportString(n)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a> func (n *BMNumber) ExportUint64() (uint64, error) {
+ 	if n == nil || n.number == nil || len(n.number) &gt; 8 {
+ 		return 0, errors.New(&quot;number cannot be exported as uint64&quot;)
+<b>diff --git a/<a id="h3" href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a> b/<a href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -16,11 +16,15 @@ func (d Bin) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+func (d Bin) getSize() int {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	return -1 // Any size
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+}
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a> func (d Bin) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+ 	result[&quot;^0b(?P&lt;bin&gt;[0-1]+)$&quot;] = binImportNoSize
+<a href="#h3-0-11" id="h3-0-11" class="d">-	// result[&quot;^0b&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;bin&gt;[0-1]+)$&quot;] = binImportWithSize
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	result[&quot;^0b&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;bin&gt;[0-1]+)$&quot;] = binImportWithSize
+</a> 
+ 	return result
+ }
+<a href="#h3-1" id="h3-1" class="h">@@ -64,3 +68,55 @@ func binImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 	}
+ 	return &amp;newNumber, nil
+ }
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+func binImportWithSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	binNum := re.ReplaceAllString(input, &quot;${bin}&quot;)
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	binSizeS := re.ReplaceAllString(input, &quot;${bits}&quot;)
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	var binSize int
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+	if val, err := strconv.Atoi(binSizeS); err != nil {
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+		return nil, errors.New(&quot;invalid hex number, wrong bits value&quot; + input)
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+	} else {
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+		binSize = val
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+	}
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+	if len(binNum) &gt; binSize {
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+		return nil, errors.New(&quot;invalid binary number, the specified number if greater than the bits size &quot; + input)
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+	}
+</a><a href="#h3-1-19" id="h3-1-19" class="i">+
+</a><a href="#h3-1-20" id="h3-1-20" class="i">+	var nextByte string
+</a><a href="#h3-1-21" id="h3-1-21" class="i">+	newNumber := BMNumber{}
+</a><a href="#h3-1-22" id="h3-1-22" class="i">+	newNumber.number = make([]byte, (binSize-1)/8+1)
+</a><a href="#h3-1-23" id="h3-1-23" class="i">+	newNumber.bits = binSize
+</a><a href="#h3-1-24" id="h3-1-24" class="i">+	newNumber.nType = Bin{}
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+	for i := 0; ; i++ {
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+		if len(binNum) &gt; 8 {
+</a><a href="#h3-1-29" id="h3-1-29" class="i">+			nextByte = binNum[len(binNum)-8:]
+</a><a href="#h3-1-30" id="h3-1-30" class="i">+			binNum = binNum[:len(binNum)-8]
+</a><a href="#h3-1-31" id="h3-1-31" class="i">+		} else if len(binNum) &gt; 0 {
+</a><a href="#h3-1-32" id="h3-1-32" class="i">+			nextByte = binNum
+</a><a href="#h3-1-33" id="h3-1-33" class="i">+			binNum = &quot;&quot;
+</a><a href="#h3-1-34" id="h3-1-34" class="i">+		} else {
+</a><a href="#h3-1-35" id="h3-1-35" class="i">+			if i*8 &lt; binSize {
+</a><a href="#h3-1-36" id="h3-1-36" class="i">+				nextByte = &quot;00000000&quot;
+</a><a href="#h3-1-37" id="h3-1-37" class="i">+			} else {
+</a><a href="#h3-1-38" id="h3-1-38" class="i">+				break
+</a><a href="#h3-1-39" id="h3-1-39" class="i">+			}
+</a><a href="#h3-1-40" id="h3-1-40" class="i">+		}
+</a><a href="#h3-1-41" id="h3-1-41" class="i">+
+</a><a href="#h3-1-42" id="h3-1-42" class="i">+		if val, err := strconv.ParseUint(nextByte, 2, 8); err == nil {
+</a><a href="#h3-1-43" id="h3-1-43" class="i">+			decoded := byte(val)
+</a><a href="#h3-1-44" id="h3-1-44" class="i">+			newNumber.number[i] = decoded
+</a><a href="#h3-1-45" id="h3-1-45" class="i">+		} else {
+</a><a href="#h3-1-46" id="h3-1-46" class="i">+			return nil, errors.New(&quot;invalid binary number&quot; + input)
+</a><a href="#h3-1-47" id="h3-1-47" class="i">+		}
+</a><a href="#h3-1-48" id="h3-1-48" class="i">+	}
+</a><a href="#h3-1-49" id="h3-1-49" class="i">+	return &amp;newNumber, nil
+</a><a href="#h3-1-50" id="h3-1-50" class="i">+}
+</a><a href="#h3-1-51" id="h3-1-51" class="i">+
+</a><a href="#h3-1-52" id="h3-1-52" class="i">+func (d Bin) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h3-1-53" id="h3-1-53" class="i">+	return n.ExportBinary(true)
+</a><a href="#h3-1-54" id="h3-1-54" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a> b/<a href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -17,10 +17,14 @@ func (d Float32) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+func (d Float32) getSize() int {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	return 32
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+}
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+
+</a> func (d Float32) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h4-0-10" id="h4-0-10" class="d">-	result[&quot;^0f(?P&lt;number&gt;[^lL].+)$&quot;] = float32Import
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	result[&quot;^0f(?P&lt;number&gt;[^lL].*)$&quot;] = float32Import
+</a> 
+ 	return result
+ }
+<a href="#h4-1" id="h4-1" class="h">@@ -57,3 +61,16 @@ func float32Import(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 		return nil, errors.New(&quot;unknown float32 number &quot; + input)
+ 	}
+ }
+<a href="#h4-1-3" id="h4-1-3" class="i">+
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+func (d Float32) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+	if n.bits != 32 {
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+		return &quot;&quot;, errors.New(&quot;cannot export float32 number with &quot; + strconv.Itoa(n.bits) + &quot; bits&quot;)
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	}
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+	var s uint32
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+	for i := 0; i &lt; 4; i++ {
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+		s = s | (uint32(n.number[i]) &lt;&lt; uint32(8*i))
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+	}
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+	return &quot;0f&lt;32&gt;&quot; + strconv.FormatFloat(float64(math.Float32frombits(s)), &#39;f&#39;, -1, 32), nil
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a> b/<a href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;encoding/hex&quot;
+ 	&quot;errors&quot;
+ 	&quot;regexp&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;strconv&quot;
+</a> )
+ 
+ type Hex struct{}
+<a href="#h5-1" id="h5-1" class="h">@@ -16,11 +17,15 @@ func (d Hex) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="i">+func (d Hex) getSize() int {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	return -1 // Any size
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+}
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+
+</a> func (d Hex) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+ 	result[&quot;^0x(?P&lt;hex&gt;[0-9a-fA-F]+)$&quot;] = hexImportNoSize
+<a href="#h5-1-11" id="h5-1-11" class="d">-	// result[&quot;^0x&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;hex&gt;[0-9a-fA-F]+)$&quot;] = hexImportWithSize
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+	result[&quot;^0x&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;hex&gt;[0-9a-fA-F]+)$&quot;] = hexImportWithSize
+</a> 
+ 	return result
+ }
+<a href="#h5-2" id="h5-2" class="h">@@ -56,3 +61,60 @@ func hexImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 		return nil, errors.New(&quot;invalid hex number&quot; + input)
+ 	}
+ }
+<a href="#h5-2-3" id="h5-2-3" class="i">+
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+func hexImportWithSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+	hexNum := re.ReplaceAllString(input, &quot;${hex}&quot;)
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+	hexSizeS := re.ReplaceAllString(input, &quot;${bits}&quot;)
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+	var hexSize int
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+	if val, err := strconv.Atoi(hexSizeS); err != nil {
+</a><a href="#h5-2-11" id="h5-2-11" class="i">+		return nil, errors.New(&quot;invalid hex number, wrong bits value&quot; + input)
+</a><a href="#h5-2-12" id="h5-2-12" class="i">+	} else {
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+		if val%8 != 0 {
+</a><a href="#h5-2-14" id="h5-2-14" class="i">+			return nil, errors.New(&quot;invalid hex number, the number of bits as to be a multiple of 8&quot; + input)
+</a><a href="#h5-2-15" id="h5-2-15" class="i">+		}
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+		hexSize = val
+</a><a href="#h5-2-17" id="h5-2-17" class="i">+	}
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+
+</a><a href="#h5-2-19" id="h5-2-19" class="i">+	if len(hexNum)%2 != 0 {
+</a><a href="#h5-2-20" id="h5-2-20" class="i">+		hexNum = &quot;0&quot; + hexNum
+</a><a href="#h5-2-21" id="h5-2-21" class="i">+	}
+</a><a href="#h5-2-22" id="h5-2-22" class="i">+
+</a><a href="#h5-2-23" id="h5-2-23" class="i">+	if decoded, err := hex.DecodeString(hexNum); err == nil {
+</a><a href="#h5-2-24" id="h5-2-24" class="i">+		if len(decoded)*8 &gt; hexSize {
+</a><a href="#h5-2-25" id="h5-2-25" class="i">+			return nil, errors.New(&quot;invalid hex number, the specified number if greater than the bits size &quot; + input)
+</a><a href="#h5-2-26" id="h5-2-26" class="i">+		}
+</a><a href="#h5-2-27" id="h5-2-27" class="i">+
+</a><a href="#h5-2-28" id="h5-2-28" class="i">+		newNumber := BMNumber{}
+</a><a href="#h5-2-29" id="h5-2-29" class="i">+		newNumber.number = make([]byte, hexSize)
+</a><a href="#h5-2-30" id="h5-2-30" class="i">+
+</a><a href="#h5-2-31" id="h5-2-31" class="i">+		for i := 0; i &lt; len(decoded); i++ {
+</a><a href="#h5-2-32" id="h5-2-32" class="i">+			newNumber.number[i] = decoded[len(decoded)-1-i]
+</a><a href="#h5-2-33" id="h5-2-33" class="i">+		}
+</a><a href="#h5-2-34" id="h5-2-34" class="i">+
+</a><a href="#h5-2-35" id="h5-2-35" class="i">+		for i := len(decoded); i &lt; hexSize; i++ {
+</a><a href="#h5-2-36" id="h5-2-36" class="i">+			newNumber.number[i] = 0
+</a><a href="#h5-2-37" id="h5-2-37" class="i">+		}
+</a><a href="#h5-2-38" id="h5-2-38" class="i">+
+</a><a href="#h5-2-39" id="h5-2-39" class="i">+		newNumber.bits = hexSize
+</a><a href="#h5-2-40" id="h5-2-40" class="i">+		newNumber.nType = Hex{}
+</a><a href="#h5-2-41" id="h5-2-41" class="i">+		return &amp;newNumber, nil
+</a><a href="#h5-2-42" id="h5-2-42" class="i">+	} else {
+</a><a href="#h5-2-43" id="h5-2-43" class="i">+		return nil, errors.New(&quot;invalid hex number&quot; + input)
+</a><a href="#h5-2-44" id="h5-2-44" class="i">+	}
+</a><a href="#h5-2-45" id="h5-2-45" class="i">+}
+</a><a href="#h5-2-46" id="h5-2-46" class="i">+
+</a><a href="#h5-2-47" id="h5-2-47" class="i">+func (b Hex) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h5-2-48" id="h5-2-48" class="i">+	bitS := strconv.Itoa(n.bits)
+</a><a href="#h5-2-49" id="h5-2-49" class="i">+	result := &quot;&quot;
+</a><a href="#h5-2-50" id="h5-2-50" class="i">+	for i := len(n.number) - 1; i &gt;= 0; i-- {
+</a><a href="#h5-2-51" id="h5-2-51" class="i">+		result += hex.EncodeToString([]byte{n.number[i]})
+</a><a href="#h5-2-52" id="h5-2-52" class="i">+	}
+</a><a href="#h5-2-53" id="h5-2-53" class="i">+
+</a><a href="#h5-2-54" id="h5-2-54" class="i">+	for len(result) &gt; 1 &amp;&amp; result[0] == &#39;0&#39; {
+</a><a href="#h5-2-55" id="h5-2-55" class="i">+		result = result[1:]
+</a><a href="#h5-2-56" id="h5-2-56" class="i">+	}
+</a><a href="#h5-2-57" id="h5-2-57" class="i">+
+</a><a href="#h5-2-58" id="h5-2-58" class="i">+	return &quot;0x&lt;&quot; + bitS + &quot;&gt;&quot; + result, nil
+</a><a href="#h5-2-59" id="h5-2-59" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a> b/<a href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -16,6 +16,10 @@ func (d Unsigned) getInfo() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h6-0-3" id="h6-0-3" class="i">+func (d Unsigned) getSize() int {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	return -1 // Any size
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+}
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+
+</a> func (d Unsigned) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h6-1" id="h6-1" class="h">@@ -55,3 +59,7 @@ func unsignedImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 		return nil, errors.New(&quot;invalid number&quot; + input)
+ 	}
+ }
+<a href="#h6-1-3" id="h6-1-3" class="i">+
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+func (d Unsigned) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+	return &quot;&quot;, errors.New(&quot;not implemented&quot;)
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -11,8 +11,9 @@ import (
+</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+ 
+<a href="#h7-0-3" id="h7-0-3" class="d">-var convertTo = flag.String(&quot;convert-to&quot;, &quot;&quot;, &quot;Convert to&quot;)
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-var dumpAs = flag.String(&quot;dump-as&quot;, &quot;bin&quot;, &quot;Dump as&quot;)
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+var convertTo = flag.String(&quot;convert-to&quot;, &quot;&quot;, &quot;Convert to type&quot;)
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+var overrideTo = flag.String(&quot;override-to&quot;, &quot;&quot;, &quot;Override type&quot;)
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+var dumpAs = flag.String(&quot;dump-as&quot;, &quot;native&quot;, &quot;Dump as (native, hex, bin)&quot;)
+</a> 
+ var withSize = flag.Bool(&quot;with-size&quot;, false, &quot;With size&quot;)
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -25,7 +26,12 @@ func init() {
+</a> func main() {
+ 
+ 	var newType bmnumbers.BMNumberType
+<a href="#h7-1-3" id="h7-1-3" class="d">-	if *convertTo != &quot;&quot; {
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+	if *overrideTo != &quot;&quot; &amp;&amp; *convertTo != &quot;&quot; {
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+		log.Fatal(&quot;Error: Cannot override and convert at the same time&quot;)
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+	}
+</a><a href="#h7-1-7" id="h7-1-7" class="i">+
+</a><a href="#h7-1-8" id="h7-1-8" class="i">+	switch {
+</a><a href="#h7-1-9" id="h7-1-9" class="i">+	case *convertTo != &quot;&quot;:
+</a> 		if _, err := bmnumbers.EventuallyCreateType(*convertTo, nil); err != nil {
+ 			log.Fatal(err)
+ 		}
+<a href="#h7-2" id="h7-2" class="h">@@ -35,6 +41,16 @@ func main() {
+</a> 			newType = v
+ 			fmt.Println(v)
+ 		}
+<a href="#h7-2-3" id="h7-2-3" class="i">+	case *overrideTo != &quot;&quot;:
+</a><a href="#h7-2-4" id="h7-2-4" class="i">+		if _, err := bmnumbers.EventuallyCreateType(*overrideTo, nil); err != nil {
+</a><a href="#h7-2-5" id="h7-2-5" class="i">+			log.Fatal(err)
+</a><a href="#h7-2-6" id="h7-2-6" class="i">+		}
+</a><a href="#h7-2-7" id="h7-2-7" class="i">+		if v := bmnumbers.GetType(*overrideTo); v == nil {
+</a><a href="#h7-2-8" id="h7-2-8" class="i">+			log.Fatal(&quot;Error: Unknown type&quot;)
+</a><a href="#h7-2-9" id="h7-2-9" class="i">+		} else {
+</a><a href="#h7-2-10" id="h7-2-10" class="i">+			newType = v
+</a><a href="#h7-2-11" id="h7-2-11" class="i">+			fmt.Println(v)
+</a><a href="#h7-2-12" id="h7-2-12" class="i">+		}
+</a> 	}
+ 
+ 	for _, argTo := range flag.Args() {
+<a href="#h7-3" id="h7-3" class="h">@@ -51,7 +67,19 @@ func main() {
+</a> 					}
+ 				}
+ 
+<a href="#h7-3-3" id="h7-3-3" class="i">+				if *overrideTo != &quot;&quot; {
+</a><a href="#h7-3-4" id="h7-3-4" class="i">+					if err := bmnumbers.OverrideType(output, newType); err != nil {
+</a><a href="#h7-3-5" id="h7-3-5" class="i">+						fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h7-3-6" id="h7-3-6" class="i">+					}
+</a><a href="#h7-3-7" id="h7-3-7" class="i">+				}
+</a><a href="#h7-3-8" id="h7-3-8" class="i">+
+</a> 				switch *dumpAs {
+<a href="#h7-3-10" id="h7-3-10" class="i">+				case &quot;native&quot;:
+</a><a href="#h7-3-11" id="h7-3-11" class="i">+					if value, err := output.ExportString(); err != nil {
+</a><a href="#h7-3-12" id="h7-3-12" class="i">+						fmt.Println(&quot;Error: &quot;, err)
+</a><a href="#h7-3-13" id="h7-3-13" class="i">+					} else {
+</a><a href="#h7-3-14" id="h7-3-14" class="i">+						fmt.Println(value)
+</a><a href="#h7-3-15" id="h7-3-15" class="i">+					}
+</a> 				case &quot;bin&quot;:
+ 					if value, err := output.ExportBinary(*withSize); err != nil {
+ 						fmt.Println(&quot;Error: &quot;, err)
+</pre>
+</div>
+</body>
+</html>

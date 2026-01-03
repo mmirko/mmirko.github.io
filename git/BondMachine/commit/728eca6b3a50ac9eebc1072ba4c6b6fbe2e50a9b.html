@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>r2t - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/728eca6b3a50ac9eebc1072ba4c6b6fbe2e50a9b.html">728eca6b3a50ac9eebc1072ba4c6b6fbe2e50a9b</a>
+<b>parent</b> <a href="../commit/47184ff2f6104b2b711a73be7076c438dd4b0e6b.html">47184ff2f6104b2b711a73be7076c438dd4b0e6b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 22 Jan 2023 00:22:27 +0100
+
+r2t
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">95</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 51 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,49 +25,39 @@ func (op R2t) Op_get_desc() string {
+</a> }
+ 
+ func (op R2t) Op_show_assembler(arch *Arch) string {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	result := &quot;r2t [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ 8 (RAM address)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opbits+int(arch.R)+8) + &quot;]\n&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	stSo := Stack{}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	result := &quot;r2t [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(stackBits)) + &quot; (Shared Stack)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+stackBits) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op R2t) Op_get_instruction_len(arch *Arch) int {
+<a href="#h0-0-13" id="h0-0-13" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	return opbits + int(arch.R) + 8 // The bits for the opcode + bits for a register + bits for vRAM address
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	stSo := Stack{}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	return opBits + int(arch.R) + int(stackBits) // The bits for the opcode + bits for a register + bits stacks
+</a> }
+ 
+<a href="#h0-0-21" id="h0-0-21" class="d">-func (op R2t) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+func (op R2t) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a> 	result := &quot;&quot;
+<a href="#h0-0-24" id="h0-0-24" class="d">-	//	result += &quot;\treg [7:0] addr_vram_r2t;\n&quot;
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-	//	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] vram_din_i;\n&quot;
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	//	result += &quot;\treg wr_int_vram;\n&quot;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;q2r&quot;, &quot;r2q&quot;}) {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		result += &quot;	reg stackqueuesSM;\n&quot;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	}
+</a> 	return result
+ }
+ 
+ func (Op R2t) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+ 	result := &quot;&quot;
+<a href="#h0-0-35" id="h0-0-35" class="d">-	//result += &quot;\t\t\twr_int_ram &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-	//result += &quot;\t\t\taddr_ram_r2m &lt;= #1 &#39;b0;\n&quot;
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	//result += &quot;\t\t\tram_din_i &lt;= #1 &#39;b0;\n&quot;
+</a> 	return result
+ }
+ 
+ func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+<a href="#h0-0-42" id="h0-0-42" class="d">-
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-	stackNum := 0
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-	if arch.Shared_constraints != &quot;&quot; {
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-		for _, constraint := range constraints {
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-			soname := values[0]
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-			if soname == &quot;stack&quot; {
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-				stackNum++
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-			}
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-		}
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-	}
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+	stSo := Stack{}
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+	stackNum := arch.Shared_num(stSo.Shr_get_name())
+</a> 	rom_word := arch.Max_word()
+ 	opBits := arch.Opcodes_bits()
+<a href="#h0-0-60" id="h0-0-60" class="d">-	outbits := arch.Outputs_bits()
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -82,16 +72,29 @@ func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if outbits == 1 {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			if stackBits == 1 {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-stackBits-1) + &quot;])\n&quot;
+</a> 			} else {
+<a href="#h0-1-8" id="h0-1-8" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(outbits)) + &quot;])\n&quot;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-stackBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(stackBits)) + &quot;])\n&quot;
+</a> 			}
+ 
+ 			for j := 0; j &lt; stackNum; j++ {
+ 				result += &quot;							&quot; + strings.ToUpper(op.getStackName(j)) + &quot; : begin\n&quot;
+<a href="#h0-1-14" id="h0-1-14" class="d">-				result += &quot;								_aux&quot; + strings.ToLower(op.getStackName(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-				result += &quot;								$display(\&quot;R2O &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(op.getStackName(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+				result += &quot;								case (stackqueueSM)\n&quot;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+				result += &quot;								   1&#39;b0: begin\n&quot;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderWrite &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				result += &quot;								     stackqueueSM &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				result += &quot;								   end\n&quot;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				result += &quot;								   1&#39;b1: begin\n&quot;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+				result += &quot;								     if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;senderAck) begin\n&quot;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+				result += &quot;								       &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderWrite &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+				result += &quot;								       stackqueueSM &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+				result += &quot;								     end\n&quot;
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+				result += &quot;								   end\n&quot;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+				result += &quot;								endcase\n&quot;
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+				result += &quot;								$display(\&quot;R2T &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(op.getStackName(j)) + &quot;\&quot;);\n&quot;
+</a> 				result += &quot;							end\n&quot;
+ 
+ 			}
+<a href="#h0-2" id="h0-2" class="h">@@ -114,18 +117,21 @@ func (op R2t) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op R2t) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	ramdepth := 8
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	stSo := Stack{}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	stackNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	stackBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	shortName := stSo.Shortname()
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	romWord := arch.Max_word()
+</a> 
+<a href="#h0-2-13" id="h0-2-13" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	if len(words) != 2 {
+ 		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+ 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h0-2-21" id="h0-2-21" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[0] == strings.ToLower(Get_register_name(i)) {
+ 			result += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h0-3" id="h0-3" class="h">@@ -136,13 +142,13 @@ func (op R2t) Assembler(arch *Arch, words []string) (string, error) {
+</a> 		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+ 	}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if partial, err := Process_number(words[1]); err == nil {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		result += zeros_prefix(ramdepth, partial)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if partial, err := Process_shared(shortName, words[1], stackNum); err == nil {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		result += zeros_prefix(stackBits, partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h0-3-11" id="h0-3-11" class="d">-	for i := opbits + int(arch.R) + ramdepth; i &lt; rom_word; i++ {
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	for i := opBits + int(arch.R) + stackBits; i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -150,11 +156,13 @@ func (op R2t) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op R2t) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	ramdepth := 8
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	reg_id := get_id(instr[:arch.R])
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	value := get_id(instr[arch.R : int(arch.R)+ramdepth])
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	result += strconv.Itoa(value)
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+	chso := Stack{}
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+	stackBits := arch.Shared_bits(chso.Shr_get_name())
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+	shortname := chso.Shortname()
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+	regId := get_id(instr[:arch.R])
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+	stId := get_id(instr[arch.R : int(arch.R)+stackBits])
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+	result += shortname + strconv.Itoa(stId)
+</a> 	return result, nil
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -202,7 +210,6 @@ func (op R2t) Forbidden_modes() (bool, []string) {
+</a> 
+ func (Op R2t) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+ 	result := &quot;&quot;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	//result += &quot;\t\t\t\twr_int_ram &lt;= #1 1&#39;b0;\n&quot;
+</a> 	return result
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

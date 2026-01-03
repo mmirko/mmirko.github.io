@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>visiter.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> visiter.go (56027B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondgo
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;fmt&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;go/ast&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;go/token&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strconv&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;strings&quot;
+<a href="#l9" class="line" id="l9">      9</a> 
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#l11" class="line" id="l11">     11</a> )
+<a href="#l12" class="line" id="l12">     12</a> 
+<a href="#l13" class="line" id="l13">     13</a> func (bg *BondgoCheck) Visit(n ast.Node) ast.Visitor {
+<a href="#l14" class="line" id="l14">     14</a> 	//bgclone := &amp;BondgoCheck{bg.BondgoResults, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg.Outer, bg.Clean, bg.Vars, bg.Returns, bg.CurrentLoop, bg.CurrentRoutine}
+<a href="#l15" class="line" id="l15">     15</a> 
+<a href="#l16" class="line" id="l16">     16</a> 	if bg.Clean != nil {
+<a href="#l17" class="line" id="l17">     17</a> 		for vari, cell := range bg.Clean.Vars {
+<a href="#l18" class="line" id="l18">     18</a> 			if bg.In_debug() {
+<a href="#l19" class="line" id="l19">     19</a> 				fmt.Println(&quot;Cleaning &quot; + vari)
+<a href="#l20" class="line" id="l20">     20</a> 			}
+<a href="#l21" class="line" id="l21">     21</a> 			bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, cell}
+<a href="#l22" class="line" id="l22">     22</a> 			if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l23" class="line" id="l23">     23</a> 				bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l24" class="line" id="l24">     24</a> 				return nil
+<a href="#l25" class="line" id="l25">     25</a> 			}
+<a href="#l26" class="line" id="l26">     26</a> 		}
+<a href="#l27" class="line" id="l27">     27</a> 		bg.Clean = nil
+<a href="#l28" class="line" id="l28">     28</a> 	}
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> 	switch x := n.(type) {
+<a href="#l31" class="line" id="l31">     31</a> 	case *ast.GenDecl:
+<a href="#l32" class="line" id="l32">     32</a> 		if bg.In_debug() {
+<a href="#l33" class="line" id="l33">     33</a> 			fmt.Printf(&quot;%p - Declaration\n&quot;, bg)
+<a href="#l34" class="line" id="l34">     34</a> 		}
+<a href="#l35" class="line" id="l35">     35</a> 
+<a href="#l36" class="line" id="l36">     36</a> 		genDecl := n.(*ast.GenDecl)
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> 		switch genDecl.Tok {
+<a href="#l39" class="line" id="l39">     39</a> 		case token.VAR:
+<a href="#l40" class="line" id="l40">     40</a> 			for _, s := range genDecl.Specs {
+<a href="#l41" class="line" id="l41">     41</a> 				spec := s.(*ast.ValueSpec)
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a> 				switch vtype := spec.Type.(type) {
+<a href="#l44" class="line" id="l44">     44</a> 				case *ast.SelectorExpr:
+<a href="#l45" class="line" id="l45">     45</a> 					x := vtype.X.(*ast.Ident)
+<a href="#l46" class="line" id="l46">     46</a> 					if x.Name == &quot;bondgo&quot; {
+<a href="#l47" class="line" id="l47">     47</a> 						if vtype.Sel.Name == &quot;Input&quot; {
+<a href="#l48" class="line" id="l48">     48</a> 							gent, _ := Type_from_string(bg.Basic_type)
+<a href="#l49" class="line" id="l49">     49</a> 							for _, vari := range spec.Names {
+<a href="#l50" class="line" id="l50">     50</a> 								if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l51" class="line" id="l51">     51</a> 									bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l52" class="line" id="l52">     52</a> 									return nil
+<a href="#l53" class="line" id="l53">     53</a> 								} else {
+<a href="#l54" class="line" id="l54">     54</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, INPUT, 0, 0, 0, 0, 0, 0}}
+<a href="#l55" class="line" id="l55">     55</a> 									resp := &lt;-bg.Answers
+<a href="#l56" class="line" id="l56">     56</a> 									if resp.AnsType == ANS_OK {
+<a href="#l57" class="line" id="l57">     57</a> 
+<a href="#l58" class="line" id="l58">     58</a> 										cell := resp.Cell
+<a href="#l59" class="line" id="l59">     59</a> 										bg.Vars[vari.Name] = cell
+<a href="#l60" class="line" id="l60">     60</a> 
+<a href="#l61" class="line" id="l61">     61</a> 										if bg.In_debug() {
+<a href="#l62" class="line" id="l62">     62</a> 											fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l63" class="line" id="l63">     63</a> 										}
+<a href="#l64" class="line" id="l64">     64</a> 									} else {
+<a href="#l65" class="line" id="l65">     65</a> 										bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l66" class="line" id="l66">     66</a> 										return nil
+<a href="#l67" class="line" id="l67">     67</a> 									}
+<a href="#l68" class="line" id="l68">     68</a> 								}
+<a href="#l69" class="line" id="l69">     69</a> 							}
+<a href="#l70" class="line" id="l70">     70</a> 						} else if vtype.Sel.Name == &quot;Output&quot; {
+<a href="#l71" class="line" id="l71">     71</a> 							gent, _ := Type_from_string(bg.Basic_type)
+<a href="#l72" class="line" id="l72">     72</a> 							for _, vari := range spec.Names {
+<a href="#l73" class="line" id="l73">     73</a> 								if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l74" class="line" id="l74">     74</a> 									bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l75" class="line" id="l75">     75</a> 									return nil
+<a href="#l76" class="line" id="l76">     76</a> 								} else {
+<a href="#l77" class="line" id="l77">     77</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, OUTPUT, 0, 0, 0, 0, 0, 0}}
+<a href="#l78" class="line" id="l78">     78</a> 									resp := &lt;-bg.Answers
+<a href="#l79" class="line" id="l79">     79</a> 									if resp.AnsType == ANS_OK {
+<a href="#l80" class="line" id="l80">     80</a> 
+<a href="#l81" class="line" id="l81">     81</a> 										cell := resp.Cell
+<a href="#l82" class="line" id="l82">     82</a> 										bg.Vars[vari.Name] = cell
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> 										if bg.In_debug() {
+<a href="#l85" class="line" id="l85">     85</a> 											fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l86" class="line" id="l86">     86</a> 										}
+<a href="#l87" class="line" id="l87">     87</a> 									} else {
+<a href="#l88" class="line" id="l88">     88</a> 										bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l89" class="line" id="l89">     89</a> 										return nil
+<a href="#l90" class="line" id="l90">     90</a> 									}
+<a href="#l91" class="line" id="l91">     91</a> 								}
+<a href="#l92" class="line" id="l92">     92</a> 							}
+<a href="#l93" class="line" id="l93">     93</a> 						} else {
+<a href="#l94" class="line" id="l94">     94</a> 							bg.Set_faulty(&quot;Unknown selector &quot; + vtype.Sel.Name)
+<a href="#l95" class="line" id="l95">     95</a> 							return nil
+<a href="#l96" class="line" id="l96">     96</a> 						}
+<a href="#l97" class="line" id="l97">     97</a> 					} else {
+<a href="#l98" class="line" id="l98">     98</a> 						bg.Set_faulty(&quot;Unknown package &quot; + x.Name)
+<a href="#l99" class="line" id="l99">     99</a> 						return nil
+<a href="#l100" class="line" id="l100">    100</a> 					}
+<a href="#l101" class="line" id="l101">    101</a> 				default:
+<a href="#l102" class="line" id="l102">    102</a> 
+<a href="#l103" class="line" id="l103">    103</a> 					newt, _ := Type_from_ast(spec.Type)
+<a href="#l104" class="line" id="l104">    104</a> 
+<a href="#l105" class="line" id="l105">    105</a> 					if gent, _ := Type_from_string(bg.Basic_type); Same_Type(newt, gent) {
+<a href="#l106" class="line" id="l106">    106</a> 
+<a href="#l107" class="line" id="l107">    107</a> 						for _, vari := range spec.Names {
+<a href="#l108" class="line" id="l108">    108</a> 							if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l109" class="line" id="l109">    109</a> 								bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l110" class="line" id="l110">    110</a> 								return nil
+<a href="#l111" class="line" id="l111">    111</a> 							} else {
+<a href="#l112" class="line" id="l112">    112</a> 								if len(vari.Name) &gt; 4 &amp;&amp; vari.Name[:4] == &quot;reg_&quot; {
+<a href="#l113" class="line" id="l113">    113</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l114" class="line" id="l114">    114</a> 								} else {
+<a href="#l115" class="line" id="l115">    115</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, MEMORY, 0, 0, 0, 0, 0, 0}}
+<a href="#l116" class="line" id="l116">    116</a> 								}
+<a href="#l117" class="line" id="l117">    117</a> 								resp := &lt;-bg.Answers
+<a href="#l118" class="line" id="l118">    118</a> 								if resp.AnsType == ANS_OK {
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> 									cell := resp.Cell
+<a href="#l121" class="line" id="l121">    121</a> 									bg.Vars[vari.Name] = cell
+<a href="#l122" class="line" id="l122">    122</a> 
+<a href="#l123" class="line" id="l123">    123</a> 									switch cell.Procobjtype {
+<a href="#l124" class="line" id="l124">    124</a> 									case REGISTER:
+<a href="#l125" class="line" id="l125">    125</a> 										regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l126" class="line" id="l126">    126</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l127" class="line" id="l127">    127</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l128" class="line" id="l128">    128</a> 									case MEMORY:
+<a href="#l129" class="line" id="l129">    129</a> 										bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l130" class="line" id="l130">    130</a> 										newresp := &lt;-bg.Answers
+<a href="#l131" class="line" id="l131">    131</a> 										if newresp.AnsType == ANS_OK {
+<a href="#l132" class="line" id="l132">    132</a> 											newregcell := newresp.Cell
+<a href="#l133" class="line" id="l133">    133</a> 
+<a href="#l134" class="line" id="l134">    134</a> 											regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l135" class="line" id="l135">    135</a> 
+<a href="#l136" class="line" id="l136">    136</a> 											bg.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l137" class="line" id="l137">    137</a> 											bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l138" class="line" id="l138">    138</a> 											bg.WriteLine(bg.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l139" class="line" id="l139">    139</a> 											bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l140" class="line" id="l140">    140</a> 
+<a href="#l141" class="line" id="l141">    141</a> 											bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, newregcell}
+<a href="#l142" class="line" id="l142">    142</a> 											if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l143" class="line" id="l143">    143</a> 												bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l144" class="line" id="l144">    144</a> 												return nil
+<a href="#l145" class="line" id="l145">    145</a> 											}
+<a href="#l146" class="line" id="l146">    146</a> 										} else {
+<a href="#l147" class="line" id="l147">    147</a> 											bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l148" class="line" id="l148">    148</a> 											return nil
+<a href="#l149" class="line" id="l149">    149</a> 										}
+<a href="#l150" class="line" id="l150">    150</a> 									}
+<a href="#l151" class="line" id="l151">    151</a> 									if bg.In_debug() {
+<a href="#l152" class="line" id="l152">    152</a> 										fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l153" class="line" id="l153">    153</a> 									}
+<a href="#l154" class="line" id="l154">    154</a> 								} else {
+<a href="#l155" class="line" id="l155">    155</a> 									bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l156" class="line" id="l156">    156</a> 									return nil
+<a href="#l157" class="line" id="l157">    157</a> 								}
+<a href="#l158" class="line" id="l158">    158</a> 							}
+<a href="#l159" class="line" id="l159">    159</a> 						}
+<a href="#l160" class="line" id="l160">    160</a> 					} else if gent, _ := Type_from_string(&quot;bool&quot;); Same_Type(newt, gent) {
+<a href="#l161" class="line" id="l161">    161</a> 
+<a href="#l162" class="line" id="l162">    162</a> 						for _, vari := range spec.Names {
+<a href="#l163" class="line" id="l163">    163</a> 							if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l164" class="line" id="l164">    164</a> 								bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l165" class="line" id="l165">    165</a> 								return nil
+<a href="#l166" class="line" id="l166">    166</a> 							} else {
+<a href="#l167" class="line" id="l167">    167</a> 								if len(vari.Name) &gt; 4 &amp;&amp; vari.Name[:4] == &quot;reg_&quot; {
+<a href="#l168" class="line" id="l168">    168</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l169" class="line" id="l169">    169</a> 								} else {
+<a href="#l170" class="line" id="l170">    170</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, MEMORY, 0, 0, 0, 0, 0, 0}}
+<a href="#l171" class="line" id="l171">    171</a> 								}
+<a href="#l172" class="line" id="l172">    172</a> 								resp := &lt;-bg.Answers
+<a href="#l173" class="line" id="l173">    173</a> 								if resp.AnsType == ANS_OK {
+<a href="#l174" class="line" id="l174">    174</a> 
+<a href="#l175" class="line" id="l175">    175</a> 									cell := resp.Cell
+<a href="#l176" class="line" id="l176">    176</a> 									bg.Vars[vari.Name] = cell
+<a href="#l177" class="line" id="l177">    177</a> 
+<a href="#l178" class="line" id="l178">    178</a> 									switch cell.Procobjtype {
+<a href="#l179" class="line" id="l179">    179</a> 									case REGISTER:
+<a href="#l180" class="line" id="l180">    180</a> 										regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l181" class="line" id="l181">    181</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l182" class="line" id="l182">    182</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l183" class="line" id="l183">    183</a> 									case MEMORY:
+<a href="#l184" class="line" id="l184">    184</a> 										bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l185" class="line" id="l185">    185</a> 										newresp := &lt;-bg.Answers
+<a href="#l186" class="line" id="l186">    186</a> 										if newresp.AnsType == ANS_OK {
+<a href="#l187" class="line" id="l187">    187</a> 											newregcell := newresp.Cell
+<a href="#l188" class="line" id="l188">    188</a> 
+<a href="#l189" class="line" id="l189">    189</a> 											regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l190" class="line" id="l190">    190</a> 
+<a href="#l191" class="line" id="l191">    191</a> 											bg.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l192" class="line" id="l192">    192</a> 											bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l193" class="line" id="l193">    193</a> 											bg.WriteLine(bg.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l194" class="line" id="l194">    194</a> 											bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l195" class="line" id="l195">    195</a> 
+<a href="#l196" class="line" id="l196">    196</a> 											bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, newregcell}
+<a href="#l197" class="line" id="l197">    197</a> 											if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l198" class="line" id="l198">    198</a> 												bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l199" class="line" id="l199">    199</a> 												return nil
+<a href="#l200" class="line" id="l200">    200</a> 											}
+<a href="#l201" class="line" id="l201">    201</a> 										} else {
+<a href="#l202" class="line" id="l202">    202</a> 											bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l203" class="line" id="l203">    203</a> 											return nil
+<a href="#l204" class="line" id="l204">    204</a> 										}
+<a href="#l205" class="line" id="l205">    205</a> 									}
+<a href="#l206" class="line" id="l206">    206</a> 									if bg.In_debug() {
+<a href="#l207" class="line" id="l207">    207</a> 										fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l208" class="line" id="l208">    208</a> 									}
+<a href="#l209" class="line" id="l209">    209</a> 								} else {
+<a href="#l210" class="line" id="l210">    210</a> 									bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l211" class="line" id="l211">    211</a> 									return nil
+<a href="#l212" class="line" id="l212">    212</a> 								}
+<a href="#l213" class="line" id="l213">    213</a> 							}
+<a href="#l214" class="line" id="l214">    214</a> 						}
+<a href="#l215" class="line" id="l215">    215</a> 					} else if gent, _ := Type_from_string(bg.Basic_chantype); Same_Type(newt, gent) {
+<a href="#l216" class="line" id="l216">    216</a> 						for _, vari := range spec.Names {
+<a href="#l217" class="line" id="l217">    217</a> 							if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l218" class="line" id="l218">    218</a> 								bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l219" class="line" id="l219">    219</a> 								return nil
+<a href="#l220" class="line" id="l220">    220</a> 							} else {
+<a href="#l221" class="line" id="l221">    221</a> 								bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, CHANNEL, 0, 0, 0, 0, 0, 0}}
+<a href="#l222" class="line" id="l222">    222</a> 								resp := &lt;-bg.Answers
+<a href="#l223" class="line" id="l223">    223</a> 								if resp.AnsType == ANS_OK {
+<a href="#l224" class="line" id="l224">    224</a> 
+<a href="#l225" class="line" id="l225">    225</a> 									cell := resp.Cell
+<a href="#l226" class="line" id="l226">    226</a> 									bg.Vars[vari.Name] = cell
+<a href="#l227" class="line" id="l227">    227</a> 
+<a href="#l228" class="line" id="l228">    228</a> 									if bg.In_debug() {
+<a href="#l229" class="line" id="l229">    229</a> 										fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l230" class="line" id="l230">    230</a> 									}
+<a href="#l231" class="line" id="l231">    231</a> 								} else {
+<a href="#l232" class="line" id="l232">    232</a> 									bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l233" class="line" id="l233">    233</a> 									return nil
+<a href="#l234" class="line" id="l234">    234</a> 								}
+<a href="#l235" class="line" id="l235">    235</a> 							}
+<a href="#l236" class="line" id="l236">    236</a> 						}
+<a href="#l237" class="line" id="l237">    237</a> 					} else if gent, _ := Type_from_string(&quot;chan bool&quot;); Same_Type(newt, gent) {
+<a href="#l238" class="line" id="l238">    238</a> 						for _, vari := range spec.Names {
+<a href="#l239" class="line" id="l239">    239</a> 							if _, ok := bg.Vars[vari.Name]; ok {
+<a href="#l240" class="line" id="l240">    240</a> 								bg.Set_faulty(vari.Name + &quot;: name already used&quot;)
+<a href="#l241" class="line" id="l241">    241</a> 								return nil
+<a href="#l242" class="line" id="l242">    242</a> 							} else {
+<a href="#l243" class="line" id="l243">    243</a> 								bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, CHANNEL, 0, 0, 0, 0, 0, 0}}
+<a href="#l244" class="line" id="l244">    244</a> 								resp := &lt;-bg.Answers
+<a href="#l245" class="line" id="l245">    245</a> 								if resp.AnsType == ANS_OK {
+<a href="#l246" class="line" id="l246">    246</a> 
+<a href="#l247" class="line" id="l247">    247</a> 									cell := resp.Cell
+<a href="#l248" class="line" id="l248">    248</a> 									bg.Vars[vari.Name] = cell
+<a href="#l249" class="line" id="l249">    249</a> 
+<a href="#l250" class="line" id="l250">    250</a> 									if bg.In_debug() {
+<a href="#l251" class="line" id="l251">    251</a> 										fmt.Println(&quot;\t\tAllocated to &quot; + vari.Name + &quot; the cell &quot; + bg.Vars[vari.Name].String())
+<a href="#l252" class="line" id="l252">    252</a> 									}
+<a href="#l253" class="line" id="l253">    253</a> 								} else {
+<a href="#l254" class="line" id="l254">    254</a> 									bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l255" class="line" id="l255">    255</a> 									return nil
+<a href="#l256" class="line" id="l256">    256</a> 								}
+<a href="#l257" class="line" id="l257">    257</a> 							}
+<a href="#l258" class="line" id="l258">    258</a> 						}
+<a href="#l259" class="line" id="l259">    259</a> 					} else {
+<a href="#l260" class="line" id="l260">    260</a> 
+<a href="#l261" class="line" id="l261">    261</a> 					}
+<a href="#l262" class="line" id="l262">    262</a> 				}
+<a href="#l263" class="line" id="l263">    263</a> 			}
+<a href="#l264" class="line" id="l264">    264</a> 		}
+<a href="#l265" class="line" id="l265">    265</a> 
+<a href="#l266" class="line" id="l266">    266</a> 	case *ast.AssignStmt:
+<a href="#l267" class="line" id="l267">    267</a> 
+<a href="#l268" class="line" id="l268">    268</a> 		// TODO Improvemente needed: type checks and channel *think*
+<a href="#l269" class="line" id="l269">    269</a> 		// TODO assignment and declaration
+<a href="#l270" class="line" id="l270">    270</a> 
+<a href="#l271" class="line" id="l271">    271</a> 		if bg.In_debug() {
+<a href="#l272" class="line" id="l272">    272</a> 			fmt.Printf(&quot;%p - %s\n&quot;, bg, &quot;Assignment Statement&quot;)
+<a href="#l273" class="line" id="l273">    273</a> 		}
+<a href="#l274" class="line" id="l274">    274</a> 
+<a href="#l275" class="line" id="l275">    275</a> 		assignStmt := n.(*ast.AssignStmt)
+<a href="#l276" class="line" id="l276">    276</a> 		switch assignStmt.Tok {
+<a href="#l277" class="line" id="l277">    277</a> 		case token.ASSIGN:
+<a href="#l278" class="line" id="l278">    278</a> 			if len(assignStmt.Lhs) == len(assignStmt.Rhs) {
+<a href="#l279" class="line" id="l279">    279</a> 				destinations := make([]VarCell, len(assignStmt.Lhs))
+<a href="#l280" class="line" id="l280">    280</a> 				sources := make([]VarCell, len(assignStmt.Lhs))
+<a href="#l281" class="line" id="l281">    281</a> 
+<a href="#l282" class="line" id="l282">    282</a> 				for assindex, _ := range assignStmt.Lhs {
+<a href="#l283" class="line" id="l283">    283</a> 					lhs := assignStmt.Lhs[assindex].(*ast.Ident)
+<a href="#l284" class="line" id="l284">    284</a> 					vari := lhs.Name
+<a href="#l285" class="line" id="l285">    285</a> 
+<a href="#l286" class="line" id="l286">    286</a> 					varexist := false
+<a href="#l287" class="line" id="l287">    287</a> 					for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l288" class="line" id="l288">    288</a> 						if _, ok := scope.Vars[vari]; ok {
+<a href="#l289" class="line" id="l289">    289</a> 							varexist = true
+<a href="#l290" class="line" id="l290">    290</a> 							destinations[assindex] = scope.Vars[vari]
+<a href="#l291" class="line" id="l291">    291</a> 							break
+<a href="#l292" class="line" id="l292">    292</a> 						}
+<a href="#l293" class="line" id="l293">    293</a> 					}
+<a href="#l294" class="line" id="l294">    294</a> 
+<a href="#l295" class="line" id="l295">    295</a> 					if !varexist {
+<a href="#l296" class="line" id="l296">    296</a> 						bg.Set_faulty(&quot;Unitialized variable &quot; + vari)
+<a href="#l297" class="line" id="l297">    297</a> 						return nil
+<a href="#l298" class="line" id="l298">    298</a> 					}
+<a href="#l299" class="line" id="l299">    299</a> 
+<a href="#l300" class="line" id="l300">    300</a> 					rhs := assignStmt.Rhs[assindex]
+<a href="#l301" class="line" id="l301">    301</a> 
+<a href="#l302" class="line" id="l302">    302</a> 					if newcell, ok := bg.Expr_eval(rhs); ok {
+<a href="#l303" class="line" id="l303">    303</a> 						sources[assindex] = newcell[0]
+<a href="#l304" class="line" id="l304">    304</a> 					} else {
+<a href="#l305" class="line" id="l305">    305</a> 						bg.Set_faulty(&quot;Assignment RHS evaluation failed&quot;)
+<a href="#l306" class="line" id="l306">    306</a> 						return nil
+<a href="#l307" class="line" id="l307">    307</a> 					}
+<a href="#l308" class="line" id="l308">    308</a> 				}
+<a href="#l309" class="line" id="l309">    309</a> 
+<a href="#l310" class="line" id="l310">    310</a> 				for assindex, cell := range destinations {
+<a href="#l311" class="line" id="l311">    311</a> 					newcell := sources[assindex]
+<a href="#l312" class="line" id="l312">    312</a> 					switch cell.Procobjtype {
+<a href="#l313" class="line" id="l313">    313</a> 					case REGISTER:
+<a href="#l314" class="line" id="l314">    314</a> 						regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l315" class="line" id="l315">    315</a> 						newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l316" class="line" id="l316">    316</a> 						bg.WriteLine(bg.CurrentRoutine, &quot;cpy &quot;+regname+&quot; &quot;+newregname)
+<a href="#l317" class="line" id="l317">    317</a> 						bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;cpy&quot;, I_NIL}
+<a href="#l318" class="line" id="l318">    318</a> 					case MEMORY:
+<a href="#l319" class="line" id="l319">    319</a> 						newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l320" class="line" id="l320">    320</a> 						bg.WriteLine(bg.CurrentRoutine, &quot;r2m &quot;+newregname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l321" class="line" id="l321">    321</a> 						bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l322" class="line" id="l322">    322</a> 					case INPUT:
+<a href="#l323" class="line" id="l323">    323</a> 						// Assing an input to another means to use the same global index
+<a href="#l324" class="line" id="l324">    324</a> 						cell.Global_id = newcell.Global_id
+<a href="#l325" class="line" id="l325">    325</a> 						cell.Start_globalid = newcell.Start_globalid
+<a href="#l326" class="line" id="l326">    326</a> 						cell.End_globalid = newcell.End_globalid
+<a href="#l327" class="line" id="l327">    327</a> 
+<a href="#l328" class="line" id="l328">    328</a> 						lhs := assignStmt.Lhs[assindex].(*ast.Ident)
+<a href="#l329" class="line" id="l329">    329</a> 						vari := lhs.Name
+<a href="#l330" class="line" id="l330">    330</a> 
+<a href="#l331" class="line" id="l331">    331</a> 						for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l332" class="line" id="l332">    332</a> 							if _, ok := scope.Vars[vari]; ok {
+<a href="#l333" class="line" id="l333">    333</a> 								scope.Vars[vari] = cell
+<a href="#l334" class="line" id="l334">    334</a> 								break
+<a href="#l335" class="line" id="l335">    335</a> 							}
+<a href="#l336" class="line" id="l336">    336</a> 						}
+<a href="#l337" class="line" id="l337">    337</a> 
+<a href="#l338" class="line" id="l338">    338</a> 					case OUTPUT:
+<a href="#l339" class="line" id="l339">    339</a> 						// Assing an output to another means to use the same global index
+<a href="#l340" class="line" id="l340">    340</a> 						cell.Global_id = newcell.Global_id
+<a href="#l341" class="line" id="l341">    341</a> 						cell.Start_globalid = newcell.Start_globalid
+<a href="#l342" class="line" id="l342">    342</a> 						cell.End_globalid = newcell.End_globalid
+<a href="#l343" class="line" id="l343">    343</a> 
+<a href="#l344" class="line" id="l344">    344</a> 						lhs := assignStmt.Lhs[assindex].(*ast.Ident)
+<a href="#l345" class="line" id="l345">    345</a> 						vari := lhs.Name
+<a href="#l346" class="line" id="l346">    346</a> 
+<a href="#l347" class="line" id="l347">    347</a> 						for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l348" class="line" id="l348">    348</a> 							if _, ok := scope.Vars[vari]; ok {
+<a href="#l349" class="line" id="l349">    349</a> 								scope.Vars[vari] = cell
+<a href="#l350" class="line" id="l350">    350</a> 								break
+<a href="#l351" class="line" id="l351">    351</a> 							}
+<a href="#l352" class="line" id="l352">    352</a> 						}
+<a href="#l353" class="line" id="l353">    353</a> 					case CHANNEL:
+<a href="#l354" class="line" id="l354">    354</a> 					}
+<a href="#l355" class="line" id="l355">    355</a> 
+<a href="#l356" class="line" id="l356">    356</a> 					bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, newcell}
+<a href="#l357" class="line" id="l357">    357</a> 					if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l358" class="line" id="l358">    358</a> 						bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l359" class="line" id="l359">    359</a> 						return nil
+<a href="#l360" class="line" id="l360">    360</a> 					}
+<a href="#l361" class="line" id="l361">    361</a> 				}
+<a href="#l362" class="line" id="l362">    362</a> 			} else {
+<a href="#l363" class="line" id="l363">    363</a> 				bg.Set_faulty(&quot;Different arguments lenghts&quot;)
+<a href="#l364" class="line" id="l364">    364</a> 				return nil
+<a href="#l365" class="line" id="l365">    365</a> 			}
+<a href="#l366" class="line" id="l366">    366</a> 		case token.DEFINE:
+<a href="#l367" class="line" id="l367">    367</a> 			// TODO Finish
+<a href="#l368" class="line" id="l368">    368</a> 			if len(assignStmt.Lhs) == len(assignStmt.Rhs) {
+<a href="#l369" class="line" id="l369">    369</a> 				sources := make([]VarCell, len(assignStmt.Lhs))
+<a href="#l370" class="line" id="l370">    370</a> 
+<a href="#l371" class="line" id="l371">    371</a> 				for assindex, _ := range assignStmt.Lhs {
+<a href="#l372" class="line" id="l372">    372</a> 					lhs := assignStmt.Lhs[assindex].(*ast.Ident)
+<a href="#l373" class="line" id="l373">    373</a> 					vari := lhs.Name
+<a href="#l374" class="line" id="l374">    374</a> 
+<a href="#l375" class="line" id="l375">    375</a> 					varexist := false
+<a href="#l376" class="line" id="l376">    376</a> 					if _, ok := bg.Vars[vari]; ok {
+<a href="#l377" class="line" id="l377">    377</a> 						varexist = true
+<a href="#l378" class="line" id="l378">    378</a> 						break
+<a href="#l379" class="line" id="l379">    379</a> 					}
+<a href="#l380" class="line" id="l380">    380</a> 
+<a href="#l381" class="line" id="l381">    381</a> 					if varexist {
+<a href="#l382" class="line" id="l382">    382</a> 						bg.Set_faulty(&quot;Already defined variable &quot; + vari)
+<a href="#l383" class="line" id="l383">    383</a> 						return nil
+<a href="#l384" class="line" id="l384">    384</a> 					}
+<a href="#l385" class="line" id="l385">    385</a> 
+<a href="#l386" class="line" id="l386">    386</a> 					rhs := assignStmt.Rhs[assindex]
+<a href="#l387" class="line" id="l387">    387</a> 
+<a href="#l388" class="line" id="l388">    388</a> 					if newcell, ok := bg.Expr_eval(rhs); ok {
+<a href="#l389" class="line" id="l389">    389</a> 						sources[assindex] = newcell[0]
+<a href="#l390" class="line" id="l390">    390</a> 					} else {
+<a href="#l391" class="line" id="l391">    391</a> 						bg.Set_faulty(&quot;Assignment RHS evaluation failed&quot;)
+<a href="#l392" class="line" id="l392">    392</a> 						return nil
+<a href="#l393" class="line" id="l393">    393</a> 					}
+<a href="#l394" class="line" id="l394">    394</a> 				}
+<a href="#l395" class="line" id="l395">    395</a> 
+<a href="#l396" class="line" id="l396">    396</a> 				for assindex, cell := range sources {
+<a href="#l397" class="line" id="l397">    397</a> 					lhs := assignStmt.Lhs[assindex].(*ast.Ident)
+<a href="#l398" class="line" id="l398">    398</a> 					vari := lhs.Name
+<a href="#l399" class="line" id="l399">    399</a> 
+<a href="#l400" class="line" id="l400">    400</a> 					switch cell.Procobjtype {
+<a href="#l401" class="line" id="l401">    401</a> 					case REGISTER:
+<a href="#l402" class="line" id="l402">    402</a> 						gent := cell.Vtype
+<a href="#l403" class="line" id="l403">    403</a> 						if len(vari) &gt; 4 &amp;&amp; vari[:4] == &quot;reg_&quot; {
+<a href="#l404" class="line" id="l404">    404</a> 							bg.Vars[vari] = cell
+<a href="#l405" class="line" id="l405">    405</a> 						} else {
+<a href="#l406" class="line" id="l406">    406</a> 							bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, MEMORY, 0, 0, 0, 0, 0, 0}}
+<a href="#l407" class="line" id="l407">    407</a> 							resp := &lt;-bg.Answers
+<a href="#l408" class="line" id="l408">    408</a> 							if resp.AnsType == ANS_OK {
+<a href="#l409" class="line" id="l409">    409</a> 								regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l410" class="line" id="l410">    410</a> 								bg.WriteLine(bg.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(resp.Cell.Id))
+<a href="#l411" class="line" id="l411">    411</a> 								bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l412" class="line" id="l412">    412</a> 								bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, cell}
+<a href="#l413" class="line" id="l413">    413</a> 								if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l414" class="line" id="l414">    414</a> 									bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l415" class="line" id="l415">    415</a> 									return nil
+<a href="#l416" class="line" id="l416">    416</a> 								}
+<a href="#l417" class="line" id="l417">    417</a> 							} else {
+<a href="#l418" class="line" id="l418">    418</a> 								bg.Set_faulty(&quot;Output request failed&quot;)
+<a href="#l419" class="line" id="l419">    419</a> 								return nil
+<a href="#l420" class="line" id="l420">    420</a> 							}
+<a href="#l421" class="line" id="l421">    421</a> 						}
+<a href="#l422" class="line" id="l422">    422</a> 
+<a href="#l423" class="line" id="l423">    423</a> 					case CHANNEL:
+<a href="#l424" class="line" id="l424">    424</a> 						bg.Set_faulty(&quot;Channel reassign prohibited&quot;)
+<a href="#l425" class="line" id="l425">    425</a> 						return nil
+<a href="#l426" class="line" id="l426">    426</a> 					}
+<a href="#l427" class="line" id="l427">    427</a> 
+<a href="#l428" class="line" id="l428">    428</a> 				}
+<a href="#l429" class="line" id="l429">    429</a> 			} else {
+<a href="#l430" class="line" id="l430">    430</a> 				bg.Set_faulty(&quot;Different arguments lenghts&quot;)
+<a href="#l431" class="line" id="l431">    431</a> 				return nil
+<a href="#l432" class="line" id="l432">    432</a> 			}
+<a href="#l433" class="line" id="l433">    433</a> 		default:
+<a href="#l434" class="line" id="l434">    434</a> 			bg.Set_faulty(&quot;Unknown assignment operation&quot;)
+<a href="#l435" class="line" id="l435">    435</a> 			return nil
+<a href="#l436" class="line" id="l436">    436</a> 
+<a href="#l437" class="line" id="l437">    437</a> 		}
+<a href="#l438" class="line" id="l438">    438</a> 
+<a href="#l439" class="line" id="l439">    439</a> 		// Do not reprocess assignment leaves
+<a href="#l440" class="line" id="l440">    440</a> 		return nil
+<a href="#l441" class="line" id="l441">    441</a> 
+<a href="#l442" class="line" id="l442">    442</a> 	case *ast.IncDecStmt:
+<a href="#l443" class="line" id="l443">    443</a> 
+<a href="#l444" class="line" id="l444">    444</a> 		incDecStmt := n.(*ast.IncDecStmt)
+<a href="#l445" class="line" id="l445">    445</a> 
+<a href="#l446" class="line" id="l446">    446</a> 		vari := incDecStmt.X.(*ast.Ident).Name
+<a href="#l447" class="line" id="l447">    447</a> 
+<a href="#l448" class="line" id="l448">    448</a> 		varexist := false
+<a href="#l449" class="line" id="l449">    449</a> 		for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l450" class="line" id="l450">    450</a> 			if _, ok := scope.Vars[vari]; ok {
+<a href="#l451" class="line" id="l451">    451</a> 				varexist = true
+<a href="#l452" class="line" id="l452">    452</a> 				cell := scope.Vars[vari]
+<a href="#l453" class="line" id="l453">    453</a> 				switch cell.Procobjtype {
+<a href="#l454" class="line" id="l454">    454</a> 				case REGISTER:
+<a href="#l455" class="line" id="l455">    455</a> 					regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l456" class="line" id="l456">    456</a> 					switch incDecStmt.Tok {
+<a href="#l457" class="line" id="l457">    457</a> 					case token.INC:
+<a href="#l458" class="line" id="l458">    458</a> 						scope.WriteLine(scope.CurrentRoutine, &quot;inc &quot;+regname)
+<a href="#l459" class="line" id="l459">    459</a> 						scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;inc&quot;, I_NIL}
+<a href="#l460" class="line" id="l460">    460</a> 					case token.DEC:
+<a href="#l461" class="line" id="l461">    461</a> 						scope.WriteLine(scope.CurrentRoutine, &quot;dec &quot;+regname)
+<a href="#l462" class="line" id="l462">    462</a> 						scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;dec&quot;, I_NIL}
+<a href="#l463" class="line" id="l463">    463</a> 					}
+<a href="#l464" class="line" id="l464">    464</a> 				case MEMORY:
+<a href="#l465" class="line" id="l465">    465</a> 					gent, _ := Type_from_string(bg.Basic_type)
+<a href="#l466" class="line" id="l466">    466</a> 					scope.Reqs &lt;- VarReq{REQ_NEW, scope.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l467" class="line" id="l467">    467</a> 					resp := &lt;-bg.Answers
+<a href="#l468" class="line" id="l468">    468</a> 					if resp.AnsType == ANS_OK {
+<a href="#l469" class="line" id="l469">    469</a> 
+<a href="#l470" class="line" id="l470">    470</a> 						newregcell := resp.Cell
+<a href="#l471" class="line" id="l471">    471</a> 
+<a href="#l472" class="line" id="l472">    472</a> 						regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l473" class="line" id="l473">    473</a> 
+<a href="#l474" class="line" id="l474">    474</a> 						scope.WriteLine(scope.CurrentRoutine, &quot;m2r &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l475" class="line" id="l475">    475</a> 						scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;m2r&quot;, I_NIL}
+<a href="#l476" class="line" id="l476">    476</a> 
+<a href="#l477" class="line" id="l477">    477</a> 						switch incDecStmt.Tok {
+<a href="#l478" class="line" id="l478">    478</a> 						case token.INC:
+<a href="#l479" class="line" id="l479">    479</a> 							scope.WriteLine(scope.CurrentRoutine, &quot;inc &quot;+regname)
+<a href="#l480" class="line" id="l480">    480</a> 							scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;inc&quot;, I_NIL}
+<a href="#l481" class="line" id="l481">    481</a> 						case token.DEC:
+<a href="#l482" class="line" id="l482">    482</a> 							scope.WriteLine(scope.CurrentRoutine, &quot;dec &quot;+regname)
+<a href="#l483" class="line" id="l483">    483</a> 							scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;dec&quot;, I_NIL}
+<a href="#l484" class="line" id="l484">    484</a> 						}
+<a href="#l485" class="line" id="l485">    485</a> 
+<a href="#l486" class="line" id="l486">    486</a> 						scope.WriteLine(scope.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l487" class="line" id="l487">    487</a> 						scope.Used &lt;- UsageNotify{TR_PROC, scope.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l488" class="line" id="l488">    488</a> 						scope.Reqs &lt;- VarReq{REQ_REMOVE, scope.CurrentRoutine, newregcell}
+<a href="#l489" class="line" id="l489">    489</a> 						if (&lt;-scope.Answers).AnsType != ANS_OK {
+<a href="#l490" class="line" id="l490">    490</a> 							bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l491" class="line" id="l491">    491</a> 							return nil
+<a href="#l492" class="line" id="l492">    492</a> 						}
+<a href="#l493" class="line" id="l493">    493</a> 					} else {
+<a href="#l494" class="line" id="l494">    494</a> 						bg.Set_faulty(&quot;Resource allocation failed&quot;)
+<a href="#l495" class="line" id="l495">    495</a> 						return nil
+<a href="#l496" class="line" id="l496">    496</a> 					}
+<a href="#l497" class="line" id="l497">    497</a> 				}
+<a href="#l498" class="line" id="l498">    498</a> 				break
+<a href="#l499" class="line" id="l499">    499</a> 			}
+<a href="#l500" class="line" id="l500">    500</a> 		}
+<a href="#l501" class="line" id="l501">    501</a> 		if !varexist {
+<a href="#l502" class="line" id="l502">    502</a> 			bg.Set_faulty(&quot;Unitialized variable &quot; + vari)
+<a href="#l503" class="line" id="l503">    503</a> 			return nil
+<a href="#l504" class="line" id="l504">    504</a> 		}
+<a href="#l505" class="line" id="l505">    505</a> 
+<a href="#l506" class="line" id="l506">    506</a> 	case *ast.BlockStmt:
+<a href="#l507" class="line" id="l507">    507</a> 		{
+<a href="#l508" class="line" id="l508">    508</a> 			if bg.In_debug() {
+<a href="#l509" class="line" id="l509">    509</a> 				fmt.Printf(&quot;%p - %s &quot;, bg, &quot;Entering the new block&quot;)
+<a href="#l510" class="line" id="l510">    510</a> 			}
+<a href="#l511" class="line" id="l511">    511</a> 
+<a href="#l512" class="line" id="l512">    512</a> 			vars := make(map[string]VarCell)
+<a href="#l513" class="line" id="l513">    513</a> 
+<a href="#l514" class="line" id="l514">    514</a> 			bgleaf := &amp;BondgoCheck{bg.BondgoResults, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, vars, bg.Returns, bg.CurrentLoop, bg.CurrentSwitch, bg.CurrentDevice, bg.CurrentRoutine}
+<a href="#l515" class="line" id="l515">    515</a> 			bg.Clean = bgleaf
+<a href="#l516" class="line" id="l516">    516</a> 
+<a href="#l517" class="line" id="l517">    517</a> 			if bg.In_debug() {
+<a href="#l518" class="line" id="l518">    518</a> 				fmt.Printf(&quot;%p\n&quot;, bgleaf)
+<a href="#l519" class="line" id="l519">    519</a> 			}
+<a href="#l520" class="line" id="l520">    520</a> 
+<a href="#l521" class="line" id="l521">    521</a> 			return bgleaf
+<a href="#l522" class="line" id="l522">    522</a> 		}
+<a href="#l523" class="line" id="l523">    523</a> 	case *ast.IfStmt:
+<a href="#l524" class="line" id="l524">    524</a> 		if bg.In_debug() {
+<a href="#l525" class="line" id="l525">    525</a> 			fmt.Println(&quot;Conditional statement&quot;)
+<a href="#l526" class="line" id="l526">    526</a> 		}
+<a href="#l527" class="line" id="l527">    527</a> 
+<a href="#l528" class="line" id="l528">    528</a> 		// Create a new BondgoCheck for the if statement with an empty program
+<a href="#l529" class="line" id="l529">    529</a> 		results := new(BondgoResults) // Results go in here
+<a href="#l530" class="line" id="l530">    530</a> 		results.Init_Results(bg.BondgoConfig)
+<a href="#l531" class="line" id="l531">    531</a> 
+<a href="#l532" class="line" id="l532">    532</a> 		bgif := &amp;BondgoCheck{results, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, bg.Vars, bg.Returns, bg.CurrentLoop, bg.CurrentSwitch, bg.CurrentDevice, bg.CurrentRoutine}
+<a href="#l533" class="line" id="l533">    533</a> 
+<a href="#l534" class="line" id="l534">    534</a> 		starting_point := bg.CountLines(bg.CurrentRoutine)
+<a href="#l535" class="line" id="l535">    535</a> 
+<a href="#l536" class="line" id="l536">    536</a> 		if x.Init != nil {
+<a href="#l537" class="line" id="l537">    537</a> 			// Launch Walk on the init body using the new BondgoCheck
+<a href="#l538" class="line" id="l538">    538</a> 			ast.Walk(bgif, x.Init)
+<a href="#l539" class="line" id="l539">    539</a> 		}
+<a href="#l540" class="line" id="l540">    540</a> 
+<a href="#l541" class="line" id="l541">    541</a> 		if x.Cond != nil {
+<a href="#l542" class="line" id="l542">    542</a> 			// Now eval the condition
+<a href="#l543" class="line" id="l543">    543</a> 			if newcell, ok := bgif.Expr_eval(x.Cond); ok {
+<a href="#l544" class="line" id="l544">    544</a> 				condevalued := newcell[0]
+<a href="#l545" class="line" id="l545">    545</a> 
+<a href="#l546" class="line" id="l546">    546</a> 				gent, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l547" class="line" id="l547">    547</a> 				if Same_Type(condevalued.Vtype, gent) {
+<a href="#l548" class="line" id="l548">    548</a> 
+<a href="#l549" class="line" id="l549">    549</a> 					newregname := procbuilder.Get_register_name(condevalued.Id)
+<a href="#l550" class="line" id="l550">    550</a> 					bgif.WriteLine(bgif.CurrentRoutine, &quot;jz &quot;+newregname+&quot; &lt;&lt;&quot;+fmt.Sprintf(&quot;%p&quot;, bgif)+&quot;FALSECONDITION&gt;&gt;&quot;)
+<a href="#l551" class="line" id="l551">    551</a> 					bgif.Used &lt;- UsageNotify{TR_PROC, bgif.CurrentRoutine, C_OPCODE, &quot;jz&quot;, I_NIL}
+<a href="#l552" class="line" id="l552">    552</a> 
+<a href="#l553" class="line" id="l553">    553</a> 					bgif.Reqs &lt;- VarReq{REQ_REMOVE, bgif.CurrentRoutine, condevalued}
+<a href="#l554" class="line" id="l554">    554</a> 					if (&lt;-bgif.Answers).AnsType != ANS_OK {
+<a href="#l555" class="line" id="l555">    555</a> 						bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l556" class="line" id="l556">    556</a> 						return nil
+<a href="#l557" class="line" id="l557">    557</a> 					}
+<a href="#l558" class="line" id="l558">    558</a> 				} else {
+<a href="#l559" class="line" id="l559">    559</a> 					bg.Set_faulty(&quot;If need a boolean condition&quot;)
+<a href="#l560" class="line" id="l560">    560</a> 					return nil
+<a href="#l561" class="line" id="l561">    561</a> 				}
+<a href="#l562" class="line" id="l562">    562</a> 			} else {
+<a href="#l563" class="line" id="l563">    563</a> 				bg.Set_faulty(&quot;If condition evaluation failed&quot;)
+<a href="#l564" class="line" id="l564">    564</a> 				return nil
+<a href="#l565" class="line" id="l565">    565</a> 			}
+<a href="#l566" class="line" id="l566">    566</a> 		}
+<a href="#l567" class="line" id="l567">    567</a> 
+<a href="#l568" class="line" id="l568">    568</a> 		if x.Body != nil {
+<a href="#l569" class="line" id="l569">    569</a> 			ast.Walk(bgif, x.Body)
+<a href="#l570" class="line" id="l570">    570</a> 		}
+<a href="#l571" class="line" id="l571">    571</a> 
+<a href="#l572" class="line" id="l572">    572</a> 		if x.Else != nil {
+<a href="#l573" class="line" id="l573">    573</a> 			bgif.WriteLine(bgif.CurrentRoutine, &quot;j &lt;&lt;&quot;+fmt.Sprintf(&quot;%p&quot;, bgif)+&quot;IFEND&gt;&gt;&quot;)
+<a href="#l574" class="line" id="l574">    574</a> 			bgif.Used &lt;- UsageNotify{TR_PROC, bgif.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l575" class="line" id="l575">    575</a> 		}
+<a href="#l576" class="line" id="l576">    576</a> 
+<a href="#l577" class="line" id="l577">    577</a> 		prod_lines_body := bgif.CountLines(bgif.CurrentRoutine)
+<a href="#l578" class="line" id="l578">    578</a> 
+<a href="#l579" class="line" id="l579">    579</a> 		if x.Else != nil {
+<a href="#l580" class="line" id="l580">    580</a> 			ast.Walk(bgif, x.Else)
+<a href="#l581" class="line" id="l581">    581</a> 		}
+<a href="#l582" class="line" id="l582">    582</a> 
+<a href="#l583" class="line" id="l583">    583</a> 		prod_lines_total := bgif.CountLines(bgif.CurrentRoutine)
+<a href="#l584" class="line" id="l584">    584</a> 
+<a href="#l585" class="line" id="l585">    585</a> 		bgif.Replacer(bgif.CurrentRoutine, &quot;&lt;&lt;&quot;+fmt.Sprintf(&quot;%p&quot;, bgif)+&quot;FALSECONDITION&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(prod_lines_body)+&quot;&gt;&gt;&quot;)
+<a href="#l586" class="line" id="l586">    586</a> 
+<a href="#l587" class="line" id="l587">    587</a> 		bgif.Replacer(bgif.CurrentRoutine, &quot;&lt;&lt;&quot;+fmt.Sprintf(&quot;%p&quot;, bgif)+&quot;IFEND&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(prod_lines_total)+&quot;&gt;&gt;&quot;)
+<a href="#l588" class="line" id="l588">    588</a> 
+<a href="#l589" class="line" id="l589">    589</a> 		// Shift eventually created reference to line number within the code
+<a href="#l590" class="line" id="l590">    590</a> 		bgif.Shift_program_location(bgif.CurrentRoutine, starting_point)
+<a href="#l591" class="line" id="l591">    591</a> 
+<a href="#l592" class="line" id="l592">    592</a> 		for _, line := range bgif.GetProgram(bgif.CurrentRoutine) {
+<a href="#l593" class="line" id="l593">    593</a> 			bg.WriteLine(bg.CurrentRoutine, line)
+<a href="#l594" class="line" id="l594">    594</a> 		}
+<a href="#l595" class="line" id="l595">    595</a> 
+<a href="#l596" class="line" id="l596">    596</a> 		// The node has already visited.
+<a href="#l597" class="line" id="l597">    597</a> 		return nil
+<a href="#l598" class="line" id="l598">    598</a> 
+<a href="#l599" class="line" id="l599">    599</a> 	case *ast.ForStmt:
+<a href="#l600" class="line" id="l600">    600</a> 		if bg.In_debug() {
+<a href="#l601" class="line" id="l601">    601</a> 			fmt.Printf(&quot;%p - Entering The for loop &quot;, bg)
+<a href="#l602" class="line" id="l602">    602</a> 		}
+<a href="#l603" class="line" id="l603">    603</a> 
+<a href="#l604" class="line" id="l604">    604</a> 		// Create a new BondgoCheck for the loop
+<a href="#l605" class="line" id="l605">    605</a> 		results := new(BondgoResults) // Results go in here
+<a href="#l606" class="line" id="l606">    606</a> 		results.Init_Results(bg.BondgoConfig)
+<a href="#l607" class="line" id="l607">    607</a> 
+<a href="#l608" class="line" id="l608">    608</a> 		bgfor := &amp;BondgoCheck{results, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, bg.Vars, bg.Returns, &quot;&quot;, bg.CurrentSwitch, bg.CurrentDevice, bg.CurrentRoutine}
+<a href="#l609" class="line" id="l609">    609</a> 
+<a href="#l610" class="line" id="l610">    610</a> 		if bg.In_debug() {
+<a href="#l611" class="line" id="l611">    611</a> 			fmt.Printf(&quot;%p\n&quot;, bgfor)
+<a href="#l612" class="line" id="l612">    612</a> 		}
+<a href="#l613" class="line" id="l613">    613</a> 
+<a href="#l614" class="line" id="l614">    614</a> 		starting_point := bg.CountLines(bg.CurrentRoutine)
+<a href="#l615" class="line" id="l615">    615</a> 
+<a href="#l616" class="line" id="l616">    616</a> 		bgfor.CurrentLoop = fmt.Sprintf(&quot;%p&quot;, bgfor)
+<a href="#l617" class="line" id="l617">    617</a> 
+<a href="#l618" class="line" id="l618">    618</a> 		if x.Init != nil {
+<a href="#l619" class="line" id="l619">    619</a> 			// Launch Walk on the init body using the new BondgoCheck
+<a href="#l620" class="line" id="l620">    620</a> 			ast.Walk(bgfor, x.Init)
+<a href="#l621" class="line" id="l621">    621</a> 		}
+<a href="#l622" class="line" id="l622">    622</a> 
+<a href="#l623" class="line" id="l623">    623</a> 		// The for starting point
+<a href="#l624" class="line" id="l624">    624</a> 		loop_start := bgfor.CountLines(bgfor.CurrentRoutine)
+<a href="#l625" class="line" id="l625">    625</a> 
+<a href="#l626" class="line" id="l626">    626</a> 		if x.Cond != nil {
+<a href="#l627" class="line" id="l627">    627</a> 			// Now eval the condition
+<a href="#l628" class="line" id="l628">    628</a> 			if newcell, ok := bgfor.Expr_eval(x.Cond); ok {
+<a href="#l629" class="line" id="l629">    629</a> 				condevalued := newcell[0]
+<a href="#l630" class="line" id="l630">    630</a> 
+<a href="#l631" class="line" id="l631">    631</a> 				gent, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l632" class="line" id="l632">    632</a> 				if Same_Type(condevalued.Vtype, gent) {
+<a href="#l633" class="line" id="l633">    633</a> 
+<a href="#l634" class="line" id="l634">    634</a> 					newregname := procbuilder.Get_register_name(condevalued.Id)
+<a href="#l635" class="line" id="l635">    635</a> 					bgfor.WriteLine(bgfor.CurrentRoutine, &quot;jz &quot;+newregname+&quot; &lt;&lt;&quot;+bgfor.CurrentLoop+&quot;ENDFOR&gt;&gt;&quot;)
+<a href="#l636" class="line" id="l636">    636</a> 					bgfor.Used &lt;- UsageNotify{TR_PROC, bgfor.CurrentRoutine, C_OPCODE, &quot;jz&quot;, I_NIL}
+<a href="#l637" class="line" id="l637">    637</a> 
+<a href="#l638" class="line" id="l638">    638</a> 					bgfor.Reqs &lt;- VarReq{REQ_REMOVE, bgfor.CurrentRoutine, condevalued}
+<a href="#l639" class="line" id="l639">    639</a> 					if (&lt;-bgfor.Answers).AnsType != ANS_OK {
+<a href="#l640" class="line" id="l640">    640</a> 						bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l641" class="line" id="l641">    641</a> 						return nil
+<a href="#l642" class="line" id="l642">    642</a> 					}
+<a href="#l643" class="line" id="l643">    643</a> 				} else {
+<a href="#l644" class="line" id="l644">    644</a> 					bg.Set_faulty(&quot;For need a boolean condition&quot;)
+<a href="#l645" class="line" id="l645">    645</a> 					return nil
+<a href="#l646" class="line" id="l646">    646</a> 				}
+<a href="#l647" class="line" id="l647">    647</a> 			} else {
+<a href="#l648" class="line" id="l648">    648</a> 				bg.Set_faulty(&quot;For condition evaluation failed&quot;)
+<a href="#l649" class="line" id="l649">    649</a> 				return nil
+<a href="#l650" class="line" id="l650">    650</a> 			}
+<a href="#l651" class="line" id="l651">    651</a> 		}
+<a href="#l652" class="line" id="l652">    652</a> 
+<a href="#l653" class="line" id="l653">    653</a> 		if x.Body != nil {
+<a href="#l654" class="line" id="l654">    654</a> 			ast.Walk(bgfor, x.Body)
+<a href="#l655" class="line" id="l655">    655</a> 		}
+<a href="#l656" class="line" id="l656">    656</a> 
+<a href="#l657" class="line" id="l657">    657</a> 		continue_point := bgfor.CountLines(bgfor.CurrentRoutine)
+<a href="#l658" class="line" id="l658">    658</a> 
+<a href="#l659" class="line" id="l659">    659</a> 		if x.Post != nil {
+<a href="#l660" class="line" id="l660">    660</a> 			ast.Walk(bgfor, x.Post)
+<a href="#l661" class="line" id="l661">    661</a> 		}
+<a href="#l662" class="line" id="l662">    662</a> 
+<a href="#l663" class="line" id="l663">    663</a> 		bgfor.WriteLine(bgfor.CurrentRoutine, &quot;j &lt;&lt;&quot;+bgfor.CurrentLoop+&quot;STARTFOR&gt;&gt;&quot;)
+<a href="#l664" class="line" id="l664">    664</a> 		bgfor.Used &lt;- UsageNotify{TR_PROC, bgfor.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l665" class="line" id="l665">    665</a> 
+<a href="#l666" class="line" id="l666">    666</a> 		prod_lines_total := bgfor.CountLines(bgfor.CurrentRoutine)
+<a href="#l667" class="line" id="l667">    667</a> 
+<a href="#l668" class="line" id="l668">    668</a> 		bgfor.Replacer(bgfor.CurrentRoutine, &quot;&lt;&lt;&quot;+bgfor.CurrentLoop+&quot;STARTFOR&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(loop_start)+&quot;&gt;&gt;&quot;)
+<a href="#l669" class="line" id="l669">    669</a> 		bgfor.Replacer(bgfor.CurrentRoutine, &quot;&lt;&lt;&quot;+bgfor.CurrentLoop+&quot;ENDFOR&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(prod_lines_total)+&quot;&gt;&gt;&quot;)
+<a href="#l670" class="line" id="l670">    670</a> 		bgfor.Replacer(bgfor.CurrentRoutine, &quot;&lt;&lt;&quot;+bgfor.CurrentLoop+&quot;CONTINUEFOR&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(continue_point)+&quot;&gt;&gt;&quot;)
+<a href="#l671" class="line" id="l671">    671</a> 
+<a href="#l672" class="line" id="l672">    672</a> 		// Shift eventually created reference to line number within the code
+<a href="#l673" class="line" id="l673">    673</a> 		bgfor.Shift_program_location(bgfor.CurrentRoutine, starting_point)
+<a href="#l674" class="line" id="l674">    674</a> 
+<a href="#l675" class="line" id="l675">    675</a> 		for _, line := range bgfor.GetProgram(bgfor.CurrentRoutine) {
+<a href="#l676" class="line" id="l676">    676</a> 			bg.WriteLine(bg.CurrentRoutine, line)
+<a href="#l677" class="line" id="l677">    677</a> 		}
+<a href="#l678" class="line" id="l678">    678</a> 
+<a href="#l679" class="line" id="l679">    679</a> 		// The node has already been visited.
+<a href="#l680" class="line" id="l680">    680</a> 		return nil
+<a href="#l681" class="line" id="l681">    681</a> 
+<a href="#l682" class="line" id="l682">    682</a> 	case *ast.SelectStmt:
+<a href="#l683" class="line" id="l683">    683</a> 		if bg.In_debug() {
+<a href="#l684" class="line" id="l684">    684</a> 			fmt.Printf(&quot;%p - Select statement&quot;, bg)
+<a href="#l685" class="line" id="l685">    685</a> 		}
+<a href="#l686" class="line" id="l686">    686</a> 
+<a href="#l687" class="line" id="l687">    687</a> 		// Create a new BondgoCheck for the select statement with an empty program
+<a href="#l688" class="line" id="l688">    688</a> 		results := new(BondgoResults) // Results go in here
+<a href="#l689" class="line" id="l689">    689</a> 		results.Init_Results(bg.BondgoConfig)
+<a href="#l690" class="line" id="l690">    690</a> 
+<a href="#l691" class="line" id="l691">    691</a> 		bgsel := &amp;BondgoCheck{results, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, bg.Vars, bg.Returns, bg.CurrentLoop, &quot;&quot;, bg.CurrentDevice, bg.CurrentRoutine}
+<a href="#l692" class="line" id="l692">    692</a> 
+<a href="#l693" class="line" id="l693">    693</a> 		starting_point := bg.CountLines(bg.CurrentRoutine)
+<a href="#l694" class="line" id="l694">    694</a> 
+<a href="#l695" class="line" id="l695">    695</a> 		bgsel.CurrentSwitch = fmt.Sprintf(&quot;SEL%p&quot;, bgsel)
+<a href="#l696" class="line" id="l696">    696</a> 
+<a href="#l697" class="line" id="l697">    697</a> 		selectbody := x.Body
+<a href="#l698" class="line" id="l698">    698</a> 
+<a href="#l699" class="line" id="l699">    699</a> 		if selectbody.List != nil {
+<a href="#l700" class="line" id="l700">    700</a> 			// There is a default case or not
+<a href="#l701" class="line" id="l701">    701</a> 			defaulted := false
+<a href="#l702" class="line" id="l702">    702</a> 			var default_point int
+<a href="#l703" class="line" id="l703">    703</a> 
+<a href="#l704" class="line" id="l704">    704</a> 			cases := len(selectbody.List)
+<a href="#l705" class="line" id="l705">    705</a> 			starting_points := make([]int, cases)
+<a href="#l706" class="line" id="l706">    706</a> 
+<a href="#l707" class="line" id="l707">    707</a> 			comm_registers := make([]VarCell, cases)
+<a href="#l708" class="line" id="l708">    708</a> 			comm_direction := make([]bool, cases) // true = send
+<a href="#l709" class="line" id="l709">    709</a> 			comm_channel := make([]VarCell, cases)
+<a href="#l710" class="line" id="l710">    710</a> 
+<a href="#l711" class="line" id="l711">    711</a> 			// The first loop set all the jumps toward cases
+<a href="#l712" class="line" id="l712">    712</a> 			ii := 0
+<a href="#l713" class="line" id="l713">    713</a> 			for _, clause := range selectbody.List {
+<a href="#l714" class="line" id="l714">    714</a> 				switch cc := clause.(type) {
+<a href="#l715" class="line" id="l715">    715</a> 				case *ast.CommClause:
+<a href="#l716" class="line" id="l716">    716</a> 					if cc.Comm != nil {
+<a href="#l717" class="line" id="l717">    717</a> 						switch commst := cc.Comm.(type) {
+<a href="#l718" class="line" id="l718">    718</a> 						case *ast.SendStmt:
+<a href="#l719" class="line" id="l719">    719</a> 							// This is a send operation
+<a href="#l720" class="line" id="l720">    720</a> 							if newcell, ok := bgsel.Expr_eval(commst.Value); ok {
+<a href="#l721" class="line" id="l721">    721</a> 								// TODO Optimization, this eval here may be a problem, everytime the expression is evaluted even if the channel is not used.
+<a href="#l722" class="line" id="l722">    722</a> 								comm_registers[ii] = newcell[0]
+<a href="#l723" class="line" id="l723">    723</a> 								comm_direction[ii] = true
+<a href="#l724" class="line" id="l724">    724</a> 							} else {
+<a href="#l725" class="line" id="l725">    725</a> 								bgsel.Set_faulty(&quot;Select condition evaluation failed&quot;)
+<a href="#l726" class="line" id="l726">    726</a> 								return nil
+<a href="#l727" class="line" id="l727">    727</a> 							}
+<a href="#l728" class="line" id="l728">    728</a> 
+<a href="#l729" class="line" id="l729">    729</a> 							chn := commst.Chan.(*ast.Ident)
+<a href="#l730" class="line" id="l730">    730</a> 
+<a href="#l731" class="line" id="l731">    731</a> 							for scope := bgsel; scope != nil; scope = scope.Outer {
+<a href="#l732" class="line" id="l732">    732</a> 								if _, ok := scope.Vars[chn.Name]; ok {
+<a href="#l733" class="line" id="l733">    733</a> 									comm_channel[ii] = scope.Vars[chn.Name]
+<a href="#l734" class="line" id="l734">    734</a> 									break
+<a href="#l735" class="line" id="l735">    735</a> 								}
+<a href="#l736" class="line" id="l736">    736</a> 							}
+<a href="#l737" class="line" id="l737">    737</a> 						case *ast.AssignStmt:
+<a href="#l738" class="line" id="l738">    738</a> 							// This is a receive operation, no matter if it&#39;s a assign or define space will be reserved.
+<a href="#l739" class="line" id="l739">    739</a> 							if len(commst.Lhs) == len(commst.Rhs) &amp;&amp; len(commst.Lhs) == 1 {
+<a href="#l740" class="line" id="l740">    740</a> 								switch commst.Rhs[0].(type) {
+<a href="#l741" class="line" id="l741">    741</a> 								case *ast.UnaryExpr:
+<a href="#l742" class="line" id="l742">    742</a> 									rhs := commst.Rhs[0].(*ast.UnaryExpr)
+<a href="#l743" class="line" id="l743">    743</a> 									if rhs.Op == token.ARROW {
+<a href="#l744" class="line" id="l744">    744</a> 										switch rhs.X.(type) {
+<a href="#l745" class="line" id="l745">    745</a> 										case *ast.Ident:
+<a href="#l746" class="line" id="l746">    746</a> 											chn := rhs.X.(*ast.Ident)
+<a href="#l747" class="line" id="l747">    747</a> 											for scope := bgsel; scope != nil; scope = scope.Outer {
+<a href="#l748" class="line" id="l748">    748</a> 												if _, ok := scope.Vars[chn.Name]; ok {
+<a href="#l749" class="line" id="l749">    749</a> 													comm_channel[ii] = scope.Vars[chn.Name]
+<a href="#l750" class="line" id="l750">    750</a> 													if gent, _ := Type_from_string(bg.Basic_type); Same_Type(comm_channel[ii].Vtype.Values[0], gent) {
+<a href="#l751" class="line" id="l751">    751</a> 														bgsel.Reqs &lt;- VarReq{REQ_NEW, bgsel.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l752" class="line" id="l752">    752</a> 														resp := &lt;-bgsel.Answers
+<a href="#l753" class="line" id="l753">    753</a> 														if resp.AnsType == ANS_OK {
+<a href="#l754" class="line" id="l754">    754</a> 															comm_registers[ii] = resp.Cell
+<a href="#l755" class="line" id="l755">    755</a> 														} else {
+<a href="#l756" class="line" id="l756">    756</a> 															bgsel.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l757" class="line" id="l757">    757</a> 															return nil
+<a href="#l758" class="line" id="l758">    758</a> 														}
+<a href="#l759" class="line" id="l759">    759</a> 													} else {
+<a href="#l760" class="line" id="l760">    760</a> 														bgsel.Set_faulty(&quot;Only allowed basic type&quot;)
+<a href="#l761" class="line" id="l761">    761</a> 														return nil
+<a href="#l762" class="line" id="l762">    762</a> 													}
+<a href="#l763" class="line" id="l763">    763</a> 													break
+<a href="#l764" class="line" id="l764">    764</a> 												}
+<a href="#l765" class="line" id="l765">    765</a> 											}
+<a href="#l766" class="line" id="l766">    766</a> 										default:
+<a href="#l767" class="line" id="l767">    767</a> 											bgsel.Set_faulty(&quot;Operation not valid in select assigment&quot;)
+<a href="#l768" class="line" id="l768">    768</a> 											return nil
+<a href="#l769" class="line" id="l769">    769</a> 										}
+<a href="#l770" class="line" id="l770">    770</a> 									} else {
+<a href="#l771" class="line" id="l771">    771</a> 										bgsel.Set_faulty(&quot;Operation not valid in select assigment&quot;)
+<a href="#l772" class="line" id="l772">    772</a> 										return nil
+<a href="#l773" class="line" id="l773">    773</a> 									}
+<a href="#l774" class="line" id="l774">    774</a> 								default:
+<a href="#l775" class="line" id="l775">    775</a> 									bgsel.Set_faulty(&quot;Operation not valid in select assigment&quot;)
+<a href="#l776" class="line" id="l776">    776</a> 									return nil
+<a href="#l777" class="line" id="l777">    777</a> 								}
+<a href="#l778" class="line" id="l778">    778</a> 							} else {
+<a href="#l779" class="line" id="l779">    779</a> 								bgsel.Set_faulty(&quot;Multivalue not allowed in receive operations&quot;)
+<a href="#l780" class="line" id="l780">    780</a> 								return nil
+<a href="#l781" class="line" id="l781">    781</a> 							}
+<a href="#l782" class="line" id="l782">    782</a> 						}
+<a href="#l783" class="line" id="l783">    783</a> 						ii++
+<a href="#l784" class="line" id="l784">    784</a> 					} else {
+<a href="#l785" class="line" id="l785">    785</a> 						// This is the default case
+<a href="#l786" class="line" id="l786">    786</a> 						if defaulted {
+<a href="#l787" class="line" id="l787">    787</a> 							bg.Set_faulty(&quot;Duplicate default case&quot;)
+<a href="#l788" class="line" id="l788">    788</a> 							return nil
+<a href="#l789" class="line" id="l789">    789</a> 						}
+<a href="#l790" class="line" id="l790">    790</a> 						defaulted = true
+<a href="#l791" class="line" id="l791">    791</a> 					}
+<a href="#l792" class="line" id="l792">    792</a> 
+<a href="#l793" class="line" id="l793">    793</a> 				default:
+<a href="#l794" class="line" id="l794">    794</a> 					bgsel.Set_faulty(&quot;Wrong case&quot;)
+<a href="#l795" class="line" id="l795">    795</a> 					return nil
+<a href="#l796" class="line" id="l796">    796</a> 				}
+<a href="#l797" class="line" id="l797">    797</a> 			}
+<a href="#l798" class="line" id="l798">    798</a> 
+<a href="#l799" class="line" id="l799">    799</a> 			if defaulted {
+<a href="#l800" class="line" id="l800">    800</a> 				comm_direction = comm_direction[:cases-1]
+<a href="#l801" class="line" id="l801">    801</a> 				comm_channel = comm_channel[:cases-1]
+<a href="#l802" class="line" id="l802">    802</a> 				comm_registers = comm_registers[:cases-1]
+<a href="#l803" class="line" id="l803">    803</a> 				starting_points = starting_points[:cases-1]
+<a href="#l804" class="line" id="l804">    804</a> 			}
+<a href="#l805" class="line" id="l805">    805</a> 
+<a href="#l806" class="line" id="l806">    806</a> 			for i, dir := range comm_direction {
+<a href="#l807" class="line" id="l807">    807</a> 				if dir {
+<a href="#l808" class="line" id="l808">    808</a> 					bgsel.WriteLine(bgsel.CurrentRoutine, &quot;wwr &quot;+procbuilder.Get_register_name(comm_registers[i].Id)+&quot; &quot;+procbuilder.Get_channel_name(comm_channel[i].Id))
+<a href="#l809" class="line" id="l809">    809</a> 					bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;wwr&quot;, I_NIL}
+<a href="#l810" class="line" id="l810">    810</a> 				} else {
+<a href="#l811" class="line" id="l811">    811</a> 					bgsel.WriteLine(bgsel.CurrentRoutine, &quot;wrd &quot;+procbuilder.Get_register_name(comm_registers[i].Id)+&quot; &quot;+procbuilder.Get_channel_name(comm_channel[i].Id))
+<a href="#l812" class="line" id="l812">    812</a> 					bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;wrd&quot;, I_NIL}
+<a href="#l813" class="line" id="l813">    813</a> 				}
+<a href="#l814" class="line" id="l814">    814</a> 			}
+<a href="#l815" class="line" id="l815">    815</a> 
+<a href="#l816" class="line" id="l816">    816</a> 			var eventreg VarCell
+<a href="#l817" class="line" id="l817">    817</a> 
+<a href="#l818" class="line" id="l818">    818</a> 			gent, _ := Type_from_string(bg.Basic_type)
+<a href="#l819" class="line" id="l819">    819</a> 			bgsel.Reqs &lt;- VarReq{REQ_NEW, bgsel.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l820" class="line" id="l820">    820</a> 			resp := &lt;-bgsel.Answers
+<a href="#l821" class="line" id="l821">    821</a> 			if resp.AnsType == ANS_OK {
+<a href="#l822" class="line" id="l822">    822</a> 				eventreg = resp.Cell
+<a href="#l823" class="line" id="l823">    823</a> 			} else {
+<a href="#l824" class="line" id="l824">    824</a> 				bgsel.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l825" class="line" id="l825">    825</a> 				return nil
+<a href="#l826" class="line" id="l826">    826</a> 			}
+<a href="#l827" class="line" id="l827">    827</a> 
+<a href="#l828" class="line" id="l828">    828</a> 			if defaulted { // Jump to the end of the switch
+<a href="#l829" class="line" id="l829">    829</a> 
+<a href="#l830" class="line" id="l830">    830</a> 				var occurreg VarCell
+<a href="#l831" class="line" id="l831">    831</a> 
+<a href="#l832" class="line" id="l832">    832</a> 				bgsel.Reqs &lt;- VarReq{REQ_NEW, bgsel.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l833" class="line" id="l833">    833</a> 				resp := &lt;-bgsel.Answers
+<a href="#l834" class="line" id="l834">    834</a> 				if resp.AnsType == ANS_OK {
+<a href="#l835" class="line" id="l835">    835</a> 					occurreg = resp.Cell
+<a href="#l836" class="line" id="l836">    836</a> 				} else {
+<a href="#l837" class="line" id="l837">    837</a> 					bgsel.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l838" class="line" id="l838">    838</a> 					return nil
+<a href="#l839" class="line" id="l839">    839</a> 				}
+<a href="#l840" class="line" id="l840">    840</a> 
+<a href="#l841" class="line" id="l841">    841</a> 				bgsel.WriteLine(bgsel.CurrentRoutine, &quot;chc &quot;+procbuilder.Get_register_name(occurreg.Id)+&quot; &quot;+procbuilder.Get_register_name(eventreg.Id))
+<a href="#l842" class="line" id="l842">    842</a> 				bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;chc&quot;, I_NIL}
+<a href="#l843" class="line" id="l843">    843</a> 
+<a href="#l844" class="line" id="l844">    844</a> 				bgsel.WriteLine(bgsel.CurrentRoutine, &quot;jz &quot;+procbuilder.Get_register_name(occurreg.Id)+&quot; &lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;CASEDEFAULT&gt;&gt;&quot;)
+<a href="#l845" class="line" id="l845">    845</a> 				bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;jz&quot;, I_NIL}
+<a href="#l846" class="line" id="l846">    846</a> 
+<a href="#l847" class="line" id="l847">    847</a> 				bgsel.Reqs &lt;- VarReq{REQ_REMOVE, bgsel.CurrentRoutine, occurreg}
+<a href="#l848" class="line" id="l848">    848</a> 				if (&lt;-bgsel.Answers).AnsType != ANS_OK {
+<a href="#l849" class="line" id="l849">    849</a> 					bgsel.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l850" class="line" id="l850">    850</a> 					return nil
+<a href="#l851" class="line" id="l851">    851</a> 				}
+<a href="#l852" class="line" id="l852">    852</a> 			} else {
+<a href="#l853" class="line" id="l853">    853</a> 				bgsel.WriteLine(bgsel.CurrentRoutine, &quot;chw &quot;+procbuilder.Get_register_name(eventreg.Id))
+<a href="#l854" class="line" id="l854">    854</a> 				bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l855" class="line" id="l855">    855</a> 			}
+<a href="#l856" class="line" id="l856">    856</a> 
+<a href="#l857" class="line" id="l857">    857</a> 			for i, _ := range comm_registers {
+<a href="#l858" class="line" id="l858">    858</a> 				bgsel.WriteLine(bgsel.CurrentRoutine, &quot;jz &quot;+procbuilder.Get_register_name(eventreg.Id)+&quot; &lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;CASE&quot;+strconv.Itoa(i)+&quot;&gt;&gt;&quot;)
+<a href="#l859" class="line" id="l859">    859</a> 				bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;jz&quot;, I_NIL}
+<a href="#l860" class="line" id="l860">    860</a> 				if i &lt; len(comm_registers)-1 {
+<a href="#l861" class="line" id="l861">    861</a> 					bgsel.WriteLine(bgsel.CurrentRoutine, &quot;dec &quot;+procbuilder.Get_register_name(eventreg.Id))
+<a href="#l862" class="line" id="l862">    862</a> 					bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;dec&quot;, I_NIL}
+<a href="#l863" class="line" id="l863">    863</a> 				}
+<a href="#l864" class="line" id="l864">    864</a> 			}
+<a href="#l865" class="line" id="l865">    865</a> 
+<a href="#l866" class="line" id="l866">    866</a> 			bgsel.Reqs &lt;- VarReq{REQ_REMOVE, bgsel.CurrentRoutine, eventreg}
+<a href="#l867" class="line" id="l867">    867</a> 			if (&lt;-bgsel.Answers).AnsType != ANS_OK {
+<a href="#l868" class="line" id="l868">    868</a> 				bgsel.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l869" class="line" id="l869">    869</a> 				return nil
+<a href="#l870" class="line" id="l870">    870</a> 			}
+<a href="#l871" class="line" id="l871">    871</a> 
+<a href="#l872" class="line" id="l872">    872</a> 			// The second loop create the cases
+<a href="#l873" class="line" id="l873">    873</a> 			ii = 0
+<a href="#l874" class="line" id="l874">    874</a> 			for _, clause := range selectbody.List {
+<a href="#l875" class="line" id="l875">    875</a> 				switch cc := clause.(type) {
+<a href="#l876" class="line" id="l876">    876</a> 				case *ast.CommClause:
+<a href="#l877" class="line" id="l877">    877</a> 
+<a href="#l878" class="line" id="l878">    878</a> 					if cc.Comm != nil {
+<a href="#l879" class="line" id="l879">    879</a> 						// This is a case
+<a href="#l880" class="line" id="l880">    880</a> 						starting_points[ii] = bgsel.CountLines(bgsel.CurrentRoutine)
+<a href="#l881" class="line" id="l881">    881</a> 
+<a href="#l882" class="line" id="l882">    882</a> 						// It&#39;s a receive
+<a href="#l883" class="line" id="l883">    883</a> 						if !comm_direction[ii] {
+<a href="#l884" class="line" id="l884">    884</a> 							vari := cc.Comm.(*ast.AssignStmt).Lhs[0].(*ast.Ident).Name
+<a href="#l885" class="line" id="l885">    885</a> 							switch cc.Comm.(*ast.AssignStmt).Tok {
+<a href="#l886" class="line" id="l886">    886</a> 							case token.ASSIGN:
+<a href="#l887" class="line" id="l887">    887</a> 
+<a href="#l888" class="line" id="l888">    888</a> 								varexist := false
+<a href="#l889" class="line" id="l889">    889</a> 								for scope := bgsel; scope != nil; scope = scope.Outer {
+<a href="#l890" class="line" id="l890">    890</a> 									if _, ok := scope.Vars[vari]; ok {
+<a href="#l891" class="line" id="l891">    891</a> 										varexist = true
+<a href="#l892" class="line" id="l892">    892</a> 
+<a href="#l893" class="line" id="l893">    893</a> 										cell := scope.Vars[vari]
+<a href="#l894" class="line" id="l894">    894</a> 										newcell := comm_registers[ii]
+<a href="#l895" class="line" id="l895">    895</a> 
+<a href="#l896" class="line" id="l896">    896</a> 										switch cell.Procobjtype {
+<a href="#l897" class="line" id="l897">    897</a> 										case REGISTER:
+<a href="#l898" class="line" id="l898">    898</a> 											regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l899" class="line" id="l899">    899</a> 											newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l900" class="line" id="l900">    900</a> 											bgsel.WriteLine(bgsel.CurrentRoutine, &quot;cpy &quot;+regname+&quot; &quot;+newregname)
+<a href="#l901" class="line" id="l901">    901</a> 											bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;cpy&quot;, I_NIL}
+<a href="#l902" class="line" id="l902">    902</a> 										case MEMORY:
+<a href="#l903" class="line" id="l903">    903</a> 											newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l904" class="line" id="l904">    904</a> 											bgsel.WriteLine(bgsel.CurrentRoutine, &quot;r2m &quot;+newregname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l905" class="line" id="l905">    905</a> 											bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l906" class="line" id="l906">    906</a> 										case INPUT:
+<a href="#l907" class="line" id="l907">    907</a> 											bgsel.Set_faulty(&quot;An input cannot be written&quot;)
+<a href="#l908" class="line" id="l908">    908</a> 											return nil
+<a href="#l909" class="line" id="l909">    909</a> 										case OUTPUT:
+<a href="#l910" class="line" id="l910">    910</a> 											newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l911" class="line" id="l911">    911</a> 											bgsel.WriteLine(bgsel.CurrentRoutine, &quot;r2o &quot;+newregname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l912" class="line" id="l912">    912</a> 											bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;r2o&quot;, I_NIL}
+<a href="#l913" class="line" id="l913">    913</a> 										case CHANNEL:
+<a href="#l914" class="line" id="l914">    914</a> 											bgsel.Set_faulty(&quot;A channel cannot be written&quot;)
+<a href="#l915" class="line" id="l915">    915</a> 											return nil
+<a href="#l916" class="line" id="l916">    916</a> 										}
+<a href="#l917" class="line" id="l917">    917</a> 										break
+<a href="#l918" class="line" id="l918">    918</a> 									}
+<a href="#l919" class="line" id="l919">    919</a> 								}
+<a href="#l920" class="line" id="l920">    920</a> 
+<a href="#l921" class="line" id="l921">    921</a> 								if !varexist {
+<a href="#l922" class="line" id="l922">    922</a> 									bgsel.Set_faulty(&quot;Unitialized variable &quot; + vari)
+<a href="#l923" class="line" id="l923">    923</a> 									return nil
+<a href="#l924" class="line" id="l924">    924</a> 								}
+<a href="#l925" class="line" id="l925">    925</a> 
+<a href="#l926" class="line" id="l926">    926</a> 							case token.DEFINE:
+<a href="#l927" class="line" id="l927">    927</a> 
+<a href="#l928" class="line" id="l928">    928</a> 								gent, _ := Type_from_string(bgsel.Basic_type)
+<a href="#l929" class="line" id="l929">    929</a> 								bgsel.Reqs &lt;- VarReq{REQ_NEW, bgsel.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l930" class="line" id="l930">    930</a> 								resp := &lt;-bgsel.Answers
+<a href="#l931" class="line" id="l931">    931</a> 								if resp.AnsType == ANS_OK {
+<a href="#l932" class="line" id="l932">    932</a> 
+<a href="#l933" class="line" id="l933">    933</a> 									newcell := resp.Cell
+<a href="#l934" class="line" id="l934">    934</a> 									cell := comm_registers[ii]
+<a href="#l935" class="line" id="l935">    935</a> 
+<a href="#l936" class="line" id="l936">    936</a> 									regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l937" class="line" id="l937">    937</a> 									newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l938" class="line" id="l938">    938</a> 									bgsel.WriteLine(bgsel.CurrentRoutine, &quot;cpy &quot;+newregname+&quot; &quot;+regname)
+<a href="#l939" class="line" id="l939">    939</a> 									bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;cpy&quot;, I_NIL}
+<a href="#l940" class="line" id="l940">    940</a> 
+<a href="#l941" class="line" id="l941">    941</a> 								} else {
+<a href="#l942" class="line" id="l942">    942</a> 									bgsel.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l943" class="line" id="l943">    943</a> 									return nil
+<a href="#l944" class="line" id="l944">    944</a> 								}
+<a href="#l945" class="line" id="l945">    945</a> 							default:
+<a href="#l946" class="line" id="l946">    946</a> 								bgsel.Set_faulty(&quot;Wrong assignment&quot;)
+<a href="#l947" class="line" id="l947">    947</a> 								return nil
+<a href="#l948" class="line" id="l948">    948</a> 							}
+<a href="#l949" class="line" id="l949">    949</a> 						}
+<a href="#l950" class="line" id="l950">    950</a> 
+<a href="#l951" class="line" id="l951">    951</a> 					} else {
+<a href="#l952" class="line" id="l952">    952</a> 						// This is the default case
+<a href="#l953" class="line" id="l953">    953</a> 						default_point = bgsel.CountLines(bgsel.CurrentRoutine)
+<a href="#l954" class="line" id="l954">    954</a> 					}
+<a href="#l955" class="line" id="l955">    955</a> 
+<a href="#l956" class="line" id="l956">    956</a> 					body := clause.(*ast.CommClause).Body
+<a href="#l957" class="line" id="l957">    957</a> 
+<a href="#l958" class="line" id="l958">    958</a> 					for _, cl := range body {
+<a href="#l959" class="line" id="l959">    959</a> 						ast.Walk(bgsel, cl)
+<a href="#l960" class="line" id="l960">    960</a> 					}
+<a href="#l961" class="line" id="l961">    961</a> 
+<a href="#l962" class="line" id="l962">    962</a> 				default:
+<a href="#l963" class="line" id="l963">    963</a> 					bgsel.Set_faulty(&quot;Wrong case&quot;)
+<a href="#l964" class="line" id="l964">    964</a> 					return nil
+<a href="#l965" class="line" id="l965">    965</a> 				}
+<a href="#l966" class="line" id="l966">    966</a> 
+<a href="#l967" class="line" id="l967">    967</a> 				bgsel.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;SELEND&gt;&gt;&quot;)
+<a href="#l968" class="line" id="l968">    968</a> 				bgsel.Used &lt;- UsageNotify{TR_PROC, bgsel.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l969" class="line" id="l969">    969</a> 
+<a href="#l970" class="line" id="l970">    970</a> 				ii++
+<a href="#l971" class="line" id="l971">    971</a> 			}
+<a href="#l972" class="line" id="l972">    972</a> 
+<a href="#l973" class="line" id="l973">    973</a> 			for _, jreg := range comm_registers {
+<a href="#l974" class="line" id="l974">    974</a> 				bgsel.Reqs &lt;- VarReq{REQ_REMOVE, bgsel.CurrentRoutine, jreg}
+<a href="#l975" class="line" id="l975">    975</a> 				if (&lt;-bgsel.Answers).AnsType != ANS_OK {
+<a href="#l976" class="line" id="l976">    976</a> 					bgsel.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l977" class="line" id="l977">    977</a> 					return nil
+<a href="#l978" class="line" id="l978">    978</a> 				}
+<a href="#l979" class="line" id="l979">    979</a> 			}
+<a href="#l980" class="line" id="l980">    980</a> 
+<a href="#l981" class="line" id="l981">    981</a> 			select_end := bgsel.CountLines(bgsel.CurrentRoutine)
+<a href="#l982" class="line" id="l982">    982</a> 
+<a href="#l983" class="line" id="l983">    983</a> 			for i, _ := range starting_points {
+<a href="#l984" class="line" id="l984">    984</a> 				bgsel.Replacer(bgsel.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;CASE&quot;+strconv.Itoa(i)+&quot;&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(starting_points[i])+&quot;&gt;&gt;&quot;)
+<a href="#l985" class="line" id="l985">    985</a> 			}
+<a href="#l986" class="line" id="l986">    986</a> 			bgsel.Replacer(bgsel.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;CASEDEFAULT&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(default_point)+&quot;&gt;&gt;&quot;)
+<a href="#l987" class="line" id="l987">    987</a> 			bgsel.Replacer(bgsel.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsel.CurrentSwitch+&quot;SELEND&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(select_end)+&quot;&gt;&gt;&quot;)
+<a href="#l988" class="line" id="l988">    988</a> 
+<a href="#l989" class="line" id="l989">    989</a> 			// Shift eventually created reference to line number within the code
+<a href="#l990" class="line" id="l990">    990</a> 			bgsel.Shift_program_location(bgsel.CurrentRoutine, starting_point)
+<a href="#l991" class="line" id="l991">    991</a> 
+<a href="#l992" class="line" id="l992">    992</a> 			for _, line := range bgsel.GetProgram(bgsel.CurrentRoutine) {
+<a href="#l993" class="line" id="l993">    993</a> 				bg.WriteLine(bg.CurrentRoutine, line)
+<a href="#l994" class="line" id="l994">    994</a> 			}
+<a href="#l995" class="line" id="l995">    995</a> 
+<a href="#l996" class="line" id="l996">    996</a> 		}
+<a href="#l997" class="line" id="l997">    997</a> 		return nil
+<a href="#l998" class="line" id="l998">    998</a> 
+<a href="#l999" class="line" id="l999">    999</a> 	case *ast.SwitchStmt:
+<a href="#l1000" class="line" id="l1000">   1000</a> 		if bg.In_debug() {
+<a href="#l1001" class="line" id="l1001">   1001</a> 			fmt.Printf(&quot;%p - Switch statement&quot;, bg)
+<a href="#l1002" class="line" id="l1002">   1002</a> 		}
+<a href="#l1003" class="line" id="l1003">   1003</a> 
+<a href="#l1004" class="line" id="l1004">   1004</a> 		var tagexpr VarCell
+<a href="#l1005" class="line" id="l1005">   1005</a> 
+<a href="#l1006" class="line" id="l1006">   1006</a> 		// Create a new BondgoCheck for the switch statement with an empty program
+<a href="#l1007" class="line" id="l1007">   1007</a> 		results := new(BondgoResults) // Results go in here
+<a href="#l1008" class="line" id="l1008">   1008</a> 		results.Init_Results(bg.BondgoConfig)
+<a href="#l1009" class="line" id="l1009">   1009</a> 
+<a href="#l1010" class="line" id="l1010">   1010</a> 		bgsw := &amp;BondgoCheck{results, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, bg.Vars, bg.Returns, bg.CurrentLoop, &quot;&quot;, bg.CurrentDevice, bg.CurrentRoutine}
+<a href="#l1011" class="line" id="l1011">   1011</a> 
+<a href="#l1012" class="line" id="l1012">   1012</a> 		starting_point := bg.CountLines(bg.CurrentRoutine)
+<a href="#l1013" class="line" id="l1013">   1013</a> 
+<a href="#l1014" class="line" id="l1014">   1014</a> 		bgsw.CurrentSwitch = fmt.Sprintf(&quot;%p&quot;, bgsw)
+<a href="#l1015" class="line" id="l1015">   1015</a> 
+<a href="#l1016" class="line" id="l1016">   1016</a> 		// I there is tag ok, otherwise use  a bool settet to true (not 0)
+<a href="#l1017" class="line" id="l1017">   1017</a> 		if x.Tag != nil {
+<a href="#l1018" class="line" id="l1018">   1018</a> 			if newcell, ok := bgsw.Expr_eval(x.Tag); ok {
+<a href="#l1019" class="line" id="l1019">   1019</a> 				tagexpr = newcell[0]
+<a href="#l1020" class="line" id="l1020">   1020</a> 			} else {
+<a href="#l1021" class="line" id="l1021">   1021</a> 				bgsw.Set_faulty(&quot;Switch condition evaluation failed&quot;)
+<a href="#l1022" class="line" id="l1022">   1022</a> 				return nil
+<a href="#l1023" class="line" id="l1023">   1023</a> 			}
+<a href="#l1024" class="line" id="l1024">   1024</a> 		} else {
+<a href="#l1025" class="line" id="l1025">   1025</a> 			gent, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l1026" class="line" id="l1026">   1026</a> 			bgsw.Reqs &lt;- VarReq{REQ_NEW, bgsw.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1027" class="line" id="l1027">   1027</a> 			resp := &lt;-bg.Answers
+<a href="#l1028" class="line" id="l1028">   1028</a> 			if resp.AnsType == ANS_OK {
+<a href="#l1029" class="line" id="l1029">   1029</a> 				tagexpr = resp.Cell
+<a href="#l1030" class="line" id="l1030">   1030</a> 
+<a href="#l1031" class="line" id="l1031">   1031</a> 				regname := procbuilder.Get_register_name(tagexpr.Id)
+<a href="#l1032" class="line" id="l1032">   1032</a> 
+<a href="#l1033" class="line" id="l1033">   1033</a> 				bgsw.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1034" class="line" id="l1034">   1034</a> 				bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1035" class="line" id="l1035">   1035</a> 				bgsw.WriteLine(bg.CurrentRoutine, &quot;rset &quot;+regname+&quot; 1&quot;)
+<a href="#l1036" class="line" id="l1036">   1036</a> 				bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;rset&quot;, I_NIL}
+<a href="#l1037" class="line" id="l1037">   1037</a> 
+<a href="#l1038" class="line" id="l1038">   1038</a> 			} else {
+<a href="#l1039" class="line" id="l1039">   1039</a> 				bgsw.Set_faulty(&quot;Allocation failed&quot;)
+<a href="#l1040" class="line" id="l1040">   1040</a> 				return nil
+<a href="#l1041" class="line" id="l1041">   1041</a> 
+<a href="#l1042" class="line" id="l1042">   1042</a> 			}
+<a href="#l1043" class="line" id="l1043">   1043</a> 
+<a href="#l1044" class="line" id="l1044">   1044</a> 		}
+<a href="#l1045" class="line" id="l1045">   1045</a> 
+<a href="#l1046" class="line" id="l1046">   1046</a> 		switchbody := x.Body
+<a href="#l1047" class="line" id="l1047">   1047</a> 
+<a href="#l1048" class="line" id="l1048">   1048</a> 		if switchbody.List != nil {
+<a href="#l1049" class="line" id="l1049">   1049</a> 			// There is a default case or not
+<a href="#l1050" class="line" id="l1050">   1050</a> 			defaulted := false
+<a href="#l1051" class="line" id="l1051">   1051</a> 			var default_point int
+<a href="#l1052" class="line" id="l1052">   1052</a> 
+<a href="#l1053" class="line" id="l1053">   1053</a> 			cases := len(switchbody.List)
+<a href="#l1054" class="line" id="l1054">   1054</a> 			starting_points := make([]int, cases)
+<a href="#l1055" class="line" id="l1055">   1055</a> 
+<a href="#l1056" class="line" id="l1056">   1056</a> 			// The first loop set all the jumps toward cases
+<a href="#l1057" class="line" id="l1057">   1057</a> 			for i, clause := range switchbody.List {
+<a href="#l1058" class="line" id="l1058">   1058</a> 				switch cc := clause.(type) {
+<a href="#l1059" class="line" id="l1059">   1059</a> 				case *ast.CaseClause:
+<a href="#l1060" class="line" id="l1060">   1060</a> 
+<a href="#l1061" class="line" id="l1061">   1061</a> 					if cc.List != nil {
+<a href="#l1062" class="line" id="l1062">   1062</a> 						// This is a case
+<a href="#l1063" class="line" id="l1063">   1063</a> 						for _, caseexpr := range cc.List {
+<a href="#l1064" class="line" id="l1064">   1064</a> 							// Now eval the condition
+<a href="#l1065" class="line" id="l1065">   1065</a> 							if newcell, ok := bgsw.Expr_eval(caseexpr); ok {
+<a href="#l1066" class="line" id="l1066">   1066</a> 
+<a href="#l1067" class="line" id="l1067">   1067</a> 								condevalued := newcell[0]
+<a href="#l1068" class="line" id="l1068">   1068</a> 
+<a href="#l1069" class="line" id="l1069">   1069</a> 								if Same_Type(tagexpr.Vtype, condevalued.Vtype) {
+<a href="#l1070" class="line" id="l1070">   1070</a> 
+<a href="#l1071" class="line" id="l1071">   1071</a> 									gent_bool, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l1072" class="line" id="l1072">   1072</a> 									gent_basic_type, _ := Type_from_string(bg.Basic_type)
+<a href="#l1073" class="line" id="l1073">   1073</a> 
+<a href="#l1074" class="line" id="l1074">   1074</a> 									if Same_Type(tagexpr.Vtype, gent_bool) || Same_Type(tagexpr.Vtype, gent_basic_type) {
+<a href="#l1075" class="line" id="l1075">   1075</a> 
+<a href="#l1076" class="line" id="l1076">   1076</a> 										regname := procbuilder.Get_register_name(tagexpr.Id)
+<a href="#l1077" class="line" id="l1077">   1077</a> 										newregname := procbuilder.Get_register_name(condevalued.Id)
+<a href="#l1078" class="line" id="l1078">   1078</a> 
+<a href="#l1079" class="line" id="l1079">   1079</a> 										bgsw.WriteLine(bgsw.CurrentRoutine, &quot;je &quot;+regname+&quot; &quot;+newregname+&quot; &lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;CASE&quot;+strconv.Itoa(i)+&quot;&gt;&gt;&quot;)
+<a href="#l1080" class="line" id="l1080">   1080</a> 										bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;je&quot;, I_NIL}
+<a href="#l1081" class="line" id="l1081">   1081</a> 
+<a href="#l1082" class="line" id="l1082">   1082</a> 										bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, condevalued}
+<a href="#l1083" class="line" id="l1083">   1083</a> 										if (&lt;-bgsw.Answers).AnsType != ANS_OK {
+<a href="#l1084" class="line" id="l1084">   1084</a> 											bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1085" class="line" id="l1085">   1085</a> 											return nil
+<a href="#l1086" class="line" id="l1086">   1086</a> 										}
+<a href="#l1087" class="line" id="l1087">   1087</a> 									} else {
+<a href="#l1088" class="line" id="l1088">   1088</a> 										bg.Set_faulty(&quot;Variable type not supported&quot;)
+<a href="#l1089" class="line" id="l1089">   1089</a> 										return nil
+<a href="#l1090" class="line" id="l1090">   1090</a> 									}
+<a href="#l1091" class="line" id="l1091">   1091</a> 
+<a href="#l1092" class="line" id="l1092">   1092</a> 								} else {
+<a href="#l1093" class="line" id="l1093">   1093</a> 									bg.Set_faulty(&quot;Type mismatch in case clause&quot;)
+<a href="#l1094" class="line" id="l1094">   1094</a> 									return nil
+<a href="#l1095" class="line" id="l1095">   1095</a> 								}
+<a href="#l1096" class="line" id="l1096">   1096</a> 							} else {
+<a href="#l1097" class="line" id="l1097">   1097</a> 								bg.Set_faulty(&quot;Case condition evaluation failed&quot;)
+<a href="#l1098" class="line" id="l1098">   1098</a> 								return nil
+<a href="#l1099" class="line" id="l1099">   1099</a> 							}
+<a href="#l1100" class="line" id="l1100">   1100</a> 
+<a href="#l1101" class="line" id="l1101">   1101</a> 						}
+<a href="#l1102" class="line" id="l1102">   1102</a> 					} else {
+<a href="#l1103" class="line" id="l1103">   1103</a> 						// This is the default case
+<a href="#l1104" class="line" id="l1104">   1104</a> 						if defaulted {
+<a href="#l1105" class="line" id="l1105">   1105</a> 							bg.Set_faulty(&quot;Duplicate default case&quot;)
+<a href="#l1106" class="line" id="l1106">   1106</a> 							return nil
+<a href="#l1107" class="line" id="l1107">   1107</a> 						}
+<a href="#l1108" class="line" id="l1108">   1108</a> 						defaulted = true
+<a href="#l1109" class="line" id="l1109">   1109</a> 					}
+<a href="#l1110" class="line" id="l1110">   1110</a> 
+<a href="#l1111" class="line" id="l1111">   1111</a> 				default:
+<a href="#l1112" class="line" id="l1112">   1112</a> 					bgsw.Set_faulty(&quot;Wrong case&quot;)
+<a href="#l1113" class="line" id="l1113">   1113</a> 					return nil
+<a href="#l1114" class="line" id="l1114">   1114</a> 				}
+<a href="#l1115" class="line" id="l1115">   1115</a> 			}
+<a href="#l1116" class="line" id="l1116">   1116</a> 
+<a href="#l1117" class="line" id="l1117">   1117</a> 			if defaulted { // Jump to the end of the switch
+<a href="#l1118" class="line" id="l1118">   1118</a> 				bgsw.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;CASEDEFAULT&gt;&gt;&quot;)
+<a href="#l1119" class="line" id="l1119">   1119</a> 				bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1120" class="line" id="l1120">   1120</a> 			} else {
+<a href="#l1121" class="line" id="l1121">   1121</a> 				bgsw.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;SWEND&gt;&gt;&quot;)
+<a href="#l1122" class="line" id="l1122">   1122</a> 				bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1123" class="line" id="l1123">   1123</a> 			}
+<a href="#l1124" class="line" id="l1124">   1124</a> 
+<a href="#l1125" class="line" id="l1125">   1125</a> 			// The second loop create the cases
+<a href="#l1126" class="line" id="l1126">   1126</a> 			for i, clause := range switchbody.List {
+<a href="#l1127" class="line" id="l1127">   1127</a> 				switch cc := clause.(type) {
+<a href="#l1128" class="line" id="l1128">   1128</a> 				case *ast.CaseClause:
+<a href="#l1129" class="line" id="l1129">   1129</a> 
+<a href="#l1130" class="line" id="l1130">   1130</a> 					if cc.List != nil {
+<a href="#l1131" class="line" id="l1131">   1131</a> 						// This is a case
+<a href="#l1132" class="line" id="l1132">   1132</a> 						starting_points[i] = bgsw.CountLines(bgsw.CurrentRoutine)
+<a href="#l1133" class="line" id="l1133">   1133</a> 					} else {
+<a href="#l1134" class="line" id="l1134">   1134</a> 						// This is the default case
+<a href="#l1135" class="line" id="l1135">   1135</a> 						default_point = bgsw.CountLines(bgsw.CurrentRoutine)
+<a href="#l1136" class="line" id="l1136">   1136</a> 					}
+<a href="#l1137" class="line" id="l1137">   1137</a> 
+<a href="#l1138" class="line" id="l1138">   1138</a> 					ast.Walk(bgsw, clause)
+<a href="#l1139" class="line" id="l1139">   1139</a> 
+<a href="#l1140" class="line" id="l1140">   1140</a> 				default:
+<a href="#l1141" class="line" id="l1141">   1141</a> 					bgsw.Set_faulty(&quot;Wrong case&quot;)
+<a href="#l1142" class="line" id="l1142">   1142</a> 					return nil
+<a href="#l1143" class="line" id="l1143">   1143</a> 				}
+<a href="#l1144" class="line" id="l1144">   1144</a> 
+<a href="#l1145" class="line" id="l1145">   1145</a> 				if i &lt; len(switchbody.List)-1 {
+<a href="#l1146" class="line" id="l1146">   1146</a> 					bgsw.Replacer(bgsw.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;FALLTHROUGH&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;CASE&quot;+strconv.Itoa(i+1)+&quot;&gt;&gt;&quot;)
+<a href="#l1147" class="line" id="l1147">   1147</a> 				} else {
+<a href="#l1148" class="line" id="l1148">   1148</a> 					if bgsw.Checker(bgsw.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;FALLTHROUGH&gt;&gt;&quot;) {
+<a href="#l1149" class="line" id="l1149">   1149</a> 						bgsw.Set_faulty(&quot;Fallthrought on the last case is not permitted&quot;)
+<a href="#l1150" class="line" id="l1150">   1150</a> 						return nil
+<a href="#l1151" class="line" id="l1151">   1151</a> 					}
+<a href="#l1152" class="line" id="l1152">   1152</a> 				}
+<a href="#l1153" class="line" id="l1153">   1153</a> 
+<a href="#l1154" class="line" id="l1154">   1154</a> 				bgsw.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;SWEND&gt;&gt;&quot;)
+<a href="#l1155" class="line" id="l1155">   1155</a> 				bgsw.Used &lt;- UsageNotify{TR_PROC, bgsw.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1156" class="line" id="l1156">   1156</a> 			}
+<a href="#l1157" class="line" id="l1157">   1157</a> 
+<a href="#l1158" class="line" id="l1158">   1158</a> 			switch_end := bgsw.CountLines(bgsw.CurrentRoutine)
+<a href="#l1159" class="line" id="l1159">   1159</a> 
+<a href="#l1160" class="line" id="l1160">   1160</a> 			for i, _ := range switchbody.List {
+<a href="#l1161" class="line" id="l1161">   1161</a> 				bgsw.Replacer(bgsw.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;CASE&quot;+strconv.Itoa(i)+&quot;&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(starting_points[i])+&quot;&gt;&gt;&quot;)
+<a href="#l1162" class="line" id="l1162">   1162</a> 			}
+<a href="#l1163" class="line" id="l1163">   1163</a> 			bgsw.Replacer(bgsw.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;CASEDEFAULT&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(default_point)+&quot;&gt;&gt;&quot;)
+<a href="#l1164" class="line" id="l1164">   1164</a> 			bgsw.Replacer(bgsw.CurrentRoutine, &quot;&lt;&lt;&quot;+bgsw.CurrentSwitch+&quot;SWEND&gt;&gt;&quot;, &quot;&lt;&lt;&quot;+strconv.Itoa(switch_end)+&quot;&gt;&gt;&quot;)
+<a href="#l1165" class="line" id="l1165">   1165</a> 
+<a href="#l1166" class="line" id="l1166">   1166</a> 			// Shift eventually created reference to line number within the code
+<a href="#l1167" class="line" id="l1167">   1167</a> 			bgsw.Shift_program_location(bgsw.CurrentRoutine, starting_point)
+<a href="#l1168" class="line" id="l1168">   1168</a> 
+<a href="#l1169" class="line" id="l1169">   1169</a> 			for _, line := range bgsw.GetProgram(bgsw.CurrentRoutine) {
+<a href="#l1170" class="line" id="l1170">   1170</a> 				bg.WriteLine(bg.CurrentRoutine, line)
+<a href="#l1171" class="line" id="l1171">   1171</a> 			}
+<a href="#l1172" class="line" id="l1172">   1172</a> 
+<a href="#l1173" class="line" id="l1173">   1173</a> 		}
+<a href="#l1174" class="line" id="l1174">   1174</a> 		return nil
+<a href="#l1175" class="line" id="l1175">   1175</a> 
+<a href="#l1176" class="line" id="l1176">   1176</a> 	case *ast.LabeledStmt:
+<a href="#l1177" class="line" id="l1177">   1177</a> 		{
+<a href="#l1178" class="line" id="l1178">   1178</a> 			if bg.In_debug() {
+<a href="#l1179" class="line" id="l1179">   1179</a> 				fmt.Printf(&quot;%p - Entering the new label &quot;, bg)
+<a href="#l1180" class="line" id="l1180">   1180</a> 			}
+<a href="#l1181" class="line" id="l1181">   1181</a> 
+<a href="#l1182" class="line" id="l1182">   1182</a> 			vars := make(map[string]VarCell)
+<a href="#l1183" class="line" id="l1183">   1183</a> 
+<a href="#l1184" class="line" id="l1184">   1184</a> 			obj := x.Label.Obj
+<a href="#l1185" class="line" id="l1185">   1185</a> 			label := obj.Name
+<a href="#l1186" class="line" id="l1186">   1186</a> 
+<a href="#l1187" class="line" id="l1187">   1187</a> 			bglabel := &amp;BondgoCheck{bg.BondgoResults, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, bg, nil, vars, bg.Returns, bg.CurrentLoop, bg.CurrentSwitch, label, bg.CurrentRoutine}
+<a href="#l1188" class="line" id="l1188">   1188</a> 
+<a href="#l1189" class="line" id="l1189">   1189</a> 			if bg.In_debug() {
+<a href="#l1190" class="line" id="l1190">   1190</a> 				fmt.Printf(&quot;%p\n&quot;, bglabel)
+<a href="#l1191" class="line" id="l1191">   1191</a> 			}
+<a href="#l1192" class="line" id="l1192">   1192</a> 
+<a href="#l1193" class="line" id="l1193">   1193</a> 			ast.Walk(bglabel, x.Stmt)
+<a href="#l1194" class="line" id="l1194">   1194</a> 
+<a href="#l1195" class="line" id="l1195">   1195</a> 			return nil
+<a href="#l1196" class="line" id="l1196">   1196</a> 		}
+<a href="#l1197" class="line" id="l1197">   1197</a> 
+<a href="#l1198" class="line" id="l1198">   1198</a> 	case *ast.GoStmt:
+<a href="#l1199" class="line" id="l1199">   1199</a> 		if bg.In_debug() {
+<a href="#l1200" class="line" id="l1200">   1200</a> 			fmt.Printf(&quot;%p - Go statement\n&quot;, bg)
+<a href="#l1201" class="line" id="l1201">   1201</a> 		}
+<a href="#l1202" class="line" id="l1202">   1202</a> 
+<a href="#l1203" class="line" id="l1203">   1203</a> 		callExpr := x.Call
+<a href="#l1204" class="line" id="l1204">   1204</a> 
+<a href="#l1205" class="line" id="l1205">   1205</a> 		// This is a function call
+<a href="#l1206" class="line" id="l1206">   1206</a> 		var functcell FunctCell
+<a href="#l1207" class="line" id="l1207">   1207</a> 
+<a href="#l1208" class="line" id="l1208">   1208</a> 		// TODO Some check here
+<a href="#l1209" class="line" id="l1209">   1209</a> 		switch callExpr.Fun.(type) {
+<a href="#l1210" class="line" id="l1210">   1210</a> 		case *ast.Ident:
+<a href="#l1211" class="line" id="l1211">   1211</a> 
+<a href="#l1212" class="line" id="l1212">   1212</a> 			if bg.CurrentLoop != &quot;&quot; {
+<a href="#l1213" class="line" id="l1213">   1213</a> 				bg.Set_faulty(&quot;Goroutines cannot be lauched from within a loop in bondgo&quot;)
+<a href="#l1214" class="line" id="l1214">   1214</a> 				return nil
+<a href="#l1215" class="line" id="l1215">   1215</a> 			}
+<a href="#l1216" class="line" id="l1216">   1216</a> 
+<a href="#l1217" class="line" id="l1217">   1217</a> 			fun := callExpr.Fun.(*ast.Ident)
+<a href="#l1218" class="line" id="l1218">   1218</a> 			funname := fun.Name
+<a href="#l1219" class="line" id="l1219">   1219</a> 
+<a href="#l1220" class="line" id="l1220">   1220</a> 			if _, ok := bg.Functions[funname]; ok {
+<a href="#l1221" class="line" id="l1221">   1221</a> 				functcell = bg.Functions[funname]
+<a href="#l1222" class="line" id="l1222">   1222</a> 			} else {
+<a href="#l1223" class="line" id="l1223">   1223</a> 				bg.Set_faulty(&quot;Undefined function &quot; + funname)
+<a href="#l1224" class="line" id="l1224">   1224</a> 				return nil
+<a href="#l1225" class="line" id="l1225">   1225</a> 			}
+<a href="#l1226" class="line" id="l1226">   1226</a> 
+<a href="#l1227" class="line" id="l1227">   1227</a> 			// Allocate variables for the function arguments and fill them with evalued values of the arguments
+<a href="#l1228" class="line" id="l1228">   1228</a> 			vars := make(map[string]VarCell)
+<a href="#l1229" class="line" id="l1229">   1229</a> 
+<a href="#l1230" class="line" id="l1230">   1230</a> 			if len(functcell.Inputs) == len(callExpr.Args) {
+<a href="#l1231" class="line" id="l1231">   1231</a> 				for i, arg := range functcell.Inputs {
+<a href="#l1232" class="line" id="l1232">   1232</a> 					argname := arg.Argname
+<a href="#l1233" class="line" id="l1233">   1233</a> 					if _, ok := vars[argname]; ok {
+<a href="#l1234" class="line" id="l1234">   1234</a> 						bg.Set_faulty(&quot;Already defined variable&quot;)
+<a href="#l1235" class="line" id="l1235">   1235</a> 						return nil
+<a href="#l1236" class="line" id="l1236">   1236</a> 					} else {
+<a href="#l1237" class="line" id="l1237">   1237</a> 						if cell, ok := bg.Expr_eval(callExpr.Args[i]); !ok {
+<a href="#l1238" class="line" id="l1238">   1238</a> 							bg.Set_faulty(&quot;Wrong evaluation&quot;)
+<a href="#l1239" class="line" id="l1239">   1239</a> 							return nil
+<a href="#l1240" class="line" id="l1240">   1240</a> 						} else {
+<a href="#l1241" class="line" id="l1241">   1241</a> 							vars[argname] = cell[0]
+<a href="#l1242" class="line" id="l1242">   1242</a> 						}
+<a href="#l1243" class="line" id="l1243">   1243</a> 					}
+<a href="#l1244" class="line" id="l1244">   1244</a> 				}
+<a href="#l1245" class="line" id="l1245">   1245</a> 			} else {
+<a href="#l1246" class="line" id="l1246">   1246</a> 				bg.Set_faulty(&quot;Call with wrong number of parameters&quot;)
+<a href="#l1247" class="line" id="l1247">   1247</a> 				return nil
+<a href="#l1248" class="line" id="l1248">   1248</a> 			}
+<a href="#l1249" class="line" id="l1249">   1249</a> 
+<a href="#l1250" class="line" id="l1250">   1250</a> 			// Evaluate if a channel is needed, this happen if some data has to passed to the other processor before it start computing
+<a href="#l1251" class="line" id="l1251">   1251</a> 			// Create also the variables for the other processor
+<a href="#l1252" class="line" id="l1252">   1252</a> 			newvars := make(map[string]VarCell)
+<a href="#l1253" class="line" id="l1253">   1253</a> 			newreturns := make([]VarCell, 0)
+<a href="#l1254" class="line" id="l1254">   1254</a> 
+<a href="#l1255" class="line" id="l1255">   1255</a> 			next_currentroutine := len(bg.Program)
+<a href="#l1256" class="line" id="l1256">   1256</a> 
+<a href="#l1257" class="line" id="l1257">   1257</a> 			proccode := new(BondgoRoutine)
+<a href="#l1258" class="line" id="l1258">   1258</a> 			proccode.Lines = make([]string, 0)
+<a href="#l1259" class="line" id="l1259">   1259</a> 			bg.Program[next_currentroutine] = proccode
+<a href="#l1260" class="line" id="l1260">   1260</a> 
+<a href="#l1261" class="line" id="l1261">   1261</a> 			// Prepare the new bondgocheck for the other processor
+<a href="#l1262" class="line" id="l1262">   1262</a> 			bggoroutine := &amp;BondgoCheck{bg.BondgoResults, bg.BondgoConfig, bg.BondgoRequirements, bg.BondgoRuninfo, bg.BondgoMessages, bg.BondgoFunctions, bg.Used, bg.Reqs, bg.Answers, nil, nil, newvars, newreturns, &quot;&quot;, &quot;&quot;, bg.CurrentDevice, next_currentroutine}
+<a href="#l1263" class="line" id="l1263">   1263</a> 
+<a href="#l1264" class="line" id="l1264">   1264</a> 			// Establish the Device parameter for the next goroutine
+<a href="#l1265" class="line" id="l1265">   1265</a> 			bggoroutine.Used &lt;- UsageNotify{TR_PROC, next_currentroutine, C_DEVICE, bg.CurrentDevice, I_NIL}
+<a href="#l1266" class="line" id="l1266">   1266</a> 
+<a href="#l1267" class="line" id="l1267">   1267</a> 			// fmt.Println(len(bg.Program))
+<a href="#l1268" class="line" id="l1268">   1268</a> 
+<a href="#l1269" class="line" id="l1269">   1269</a> 			needchan := false
+<a href="#l1270" class="line" id="l1270">   1270</a> 			for varname, cell := range vars {
+<a href="#l1271" class="line" id="l1271">   1271</a> 				if gent, _ := Type_from_string(bg.Basic_type); Same_Type(cell.Vtype, gent) {
+<a href="#l1272" class="line" id="l1272">   1272</a> 					needchan = true
+<a href="#l1273" class="line" id="l1273">   1273</a> 					bggoroutine.Reqs &lt;- VarReq{REQ_NEW, bggoroutine.CurrentRoutine, cell}
+<a href="#l1274" class="line" id="l1274">   1274</a> 					resp := &lt;-bg.Answers
+<a href="#l1275" class="line" id="l1275">   1275</a> 					if resp.AnsType == ANS_OK {
+<a href="#l1276" class="line" id="l1276">   1276</a> 						newcell := resp.Cell
+<a href="#l1277" class="line" id="l1277">   1277</a> 
+<a href="#l1278" class="line" id="l1278">   1278</a> 						newvars[varname] = newcell
+<a href="#l1279" class="line" id="l1279">   1279</a> 
+<a href="#l1280" class="line" id="l1280">   1280</a> 						switch newcell.Procobjtype {
+<a href="#l1281" class="line" id="l1281">   1281</a> 						case REGISTER:
+<a href="#l1282" class="line" id="l1282">   1282</a> 							regname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l1283" class="line" id="l1283">   1283</a> 							bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1284" class="line" id="l1284">   1284</a> 							bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1285" class="line" id="l1285">   1285</a> 						case MEMORY:
+<a href="#l1286" class="line" id="l1286">   1286</a> 							bggoroutine.Reqs &lt;- VarReq{REQ_NEW, bggoroutine.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1287" class="line" id="l1287">   1287</a> 							newresp := &lt;-bggoroutine.Answers
+<a href="#l1288" class="line" id="l1288">   1288</a> 							if newresp.AnsType == ANS_OK {
+<a href="#l1289" class="line" id="l1289">   1289</a> 								newregcell := newresp.Cell
+<a href="#l1290" class="line" id="l1290">   1290</a> 
+<a href="#l1291" class="line" id="l1291">   1291</a> 								regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l1292" class="line" id="l1292">   1292</a> 
+<a href="#l1293" class="line" id="l1293">   1293</a> 								bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1294" class="line" id="l1294">   1294</a> 								bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1295" class="line" id="l1295">   1295</a> 								bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(newcell.Id))
+<a href="#l1296" class="line" id="l1296">   1296</a> 								bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l1297" class="line" id="l1297">   1297</a> 
+<a href="#l1298" class="line" id="l1298">   1298</a> 								bggoroutine.Reqs &lt;- VarReq{REQ_REMOVE, bggoroutine.CurrentRoutine, newregcell}
+<a href="#l1299" class="line" id="l1299">   1299</a> 								if (&lt;-bggoroutine.Answers).AnsType != ANS_OK {
+<a href="#l1300" class="line" id="l1300">   1300</a> 									bggoroutine.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1301" class="line" id="l1301">   1301</a> 									return nil
+<a href="#l1302" class="line" id="l1302">   1302</a> 								}
+<a href="#l1303" class="line" id="l1303">   1303</a> 							} else {
+<a href="#l1304" class="line" id="l1304">   1304</a> 								bggoroutine.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l1305" class="line" id="l1305">   1305</a> 								return nil
+<a href="#l1306" class="line" id="l1306">   1306</a> 							}
+<a href="#l1307" class="line" id="l1307">   1307</a> 						}
+<a href="#l1308" class="line" id="l1308">   1308</a> 					} else {
+<a href="#l1309" class="line" id="l1309">   1309</a> 						bg.Set_faulty(&quot;Allocation failed&quot;)
+<a href="#l1310" class="line" id="l1310">   1310</a> 						return nil
+<a href="#l1311" class="line" id="l1311">   1311</a> 					}
+<a href="#l1312" class="line" id="l1312">   1312</a> 				} else if gent, _ := Type_from_string(&quot;bool&quot;); Same_Type(cell.Vtype, gent) {
+<a href="#l1313" class="line" id="l1313">   1313</a> 					needchan = true
+<a href="#l1314" class="line" id="l1314">   1314</a> 					bggoroutine.Reqs &lt;- VarReq{REQ_NEW, bggoroutine.CurrentRoutine, cell}
+<a href="#l1315" class="line" id="l1315">   1315</a> 					resp := &lt;-bg.Answers
+<a href="#l1316" class="line" id="l1316">   1316</a> 					if resp.AnsType == ANS_OK {
+<a href="#l1317" class="line" id="l1317">   1317</a> 						newcell := resp.Cell
+<a href="#l1318" class="line" id="l1318">   1318</a> 
+<a href="#l1319" class="line" id="l1319">   1319</a> 						newvars[varname] = newcell
+<a href="#l1320" class="line" id="l1320">   1320</a> 
+<a href="#l1321" class="line" id="l1321">   1321</a> 						switch newcell.Procobjtype {
+<a href="#l1322" class="line" id="l1322">   1322</a> 						case REGISTER:
+<a href="#l1323" class="line" id="l1323">   1323</a> 							regname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l1324" class="line" id="l1324">   1324</a> 							bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1325" class="line" id="l1325">   1325</a> 							bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1326" class="line" id="l1326">   1326</a> 						case MEMORY:
+<a href="#l1327" class="line" id="l1327">   1327</a> 							bggoroutine.Reqs &lt;- VarReq{REQ_NEW, bggoroutine.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1328" class="line" id="l1328">   1328</a> 							newresp := &lt;-bggoroutine.Answers
+<a href="#l1329" class="line" id="l1329">   1329</a> 							if newresp.AnsType == ANS_OK {
+<a href="#l1330" class="line" id="l1330">   1330</a> 								newregcell := newresp.Cell
+<a href="#l1331" class="line" id="l1331">   1331</a> 
+<a href="#l1332" class="line" id="l1332">   1332</a> 								regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l1333" class="line" id="l1333">   1333</a> 
+<a href="#l1334" class="line" id="l1334">   1334</a> 								bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1335" class="line" id="l1335">   1335</a> 								bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1336" class="line" id="l1336">   1336</a> 								bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(newcell.Id))
+<a href="#l1337" class="line" id="l1337">   1337</a> 								bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;r2m&quot;, I_NIL}
+<a href="#l1338" class="line" id="l1338">   1338</a> 
+<a href="#l1339" class="line" id="l1339">   1339</a> 								bggoroutine.Reqs &lt;- VarReq{REQ_REMOVE, bggoroutine.CurrentRoutine, newregcell}
+<a href="#l1340" class="line" id="l1340">   1340</a> 								if (&lt;-bggoroutine.Answers).AnsType != ANS_OK {
+<a href="#l1341" class="line" id="l1341">   1341</a> 									bggoroutine.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1342" class="line" id="l1342">   1342</a> 									return nil
+<a href="#l1343" class="line" id="l1343">   1343</a> 								}
+<a href="#l1344" class="line" id="l1344">   1344</a> 							} else {
+<a href="#l1345" class="line" id="l1345">   1345</a> 								bggoroutine.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l1346" class="line" id="l1346">   1346</a> 								return nil
+<a href="#l1347" class="line" id="l1347">   1347</a> 							}
+<a href="#l1348" class="line" id="l1348">   1348</a> 						}
+<a href="#l1349" class="line" id="l1349">   1349</a> 					} else {
+<a href="#l1350" class="line" id="l1350">   1350</a> 						bg.Set_faulty(&quot;Allocation failed&quot;)
+<a href="#l1351" class="line" id="l1351">   1351</a> 						return nil
+<a href="#l1352" class="line" id="l1352">   1352</a> 					}
+<a href="#l1353" class="line" id="l1353">   1353</a> 				} else if gent, _ := Type_from_string(bg.Basic_chantype); Same_Type(cell.Vtype, gent) {
+<a href="#l1354" class="line" id="l1354">   1354</a> 					bggoroutine.Reqs &lt;- VarReq{REQ_ATTACH, bggoroutine.CurrentRoutine, cell}
+<a href="#l1355" class="line" id="l1355">   1355</a> 					resp := &lt;-bg.Answers
+<a href="#l1356" class="line" id="l1356">   1356</a> 					if resp.AnsType == ANS_OK {
+<a href="#l1357" class="line" id="l1357">   1357</a> 						newcell := resp.Cell
+<a href="#l1358" class="line" id="l1358">   1358</a> 
+<a href="#l1359" class="line" id="l1359">   1359</a> 						newvars[varname] = newcell
+<a href="#l1360" class="line" id="l1360">   1360</a> 					} else {
+<a href="#l1361" class="line" id="l1361">   1361</a> 						bggoroutine.Set_faulty(&quot;Channel attach failed&quot;)
+<a href="#l1362" class="line" id="l1362">   1362</a> 						return nil
+<a href="#l1363" class="line" id="l1363">   1363</a> 					}
+<a href="#l1364" class="line" id="l1364">   1364</a> 				} else if gent, _ := Type_from_string(&quot;chan bool&quot;); Same_Type(cell.Vtype, gent) {
+<a href="#l1365" class="line" id="l1365">   1365</a> 					bggoroutine.Reqs &lt;- VarReq{REQ_ATTACH, bggoroutine.CurrentRoutine, cell}
+<a href="#l1366" class="line" id="l1366">   1366</a> 					resp := &lt;-bg.Answers
+<a href="#l1367" class="line" id="l1367">   1367</a> 					if resp.AnsType == ANS_OK {
+<a href="#l1368" class="line" id="l1368">   1368</a> 						newcell := resp.Cell
+<a href="#l1369" class="line" id="l1369">   1369</a> 
+<a href="#l1370" class="line" id="l1370">   1370</a> 						newvars[varname] = newcell
+<a href="#l1371" class="line" id="l1371">   1371</a> 					} else {
+<a href="#l1372" class="line" id="l1372">   1372</a> 						bggoroutine.Set_faulty(&quot;Channel attach failed&quot;)
+<a href="#l1373" class="line" id="l1373">   1373</a> 						return nil
+<a href="#l1374" class="line" id="l1374">   1374</a> 					}
+<a href="#l1375" class="line" id="l1375">   1375</a> 				} else {
+<a href="#l1376" class="line" id="l1376">   1376</a> 					bg.Set_faulty(&quot;Unsupported type&quot;)
+<a href="#l1377" class="line" id="l1377">   1377</a> 					return nil
+<a href="#l1378" class="line" id="l1378">   1378</a> 				}
+<a href="#l1379" class="line" id="l1379">   1379</a> 			}
+<a href="#l1380" class="line" id="l1380">   1380</a> 
+<a href="#l1381" class="line" id="l1381">   1381</a> 			if needchan {
+<a href="#l1382" class="line" id="l1382">   1382</a> 				// Prepare the channel on this side (if there is data to be passed)
+<a href="#l1383" class="line" id="l1383">   1383</a> 				gent, _ := Type_from_string(bg.Basic_chantype)
+<a href="#l1384" class="line" id="l1384">   1384</a> 				bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, CHANNEL, 0, 0, 0, 0, 0, 0}}
+<a href="#l1385" class="line" id="l1385">   1385</a> 				resp := &lt;-bg.Answers
+<a href="#l1386" class="line" id="l1386">   1386</a> 				if resp.AnsType == ANS_OK {
+<a href="#l1387" class="line" id="l1387">   1387</a> 					cell := resp.Cell
+<a href="#l1388" class="line" id="l1388">   1388</a> 
+<a href="#l1389" class="line" id="l1389">   1389</a> 					// Prepare the channel on the other side (if)
+<a href="#l1390" class="line" id="l1390">   1390</a> 					bggoroutine.Reqs &lt;- VarReq{REQ_ATTACH, bggoroutine.CurrentRoutine, cell}
+<a href="#l1391" class="line" id="l1391">   1391</a> 					oresp := &lt;-bggoroutine.Answers
+<a href="#l1392" class="line" id="l1392">   1392</a> 					if oresp.AnsType == ANS_OK {
+<a href="#l1393" class="line" id="l1393">   1393</a> 						ocell := oresp.Cell
+<a href="#l1394" class="line" id="l1394">   1394</a> 
+<a href="#l1395" class="line" id="l1395">   1395</a> 						// These channel is implicit and does not result as variable
+<a href="#l1396" class="line" id="l1396">   1396</a> 
+<a href="#l1397" class="line" id="l1397">   1397</a> 						// Send the passed by value data to the channel
+<a href="#l1398" class="line" id="l1398">   1398</a> 						channame := procbuilder.Get_channel_name(cell.Id)
+<a href="#l1399" class="line" id="l1399">   1399</a> 
+<a href="#l1400" class="line" id="l1400">   1400</a> 						for _, cell := range vars {
+<a href="#l1401" class="line" id="l1401">   1401</a> 							gent1, _ := Type_from_string(bg.Basic_type)
+<a href="#l1402" class="line" id="l1402">   1402</a> 							gent2, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l1403" class="line" id="l1403">   1403</a> 							if Same_Type(cell.Vtype, gent1) || Same_Type(cell.Vtype, gent2) {
+<a href="#l1404" class="line" id="l1404">   1404</a> 
+<a href="#l1405" class="line" id="l1405">   1405</a> 								switch cell.Procobjtype {
+<a href="#l1406" class="line" id="l1406">   1406</a> 								case REGISTER:
+<a href="#l1407" class="line" id="l1407">   1407</a> 									regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l1408" class="line" id="l1408">   1408</a> 									bg.WriteLine(bg.CurrentRoutine, &quot;wwr &quot;+regname+&quot; &quot;+channame)
+<a href="#l1409" class="line" id="l1409">   1409</a> 									bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;wwr&quot;, I_NIL}
+<a href="#l1410" class="line" id="l1410">   1410</a> 									bg.WriteLine(bg.CurrentRoutine, &quot;chw&quot;)
+<a href="#l1411" class="line" id="l1411">   1411</a> 									bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l1412" class="line" id="l1412">   1412</a> 								case MEMORY:
+<a href="#l1413" class="line" id="l1413">   1413</a> 									bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1414" class="line" id="l1414">   1414</a> 									newresp := &lt;-bg.Answers
+<a href="#l1415" class="line" id="l1415">   1415</a> 									if newresp.AnsType == ANS_OK {
+<a href="#l1416" class="line" id="l1416">   1416</a> 										newregcell := newresp.Cell
+<a href="#l1417" class="line" id="l1417">   1417</a> 
+<a href="#l1418" class="line" id="l1418">   1418</a> 										regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l1419" class="line" id="l1419">   1419</a> 
+<a href="#l1420" class="line" id="l1420">   1420</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1421" class="line" id="l1421">   1421</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1422" class="line" id="l1422">   1422</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;m2r &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l1423" class="line" id="l1423">   1423</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;m2r&quot;, I_NIL}
+<a href="#l1424" class="line" id="l1424">   1424</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;wwr &quot;+regname+&quot; &quot;+channame)
+<a href="#l1425" class="line" id="l1425">   1425</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;wwr&quot;, I_NIL}
+<a href="#l1426" class="line" id="l1426">   1426</a> 										bg.WriteLine(bg.CurrentRoutine, &quot;chw&quot;)
+<a href="#l1427" class="line" id="l1427">   1427</a> 										bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l1428" class="line" id="l1428">   1428</a> 
+<a href="#l1429" class="line" id="l1429">   1429</a> 										bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, newregcell}
+<a href="#l1430" class="line" id="l1430">   1430</a> 										if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l1431" class="line" id="l1431">   1431</a> 											bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1432" class="line" id="l1432">   1432</a> 											return nil
+<a href="#l1433" class="line" id="l1433">   1433</a> 										}
+<a href="#l1434" class="line" id="l1434">   1434</a> 									} else {
+<a href="#l1435" class="line" id="l1435">   1435</a> 										bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l1436" class="line" id="l1436">   1436</a> 										return nil
+<a href="#l1437" class="line" id="l1437">   1437</a> 									}
+<a href="#l1438" class="line" id="l1438">   1438</a> 								}
+<a href="#l1439" class="line" id="l1439">   1439</a> 							}
+<a href="#l1440" class="line" id="l1440">   1440</a> 						}
+<a href="#l1441" class="line" id="l1441">   1441</a> 
+<a href="#l1442" class="line" id="l1442">   1442</a> 						// Get the data passed by value from the channel on the other side
+<a href="#l1443" class="line" id="l1443">   1443</a> 						ochanname := procbuilder.Get_channel_name(ocell.Id)
+<a href="#l1444" class="line" id="l1444">   1444</a> 
+<a href="#l1445" class="line" id="l1445">   1445</a> 						for _, cell := range newvars {
+<a href="#l1446" class="line" id="l1446">   1446</a> 							gent1, _ := Type_from_string(bg.Basic_type)
+<a href="#l1447" class="line" id="l1447">   1447</a> 							gent2, _ := Type_from_string(&quot;bool&quot;)
+<a href="#l1448" class="line" id="l1448">   1448</a> 							if Same_Type(cell.Vtype, gent1) || Same_Type(cell.Vtype, gent2) {
+<a href="#l1449" class="line" id="l1449">   1449</a> 
+<a href="#l1450" class="line" id="l1450">   1450</a> 								switch cell.Procobjtype {
+<a href="#l1451" class="line" id="l1451">   1451</a> 								case REGISTER:
+<a href="#l1452" class="line" id="l1452">   1452</a> 									regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l1453" class="line" id="l1453">   1453</a> 									bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;wrd &quot;+regname+&quot; &quot;+ochanname)
+<a href="#l1454" class="line" id="l1454">   1454</a> 									bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;wrd&quot;, I_NIL}
+<a href="#l1455" class="line" id="l1455">   1455</a> 									bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;chw&quot;)
+<a href="#l1456" class="line" id="l1456">   1456</a> 									bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l1457" class="line" id="l1457">   1457</a> 								case MEMORY:
+<a href="#l1458" class="line" id="l1458">   1458</a> 									bggoroutine.Reqs &lt;- VarReq{REQ_NEW, bggoroutine.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1459" class="line" id="l1459">   1459</a> 									newresp := &lt;-bggoroutine.Answers
+<a href="#l1460" class="line" id="l1460">   1460</a> 									if newresp.AnsType == ANS_OK {
+<a href="#l1461" class="line" id="l1461">   1461</a> 										newregcell := newresp.Cell
+<a href="#l1462" class="line" id="l1462">   1462</a> 
+<a href="#l1463" class="line" id="l1463">   1463</a> 										regname := procbuilder.Get_register_name(newregcell.Id)
+<a href="#l1464" class="line" id="l1464">   1464</a> 
+<a href="#l1465" class="line" id="l1465">   1465</a> 										bggoroutine.WriteLine(bggoroutine.CurrentRoutine, &quot;clr &quot;+regname)
+<a href="#l1466" class="line" id="l1466">   1466</a> 										bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;clr&quot;, I_NIL}
+<a href="#l1467" class="line" id="l1467">   1467</a> 										bggoroutine.WriteLine(bg.CurrentRoutine, &quot;wrd &quot;+regname+&quot; &quot;+ochanname)
+<a href="#l1468" class="line" id="l1468">   1468</a> 										bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;wrd&quot;, I_NIL}
+<a href="#l1469" class="line" id="l1469">   1469</a> 										bggoroutine.WriteLine(bg.CurrentRoutine, &quot;chw&quot;)
+<a href="#l1470" class="line" id="l1470">   1470</a> 										bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l1471" class="line" id="l1471">   1471</a> 										bggoroutine.WriteLine(bg.CurrentRoutine, &quot;r2m &quot;+regname+&quot; &quot;+strconv.Itoa(cell.Id))
+<a href="#l1472" class="line" id="l1472">   1472</a> 										bggoroutine.Used &lt;- UsageNotify{TR_PROC, bggoroutine.CurrentRoutine, C_OPCODE, &quot;m2r&quot;, I_NIL}
+<a href="#l1473" class="line" id="l1473">   1473</a> 
+<a href="#l1474" class="line" id="l1474">   1474</a> 										bggoroutine.Reqs &lt;- VarReq{REQ_REMOVE, bggoroutine.CurrentRoutine, newregcell}
+<a href="#l1475" class="line" id="l1475">   1475</a> 										if (&lt;-bggoroutine.Answers).AnsType != ANS_OK {
+<a href="#l1476" class="line" id="l1476">   1476</a> 											bggoroutine.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1477" class="line" id="l1477">   1477</a> 											return nil
+<a href="#l1478" class="line" id="l1478">   1478</a> 										}
+<a href="#l1479" class="line" id="l1479">   1479</a> 									} else {
+<a href="#l1480" class="line" id="l1480">   1480</a> 										bggoroutine.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l1481" class="line" id="l1481">   1481</a> 										return nil
+<a href="#l1482" class="line" id="l1482">   1482</a> 									}
+<a href="#l1483" class="line" id="l1483">   1483</a> 								}
+<a href="#l1484" class="line" id="l1484">   1484</a> 							}
+<a href="#l1485" class="line" id="l1485">   1485</a> 						}
+<a href="#l1486" class="line" id="l1486">   1486</a> 
+<a href="#l1487" class="line" id="l1487">   1487</a> 					} else {
+<a href="#l1488" class="line" id="l1488">   1488</a> 						bg.Set_faulty(&quot;Channel creation failed&quot;)
+<a href="#l1489" class="line" id="l1489">   1489</a> 						return nil
+<a href="#l1490" class="line" id="l1490">   1490</a> 					}
+<a href="#l1491" class="line" id="l1491">   1491</a> 				} else {
+<a href="#l1492" class="line" id="l1492">   1492</a> 					bg.Set_faulty(&quot;Channel creation failed&quot;)
+<a href="#l1493" class="line" id="l1493">   1493</a> 					return nil
+<a href="#l1494" class="line" id="l1494">   1494</a> 				}
+<a href="#l1495" class="line" id="l1495">   1495</a> 
+<a href="#l1496" class="line" id="l1496">   1496</a> 			}
+<a href="#l1497" class="line" id="l1497">   1497</a> 
+<a href="#l1498" class="line" id="l1498">   1498</a> 			// Compile the goroutine for the other processor
+<a href="#l1499" class="line" id="l1499">   1499</a> 			ast.Walk(bggoroutine, functcell.Body)
+<a href="#l1500" class="line" id="l1500">   1500</a> 
+<a href="#l1501" class="line" id="l1501">   1501</a> 			return nil
+<a href="#l1502" class="line" id="l1502">   1502</a> 
+<a href="#l1503" class="line" id="l1503">   1503</a> 		default:
+<a href="#l1504" class="line" id="l1504">   1504</a> 			bg.Set_faulty(&quot;Unknown function type&quot;)
+<a href="#l1505" class="line" id="l1505">   1505</a> 			return nil
+<a href="#l1506" class="line" id="l1506">   1506</a> 		}
+<a href="#l1507" class="line" id="l1507">   1507</a> 
+<a href="#l1508" class="line" id="l1508">   1508</a> 	case *ast.BranchStmt:
+<a href="#l1509" class="line" id="l1509">   1509</a> 		if bg.In_debug() {
+<a href="#l1510" class="line" id="l1510">   1510</a> 			fmt.Println(&quot;Branch&quot;)
+<a href="#l1511" class="line" id="l1511">   1511</a> 		}
+<a href="#l1512" class="line" id="l1512">   1512</a> 		switch x.Tok {
+<a href="#l1513" class="line" id="l1513">   1513</a> 		case token.BREAK:
+<a href="#l1514" class="line" id="l1514">   1514</a> 			if bg.CurrentLoop != &quot;&quot; {
+<a href="#l1515" class="line" id="l1515">   1515</a> 				bg.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bg.CurrentLoop+&quot;ENDFOR&gt;&gt;&quot;)
+<a href="#l1516" class="line" id="l1516">   1516</a> 				bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1517" class="line" id="l1517">   1517</a> 			} else {
+<a href="#l1518" class="line" id="l1518">   1518</a> 				bg.Set_faulty(&quot;break outside a loop&quot;)
+<a href="#l1519" class="line" id="l1519">   1519</a> 				return nil
+<a href="#l1520" class="line" id="l1520">   1520</a> 			}
+<a href="#l1521" class="line" id="l1521">   1521</a> 		case token.CONTINUE:
+<a href="#l1522" class="line" id="l1522">   1522</a> 			if bg.CurrentLoop != &quot;&quot; {
+<a href="#l1523" class="line" id="l1523">   1523</a> 				bg.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bg.CurrentLoop+&quot;CONTINUEFOR&gt;&gt;&quot;)
+<a href="#l1524" class="line" id="l1524">   1524</a> 				bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1525" class="line" id="l1525">   1525</a> 			} else {
+<a href="#l1526" class="line" id="l1526">   1526</a> 				bg.Set_faulty(&quot;continue outside a loop&quot;)
+<a href="#l1527" class="line" id="l1527">   1527</a> 				return nil
+<a href="#l1528" class="line" id="l1528">   1528</a> 			}
+<a href="#l1529" class="line" id="l1529">   1529</a> 		case token.FALLTHROUGH:
+<a href="#l1530" class="line" id="l1530">   1530</a> 			if bg.CurrentSwitch != &quot;&quot; &amp;&amp; !strings.HasPrefix(bg.CurrentSwitch, &quot;SEL&quot;) {
+<a href="#l1531" class="line" id="l1531">   1531</a> 				bg.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;&quot;+bg.CurrentSwitch+&quot;FALLTHROUGH&gt;&gt;&quot;)
+<a href="#l1532" class="line" id="l1532">   1532</a> 				bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;j&quot;, I_NIL}
+<a href="#l1533" class="line" id="l1533">   1533</a> 			} else {
+<a href="#l1534" class="line" id="l1534">   1534</a> 				bg.Set_faulty(&quot;fallthrough outside a switch statement&quot;)
+<a href="#l1535" class="line" id="l1535">   1535</a> 				return nil
+<a href="#l1536" class="line" id="l1536">   1536</a> 			}
+<a href="#l1537" class="line" id="l1537">   1537</a> 		}
+<a href="#l1538" class="line" id="l1538">   1538</a> 	case *ast.ReturnStmt:
+<a href="#l1539" class="line" id="l1539">   1539</a> 		// TODO this has to change, on the Check fill Returns with empty varcell of the right type and here check the type and substitute the append with an assignment
+<a href="#l1540" class="line" id="l1540">   1540</a> 		if x.Results != nil {
+<a href="#l1541" class="line" id="l1541">   1541</a> 			for _, resul := range x.Results {
+<a href="#l1542" class="line" id="l1542">   1542</a> 				if newcell, ok := bg.Expr_eval(resul); ok {
+<a href="#l1543" class="line" id="l1543">   1543</a> 					for scope := bg; ; scope = scope.Outer {
+<a href="#l1544" class="line" id="l1544">   1544</a> 						if scope.Outer == nil {
+<a href="#l1545" class="line" id="l1545">   1545</a> 							scope.Returns = append(scope.Returns, newcell[0])
+<a href="#l1546" class="line" id="l1546">   1546</a> 							break
+<a href="#l1547" class="line" id="l1547">   1547</a> 						}
+<a href="#l1548" class="line" id="l1548">   1548</a> 					}
+<a href="#l1549" class="line" id="l1549">   1549</a> 				} else {
+<a href="#l1550" class="line" id="l1550">   1550</a> 					bg.Set_faulty(&quot;Return evaluation failed&quot;)
+<a href="#l1551" class="line" id="l1551">   1551</a> 					return nil
+<a href="#l1552" class="line" id="l1552">   1552</a> 				}
+<a href="#l1553" class="line" id="l1553">   1553</a> 			}
+<a href="#l1554" class="line" id="l1554">   1554</a> 		}
+<a href="#l1555" class="line" id="l1555">   1555</a> 		bg.WriteLine(bg.CurrentRoutine, &quot;j &lt;&lt;LASTN&gt;&gt;&quot;)
+<a href="#l1556" class="line" id="l1556">   1556</a> 	case *ast.SendStmt:
+<a href="#l1557" class="line" id="l1557">   1557</a> 		if bg.In_debug() {
+<a href="#l1558" class="line" id="l1558">   1558</a> 			fmt.Println(&quot;Send Statement&quot;)
+<a href="#l1559" class="line" id="l1559">   1559</a> 		}
+<a href="#l1560" class="line" id="l1560">   1560</a> 		channelname := x.Chan.(*ast.Ident).Name
+<a href="#l1561" class="line" id="l1561">   1561</a> 
+<a href="#l1562" class="line" id="l1562">   1562</a> 		var destchan VarCell
+<a href="#l1563" class="line" id="l1563">   1563</a> 
+<a href="#l1564" class="line" id="l1564">   1564</a> 		chanexist := false
+<a href="#l1565" class="line" id="l1565">   1565</a> 		for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l1566" class="line" id="l1566">   1566</a> 			if _, ok := scope.Vars[channelname]; ok {
+<a href="#l1567" class="line" id="l1567">   1567</a> 				chanexist = true
+<a href="#l1568" class="line" id="l1568">   1568</a> 				destchan = scope.Vars[channelname]
+<a href="#l1569" class="line" id="l1569">   1569</a> 				break
+<a href="#l1570" class="line" id="l1570">   1570</a> 			}
+<a href="#l1571" class="line" id="l1571">   1571</a> 		}
+<a href="#l1572" class="line" id="l1572">   1572</a> 
+<a href="#l1573" class="line" id="l1573">   1573</a> 		if !chanexist {
+<a href="#l1574" class="line" id="l1574">   1574</a> 			bg.Set_faulty(&quot;Unitialized channel &quot; + channelname)
+<a href="#l1575" class="line" id="l1575">   1575</a> 			return nil
+<a href="#l1576" class="line" id="l1576">   1576</a> 		}
+<a href="#l1577" class="line" id="l1577">   1577</a> 
+<a href="#l1578" class="line" id="l1578">   1578</a> 		value := x.Value
+<a href="#l1579" class="line" id="l1579">   1579</a> 
+<a href="#l1580" class="line" id="l1580">   1580</a> 		if newcell, ok := bg.Expr_eval(value); ok {
+<a href="#l1581" class="line" id="l1581">   1581</a> 			// TODO Missing types checks
+<a href="#l1582" class="line" id="l1582">   1582</a> 			gent, _ := Type_from_string(bg.Basic_type)
+<a href="#l1583" class="line" id="l1583">   1583</a> 			bg.Reqs &lt;- VarReq{REQ_NEW, bg.CurrentRoutine, VarCell{gent, REGISTER, 0, 0, 0, 0, 0, 0}}
+<a href="#l1584" class="line" id="l1584">   1584</a> 			resp := &lt;-bg.Answers
+<a href="#l1585" class="line" id="l1585">   1585</a> 			if resp.AnsType == ANS_OK {
+<a href="#l1586" class="line" id="l1586">   1586</a> 
+<a href="#l1587" class="line" id="l1587">   1587</a> 				cell := newcell[0]
+<a href="#l1588" class="line" id="l1588">   1588</a> 				cell2 := resp.Cell
+<a href="#l1589" class="line" id="l1589">   1589</a> 				regname := procbuilder.Get_register_name(cell.Id)
+<a href="#l1590" class="line" id="l1590">   1590</a> 				channame := procbuilder.Get_channel_name(destchan.Id)
+<a href="#l1591" class="line" id="l1591">   1591</a> 				waitregname := procbuilder.Get_register_name(cell2.Id)
+<a href="#l1592" class="line" id="l1592">   1592</a> 
+<a href="#l1593" class="line" id="l1593">   1593</a> 				bg.WriteLine(bg.CurrentRoutine, &quot;wwr &quot;+regname+&quot; &quot;+channame)
+<a href="#l1594" class="line" id="l1594">   1594</a> 				bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;wwr&quot;, I_NIL}
+<a href="#l1595" class="line" id="l1595">   1595</a> 				bg.WriteLine(bg.CurrentRoutine, &quot;chw &quot;+waitregname)
+<a href="#l1596" class="line" id="l1596">   1596</a> 				bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;chw&quot;, I_NIL}
+<a href="#l1597" class="line" id="l1597">   1597</a> 
+<a href="#l1598" class="line" id="l1598">   1598</a> 				bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, cell}
+<a href="#l1599" class="line" id="l1599">   1599</a> 				if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l1600" class="line" id="l1600">   1600</a> 					bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1601" class="line" id="l1601">   1601</a> 					return nil
+<a href="#l1602" class="line" id="l1602">   1602</a> 				}
+<a href="#l1603" class="line" id="l1603">   1603</a> 				bg.Reqs &lt;- VarReq{REQ_REMOVE, bg.CurrentRoutine, cell2}
+<a href="#l1604" class="line" id="l1604">   1604</a> 				if (&lt;-bg.Answers).AnsType != ANS_OK {
+<a href="#l1605" class="line" id="l1605">   1605</a> 					bg.Set_faulty(&quot;Resource clean failed&quot;)
+<a href="#l1606" class="line" id="l1606">   1606</a> 					return nil
+<a href="#l1607" class="line" id="l1607">   1607</a> 				}
+<a href="#l1608" class="line" id="l1608">   1608</a> 			} else {
+<a href="#l1609" class="line" id="l1609">   1609</a> 				bg.Set_faulty(&quot;Resource reservation failed&quot;)
+<a href="#l1610" class="line" id="l1610">   1610</a> 				return nil
+<a href="#l1611" class="line" id="l1611">   1611</a> 			}
+<a href="#l1612" class="line" id="l1612">   1612</a> 
+<a href="#l1613" class="line" id="l1613">   1613</a> 		} else {
+<a href="#l1614" class="line" id="l1614">   1614</a> 			bg.Set_faulty(&quot;Send evaluation failed&quot;)
+<a href="#l1615" class="line" id="l1615">   1615</a> 			return nil
+<a href="#l1616" class="line" id="l1616">   1616</a> 		}
+<a href="#l1617" class="line" id="l1617">   1617</a> 
+<a href="#l1618" class="line" id="l1618">   1618</a> 	case *ast.CallExpr:
+<a href="#l1619" class="line" id="l1619">   1619</a> 
+<a href="#l1620" class="line" id="l1620">   1620</a> 		if bg.In_debug() {
+<a href="#l1621" class="line" id="l1621">   1621</a> 			fmt.Printf(&quot;%p - %s\n&quot;, bg, &quot;Call Statement&quot;)
+<a href="#l1622" class="line" id="l1622">   1622</a> 		}
+<a href="#l1623" class="line" id="l1623">   1623</a> 
+<a href="#l1624" class="line" id="l1624">   1624</a> 		switch fun := x.Fun.(type) {
+<a href="#l1625" class="line" id="l1625">   1625</a> 		case (*ast.SelectorExpr):
+<a href="#l1626" class="line" id="l1626">   1626</a> 			// This is the case of a &quot;Method&quot;
+<a href="#l1627" class="line" id="l1627">   1627</a> 			xf := fun.X.(*ast.Ident)
+<a href="#l1628" class="line" id="l1628">   1628</a> 			sel := fun.Sel
+<a href="#l1629" class="line" id="l1629">   1629</a> 
+<a href="#l1630" class="line" id="l1630">   1630</a> 			if xf.Name == &quot;bondgo&quot; {
+<a href="#l1631" class="line" id="l1631">   1631</a> 				switch sel.Name {
+<a href="#l1632" class="line" id="l1632">   1632</a> 				case &quot;Void&quot;:
+<a href="#l1633" class="line" id="l1633">   1633</a> 				case &quot;IOWrite&quot;:
+<a href="#l1634" class="line" id="l1634">   1634</a> 
+<a href="#l1635" class="line" id="l1635">   1635</a> 					args := x.Args
+<a href="#l1636" class="line" id="l1636">   1636</a> 					if len(args) == 2 {
+<a href="#l1637" class="line" id="l1637">   1637</a> 						// TODO Finish
+<a href="#l1638" class="line" id="l1638">   1638</a> 						switch arg := args[0].(type) {
+<a href="#l1639" class="line" id="l1639">   1639</a> 						case *ast.Ident:
+<a href="#l1640" class="line" id="l1640">   1640</a> 							identname := arg.Name
+<a href="#l1641" class="line" id="l1641">   1641</a> 
+<a href="#l1642" class="line" id="l1642">   1642</a> 							varexist := false
+<a href="#l1643" class="line" id="l1643">   1643</a> 							for scope := bg; scope != nil; scope = scope.Outer {
+<a href="#l1644" class="line" id="l1644">   1644</a> 								if cell, ok := scope.Vars[identname]; ok {
+<a href="#l1645" class="line" id="l1645">   1645</a> 									varexist = true
+<a href="#l1646" class="line" id="l1646">   1646</a> 									if bg.In_debug() {
+<a href="#l1647" class="line" id="l1647">   1647</a> 										fmt.Printf(&quot;%p - Found variable %s in scope %p\n&quot;, bg, identname, scope)
+<a href="#l1648" class="line" id="l1648">   1648</a> 									}
+<a href="#l1649" class="line" id="l1649">   1649</a> 									switch cell.Procobjtype {
+<a href="#l1650" class="line" id="l1650">   1650</a> 									case OUTPUT:
+<a href="#l1651" class="line" id="l1651">   1651</a> 										if cell.Global_id == 0 {
+<a href="#l1652" class="line" id="l1652">   1652</a> 											bg.Set_faulty(&quot;Output not allocated&quot;)
+<a href="#l1653" class="line" id="l1653">   1653</a> 											return nil
+<a href="#l1654" class="line" id="l1654">   1654</a> 										} else {
+<a href="#l1655" class="line" id="l1655">   1655</a> 											if bg.In_debug() {
+<a href="#l1656" class="line" id="l1656">   1656</a> 												fmt.Printf(&quot;%p - IO Write call\n&quot;, bg)
+<a href="#l1657" class="line" id="l1657">   1657</a> 											}
+<a href="#l1658" class="line" id="l1658">   1658</a> 											if ncell, ok := bg.Expr_eval(args[1]); ok {
+<a href="#l1659" class="line" id="l1659">   1659</a> 												newcell := ncell[0]
+<a href="#l1660" class="line" id="l1660">   1660</a> 												newregname := procbuilder.Get_register_name(newcell.Id)
+<a href="#l1661" class="line" id="l1661">   1661</a> 												newoutname := procbuilder.Get_output_name(cell.Id)
+<a href="#l1662" class="line" id="l1662">   1662</a> 												bg.WriteLine(bg.CurrentRoutine, &quot;r2o &quot;+newregname+&quot; &quot;+newoutname)
+<a href="#l1663" class="line" id="l1663">   1663</a> 												bg.Used &lt;- UsageNotify{TR_PROC, bg.CurrentRoutine, C_OPCODE, &quot;r2o&quot;, I_NIL}
+<a href="#l1664" class="line" id="l1664">   1664</a> 
+<a href="#l1665" class="line" id="l1665">   1665</a> 											} else {
+<a href="#l1666" class="line" id="l1666">   1666</a> 												bg.Set_faulty(&quot;Write evaluation failed&quot;)
+<a href="#l1667" class="line" id="l1667">   1667</a> 												return nil
+<a href="#l1668" class="line" id="l1668">   1668</a> 											}
+<a href="#l1669" class="line" id="l1669">   1669</a> 
+<a href="#l1670" class="line" id="l1670">   1670</a> 										}
+<a href="#l1671" class="line" id="l1671">   1671</a> 									default:
+<a href="#l1672" class="line" id="l1672">   1672</a> 										bg.Set_faulty(&quot;Write can only be used on output registers&quot;)
+<a href="#l1673" class="line" id="l1673">   1673</a> 										return nil
+<a href="#l1674" class="line" id="l1674">   1674</a> 									}
+<a href="#l1675" class="line" id="l1675">   1675</a> 									break
+<a href="#l1676" class="line" id="l1676">   1676</a> 								}
+<a href="#l1677" class="line" id="l1677">   1677</a> 							}
+<a href="#l1678" class="line" id="l1678">   1678</a> 							if !varexist {
+<a href="#l1679" class="line" id="l1679">   1679</a> 								bg.Set_faulty(&quot;Variable &quot; + identname + &quot; not defined&quot;)
+<a href="#l1680" class="line" id="l1680">   1680</a> 								return nil
+<a href="#l1681" class="line" id="l1681">   1681</a> 							}
+<a href="#l1682" class="line" id="l1682">   1682</a> 						default:
+<a href="#l1683" class="line" id="l1683">   1683</a> 							bg.Set_faulty(&quot;The fiers argument has to be an output register&quot;)
+<a href="#l1684" class="line" id="l1684">   1684</a> 							return nil
+<a href="#l1685" class="line" id="l1685">   1685</a> 						}
+<a href="#l1686" class="line" id="l1686">   1686</a> 
+<a href="#l1687" class="line" id="l1687">   1687</a> 					} else {
+<a href="#l1688" class="line" id="l1688">   1688</a> 						bg.Set_faulty(&quot;Two arguments expected&quot;)
+<a href="#l1689" class="line" id="l1689">   1689</a> 						return nil
+<a href="#l1690" class="line" id="l1690">   1690</a> 					}
+<a href="#l1691" class="line" id="l1691">   1691</a> 
+<a href="#l1692" class="line" id="l1692">   1692</a> 				default:
+<a href="#l1693" class="line" id="l1693">   1693</a> 					bg.Set_faulty(&quot;Unknown function &quot; + sel.Name)
+<a href="#l1694" class="line" id="l1694">   1694</a> 					return nil
+<a href="#l1695" class="line" id="l1695">   1695</a> 				}
+<a href="#l1696" class="line" id="l1696">   1696</a> 			} else {
+<a href="#l1697" class="line" id="l1697">   1697</a> 				bg.Set_faulty(&quot;Unknown module &quot; + xf.Name)
+<a href="#l1698" class="line" id="l1698">   1698</a> 				return nil
+<a href="#l1699" class="line" id="l1699">   1699</a> 			}
+<a href="#l1700" class="line" id="l1700">   1700</a> 
+<a href="#l1701" class="line" id="l1701">   1701</a> 		case (*ast.Ident):
+<a href="#l1702" class="line" id="l1702">   1702</a> 			// This id the case of a function with no receiver
+<a href="#l1703" class="line" id="l1703">   1703</a> 			// TODO Finish
+<a href="#l1704" class="line" id="l1704">   1704</a> 		}
+<a href="#l1705" class="line" id="l1705">   1705</a> 		return nil
+<a href="#l1706" class="line" id="l1706">   1706</a> 	}
+<a href="#l1707" class="line" id="l1707">   1707</a> 
+<a href="#l1708" class="line" id="l1708">   1708</a> 	return bg
+<a href="#l1709" class="line" id="l1709">   1709</a> }
+</pre>
+</div>
+</body>
+</html>

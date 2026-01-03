@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hardware optimizations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/47b9083ba3197a8ec16212027f7e4d01fe2635ef.html">47b9083ba3197a8ec16212027f7e4d01fe2635ef</a>
+<b>parent</b> <a href="../commit/80188a867cda24fd21d91e62793fcd55589c7c59.html">80188a867cda24fd21d91e62793fcd55589c7c59</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 27 Feb 2024 17:25:44 +0100
+
+Hardware optimizations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_dec.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>5 files changed, 73 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a> b/<a href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -62,6 +62,15 @@ func (op Dec) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:dec&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+				continue
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		}
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;							_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot; - 1&#39;b1;\n&quot;
+ 		result += &quot;							$display(\&quot;DEC &quot; + strings.ToUpper(Get_register_name(i)) + &quot;\&quot;);\n&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -187,6 +196,8 @@ func (Op Dec) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 	case &quot;dec&quot;:
+ 		regNeed := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+<a href="#h0-1-3" id="h0-1-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;dec&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:dec&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -63,6 +63,14 @@ func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:inc&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+				continue
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		}
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;							_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot; + 1&#39;b1;\n&quot;
+ 		result += &quot;							$display(\&quot;INC &quot; + strings.ToUpper(Get_register_name(i)) + &quot;\&quot;);\n&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -190,6 +198,8 @@ func (Op Inc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 	case &quot;inc&quot;:
+ 		regNeed := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+<a href="#h1-1-3" id="h1-1-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;inc&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:inc&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -53,6 +53,15 @@ func (op Jz) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *
+</a> 		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:jz&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+				continue
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+			}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+		}
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a> 		result += &quot;							&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;								if(_&quot; + strings.ToLower(Get_register_name(i)) + &quot; == &#39;b0) begin\n&quot;
+ 		result += NextInstruction(conf, arch, 8, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1-int(arch.R))+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O)-int(arch.R))+&quot;]&quot;)
+<a href="#h2-1" id="h2-1" class="h">@@ -226,6 +235,10 @@ func (Op Jz) HLAssemblerMatch(arch *Arch) []string {
+</a> func (Op Jz) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+ 	switch line.Operation.GetValue() {
+ 	case &quot;jz&quot;:
+<a href="#h2-1-3" id="h2-1-3" class="i">+		regNeed := line.Elements[0].GetValue()
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;jz&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:jz&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -91,6 +91,15 @@ func (op M2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; regNum; i++ {
+<a href="#h3-0-3" id="h3-0-3" class="i">+
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+			cp := arch.Tag
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+				continue
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+			}
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h3-1" id="h3-1" class="h">@@ -100,6 +109,15 @@ func (op M2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 		}
+ 
+ 		for j := 0; j &lt; regNum; j++ {
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+				cp := arch.Tag
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+					continue
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+				}
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+			}
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+
+</a> 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 
+ 			result += &quot;								if (state_read_mem_m2rri == 1&#39;b1) begin\n&quot;
+<a href="#h3-2" id="h3-2" class="h">@@ -328,12 +346,18 @@ func (Op M2rri) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> 		regDest := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDest, Op: bmreqs.OpAdd})
+<a href="#h3-2-3" id="h3-2-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;m2rri&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDest, Op: bmreqs.OpAdd})
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	case &quot;mov&quot;:
+ 		regDest := line.Elements[0].GetValue()
+ 		regNeed := line.Elements[1].GetMeta(&quot;ramregister&quot;)
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDest, Op: bmreqs.OpAdd})
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+<a href="#h3-2-12" id="h3-2-12" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;m2rri&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDest, Op: bmreqs.OpAdd})
+</a><a href="#h3-2-14" id="h3-2-14" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:m2rri&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		if regDest != &quot;&quot; &amp;&amp; regNeed != &quot;&quot; {
+ 			newLine := new(bmline.BasmLine)
+ 			newOp := new(bmline.BasmElement)
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -43,20 +43,29 @@ func (op Rset) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a> 
+ func (op Rset) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	rom_word := arch.Max_word()
+<a href="#h4-0-3" id="h4-0-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	opBits := arch.Opcodes_bits()
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	result := &quot;&quot;
+ 	result += &quot;					RSET: begin\n&quot;
+ 	if arch.R == 1 {
+<a href="#h4-0-11" id="h4-0-11" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h4-0-14" id="h4-0-14" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h4-0-18" id="h4-0-18" class="i">+
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+			cp := arch.Tag
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:rset&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+				continue
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+			}
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+		}
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+<a href="#h4-0-28" id="h4-0-28" class="d">-		result += &quot;							_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.Rsize)-int(arch.R)) + &quot;];\n&quot;
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+		result += &quot;							_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.Rsize)-int(arch.R)) + &quot;];\n&quot;
+</a> 		result += &quot;							$display(\&quot;RSET &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;						end\n&quot;
+ 	}
+<a href="#h4-1" id="h4-1" class="h">@@ -209,10 +218,12 @@ func (Op Rset) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> 	case &quot;rset&quot;:
+ 		regNeed := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+<a href="#h4-1-3" id="h4-1-3" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:rset&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		return line, nil
+ 	case &quot;mov&quot;:
+ 		regNeed := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+<a href="#h4-1-8" id="h4-1-8" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:rset&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regNeed, Op: bmreqs.OpAdd})
+</a> 		line.Operation.SetValue(&quot;rset&quot;)
+ 		return line, nil
+ 	}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Improved call resolver - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ddc2286a832e6a5adc7538f335d749274f18023d.html">ddc2286a832e6a5adc7538f335d749274f18023d</a>
+<b>parent</b> <a href="../commit/c53adfaef006882611679aa7c367d533603e34ed.html">c53adfaef006882611679aa7c367d533603e34ed</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  5 Sep 2023 11:54:03 +0200
+
+Improved call resolver
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/callresolver.go</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a> b/<a href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,6 +9,8 @@ import (
+</a> 
+ // section entry points detection, the pass detects the symbol used as entry point of the section and sign it as metadata.
+ func callResolver(bi *BasmInstance) error {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	symbolTagger(bi)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> 	for sectName, section := range bi.sections {
+ 		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+ 			if bi.debug {
+<a href="#h0-1" id="h0-1" class="h">@@ -61,14 +63,29 @@ func callResolver(bi *BasmInstance) error {
+</a> 						// Rewrite the call to a jump to the fragment
+ 						section.sectionBody.Lines[i].Operation.SetValue(&quot;call&quot; + mod + stack)
+ 						arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+<a href="#h0-1-3" id="h0-1-3" class="i">+						fragName := arg.GetValue()
+</a> 						// It has to be a new symbol, otherwise it would have been caught by the previous check
+ 						// Append the fragment to the newcode
+<a href="#h0-1-6" id="h0-1-6" class="d">-						for j, appLine := range bi.fragments[arg.GetValue()].fragmentBody.Lines {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+						for j, appLine := range bi.fragments[fragName].fragmentBody.Lines {
+</a> 							newLine := appLine.Copy()
+ 							if j == 0 {
+<a href="#h0-1-10" id="h0-1-10" class="d">-								newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, arg.GetValue())
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-								bi.symbols[symbolPrefix+sectName+&quot;.&quot;+arg.GetValue()] = -1
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+								newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName)
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+								bi.symbols[symbolPrefix+sectName+&quot;.&quot;+fragName] = -1
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+							} else {
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+								if s := newLine.GetMeta(&quot;symbol&quot;); s != &quot;&quot; {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+									newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName+s)
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+								}
+</a> 							}
+<a href="#h0-1-19" id="h0-1-19" class="i">+
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+							for _, el := range newLine.Elements {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+								s := el.GetValue()
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+								// if s is a symbol local to the fragment rewrite it
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+								if _, ok := bi.symbols[&quot;frag.&quot;+fragName+&quot;.&quot;+s]; ok {
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+									el.SetValue(fragName + s)
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+								}
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+							}
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+
+</a> 							newCode = append(newCode, newLine)
+ 						}
+ 						newLine := new(bmline.BasmLine)
+</pre>
+</div>
+</body>
+</html>

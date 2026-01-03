@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>parametric neurons opcodes - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/885985d96570db1302db875c8c484d1b44aaabc4.html">885985d96570db1302db875c8c484d1b44aaabc4</a>
+<b>parent</b> <a href="../commit/744b9bceff2d064b2d725f6f59b577c86951e458.html">744b9bceff2d064b2d725f6f59b577c86951e458</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 22 Mar 2023 11:38:19 +0100
+
+parametric neurons opcodes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">library/neurons/frag-linear.basm</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/neurons/frag-relu.basm</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">library/neurons/frag-softmax.basm</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">library/neurons/frag-summation.basm</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">library/neurons/linear.nb</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">library/neurons/softmax.nb</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">library/neurons/summation.nb</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">29</td><td><span class="i">++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+</table></pre><pre>10 files changed, 46 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -131,6 +131,7 @@ func main() {
+</a> 				}
+ 				config.DataType = *dataType
+ 				config.TypePrefix = tpy.ShowPrefix()
+<a href="#h0-0-3" id="h0-0-3" class="i">+				config.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a> 				found = true
+ 				break
+ 			}
+<a href="#h0-1" id="h0-1" class="h">@@ -145,6 +146,7 @@ func main() {
+</a> 							}
+ 							config.DataType = *dataType
+ 							config.TypePrefix = tpy.ShowPrefix()
+<a href="#h0-1-3" id="h0-1-3" class="i">+							config.Params[&quot;typeprefix&quot;] = tpy.ShowPrefix()
+</a> 							break
+ 						}
+ 					}
+<b>diff --git a/<a id="h1" href="../file/library/neurons/frag-linear.basm.html">library/neurons/frag-linear.basm</a> b/<a href="../file/library/neurons/frag-linear.basm.html">library/neurons/frag-linear.basm</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +1,7 @@
+</a> %fragment linear template:true resout:r0
+ %meta literal resin {{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+ 	clr r0
+<a href="#h1-0-3" id="h1-0-3" class="d">-	{{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;addf r0,r%d\n&quot; $y}}{{end}}{{end}}
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	{{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{$.Params.addop}}{{printf &quot; r0,r%d\n&quot; $y}}{{end}}{{end}}
+</a> 	mov	r1, {{.Params.bias}}
+<a href="#h1-0-6" id="h1-0-6" class="d">-	addf	r0, r1
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	{{.Params.addop}}	r0, r1
+</a> %endfragment
+<b>diff --git a/<a id="h2" href="../file/library/neurons/frag-relu.basm.html">library/neurons/frag-relu.basm</a> b/<a href="../file/library/neurons/frag-relu.basm.html">library/neurons/frag-relu.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,7 +2,7 @@
+</a> 	clr r0
+ ;	{{range $y := intRange &quot;0&quot; .Params.inputs}}{{printf &quot;i2r r1,i%d\naddf r0,r1\n&quot; $y}}{{end}}
+ ;	mov	r1, {{.Params.bias}}
+<a href="#h2-0-3" id="h2-0-3" class="d">-	addf	r0, r1
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	{{.Params.addop}}	r0, r1
+</a> 	jgt0f	r0, sendo0
+ 	clr	r0
+ sendo0:
+<b>diff --git a/<a id="h3" href="../file/library/neurons/frag-softmax.basm.html">library/neurons/frag-softmax.basm</a> b/<a href="../file/library/neurons/frag-softmax.basm.html">library/neurons/frag-softmax.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,23 +1,23 @@
+</a> %fragment softmax iomode:sync template:true resout:r9
+ %meta literal resin {{ with $last := adds &quot;10&quot; .Params.inputs }}{{range $y := intRange &quot;10&quot; $last }}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+<a href="#h3-0-2" id="h3-0-2" class="d">-	mov	r8, 0f0.0
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	mov	r8, {{$.Params.typeprefix}}0.0
+</a> {{ with $last := adds &quot;10&quot; .Params.inputs }}
+ {{range $y := intRange &quot;10&quot; $last}}
+ {{printf &quot;mov r1,r%d\n&quot; $y}}
+<a href="#h3-0-7" id="h3-0-7" class="d">-        mov     r0, 0f1.0
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-        mov     r2, 0f1.0
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-        mov     r3, 0f1.0
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-        mov     r4, 0f1.0
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-        mov     r5, 0f1.0
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+        mov     r0, {{$.Params.typeprefix}}1.0
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+        mov     r2, {{$.Params.typeprefix}}1.0
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+        mov     r3, {{$.Params.typeprefix}}1.0
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+        mov     r4, {{$.Params.typeprefix}}1.0
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+        mov     r5, {{$.Params.typeprefix}}1.0
+</a>         mov     r7, {{$.Params.expprec}}
+ loop{{printf &quot;%d&quot; $y}}:
+<a href="#h3-0-19" id="h3-0-19" class="d">-        multf   r2, r1
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-        multf   r3, r4
+</a><a href="#h3-0-21" id="h3-0-21" class="d">-        addf    r4, r5
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+        {{$.Params.multop}}   r2, r1
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+        {{$.Params.multop}}   r3, r4
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+        {{$.Params.addop}}    r4, r5
+</a>         mov     r6, r2
+<a href="#h3-0-26" id="h3-0-26" class="d">-        divf    r6, r3
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+        {{$.Params.divop}}    r6, r3
+</a> 
+<a href="#h3-0-29" id="h3-0-29" class="d">-        addf    r0, r6
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+        {{$.Params.addop}}    r0, r6
+</a> 
+         dec     r7
+         jz      r7,exit{{printf &quot;%d&quot; $y}}
+<a href="#h3-1" id="h3-1" class="h">@@ -28,8 +28,8 @@ exit{{printf &quot;%d&quot; $y}}:
+</a> {{if eq $y $z}} 
+ 	mov	r9, r0
+ {{end}}
+<a href="#h3-1-3" id="h3-1-3" class="d">-	addf	r8, r0
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	{{$.Params.addop}}	r8, r0
+</a> {{end}}
+ {{end}}
+<a href="#h3-1-7" id="h3-1-7" class="d">-	divf	r9, r8
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	{{$.Params.divop}}	r9, r8
+</a> %endfragment
+<b>diff --git a/<a id="h4" href="../file/library/neurons/frag-summation.basm.html">library/neurons/frag-summation.basm</a> b/<a href="../file/library/neurons/frag-summation.basm.html">library/neurons/frag-summation.basm</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,7 +1,7 @@
+</a> %fragment summation template:true resout:r0
+ %meta literal resin {{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+ 	clr r0
+<a href="#h4-0-3" id="h4-0-3" class="d">-	{{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;addf r0,r%d\n&quot; $y}}{{end}}{{end}}	
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	{{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{$.Params.addop}}{{printf &quot; r0,r%d\n&quot; $y}}{{end}}{{end}}	
+</a> 	mov	r1, {{.Params.bias}}
+<a href="#h4-0-6" id="h4-0-6" class="d">-	addf	r0, r1
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-%endfragment
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-\ No newline at end of file
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	{{.Params.addop}}	r0, r1
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+%endfragment
+</a><b>diff --git a/<a id="h5" href="../file/library/neurons/linear.nb.html">library/neurons/linear.nb</a> b/<a href="../file/library/neurons/linear.nb.html">library/neurons/linear.nb</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,3 +1,3 @@
+</a> {
+<a href="#h5-0-1" id="h5-0-1" class="d">-	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;]
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;addop&quot;]
+</a> }
+<b>diff --git a/<a id="h6" href="../file/library/neurons/softmax.nb.html">library/neurons/softmax.nb</a> b/<a href="../file/library/neurons/softmax.nb.html">library/neurons/softmax.nb</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -1,3 +1,3 @@
+</a> {
+<a href="#h6-0-1" id="h6-0-1" class="d">-	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;pos&quot;, &quot;expprec&quot;]
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;pos&quot;, &quot;expprec&quot;, &quot;addop&quot;, &quot;divop&quot;, &quot;multop&quot;, &quot;typeprefix&quot;]
+</a> }
+<b>diff --git a/<a id="h7" href="../file/library/neurons/summation.nb.html">library/neurons/summation.nb</a> b/<a href="../file/library/neurons/summation.nb.html">library/neurons/summation.nb</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,3 +1,3 @@
+</a> {
+<a href="#h7-0-1" id="h7-0-1" class="d">-	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;]
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;addop&quot;]
+</a> }
+<b>diff --git a/<a id="h8" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ )
+<a href="#h8-1" id="h8-1" class="h">@@ -23,18 +24,17 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;reg&quot;)
+ 			}
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-			// TODO Use bmnumbers package
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+			// re = regexp.MustCompile(&quot;^[0-9]+$&quot;)
+</a><a href="#h8-1-5" id="h8-1-5" class="i">+			// if re.MatchString(arg.GetValue()) {
+</a><a href="#h8-1-6" id="h8-1-6" class="i">+			// 	arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h8-1-7" id="h8-1-7" class="i">+			// 	arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, &quot;decimal&quot;)
+</a><a href="#h8-1-8" id="h8-1-8" class="i">+			// }
+</a><a href="#h8-1-9" id="h8-1-9" class="i">+			// re = regexp.MustCompile(&quot;^0f[+-]?([0-9]*[.])?[0-9]+$&quot;)
+</a><a href="#h8-1-10" id="h8-1-10" class="i">+			// if re.MatchString(arg.GetValue()) {
+</a><a href="#h8-1-11" id="h8-1-11" class="i">+			// 	arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h8-1-12" id="h8-1-12" class="i">+			// 	arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, &quot;float&quot;)
+</a><a href="#h8-1-13" id="h8-1-13" class="i">+			// }
+</a> 
+<a href="#h8-1-15" id="h8-1-15" class="d">-			re = regexp.MustCompile(&quot;^[0-9]+$&quot;)
+</a><a href="#h8-1-16" id="h8-1-16" class="d">-			if re.MatchString(arg.GetValue()) {
+</a><a href="#h8-1-17" id="h8-1-17" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h8-1-18" id="h8-1-18" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, &quot;decimal&quot;)
+</a><a href="#h8-1-19" id="h8-1-19" class="d">-			}
+</a><a href="#h8-1-20" id="h8-1-20" class="d">-			re = regexp.MustCompile(&quot;^0f[+-]?([0-9]*[.])?[0-9]+$&quot;)
+</a><a href="#h8-1-21" id="h8-1-21" class="d">-			if re.MatchString(arg.GetValue()) {
+</a><a href="#h8-1-22" id="h8-1-22" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h8-1-23" id="h8-1-23" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, &quot;float&quot;)
+</a><a href="#h8-1-24" id="h8-1-24" class="d">-			}
+</a> 			re = regexp.MustCompile(&quot;^rom:(?P&lt;location&gt;[0-9]+)$&quot;)
+ 			if re.MatchString(arg.GetValue()) {
+ 				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;rom&quot;)
+<a href="#h8-2" id="h8-2" class="h">@@ -101,6 +101,7 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 					}
+ 				}
+ 			}
+<a href="#h8-2-3" id="h8-2-3" class="i">+
+</a> 			for _, soname := range soShortNames {
+ 				re = regexp.MustCompile(&quot;^&quot; + soname + &quot;(?P&lt;index&gt;[0-9]+)$&quot;)
+ 				if re.MatchString(arg.GetValue()) {
+<a href="#h8-3" id="h8-3" class="h">@@ -142,8 +143,14 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 					arg.BasmMeta = arg.SetMeta(&quot;soaddr&quot;, addr)
+ 				}
+ 			}
+<a href="#h8-3-3" id="h8-3-3" class="i">+
+</a><a href="#h8-3-4" id="h8-3-4" class="i">+			if bmNumber, err := bmnumbers.ImportString(arg.GetValue()); err == nil {
+</a><a href="#h8-3-5" id="h8-3-5" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h8-3-6" id="h8-3-6" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;numbertype&quot;, bmNumber.GetTypeName())
+</a><a href="#h8-3-7" id="h8-3-7" class="i">+			}
+</a> 		}
+ 	}
+<a href="#h8-3-10" id="h8-3-10" class="i">+
+</a> 	//TODO add more meta data
+ 	return nil
+ }
+<b>diff --git a/<a id="h9" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -66,6 +66,10 @@ func GetType(name string) BMNumberType {
+</a> 	return nil
+ }
+ 
+<a href="#h9-0-3" id="h9-0-3" class="i">+func (n *BMNumber) GetTypeName() string {
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	return n.nType.GetName()
+</a><a href="#h9-0-5" id="h9-0-5" class="i">+}
+</a><a href="#h9-0-6" id="h9-0-6" class="i">+
+</a> func OverrideType(n *BMNumber, t BMNumberType) error {
+ 	if n == nil || n.number == nil {
+ 		return errors.New(&quot;Cannot override type of nil number&quot;)
+</pre>
+</div>
+</body>
+</html>

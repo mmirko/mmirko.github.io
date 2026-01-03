@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>uart opcodes - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b07e1788e815a3c332f19bd837356a53aab11213.html">b07e1788e815a3c332f19bd837356a53aab11213</a>
+<b>parent</b> <a href="../commit/ebdffaaec37e3938bb01a9f31c0de078665351c7.html">ebdffaaec37e3938bb01a9f31c0de078665351c7</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  3 Mar 2023 17:40:04 +0100
+
+uart opcodes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_r2u.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_u2r.go</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>2 files changed, 21 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a> b/<a href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -44,8 +44,6 @@ func (op R2u) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+ 	uartNum := arch.Shared_num(uSo.Shr_get_name())
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	// TODO: from here
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-
+</a> 	result := &quot;&quot;
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;q2r&quot;, &quot;r2q&quot;, &quot;r2u&quot;, &quot;u2r&quot;, &quot;k2r&quot;}) {
+ 		result += &quot;	reg stackqueueSM;\n&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -257,7 +255,7 @@ func (Op R2u) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> }
+ func (Op R2u) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 0)
+<a href="#h0-1-3" id="h0-1-3" class="d">-	result = append(result, &quot;push::*--type=reg&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	result = append(result, &quot;touart::*--type=reg&quot;)
+</a> 	result = append(result, &quot;r2u::*--type=reg::*--type=somov--sotype=u&quot;)
+ 	result = append(result, &quot;mov::*--type=somov--sotype=u::*--type=reg&quot;)
+ 	return result
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a> b/<a href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,8 +69,8 @@ func (Op U2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> 
+ func (op U2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+ 	uSo := Uart{}
+<a href="#h1-0-3" id="h1-0-3" class="d">-	queueBits := arch.Shared_bits(uSo.Shr_get_name())
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	queueNum := arch.Shared_num(uSo.Shr_get_name())
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	uartNum := arch.Shared_num(uSo.Shr_get_name())
+</a> 	rom_word := arch.Max_word()
+ 	opBits := arch.Opcodes_bits()
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -78,7 +78,7 @@ func (op U2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					U2R: begin\n&quot;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if queueNum &gt; 0 {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if uartNum &gt; 0 {
+</a> 		if arch.R == 1 {
+ 			result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+ 		} else {
+<a href="#h1-2" id="h1-2" class="h">@@ -87,13 +87,13 @@ func (op U2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 		for i := 0; i &lt; reg_num; i++ {
+ 			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-			if queueBits == 1 {
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;])\n&quot;
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+			if uartBits == 1 {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-uartBits-1) + &quot;])\n&quot;
+</a> 			} else {
+<a href="#h1-2-8" id="h1-2-8" class="d">-				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-queueBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(queueBits)) + &quot;])\n&quot;
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+				result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opBits-uartBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(uartBits)) + &quot;])\n&quot;
+</a> 			}
+ 
+<a href="#h1-2-12" id="h1-2-12" class="d">-			for j := 0; j &lt; queueNum; j++ {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			for j := 0; j &lt; uartNum; j++ {
+</a> 				result += &quot;							&quot; + strings.ToUpper(op.getUartName(j)) + &quot; : begin\n&quot;
+ 				result += &quot;								if (&quot; + strings.ToLower(op.getUartName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverRead) begin\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getUartName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+<a href="#h1-3" id="h1-3" class="h">@@ -128,8 +128,8 @@ func (op U2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> func (op U2r) Assembler(arch *Arch, words []string) (string, error) {
+ 	opBits := arch.Opcodes_bits()
+ 	uSo := Uart{}
+<a href="#h1-3-3" id="h1-3-3" class="d">-	queueNum := arch.Shared_num(uSo.Shr_get_name())
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	queueBits := arch.Shared_bits(uSo.Shr_get_name())
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	uartNum := arch.Shared_num(uSo.Shr_get_name())
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+</a> 	shortName := uSo.Shortname()
+ 	romWord := arch.Max_word()
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -151,13 +151,13 @@ func (op U2r) Assembler(arch *Arch, words []string) (string, error) {
+</a> 		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+ 	}
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-	if partial, err := Process_shared(shortName, words[1], queueNum); err == nil {
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-		result += zeros_prefix(queueBits, partial)
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	if partial, err := Process_shared(shortName, words[1], uartNum); err == nil {
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+		result += zeros_prefix(uartBits, partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h1-4-11" id="h1-4-11" class="d">-	for i := opBits + int(arch.R) + queueBits; i &lt; romWord; i++ {
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+	for i := opBits + int(arch.R) + uartBits; i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h1-5" id="h1-5" class="h">@@ -165,13 +165,13 @@ func (op U2r) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op U2r) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-	chso := Uart{}
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	queueBits := arch.Shared_bits(chso.Shr_get_name())
+</a><a href="#h1-5-5" id="h1-5-5" class="d">-	shortname := chso.Shortname()
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	uSo := Uart{}
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	uartBits := arch.Shared_bits(uSo.Shr_get_name())
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+	shortname := uSo.Shortname()
+</a> 	regId := get_id(instr[:arch.R])
+ 	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+<a href="#h1-5-11" id="h1-5-11" class="d">-	stId := get_id(instr[arch.R : int(arch.R)+queueBits])
+</a><a href="#h1-5-12" id="h1-5-12" class="d">-	result += shortname + strconv.Itoa(stId)
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	uId := get_id(instr[arch.R : int(arch.R)+uartBits])
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+	result += shortname + strconv.Itoa(uId)
+</a> 	return result, nil
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -248,7 +248,7 @@ func (Op U2r) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> }
+ func (Op U2r) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 0)
+<a href="#h1-6-3" id="h1-6-3" class="d">-	result = append(result, &quot;deq::*--type=reg&quot;)
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	result = append(result, &quot;fromuart::*--type=reg&quot;)
+</a> 	result = append(result, &quot;u2r::*--type=reg::*--type=somov--sotype=u&quot;)
+ 	result = append(result, &quot;mov::*--type=reg::*--type=somov--sotype=u&quot;)
+ 	return result
+<a href="#h1-7" id="h1-7" class="h">@@ -261,10 +261,10 @@ func (Op U2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 		soVal := line.Elements[1].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+ 		return line, nil
+<a href="#h1-7-3" id="h1-7-3" class="d">-	case &quot;deq&quot;:
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	case &quot;fromuart&quot;:
+</a> 		regVal := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+<a href="#h1-7-7" id="h1-7-7" class="d">-		soVal := &quot;q0&quot; // Pull implicitly uses queue 0
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+		soVal := &quot;u0&quot; // Fromuart is always u0
+</a> 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+ 		if regVal != &quot;&quot; &amp;&amp; soVal != &quot;&quot; {
+ 			newLine := new(bmline.BasmLine)
+</pre>
+</div>
+</body>
+</html>

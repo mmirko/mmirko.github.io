@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HW optimizations flag - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dc0e2bf6ea3f668eaa45fb22798e6f86c5ce3bf4.html">dc0e2bf6ea3f668eaa45fb22798e6f86c5ce3bf4</a>
+<b>parent</b> <a href="../commit/56ecd17f7881764372778177747f7b0b31756694.html">56ecd17f7881764372778177747f7b0b31756694</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 30 Mar 2023 22:57:33 +0200
+
+HW optimizations flag
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/hwoptimizations.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_multf.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 11 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -165,7 +165,7 @@ var attach_benchmark_core string_slice
+</a> 
+ var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;File containing the bondmachine extra info&quot;)
+ var bmRequirementsFile = flag.String(&quot;bmrequirements-file&quot;, &quot;&quot;, &quot;File containing the bondmachine requirements&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="d">-var hwOptimizations = flag.String(&quot;hwoptimizations&quot;, &quot;&quot;, &quot;comma separated hardware optimizations&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var hwOptimizations = flag.String(&quot;hw-optimizations&quot;, &quot;&quot;, &quot;comma separated hardware optimizations&quot;)
+</a> 
+ func check(e error) {
+ 	if e != nil {
+<a href="#h0-1" id="h0-1" class="h">@@ -209,6 +209,8 @@ func main() {
+</a> 		for _, opt := range strings.Split(*hwOptimizations, &quot;,&quot;) {
+ 			if id := procbuilder.HwOptimizationId(opt); id != 0 {
+ 				conf.HwOptimizations = procbuilder.SetHwOptimization(conf.HwOptimizations, id)
+<a href="#h0-1-3" id="h0-1-3" class="i">+			} else {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				panic(&quot;Unknown hardware optimization: &quot; + opt)
+</a> 			}
+ 		}
+ 	}
+<a href="#h0-2" id="h0-2" class="h">@@ -234,7 +236,7 @@ func main() {
+</a> 			}
+ 			newRg, _ := bmreqs.Import(reqs)
+ 			conf.ReqRoot = newRg
+<a href="#h0-2-3" id="h0-2-3" class="d">-			fmt.Println(newRg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, Op: bmreqs.OpDump}))
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			// fmt.Println(newRg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, Op: bmreqs.OpDump}))
+</a> 		} else {
+ 			panic(err)
+ 		}
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/hwoptimizations.go.html">pkg/procbuilder/hwoptimizations.go</a> b/<a href="../file/pkg/procbuilder/hwoptimizations.go.html">pkg/procbuilder/hwoptimizations.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,7 +8,7 @@ type HwOptimizations uint64
+</a> 
+ func HwOptimizationId(name string) HwOptimizations {
+ 	switch name {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	case &quot;optimize&quot;:
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	case &quot;hwoptimize&quot;:
+</a> 		return HwOptimizations(HwOptimize)
+ 	}
+ 	return 0
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a> b/<a href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,6 +2,7 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;errors&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;fmt&quot;
+</a> 	&quot;math&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -68,6 +69,11 @@ func (op Multf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+ 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(HwOptimize)) {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+			fmt.Println(&quot;Optimizing multf&quot;)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		}
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+
+</a> 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+</pre>
+</div>
+</body>
+</html>

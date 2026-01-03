@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minor - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bd92e36daff7b1efc6c6e9fa1153261a0c617c37.html">bd92e36daff7b1efc6c6e9fa1153261a0c617c37</a>
+<b>parent</b> <a href="../commit/404dc20a44151cf26b93bbdb69810aea191d5428.html">404dc20a44151cf26b93bbdb69810aea191d5428</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  5 May 2023 15:03:51 +0200
+
+Minor
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++++++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/simbox/simbox.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 30 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -114,8 +114,13 @@ func (op LinearQuantizer) Op_instruction_verilog_state_machine(conf *Config, arc
+</a> 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 			result += &quot;							case (&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state)\n&quot;
+ 			result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			switch op.opType {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			case LQADD, LQMULT:
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			case LQDIV:
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_corr &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+			}
+</a> 			switch op.opType {
+ 			case LQADD:
+ 				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -123,16 +128,24 @@ func (op LinearQuantizer) Op_instruction_verilog_state_machine(conf *Config, arc
+</a> 				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr;\n&quot;
+ 			}
+ 			result += &quot;							end\n&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if op.opType == LQMULT || op.opType == LQDIV {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			switch op.opType {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			case LQMULT:
+</a> 				result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr : begin\n&quot;
+ 				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_corr &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+ 				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+ 				result += &quot;							end\n&quot;
+<a href="#h0-1-10" id="h0-1-10" class="i">+			case LQDIV:
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_corr : begin\n&quot;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_a &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr;\n&quot;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+				result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+				result += &quot;							end\n&quot;
+</a> 			}
+ 			result += &quot;							&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+<a href="#h0-1-18" id="h0-1-18" class="d">-			if op.opType == LQADD {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			switch op.opType {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+			case LQADD, LQDIV:
+</a> 				result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+<a href="#h0-1-22" id="h0-1-22" class="d">-			} else {
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+			case LQMULT:
+</a> 				result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_output_corr;\n&quot;
+ 			}
+ 			result += &quot;								&quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.lqName + &quot;_&quot; + arch.Tag + &quot;_put;\n&quot;
+<b>diff --git a/<a id="h1" href="../file/pkg/simbox/simbox.go.html">pkg/simbox/simbox.go</a> b/<a href="../file/pkg/simbox/simbox.go.html">pkg/simbox/simbox.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -121,6 +121,18 @@ func (r *Simbox) Add(adds string) error {
+</a> 				return nil
+ 			}
+ 		}
+<a href="#h1-0-3" id="h1-0-3" class="i">+		if words[0] == &quot;absolute&quot; &amp;&amp; words[2] == &quot;show&quot; {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			if tick, err := strconv.Atoi(words[1]); err == nil {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_ABS, uint64(tick), ACTION_SHOW, words[3], words[4]})
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+				return nil
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		}
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		if words[0] == &quot;relative&quot; &amp;&amp; words[2] == &quot;show&quot; {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			if every, err := strconv.Atoi(words[1]); err == nil {
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+				r.Rules = append(r.Rules, Rule{TIMEC_REL, uint64(every), ACTION_SHOW, words[3], words[4]})
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+				return nil
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		}
+</a> 	} else if len(words) == 4 {
+ 		if words[0] == &quot;absolute&quot; &amp;&amp; words[2] == &quot;get&quot; {
+ 			if tick, err := strconv.Atoi(words[1]); err == nil {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>New support parameters - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6145da214ea7bfaf150f1017f3acbdd8662d52ad.html">6145da214ea7bfaf150f1017f3acbdd8662d52ad</a>
+<b>parent</b> <a href="../commit/9f763345bcffb00ff341cd19f313bac83d4db1a6.html">9f763345bcffb00ff341cd19f313bac83d4db1a6</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 15 Sep 2024 23:04:07 +0200
+
+New support parameters
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/referencebuild.sh</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">60</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">---------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 33 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/referencebuild.sh.html">pkg/basm/referencebuild.sh</a> b/<a href="../file/pkg/basm/referencebuild.sh.html">pkg/basm/referencebuild.sh</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -143,14 +143,19 @@ done
+</a> cat &gt; ./reference/matrix.md &lt;&lt; EOF
+ # Support Matrix
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-The following tables show the feature support of the instructions and the dynamical instruction in the BondMachine project.
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+The following tables show the feature state in term of level of development for each instruction and instruction group.
+</a> For each of them the support of the features is shown.
+ 
+ The features are the following:
+ | Feature | Description |
+ | --- | --- |
+ | hdl | The instruction can be translated to hardware description language |
+<a href="#h0-0-11" id="h0-0-11" class="i">+| asm | The instruction can be assembled by the assembler |
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+| disasm | The instruction can be disassembled by the disassembler |
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+| hlasm | The instruction can be assembled by the high-level assembler (Basm) |
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+| asmmeta | The instruction has metadata for the assembler |
+</a> | gosim | The instruction can be simulated in the Go-based simulator |
+<a href="#h0-0-16" id="h0-0-16" class="i">+| hdlsim | The instruction can be simulated in the hardware description language simulator |
+</a> 
+ The possible support values are shown below:
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -37,7 +37,7 @@ func (op Inc) Op_get_instruction_len(arch *Arch) int {
+</a> 	return opBits + int(arch.R) // The bits for the opcode + bits for a register
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-func (op Inc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func (op Inc) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -55,10 +55,10 @@ func (Op Inc) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> 
+ func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	// &quot;reference&quot;: {&quot;support_hdl&quot;:&quot;ok&quot;}
+<a href="#h1-1-3" id="h1-1-3" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	romWord := arch.Max_word()
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	opBits := arch.Opcodes_bits()
+</a> 	tabsNum := 5
+<a href="#h1-1-8" id="h1-1-8" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	result := &quot;&quot;
+ 	result += tabs(tabsNum) + &quot;INC: begin\n&quot;
+<a href="#h1-2" id="h1-2" class="h">@@ -67,13 +67,14 @@ func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 		tabsNum++
+ 	}
+ 	if arch.R == 1 {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h1-2-6" id="h1-2-6" class="d">-		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+<a href="#h1-2-9" id="h1-2-9" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 
+ 		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+<a href="#h1-2-13" id="h1-2-13" class="i">+			// &quot;reference&quot;: {&quot;hwoptimizations&quot;: &quot;OnlyDestRegs&quot;}
+</a> 			cp := arch.Tag
+ 			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:inc&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+ 			if req.Value == &quot;false&quot; {
+<a href="#h1-3" id="h1-3" class="h">@@ -100,17 +101,18 @@ func (op Inc) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op Inc) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h1-3-3" id="h1-3-3" class="i">+	// &quot;reference&quot;: {&quot;support_asm&quot;: &quot;ok&quot;}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h1-3-5" id="h1-3-5" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	romWord := arch.Max_word()
+</a> 
+<a href="#h1-3-8" id="h1-3-8" class="d">-	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a> 
+ 	if len(words) != 1 {
+<a href="#h1-3-12" id="h1-3-12" class="d">-		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+		return &quot;&quot;, errors.New(&quot;wrong arguments number&quot;)
+</a> 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h1-3-17" id="h1-3-17" class="d">-	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a> 		if words[0] == strings.ToLower(Get_register_name(i)) {
+ 			result += zeros_prefix(int(arch.R), get_binary(i))
+ 			break
+<a href="#h1-4" id="h1-4" class="h">@@ -118,10 +120,10 @@ func (op Inc) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if result == &quot;&quot; {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		return &quot;&quot;, errors.New(&quot;unknown register name &quot; + words[0])
+</a> 	}
+ 
+<a href="#h1-4-7" id="h1-4-7" class="d">-	for i := opBits + int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+	for i := opBits + int(arch.R); i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h1-5" id="h1-5" class="h">@@ -129,8 +131,9 @@ func (op Inc) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op Inc) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-	reg_id := get_id(instr[:arch.R])
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	result := strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	// &quot;reference&quot;: {&quot;support_disasm&quot;: &quot;ok&quot;}
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	regID := get_id(instr[:arch.R])
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	result := strings.ToLower(Get_register_name(regID))
+</a> 	return result, nil
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -177,24 +180,12 @@ func (Op Inc) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([
+</a> }
+ 
+ func (Op Inc) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	seq, types := Sequence_to_0(words[0])
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	if len(seq) &gt; 0 &amp;&amp; types == O_REGISTER {
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-		result := make([]UsageNotify, 2)
+</a><a href="#h1-6-7" id="h1-6-7" class="d">-		newnot0 := UsageNotify{C_OPCODE, &quot;inc&quot;, I_NIL}
+</a><a href="#h1-6-8" id="h1-6-8" class="d">-		result[0] = newnot0
+</a><a href="#h1-6-9" id="h1-6-9" class="d">-		newnot1 := UsageNotify{C_REGSIZE, S_NIL, len(seq)}
+</a><a href="#h1-6-10" id="h1-6-10" class="d">-		result[1] = newnot1
+</a><a href="#h1-6-11" id="h1-6-11" class="d">-
+</a><a href="#h1-6-12" id="h1-6-12" class="d">-		return result, nil
+</a><a href="#h1-6-13" id="h1-6-13" class="d">-	}
+</a><a href="#h1-6-14" id="h1-6-14" class="d">-
+</a><a href="#h1-6-15" id="h1-6-15" class="d">-	return []UsageNotify{}, errors.New(&quot;wrong register&quot;)
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+	return []UsageNotify{}, errors.New(&quot;function obsolete&quot;)
+</a> }
+ 
+<a href="#h1-6-19" id="h1-6-19" class="d">-func (Op Inc) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h1-6-20" id="h1-6-20" class="i">+func (Op Inc) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockName string, objects []string) string {
+</a> 	result := &quot;&quot;
+<a href="#h1-6-22" id="h1-6-22" class="d">-	switch blockname {
+</a><a href="#h1-6-23" id="h1-6-23" class="i">+	switch blockName {
+</a> 	default:
+ 		result = &quot;&quot;
+ 	}
+<a href="#h1-7" id="h1-7" class="h">@@ -202,6 +193,7 @@ func (Op Inc) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> }
+ 
+ func (Op Inc) HLAssemblerMatch(arch *Arch) []string {
+<a href="#h1-7-3" id="h1-7-3" class="i">+	// &quot;reference&quot;: {&quot;support_hlasm&quot;: &quot;ok&quot;}
+</a> 	result := make([]string, 0)
+ 	result = append(result, &quot;inc::*--type=reg&quot;)
+ 	return result
+<a href="#h1-8" id="h1-8" class="h">@@ -218,11 +210,9 @@ func (Op Inc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 	}
+ 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+ }
+<a href="#h1-8-3" id="h1-8-3" class="d">-func (Op Inc) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-	return []string{}, []string{}
+</a><a href="#h1-8-5" id="h1-8-5" class="d">-}
+</a> 
+ func (Op Inc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h1-8-8" id="h1-8-8" class="i">+	// &quot;reference&quot;: {&quot;support_asmeta&quot;: &quot;ok&quot;}
+</a> 	switch line.Operation.GetValue() {
+ 	case &quot;inc&quot;:
+ 		regDst := line.Elements[0].GetValue()
+<a href="#h1-9" id="h1-9" class="h">@@ -235,3 +225,7 @@ func (Op Inc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) 
+</a> 	}
+ 	return nil, nil
+ }
+<a href="#h1-9-3" id="h1-9-3" class="i">+
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+func (Op Inc) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+	return []string{}, []string{}
+</a><a href="#h1-9-6" id="h1-9-6" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Queue fix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3ff218bb2a6bf7f91a4ce81c58dc8a005b98c608.html">3ff218bb2a6bf7f91a4ce81c58dc8a005b98c608</a>
+<b>parent</b> <a href="../commit/58edc1b82352c5ddfd75887029127cdc2433154e.html">58edc1b82352c5ddfd75887029127cdc2433154e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  1 Feb 2023 10:47:29 +0100
+
+Queue fix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_q2r.go</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_r2q.go</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/shr_queue.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 29 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a> b/<a href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,24 +25,24 @@ func (op Q2r) Op_get_desc() string {
+</a> }
+ 
+ func (op Q2r) Op_show_assembler(arch *Arch) string {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	stSo := Queue{}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	qSo := Queue{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h0-0-6" id="h0-0-6" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a> 	result := &quot;q2r [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(queueBits)) + &quot; (Shared Queue)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+queueBits) + &quot;]\n&quot;
+ 	return result
+ }
+ 
+ func (op Q2r) Op_get_instruction_len(arch *Arch) int {
+<a href="#h0-0-13" id="h0-0-13" class="d">-	stSo := Queue{}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	qSo := Queue{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h0-0-16" id="h0-0-16" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a> 	return opBits + int(arch.R) + int(queueBits) // The bits for the opcode + bits for a register + bits queues
+ }
+ 
+ func (op Q2r) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+<a href="#h0-0-22" id="h0-0-22" class="d">-	stSo := Queue{}
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	qSo := Queue{}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a> 
+ 	result := &quot;&quot;
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;q2r&quot;, &quot;r2q&quot;}) {
+<a href="#h0-1" id="h0-1" class="h">@@ -68,9 +68,9 @@ func (Op Q2r) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op Q2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	stSo := Queue{}
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	qSo := Queue{}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a> 	rom_word := arch.Max_word()
+ 	opBits := arch.Opcodes_bits()
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -127,10 +127,10 @@ func (op Q2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 
+ func (op Q2r) Assembler(arch *Arch, words []string) (string, error) {
+ 	opBits := arch.Opcodes_bits()
+<a href="#h0-2-3" id="h0-2-3" class="d">-	stSo := Queue{}
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	shortName := stSo.Shortname()
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	qSo := Queue{}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	shortName := qSo.Shortname()
+</a> 	romWord := arch.Max_word()
+ 
+ 	regNum := 1 &lt;&lt; arch.R
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a> b/<a href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -25,24 +25,24 @@ func (op R2q) Op_get_desc() string {
+</a> }
+ 
+ func (op R2q) Op_show_assembler(arch *Arch) string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	stSo := Queue{}
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	qSo := Queue{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h1-0-6" id="h1-0-6" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a> 	result := &quot;r2q [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ &quot; + strconv.Itoa(int(queueBits)) + &quot; (Shared Queue)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opBits+int(arch.R)+queueBits) + &quot;]\n&quot;
+ 	return result
+ }
+ 
+ func (op R2q) Op_get_instruction_len(arch *Arch) int {
+<a href="#h1-0-13" id="h1-0-13" class="d">-	stSo := Queue{}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	qSo := Queue{}
+</a> 	opBits := arch.Opcodes_bits()
+<a href="#h1-0-16" id="h1-0-16" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a> 	return opBits + int(arch.R) + int(queueBits) // The bits for the opcode + bits for a register + bits queues
+ }
+ 
+ func (op R2q) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+<a href="#h1-0-22" id="h1-0-22" class="d">-	stSo := Queue{}
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	qSo := Queue{}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a> 
+ 	result := &quot;&quot;
+ 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2t&quot;, &quot;t2r&quot;, &quot;q2r&quot;, &quot;r2q&quot;}) {
+<a href="#h1-1" id="h1-1" class="h">@@ -68,9 +68,9 @@ func (Op R2q) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a> }
+ 
+ func (op R2q) Op_instruction_verilog_state_machine(arch *Arch, flavor string) string {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	stSo := Queue{}
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	qSo := Queue{}
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a> 	rom_word := arch.Max_word()
+ 	opBits := arch.Opcodes_bits()
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -135,10 +135,10 @@ func (op R2q) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 
+ func (op R2q) Assembler(arch *Arch, words []string) (string, error) {
+ 	opBits := arch.Opcodes_bits()
+<a href="#h1-2-3" id="h1-2-3" class="d">-	stSo := Queue{}
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-	queueNum := arch.Shared_num(stSo.Shr_get_name())
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-	queueBits := arch.Shared_bits(stSo.Shr_get_name())
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-	shortName := stSo.Shortname()
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	qSo := Queue{}
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	queueNum := arch.Shared_num(qSo.Shr_get_name())
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+	queueBits := arch.Shared_bits(qSo.Shr_get_name())
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	shortName := qSo.Shortname()
+</a> 	romWord := arch.Max_word()
+ 
+ 	regNum := 1 &lt;&lt; arch.R
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a> b/<a href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -35,7 +35,7 @@ func (op Queue) GetArchHeader(arch *Arch, shared_constraint string, seq int) str
+</a> }
+ 
+ func (op Queue) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	queueName := &quot;st&quot; + strconv.Itoa(seq)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	queueName := &quot;q&quot; + strconv.Itoa(seq)
+</a> 	result := &quot;&quot;
+ 
+ 	for _, op := range arch.Op {
+</pre>
+</div>
+</body>
+</html>

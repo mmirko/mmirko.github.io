@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>opcode insert - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ec2625934b4563e1e7629d4033c6a056b037a796.html">ec2625934b4563e1e7629d4033c6a056b037a796</a>
+<b>parent</b> <a href="../commit/f1f76ec534a3220ff03839597949cb8ce02fb784.html">f1f76ec534a3220ff03839597949cb8ce02fb784</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 19 Jan 2023 11:52:23 +0100
+
+opcode insert
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a> b/<a href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -26,7 +26,7 @@ var execution_model = flag.String(&quot;execution-model&quot;, &quot;ha&quot;, &quot;Execution model: vn 
+</a> 
+ var register_size = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-bit)&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var enabled_opcodes = flag.String(&quot;opcodes&quot;, &quot;adc,add,addf,addi,and,cil,cilc,cir,cirn,chc,chw,clc,clr,cpy,cset,dec,div,divf,dpc,hit,hlt,i2r,i2rw,incc,inc,j,jc,je,jz,lfsr82r,m2r,mod,mulc,mult,multf,nand,nop,nor,not,or,r2m,r2o,r2owa,r2owaa,r2s,r2v,r2vri,rsc,rset,sic,s2r,saj,sbc,sub,wrd,wwr,xnor,xor&quot;, &quot;Enabled opcodes&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var enabledOpcodes = flag.String(&quot;opcodes&quot;, &quot;nop&quot;, &quot;Enabled opcodes&quot;)
+</a> 
+ var rbit = flag.Int(&quot;registers&quot;, 3, &quot;Number of n-bit registers 2^&quot;)
+ var lbit = flag.Int(&quot;ram&quot;, 8, &quot;Number of n-bit RAM memory cells 2^&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -199,23 +199,36 @@ func main() {
+</a> 				panic(err)
+ 			}
+ 		} else {
+<a href="#h0-1-3" id="h0-1-3" class="d">-			// TODO include opcodes checks
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			// TODO keep the opcodes unique and sorted
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			var eops []string
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			if *enabled_opcodes != &quot;&quot; {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-				eops = strings.Split(*enabled_opcodes, &quot;,&quot;)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			var eOps []string
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			if *enabledOpcodes != &quot;&quot; {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				eOps = strings.Split(*enabledOpcodes, &quot;,&quot;)
+</a> 			} else {
+ 				panic(&quot;Missing opcodes&quot;)
+ 			}
+ 
+<a href="#h0-1-15" id="h0-1-15" class="d">-			opcodes := make([]procbuilder.Opcode, len(eops))
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			opcodes := make([]procbuilder.Opcode, len(eOps))
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			checked := make(map[string]struct{})
+</a> 
+<a href="#h0-1-19" id="h0-1-19" class="d">-			for i, opname := range eops {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+			for i, opName := range eOps {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				if _, err := procbuilder.EventuallyCreateInstruction(opName); err != nil {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+					panic(err)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+				}
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				found := false
+</a> 				for _, op := range procbuilder.Allopcodes {
+<a href="#h0-1-27" id="h0-1-27" class="d">-					if op.Op_get_name() == opname {
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+					if op.Op_get_name() == opName {
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+						if _, ok := checked[opName]; ok {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+							panic(&quot;Duplicate opcode &quot; + opName)
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+						}
+</a> 						opcodes[i] = op
+<a href="#h0-1-33" id="h0-1-33" class="i">+						found = true
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+						checked[opName] = struct{}{}
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+						break
+</a> 					}
+ 				}
+<a href="#h0-1-38" id="h0-1-38" class="i">+				if !found {
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+					panic(&quot;Unknown opcode &quot; + opName)
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+				}
+</a> 			}
+ 
+ 			sort.Sort(procbuilder.ByName(opcodes))
+</pre>
+</div>
+</body>
+</html>

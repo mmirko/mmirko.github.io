@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pruning and collapsing - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/975b3832e06e837d0311005960641c2e4ab91638.html">975b3832e06e837d0311005960641c2e4ab91638</a>
+<b>parent</b> <a href="../commit/c3739ef63ed185d48206f4297156ce1496d11f0e.html">c3739ef63ed185d48206f4297156ce1496d11f0e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 15 Oct 2022 00:45:35 +0200
+
+Pruning and collapsing
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">48</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 66 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -73,6 +73,16 @@ func main() {
+</a> 		config.Params = make(map[string]string)
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	if config.Params == nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		config.Params = make(map[string]string)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	if config.List == nil {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		config.List = make(map[string]string)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	if config.Pruned == nil {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		config.Pruned = make([]string, 0)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> 	if *neuronLibPath != &quot;&quot; {
+ 		config.NeuronLibPath = *neuronLibPath
+ 	} else {
+<a href="#h0-1" id="h0-1" class="h">@@ -93,4 +103,12 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		// Write the config file
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		if configFileJSON, err := json.MarshalIndent(config, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			ioutil.WriteFile(*configFile, configFileJSON, 0644)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		} else {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			panic(err)
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	}
+</a> }
+<b>diff --git a/<a id="h1" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,8 +22,12 @@ type TrainedNet struct {
+</a> 	OperatingMode uint8
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+type Group []string
+</a> type Config struct {
+ 	Params        map[string]string
+<a href="#h1-0-6" id="h1-0-6" class="i">+	List          map[string]string
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	Pruned        []string
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	Collapsed     []Group
+</a> 	Debug         bool
+ 	Verbose       bool
+ 	NeuronLibPath string
+<a href="#h1-1" id="h1-1" class="h">@@ -134,17 +138,20 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 		for _, node := range n.Nodes {
+ 			if node.Type == &quot;input&quot; {
+ 				result += fmt.Sprintf(&quot;%%meta cpdef node_0_%d romcode:terminal\n&quot;, node.Pos)
+<a href="#h1-1-3" id="h1-1-3" class="i">+				c.List[fmt.Sprintf(&quot;node_0_%d&quot;, node.Pos)] = &quot;input&quot;
+</a> 				result += fmt.Sprintf(&quot;%%meta iodef input_%d type:io\n&quot;, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+ 			} else if node.Type == &quot;output&quot; {
+ 				result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+<a href="#h1-1-9" id="h1-1-9" class="i">+				c.List[fmt.Sprintf(&quot;node_%d_%d&quot;, node.Layer, node.Pos)] = &quot;output&quot;
+</a> 				result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:bm, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+ 			} else {
+ 				if neuron, ok := n.Neurons[node.Type]; ok {
+ 					result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:%s&quot;, node.Layer, node.Pos, node.Type)
+<a href="#h1-1-16" id="h1-1-16" class="i">+					c.List[fmt.Sprintf(&quot;node_%d_%d&quot;, node.Layer, node.Pos)] = node.Type
+</a> 					for _, param := range neuron.Params {
+ 						switch param {
+ 						case &quot;inputs&quot;:
+<a href="#h1-2" id="h1-2" class="h">@@ -173,6 +180,7 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 			downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+ 			upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+ 			result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:0f%f\n&quot;, weightCP, weight.Value)
+<a href="#h1-2-3" id="h1-2-3" class="i">+			c.List[weightCP] = &quot;weight&quot;
+</a> 			result += fmt.Sprintf(&quot;%%meta iodef up%s type:io\n&quot;, weightCP)
+ 			result += fmt.Sprintf(&quot;%%meta iodef down%s type:io\n&quot;, weightCP)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:input, index:0\n&quot;, weightCP, weightCP)
+<a href="#h1-3" id="h1-3" class="h">@@ -184,17 +192,20 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 		for _, node := range n.Nodes {
+ 			if node.Type == &quot;input&quot; {
+ 				result += fmt.Sprintf(&quot;%%meta fidef node_0_%d fragment:terminal\n&quot;, node.Pos)
+<a href="#h1-3-3" id="h1-3-3" class="i">+				c.List[fmt.Sprintf(&quot;node_0_%d&quot;, node.Pos)] = &quot;input&quot;
+</a> 				result += fmt.Sprintf(&quot;%%meta filinkdef input_%d type:fl\n&quot;, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta filinkatt input_%d fi:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta filinkatt input_%d fi:ext, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+ 			} else if node.Type == &quot;output&quot; {
+ 				result += fmt.Sprintf(&quot;%%meta fidef node_%d_%d fragment:terminal\n&quot;, node.Layer, node.Pos)
+<a href="#h1-3-9" id="h1-3-9" class="i">+				c.List[fmt.Sprintf(&quot;node_%d_%d&quot;, node.Layer, node.Pos)] = &quot;output&quot;
+</a> 				result += fmt.Sprintf(&quot;%%meta filinkdef output_%d type:fl\n&quot;, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta filinkatt output_%d fi:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+ 				result += fmt.Sprintf(&quot;%%meta filinkatt output_%d fi:ext, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+ 			} else {
+ 				if neuron, ok := n.Neurons[node.Type]; ok {
+ 					result += fmt.Sprintf(&quot;%%meta fidef node_%d_%d fragment:%s&quot;, node.Layer, node.Pos, node.Type)
+<a href="#h1-3-16" id="h1-3-16" class="i">+					c.List[fmt.Sprintf(&quot;node_%d_%d&quot;, node.Layer, node.Pos)] = node.Type
+</a> 					for _, param := range neuron.Params {
+ 						switch param {
+ 						case &quot;inputs&quot;:
+<a href="#h1-4" id="h1-4" class="h">@@ -223,6 +234,7 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 			downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+ 			upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+ 			result += fmt.Sprintf(&quot;%%meta fidef %s fragment:weight, weight:0f%f\n&quot;, weightFI, weight.Value)
+<a href="#h1-4-3" id="h1-4-3" class="i">+			c.List[weightFI] = &quot;weight&quot;
+</a> 			result += fmt.Sprintf(&quot;%%meta filinkdef up%s type:fi\n&quot;, weightFI)
+ 			result += fmt.Sprintf(&quot;%%meta filinkdef down%s type:fi\n&quot;, weightFI)
+ 			result += fmt.Sprintf(&quot;%%meta filinkatt down%s fi:%s, type:input, index:0\n&quot;, weightFI, weightFI)
+<a href="#h1-5" id="h1-5" class="h">@@ -231,6 +243,42 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 			result += fmt.Sprintf(&quot;%%meta filinkatt up%s fi:%s, type:output, index:0\n&quot;, weightFI, weightFI)
+ 		}
+ 
+<a href="#h1-5-3" id="h1-5-3" class="i">+		ProcessedNodes := make(map[string]struct{})
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		for node, _ := range c.List {
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+			ProcessedNodes[node] = struct{}{}
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+		}
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+		// Processing pruned nodes
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+		for _, pNode := range c.Pruned {
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+			if _, ok := ProcessedNodes[pNode]; !ok {
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+				return &quot;&quot;, errors.New(&quot;Pruned node &quot; + pNode + &quot; not found&quot;)
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+			} else {
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+				result += fmt.Sprintf(&quot;%%meta fidef %s pruned:true\n&quot;, pNode)
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+				delete(ProcessedNodes, pNode)
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+			}
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+		}
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+		// Processing collapsed nodes
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+		for _, cGroup := range c.Collapsed {
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+			cName := &quot;&quot;
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+			cCode := &quot;&quot;
+</a><a href="#h1-5-22" id="h1-5-22" class="i">+			for _, cNode := range cGroup {
+</a><a href="#h1-5-23" id="h1-5-23" class="i">+				if _, ok := ProcessedNodes[cNode]; !ok {
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+					return &quot;&quot;, errors.New(&quot;Collapsed node &quot; + cNode + &quot; not found&quot;)
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+				} else {
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+					cName += cNode + &quot;_&quot;
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+					cCode += &quot;:&quot; + cNode
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+					delete(ProcessedNodes, cNode)
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+				}
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+			}
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef %s fragcollapse%s\n&quot;, cName, cCode)
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+		}
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+		// Processing remaining nodes
+</a><a href="#h1-5-35" id="h1-5-35" class="i">+		for node := range ProcessedNodes {
+</a><a href="#h1-5-36" id="h1-5-36" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef %s fragcollapse:%s\n&quot;, node, node)
+</a><a href="#h1-5-37" id="h1-5-37" class="i">+		}
+</a><a href="#h1-5-38" id="h1-5-38" class="i">+
+</a> 	default:
+ 		return &quot;&quot;, errors.New(&quot;unknown operating mode&quot;)
+ 	}
+</pre>
+</div>
+</body>
+</html>

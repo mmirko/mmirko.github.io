@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BCOF and ramcode assembler - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c358a1ba1bd5c682be147fb22caaa7eef1a1feaa.html">c358a1ba1bd5c682be147fb22caaa7eef1a1feaa</a>
+<b>parent</b> <a href="../commit/b31bb8de5be5804239bd95c8e4c715e9e2f24959.html">b31bb8de5be5804239bd95c8e4c715e9e2f24959</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 18 Aug 2023 19:30:03 +0200
+
+BCOF and ramcode assembler
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bcof.proto</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/basm/main.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/basm.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/creatorbcof.go</a></td><td> | </td><td class="num">96</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++</span><span class="d">------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">pkg/bcof/bcof.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bcof/bcof.pb.go</a></td><td> | </td><td class="num">261</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/bcof/bcof_test.go</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/arch.go</a></td><td> | </td><td class="num">40</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">84</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>10 files changed, 480 insertions(+), 82 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bcof.proto.html">bcof.proto</a> b/<a href="../file/bcof.proto.html">bcof.proto</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2,11 +2,24 @@ syntax = &quot;proto3&quot;;
+</a> option go_package = &quot;./bcof&quot;;
+ package bcof;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+message BCOFData {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	uint32 id = 1;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	uint32 rsize = 2;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	string signature = 3;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	bytes payload = 4;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> message BCOFEntry {
+ 	uint32 id = 1;
+<a href="#h0-0-12" id="h0-0-12" class="d">-	string signature = 2;
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-	oneof payload {
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-		BCOFEntry sub = 3;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		bytes data = 4;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	uint32 rsize = 2;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	string signature = 3;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	message subentry {
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		oneof pl {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			BCOFData binary = 1;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+			BCOFEntry leaf = 2;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		}
+</a> 	}
+<a href="#h0-0-25" id="h0-0-25" class="i">+	
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	repeated subentry data = 4;
+</a> }
+<b>diff --git a/<a id="h1" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -102,6 +102,9 @@ func main() {
+</a> 		bi.SetVerbose()
+ 	}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	// The BMinfo is always initialized and used internally. If the user wants to use it, it must be loaded from a file. Specifying the file is optional and it will be save only if specified.
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	bi.BMinfo = new(bminfo.BMinfo)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> 	if *bmInfoFile != &quot;&quot; {
+ 		bi.BMinfo = new(bminfo.BMinfo)
+ 		if bmInfoJSON, err := os.ReadFile(*bmInfoFile); err == nil {
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;fmt&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -40,6 +41,7 @@ type BasmInstance struct {
+</a> 	matchersOps      []procbuilder.Opcode
+ 	bm               *bondmachine.Bondmachine
+ 	result           *bondmachine.Bondmachine
+<a href="#h2-1-3" id="h2-1-3" class="i">+	outBCOF          *bcof.BCOFEntry
+</a> 	rg               *bmreqs.ReqRoot
+ 	global           *bmline.BasmElement
+ 	cps              []*bmline.BasmElement
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/creatorbcof.go.html">pkg/basm/creatorbcof.go</a> b/<a href="../file/pkg/basm/creatorbcof.go.html">pkg/basm/creatorbcof.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,13 +1,51 @@
+</a> package basm
+ 
+ import (
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 	&quot;regexp&quot;
+<a href="#h3-0-6" id="h3-0-6" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+</a> )
+ 
+ // Assembler2BCOF transform an assembled instance into a BCOF file
+ func (bi *BasmInstance) Assembler2BCOF() error {
+ 
+<a href="#h3-0-14" id="h3-0-14" class="i">+	if bi.debug {
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+		fmt.Println(&quot;\t&quot; + green(&quot;BCOF metadata&quot;))
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	}
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	registerSize := bi.global.GetMeta(&quot;registersize&quot;)
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+	if registerSize == &quot;&quot; {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+		return errors.New(&quot;register size not specified&quot;)
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	}
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	var rSize uint8
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	if size, err := strconv.Atoi(registerSize); err == nil {
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+		if 0 &lt; size &amp;&amp; size &lt; 256 {
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+			rSize = uint8(size)
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		} else {
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+			return errors.New(&quot;wrong value for register size&quot;)
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+		}
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	} else {
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		return errors.New(&quot;register size not valid&quot;)
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	}
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	if bi.debug {
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		fmt.Println(&quot;\t\t&quot;+green(&quot;register size:&quot;), rSize)
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	}
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	if bi.debug {
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+		fmt.Println(&quot;\t&quot; + green(&quot;BCOF creation&quot;))
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	}
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+	bi.outBCOF = bcof.NewBCOF(uint32(rSize))
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	bi.outBCOF.SetId(1)
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+	bi.outBCOF.SetSignature(&quot;bm&quot;)
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	idDone := make(map[int]struct{})
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+
+</a> 	for _, cp := range bi.cps {
+ 		if bi.debug {
+ 			fmt.Println(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+<a href="#h3-1" id="h3-1" class="h">@@ -30,8 +68,62 @@ func (bi *BasmInstance) Assembler2BCOF() error {
+</a> 				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram data: &quot;) + yellow(&quot;not specified&quot;))
+ 			}
+ 		}
+<a href="#h3-1-3" id="h3-1-3" class="d">-		// if the name of the CP (cp.GetValue()) is in the form of &quot;cpN&quot; (where N is a number) then we have to compile against the N-th CP of the result BM
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-		// otherwise we have to compile against the CP with the same name that can be found into the bminfo file
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+		if ramCode == &quot;&quot; &amp;&amp; ramData == &quot;&quot; {
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+			if bi.debug {
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+				fmt.Println(&quot;\t\t - &quot; + purple(&quot;no ram code or ram data specified, skipping&quot;))
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+			}
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+			continue
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+		}
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+		// To identify the CP id we have to check the following:
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+		// - if the BM came from this assembler run, the BMinfo file will contain the CP id and we have to use it
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+		// - if the BM came from the CLI, and the BMinfo is provided, we have to use the CP id from the BMinfo file
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+		// - if the BM came from the CLI, and the BMinfo is not provided, we will use the convention of the CP name in the form of &quot;cpN&quot; (where N is a number).
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+		// Search th ID in the BMinfo data
+</a><a href="#h3-1-19" id="h3-1-19" class="i">+		if bi.BMinfo != nil {
+</a><a href="#h3-1-20" id="h3-1-20" class="i">+			for id, name := range bi.BMinfo.CPNames {
+</a><a href="#h3-1-21" id="h3-1-21" class="i">+				if name == cp.GetValue() {
+</a><a href="#h3-1-22" id="h3-1-22" class="i">+					if _, ok := idDone[id]; ok {
+</a><a href="#h3-1-23" id="h3-1-23" class="i">+						return errors.New(&quot;CP id already used&quot;)
+</a><a href="#h3-1-24" id="h3-1-24" class="i">+					}
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+					idDone[id] = struct{}{}
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+					if bi.debug {
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+						fmt.Println(&quot;\t\t - &quot; + green(&quot;cpId: &quot;) + yellow(id))
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+					}
+</a><a href="#h3-1-29" id="h3-1-29" class="i">+
+</a><a href="#h3-1-30" id="h3-1-30" class="i">+					prog := &quot;&quot;
+</a><a href="#h3-1-31" id="h3-1-31" class="i">+					for _, line := range bi.sections[ramCode].sectionBody.Lines {
+</a><a href="#h3-1-32" id="h3-1-32" class="i">+						prog += line.Operation.GetValue()
+</a><a href="#h3-1-33" id="h3-1-33" class="i">+						for _, arg := range line.Elements {
+</a><a href="#h3-1-34" id="h3-1-34" class="i">+							prog += &quot; &quot; + arg.GetValue()
+</a><a href="#h3-1-35" id="h3-1-35" class="i">+						}
+</a><a href="#h3-1-36" id="h3-1-36" class="i">+						prog += &quot;\n&quot;
+</a><a href="#h3-1-37" id="h3-1-37" class="i">+					}
+</a><a href="#h3-1-38" id="h3-1-38" class="i">+					// Get the machine
+</a><a href="#h3-1-39" id="h3-1-39" class="i">+					myMachine := bi.result
+</a><a href="#h3-1-40" id="h3-1-40" class="i">+					myArch := myMachine.Domains[myMachine.Processors[id]].Arch
+</a><a href="#h3-1-41" id="h3-1-41" class="i">+					// TODO Finish this
+</a><a href="#h3-1-42" id="h3-1-42" class="i">+					if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+</a><a href="#h3-1-43" id="h3-1-43" class="i">+						fmt.Println(prog)
+</a><a href="#h3-1-44" id="h3-1-44" class="i">+					} else {
+</a><a href="#h3-1-45" id="h3-1-45" class="i">+						return err
+</a><a href="#h3-1-46" id="h3-1-46" class="i">+					}
+</a><a href="#h3-1-47" id="h3-1-47" class="i">+
+</a><a href="#h3-1-48" id="h3-1-48" class="i">+					// Create the BCOF entry
+</a><a href="#h3-1-49" id="h3-1-49" class="i">+					// bcofData := &amp;bcof.BCOFData{
+</a><a href="#h3-1-50" id="h3-1-50" class="i">+					// 	Id:        uint32(id),
+</a><a href="#h3-1-51" id="h3-1-51" class="i">+					// 	Rsize:     uint32(rSize),
+</a><a href="#h3-1-52" id="h3-1-52" class="i">+					// 	Signature: cp.GetValue(), // TODO: for now we use the CP name as signature
+</a><a href="#h3-1-53" id="h3-1-53" class="i">+					// 	Payload:   []byte(ramCode),
+</a><a href="#h3-1-54" id="h3-1-54" class="i">+					// }
+</a><a href="#h3-1-55" id="h3-1-55" class="i">+
+</a><a href="#h3-1-56" id="h3-1-56" class="i">+					break
+</a><a href="#h3-1-57" id="h3-1-57" class="i">+				}
+</a><a href="#h3-1-58" id="h3-1-58" class="i">+			}
+</a><a href="#h3-1-59" id="h3-1-59" class="i">+		}
+</a><a href="#h3-1-60" id="h3-1-60" class="i">+
+</a> 		re := regexp.MustCompile(&quot;^cp(?P&lt;cpId&gt;[0-9]+)$&quot;)
+ 		if re.MatchString(cp.GetValue()) {
+ 			cpId := re.ReplaceAllString(cp.GetValue(), &quot;${cpId}&quot;)
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -134,12 +134,6 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 				}
+ 				bi.CPNames[i] = cp.GetValue()
+ 			}
+<a href="#h4-0-3" id="h4-0-3" class="d">-			if bi.debug {
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-				fmt.Println(green(&quot;\t\tProcessor created dump: &quot;))
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-				fmt.Println(green(&quot;\t\t----&quot;))
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-				fmt.Println(cpm)
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-				fmt.Println(green(&quot;\t\t----&quot;))
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-			}
+</a> 		} else {
+ 			return err
+ 		}
+<a href="#h4-1" id="h4-1" class="h">@@ -282,6 +276,13 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 		}
+ 
+<a href="#h4-1-3" id="h4-1-3" class="i">+		if bi.debug {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (post-data): &quot;) + yellow(myArch.O))
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+			fmt.Println(green(&quot;\t\tProcessor created dump: &quot;))
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+			fmt.Println(green(&quot;\t\t----&quot;))
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+			fmt.Println(cps[i])
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+			fmt.Println(green(&quot;\t\t----&quot;))
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+		}
+</a> 	}
+ 
+ 	// Will keep track of the processed attach
+<b>diff --git a/<a id="h5" href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a> b/<a href="../file/pkg/bcof/bcof.go.html">pkg/bcof/bcof.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,18 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package bcof
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+func NewBCOF(rsize uint32) *BCOFEntry {
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	return &amp;BCOFEntry{
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		Rsize:     rsize,
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+		Id:        0,
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+		Signature: &quot;&quot;,
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+		Data:      make([]*BCOFEntrySubentry, 0),
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+	}
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+}
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+func (b *BCOFEntry) SetId(id uint32) {
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+	b.Id = id
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+}
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+func (b *BCOFEntry) SetSignature(signature string) {
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+	b.Signature = signature
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/bcof/bcof.pb.go.html">pkg/bcof/bcof.pb.go</a> b/<a href="../file/pkg/bcof/bcof.pb.go.html">pkg/bcof/bcof.pb.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -20,23 +20,92 @@ const (
+</a> 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+ )
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-type BCOFEntry struct {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+type BCOFData struct {
+</a> 	state         protoimpl.MessageState
+ 	sizeCache     protoimpl.SizeCache
+ 	unknownFields protoimpl.UnknownFields
+ 
+ 	Id        uint32 `protobuf:&quot;varint,1,opt,name=id,proto3&quot; json:&quot;id,omitempty&quot;`
+<a href="#h6-0-10" id="h6-0-10" class="d">-	Signature string `protobuf:&quot;bytes,2,opt,name=signature,proto3&quot; json:&quot;signature,omitempty&quot;`
+</a><a href="#h6-0-11" id="h6-0-11" class="d">-	// Types that are assignable to Payload:
+</a><a href="#h6-0-12" id="h6-0-12" class="d">-	//	*BCOFEntry_Sub
+</a><a href="#h6-0-13" id="h6-0-13" class="d">-	//	*BCOFEntry_Data
+</a><a href="#h6-0-14" id="h6-0-14" class="d">-	Payload isBCOFEntry_Payload `protobuf_oneof:&quot;payload&quot;`
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+	Rsize     uint32 `protobuf:&quot;varint,2,opt,name=rsize,proto3&quot; json:&quot;rsize,omitempty&quot;`
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+	Signature string `protobuf:&quot;bytes,3,opt,name=signature,proto3&quot; json:&quot;signature,omitempty&quot;`
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+	Payload   []byte `protobuf:&quot;bytes,4,opt,name=payload,proto3&quot; json:&quot;payload,omitempty&quot;`
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+}
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+func (x *BCOFData) Reset() {
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+	*x = BCOFData{}
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+	if protoimpl.UnsafeEnabled {
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+		mi := &amp;file_bcof_proto_msgTypes[0]
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+		ms.StoreMessageInfo(mi)
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+	}
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+}
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+func (x *BCOFData) String() string {
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+	return protoimpl.X.MessageStringOf(x)
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+}
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+func (*BCOFData) ProtoMessage() {}
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+func (x *BCOFData) ProtoReflect() protoreflect.Message {
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+	mi := &amp;file_bcof_proto_msgTypes[0]
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+	if protoimpl.UnsafeEnabled &amp;&amp; x != nil {
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+		if ms.LoadMessageInfo() == nil {
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+			ms.StoreMessageInfo(mi)
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+		}
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+		return ms
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+	}
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+	return mi.MessageOf(x)
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+}
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+// Deprecated: Use BCOFData.ProtoReflect.Descriptor instead.
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+func (*BCOFData) Descriptor() ([]byte, []int) {
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+	return file_bcof_proto_rawDescGZIP(), []int{0}
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+}
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+func (x *BCOFData) GetId() uint32 {
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+	if x != nil {
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+		return x.Id
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+	}
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+	return 0
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+}
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+func (x *BCOFData) GetRsize() uint32 {
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+	if x != nil {
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+		return x.Rsize
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+	}
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+	return 0
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+}
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+func (x *BCOFData) GetSignature() string {
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+	if x != nil {
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+		return x.Signature
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+	}
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+}
+</a><a href="#h6-0-72" id="h6-0-72" class="i">+
+</a><a href="#h6-0-73" id="h6-0-73" class="i">+func (x *BCOFData) GetPayload() []byte {
+</a><a href="#h6-0-74" id="h6-0-74" class="i">+	if x != nil {
+</a><a href="#h6-0-75" id="h6-0-75" class="i">+		return x.Payload
+</a><a href="#h6-0-76" id="h6-0-76" class="i">+	}
+</a><a href="#h6-0-77" id="h6-0-77" class="i">+	return nil
+</a><a href="#h6-0-78" id="h6-0-78" class="i">+}
+</a><a href="#h6-0-79" id="h6-0-79" class="i">+
+</a><a href="#h6-0-80" id="h6-0-80" class="i">+type BCOFEntry struct {
+</a><a href="#h6-0-81" id="h6-0-81" class="i">+	state         protoimpl.MessageState
+</a><a href="#h6-0-82" id="h6-0-82" class="i">+	sizeCache     protoimpl.SizeCache
+</a><a href="#h6-0-83" id="h6-0-83" class="i">+	unknownFields protoimpl.UnknownFields
+</a><a href="#h6-0-84" id="h6-0-84" class="i">+
+</a><a href="#h6-0-85" id="h6-0-85" class="i">+	Id        uint32               `protobuf:&quot;varint,1,opt,name=id,proto3&quot; json:&quot;id,omitempty&quot;`
+</a><a href="#h6-0-86" id="h6-0-86" class="i">+	Rsize     uint32               `protobuf:&quot;varint,2,opt,name=rsize,proto3&quot; json:&quot;rsize,omitempty&quot;`
+</a><a href="#h6-0-87" id="h6-0-87" class="i">+	Signature string               `protobuf:&quot;bytes,3,opt,name=signature,proto3&quot; json:&quot;signature,omitempty&quot;`
+</a><a href="#h6-0-88" id="h6-0-88" class="i">+	Data      []*BCOFEntrySubentry `protobuf:&quot;bytes,4,rep,name=data,proto3&quot; json:&quot;data,omitempty&quot;`
+</a> }
+ 
+ func (x *BCOFEntry) Reset() {
+ 	*x = BCOFEntry{}
+ 	if protoimpl.UnsafeEnabled {
+<a href="#h6-0-94" id="h6-0-94" class="d">-		mi := &amp;file_bcof_proto_msgTypes[0]
+</a><a href="#h6-0-95" id="h6-0-95" class="i">+		mi := &amp;file_bcof_proto_msgTypes[1]
+</a> 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		ms.StoreMessageInfo(mi)
+ 	}
+<a href="#h6-1" id="h6-1" class="h">@@ -49,7 +118,7 @@ func (x *BCOFEntry) String() string {
+</a> func (*BCOFEntry) ProtoMessage() {}
+ 
+ func (x *BCOFEntry) ProtoReflect() protoreflect.Message {
+<a href="#h6-1-3" id="h6-1-3" class="d">-	mi := &amp;file_bcof_proto_msgTypes[0]
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+	mi := &amp;file_bcof_proto_msgTypes[1]
+</a> 	if protoimpl.UnsafeEnabled &amp;&amp; x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+<a href="#h6-2" id="h6-2" class="h">@@ -62,7 +131,7 @@ func (x *BCOFEntry) ProtoReflect() protoreflect.Message {
+</a> 
+ // Deprecated: Use BCOFEntry.ProtoReflect.Descriptor instead.
+ func (*BCOFEntry) Descriptor() ([]byte, []int) {
+<a href="#h6-2-3" id="h6-2-3" class="d">-	return file_bcof_proto_rawDescGZIP(), []int{0}
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+	return file_bcof_proto_rawDescGZIP(), []int{1}
+</a> }
+ 
+ func (x *BCOFEntry) GetId() uint32 {
+<a href="#h6-3" id="h6-3" class="h">@@ -72,6 +141,13 @@ func (x *BCOFEntry) GetId() uint32 {
+</a> 	return 0
+ }
+ 
+<a href="#h6-3-3" id="h6-3-3" class="i">+func (x *BCOFEntry) GetRsize() uint32 {
+</a><a href="#h6-3-4" id="h6-3-4" class="i">+	if x != nil {
+</a><a href="#h6-3-5" id="h6-3-5" class="i">+		return x.Rsize
+</a><a href="#h6-3-6" id="h6-3-6" class="i">+	}
+</a><a href="#h6-3-7" id="h6-3-7" class="i">+	return 0
+</a><a href="#h6-3-8" id="h6-3-8" class="i">+}
+</a><a href="#h6-3-9" id="h6-3-9" class="i">+
+</a> func (x *BCOFEntry) GetSignature() string {
+ 	if x != nil {
+ 		return x.Signature
+<a href="#h6-4" id="h6-4" class="h">@@ -79,57 +155,120 @@ func (x *BCOFEntry) GetSignature() string {
+</a> 	return &quot;&quot;
+ }
+ 
+<a href="#h6-4-3" id="h6-4-3" class="d">-func (m *BCOFEntry) GetPayload() isBCOFEntry_Payload {
+</a><a href="#h6-4-4" id="h6-4-4" class="i">+func (x *BCOFEntry) GetData() []*BCOFEntrySubentry {
+</a><a href="#h6-4-5" id="h6-4-5" class="i">+	if x != nil {
+</a><a href="#h6-4-6" id="h6-4-6" class="i">+		return x.Data
+</a><a href="#h6-4-7" id="h6-4-7" class="i">+	}
+</a><a href="#h6-4-8" id="h6-4-8" class="i">+	return nil
+</a><a href="#h6-4-9" id="h6-4-9" class="i">+}
+</a><a href="#h6-4-10" id="h6-4-10" class="i">+
+</a><a href="#h6-4-11" id="h6-4-11" class="i">+type BCOFEntrySubentry struct {
+</a><a href="#h6-4-12" id="h6-4-12" class="i">+	state         protoimpl.MessageState
+</a><a href="#h6-4-13" id="h6-4-13" class="i">+	sizeCache     protoimpl.SizeCache
+</a><a href="#h6-4-14" id="h6-4-14" class="i">+	unknownFields protoimpl.UnknownFields
+</a><a href="#h6-4-15" id="h6-4-15" class="i">+
+</a><a href="#h6-4-16" id="h6-4-16" class="i">+	// Types that are assignable to Pl:
+</a><a href="#h6-4-17" id="h6-4-17" class="i">+	//	*BCOFEntrySubentry_Binary
+</a><a href="#h6-4-18" id="h6-4-18" class="i">+	//	*BCOFEntrySubentry_Leaf
+</a><a href="#h6-4-19" id="h6-4-19" class="i">+	Pl isBCOFEntrySubentry_Pl `protobuf_oneof:&quot;pl&quot;`
+</a><a href="#h6-4-20" id="h6-4-20" class="i">+}
+</a><a href="#h6-4-21" id="h6-4-21" class="i">+
+</a><a href="#h6-4-22" id="h6-4-22" class="i">+func (x *BCOFEntrySubentry) Reset() {
+</a><a href="#h6-4-23" id="h6-4-23" class="i">+	*x = BCOFEntrySubentry{}
+</a><a href="#h6-4-24" id="h6-4-24" class="i">+	if protoimpl.UnsafeEnabled {
+</a><a href="#h6-4-25" id="h6-4-25" class="i">+		mi := &amp;file_bcof_proto_msgTypes[2]
+</a><a href="#h6-4-26" id="h6-4-26" class="i">+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+</a><a href="#h6-4-27" id="h6-4-27" class="i">+		ms.StoreMessageInfo(mi)
+</a><a href="#h6-4-28" id="h6-4-28" class="i">+	}
+</a><a href="#h6-4-29" id="h6-4-29" class="i">+}
+</a><a href="#h6-4-30" id="h6-4-30" class="i">+
+</a><a href="#h6-4-31" id="h6-4-31" class="i">+func (x *BCOFEntrySubentry) String() string {
+</a><a href="#h6-4-32" id="h6-4-32" class="i">+	return protoimpl.X.MessageStringOf(x)
+</a><a href="#h6-4-33" id="h6-4-33" class="i">+}
+</a><a href="#h6-4-34" id="h6-4-34" class="i">+
+</a><a href="#h6-4-35" id="h6-4-35" class="i">+func (*BCOFEntrySubentry) ProtoMessage() {}
+</a><a href="#h6-4-36" id="h6-4-36" class="i">+
+</a><a href="#h6-4-37" id="h6-4-37" class="i">+func (x *BCOFEntrySubentry) ProtoReflect() protoreflect.Message {
+</a><a href="#h6-4-38" id="h6-4-38" class="i">+	mi := &amp;file_bcof_proto_msgTypes[2]
+</a><a href="#h6-4-39" id="h6-4-39" class="i">+	if protoimpl.UnsafeEnabled &amp;&amp; x != nil {
+</a><a href="#h6-4-40" id="h6-4-40" class="i">+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+</a><a href="#h6-4-41" id="h6-4-41" class="i">+		if ms.LoadMessageInfo() == nil {
+</a><a href="#h6-4-42" id="h6-4-42" class="i">+			ms.StoreMessageInfo(mi)
+</a><a href="#h6-4-43" id="h6-4-43" class="i">+		}
+</a><a href="#h6-4-44" id="h6-4-44" class="i">+		return ms
+</a><a href="#h6-4-45" id="h6-4-45" class="i">+	}
+</a><a href="#h6-4-46" id="h6-4-46" class="i">+	return mi.MessageOf(x)
+</a><a href="#h6-4-47" id="h6-4-47" class="i">+}
+</a><a href="#h6-4-48" id="h6-4-48" class="i">+
+</a><a href="#h6-4-49" id="h6-4-49" class="i">+// Deprecated: Use BCOFEntrySubentry.ProtoReflect.Descriptor instead.
+</a><a href="#h6-4-50" id="h6-4-50" class="i">+func (*BCOFEntrySubentry) Descriptor() ([]byte, []int) {
+</a><a href="#h6-4-51" id="h6-4-51" class="i">+	return file_bcof_proto_rawDescGZIP(), []int{1, 0}
+</a><a href="#h6-4-52" id="h6-4-52" class="i">+}
+</a><a href="#h6-4-53" id="h6-4-53" class="i">+
+</a><a href="#h6-4-54" id="h6-4-54" class="i">+func (m *BCOFEntrySubentry) GetPl() isBCOFEntrySubentry_Pl {
+</a> 	if m != nil {
+<a href="#h6-4-56" id="h6-4-56" class="d">-		return m.Payload
+</a><a href="#h6-4-57" id="h6-4-57" class="i">+		return m.Pl
+</a> 	}
+ 	return nil
+ }
+ 
+<a href="#h6-4-62" id="h6-4-62" class="d">-func (x *BCOFEntry) GetSub() *BCOFEntry {
+</a><a href="#h6-4-63" id="h6-4-63" class="d">-	if x, ok := x.GetPayload().(*BCOFEntry_Sub); ok {
+</a><a href="#h6-4-64" id="h6-4-64" class="d">-		return x.Sub
+</a><a href="#h6-4-65" id="h6-4-65" class="i">+func (x *BCOFEntrySubentry) GetBinary() *BCOFData {
+</a><a href="#h6-4-66" id="h6-4-66" class="i">+	if x, ok := x.GetPl().(*BCOFEntrySubentry_Binary); ok {
+</a><a href="#h6-4-67" id="h6-4-67" class="i">+		return x.Binary
+</a> 	}
+ 	return nil
+ }
+ 
+<a href="#h6-4-72" id="h6-4-72" class="d">-func (x *BCOFEntry) GetData() []byte {
+</a><a href="#h6-4-73" id="h6-4-73" class="d">-	if x, ok := x.GetPayload().(*BCOFEntry_Data); ok {
+</a><a href="#h6-4-74" id="h6-4-74" class="d">-		return x.Data
+</a><a href="#h6-4-75" id="h6-4-75" class="i">+func (x *BCOFEntrySubentry) GetLeaf() *BCOFEntry {
+</a><a href="#h6-4-76" id="h6-4-76" class="i">+	if x, ok := x.GetPl().(*BCOFEntrySubentry_Leaf); ok {
+</a><a href="#h6-4-77" id="h6-4-77" class="i">+		return x.Leaf
+</a> 	}
+ 	return nil
+ }
+ 
+<a href="#h6-4-82" id="h6-4-82" class="d">-type isBCOFEntry_Payload interface {
+</a><a href="#h6-4-83" id="h6-4-83" class="d">-	isBCOFEntry_Payload()
+</a><a href="#h6-4-84" id="h6-4-84" class="i">+type isBCOFEntrySubentry_Pl interface {
+</a><a href="#h6-4-85" id="h6-4-85" class="i">+	isBCOFEntrySubentry_Pl()
+</a> }
+ 
+<a href="#h6-4-88" id="h6-4-88" class="d">-type BCOFEntry_Sub struct {
+</a><a href="#h6-4-89" id="h6-4-89" class="d">-	Sub *BCOFEntry `protobuf:&quot;bytes,3,opt,name=sub,proto3,oneof&quot;`
+</a><a href="#h6-4-90" id="h6-4-90" class="i">+type BCOFEntrySubentry_Binary struct {
+</a><a href="#h6-4-91" id="h6-4-91" class="i">+	Binary *BCOFData `protobuf:&quot;bytes,1,opt,name=binary,proto3,oneof&quot;`
+</a> }
+ 
+<a href="#h6-4-94" id="h6-4-94" class="d">-type BCOFEntry_Data struct {
+</a><a href="#h6-4-95" id="h6-4-95" class="d">-	Data []byte `protobuf:&quot;bytes,4,opt,name=data,proto3,oneof&quot;`
+</a><a href="#h6-4-96" id="h6-4-96" class="i">+type BCOFEntrySubentry_Leaf struct {
+</a><a href="#h6-4-97" id="h6-4-97" class="i">+	Leaf *BCOFEntry `protobuf:&quot;bytes,2,opt,name=leaf,proto3,oneof&quot;`
+</a> }
+ 
+<a href="#h6-4-100" id="h6-4-100" class="d">-func (*BCOFEntry_Sub) isBCOFEntry_Payload() {}
+</a><a href="#h6-4-101" id="h6-4-101" class="i">+func (*BCOFEntrySubentry_Binary) isBCOFEntrySubentry_Pl() {}
+</a> 
+<a href="#h6-4-103" id="h6-4-103" class="d">-func (*BCOFEntry_Data) isBCOFEntry_Payload() {}
+</a><a href="#h6-4-104" id="h6-4-104" class="i">+func (*BCOFEntrySubentry_Leaf) isBCOFEntrySubentry_Pl() {}
+</a> 
+ var File_bcof_proto protoreflect.FileDescriptor
+ 
+ var file_bcof_proto_rawDesc = []byte{
+ 	0x0a, 0x0a, 0x62, 0x63, 0x6f, 0x66, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04, 0x62, 0x63,
+<a href="#h6-4-110" id="h6-4-110" class="d">-	0x6f, 0x66, 0x22, 0x7f, 0x0a, 0x09, 0x42, 0x43, 0x4f, 0x46, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12,
+</a><a href="#h6-4-111" id="h6-4-111" class="d">-	0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12,
+</a><a href="#h6-4-112" id="h6-4-112" class="d">-	0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x02, 0x20, 0x01,
+</a><a href="#h6-4-113" id="h6-4-113" class="d">-	0x28, 0x09, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x23, 0x0a,
+</a><a href="#h6-4-114" id="h6-4-114" class="d">-	0x03, 0x73, 0x75, 0x62, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x62, 0x63, 0x6f,
+</a><a href="#h6-4-115" id="h6-4-115" class="d">-	0x66, 0x2e, 0x42, 0x43, 0x4f, 0x46, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x48, 0x00, 0x52, 0x03, 0x73,
+</a><a href="#h6-4-116" id="h6-4-116" class="d">-	0x75, 0x62, 0x12, 0x14, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c,
+</a><a href="#h6-4-117" id="h6-4-117" class="d">-	0x48, 0x00, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c,
+</a><a href="#h6-4-118" id="h6-4-118" class="d">-	0x6f, 0x61, 0x64, 0x42, 0x08, 0x5a, 0x06, 0x2e, 0x2f, 0x62, 0x63, 0x6f, 0x66, 0x62, 0x06, 0x70,
+</a><a href="#h6-4-119" id="h6-4-119" class="d">-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+</a><a href="#h6-4-120" id="h6-4-120" class="i">+	0x6f, 0x66, 0x22, 0x68, 0x0a, 0x08, 0x42, 0x43, 0x4f, 0x46, 0x44, 0x61, 0x74, 0x61, 0x12, 0x0e,
+</a><a href="#h6-4-121" id="h6-4-121" class="i">+	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14,
+</a><a href="#h6-4-122" id="h6-4-122" class="i">+	0x0a, 0x05, 0x72, 0x73, 0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x72,
+</a><a href="#h6-4-123" id="h6-4-123" class="i">+	0x73, 0x69, 0x7a, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72,
+</a><a href="#h6-4-124" id="h6-4-124" class="i">+	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75,
+</a><a href="#h6-4-125" id="h6-4-125" class="i">+	0x72, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x04, 0x20,
+</a><a href="#h6-4-126" id="h6-4-126" class="i">+	0x01, 0x28, 0x0c, 0x52, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0xe0, 0x01, 0x0a,
+</a><a href="#h6-4-127" id="h6-4-127" class="i">+	0x09, 0x42, 0x43, 0x4f, 0x46, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+</a><a href="#h6-4-128" id="h6-4-128" class="i">+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x72, 0x73,
+</a><a href="#h6-4-129" id="h6-4-129" class="i">+	0x69, 0x7a, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x72, 0x73, 0x69, 0x7a, 0x65,
+</a><a href="#h6-4-130" id="h6-4-130" class="i">+	0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x03, 0x20,
+</a><a href="#h6-4-131" id="h6-4-131" class="i">+	0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x2c,
+</a><a href="#h6-4-132" id="h6-4-132" class="i">+	0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x62,
+</a><a href="#h6-4-133" id="h6-4-133" class="i">+	0x63, 0x6f, 0x66, 0x2e, 0x42, 0x43, 0x4f, 0x46, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x2e, 0x73, 0x75,
+</a><a href="#h6-4-134" id="h6-4-134" class="i">+	0x62, 0x65, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x1a, 0x61, 0x0a, 0x08,
+</a><a href="#h6-4-135" id="h6-4-135" class="i">+	0x73, 0x75, 0x62, 0x65, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x28, 0x0a, 0x06, 0x62, 0x69, 0x6e, 0x61,
+</a><a href="#h6-4-136" id="h6-4-136" class="i">+	0x72, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0e, 0x2e, 0x62, 0x63, 0x6f, 0x66, 0x2e,
+</a><a href="#h6-4-137" id="h6-4-137" class="i">+	0x42, 0x43, 0x4f, 0x46, 0x44, 0x61, 0x74, 0x61, 0x48, 0x00, 0x52, 0x06, 0x62, 0x69, 0x6e, 0x61,
+</a><a href="#h6-4-138" id="h6-4-138" class="i">+	0x72, 0x79, 0x12, 0x25, 0x0a, 0x04, 0x6c, 0x65, 0x61, 0x66, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+</a><a href="#h6-4-139" id="h6-4-139" class="i">+	0x32, 0x0f, 0x2e, 0x62, 0x63, 0x6f, 0x66, 0x2e, 0x42, 0x43, 0x4f, 0x46, 0x45, 0x6e, 0x74, 0x72,
+</a><a href="#h6-4-140" id="h6-4-140" class="i">+	0x79, 0x48, 0x00, 0x52, 0x04, 0x6c, 0x65, 0x61, 0x66, 0x42, 0x04, 0x0a, 0x02, 0x70, 0x6c, 0x42,
+</a><a href="#h6-4-141" id="h6-4-141" class="i">+	0x08, 0x5a, 0x06, 0x2e, 0x2f, 0x62, 0x63, 0x6f, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+</a><a href="#h6-4-142" id="h6-4-142" class="i">+	0x33,
+</a> }
+ 
+ var (
+<a href="#h6-5" id="h6-5" class="h">@@ -144,17 +283,21 @@ func file_bcof_proto_rawDescGZIP() []byte {
+</a> 	return file_bcof_proto_rawDescData
+ }
+ 
+<a href="#h6-5-3" id="h6-5-3" class="d">-var file_bcof_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+</a><a href="#h6-5-4" id="h6-5-4" class="i">+var file_bcof_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+</a> var file_bcof_proto_goTypes = []interface{}{
+<a href="#h6-5-6" id="h6-5-6" class="d">-	(*BCOFEntry)(nil), // 0: bcof.BCOFEntry
+</a><a href="#h6-5-7" id="h6-5-7" class="i">+	(*BCOFData)(nil),          // 0: bcof.BCOFData
+</a><a href="#h6-5-8" id="h6-5-8" class="i">+	(*BCOFEntry)(nil),         // 1: bcof.BCOFEntry
+</a><a href="#h6-5-9" id="h6-5-9" class="i">+	(*BCOFEntrySubentry)(nil), // 2: bcof.BCOFEntry.subentry
+</a> }
+ var file_bcof_proto_depIdxs = []int32{
+<a href="#h6-5-12" id="h6-5-12" class="d">-	0, // 0: bcof.BCOFEntry.sub:type_name -&gt; bcof.BCOFEntry
+</a><a href="#h6-5-13" id="h6-5-13" class="d">-	1, // [1:1] is the sub-list for method output_type
+</a><a href="#h6-5-14" id="h6-5-14" class="d">-	1, // [1:1] is the sub-list for method input_type
+</a><a href="#h6-5-15" id="h6-5-15" class="d">-	1, // [1:1] is the sub-list for extension type_name
+</a><a href="#h6-5-16" id="h6-5-16" class="d">-	1, // [1:1] is the sub-list for extension extendee
+</a><a href="#h6-5-17" id="h6-5-17" class="d">-	0, // [0:1] is the sub-list for field type_name
+</a><a href="#h6-5-18" id="h6-5-18" class="i">+	2, // 0: bcof.BCOFEntry.data:type_name -&gt; bcof.BCOFEntry.subentry
+</a><a href="#h6-5-19" id="h6-5-19" class="i">+	0, // 1: bcof.BCOFEntry.subentry.binary:type_name -&gt; bcof.BCOFData
+</a><a href="#h6-5-20" id="h6-5-20" class="i">+	1, // 2: bcof.BCOFEntry.subentry.leaf:type_name -&gt; bcof.BCOFEntry
+</a><a href="#h6-5-21" id="h6-5-21" class="i">+	3, // [3:3] is the sub-list for method output_type
+</a><a href="#h6-5-22" id="h6-5-22" class="i">+	3, // [3:3] is the sub-list for method input_type
+</a><a href="#h6-5-23" id="h6-5-23" class="i">+	3, // [3:3] is the sub-list for extension type_name
+</a><a href="#h6-5-24" id="h6-5-24" class="i">+	3, // [3:3] is the sub-list for extension extendee
+</a><a href="#h6-5-25" id="h6-5-25" class="i">+	0, // [0:3] is the sub-list for field type_name
+</a> }
+ 
+ func init() { file_bcof_proto_init() }
+<a href="#h6-6" id="h6-6" class="h">@@ -164,6 +307,18 @@ func file_bcof_proto_init() {
+</a> 	}
+ 	if !protoimpl.UnsafeEnabled {
+ 		file_bcof_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+<a href="#h6-6-3" id="h6-6-3" class="i">+			switch v := v.(*BCOFData); i {
+</a><a href="#h6-6-4" id="h6-6-4" class="i">+			case 0:
+</a><a href="#h6-6-5" id="h6-6-5" class="i">+				return &amp;v.state
+</a><a href="#h6-6-6" id="h6-6-6" class="i">+			case 1:
+</a><a href="#h6-6-7" id="h6-6-7" class="i">+				return &amp;v.sizeCache
+</a><a href="#h6-6-8" id="h6-6-8" class="i">+			case 2:
+</a><a href="#h6-6-9" id="h6-6-9" class="i">+				return &amp;v.unknownFields
+</a><a href="#h6-6-10" id="h6-6-10" class="i">+			default:
+</a><a href="#h6-6-11" id="h6-6-11" class="i">+				return nil
+</a><a href="#h6-6-12" id="h6-6-12" class="i">+			}
+</a><a href="#h6-6-13" id="h6-6-13" class="i">+		}
+</a><a href="#h6-6-14" id="h6-6-14" class="i">+		file_bcof_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+</a> 			switch v := v.(*BCOFEntry); i {
+ 			case 0:
+ 				return &amp;v.state
+<a href="#h6-7" id="h6-7" class="h">@@ -175,10 +330,22 @@ func file_bcof_proto_init() {
+</a> 				return nil
+ 			}
+ 		}
+<a href="#h6-7-3" id="h6-7-3" class="i">+		file_bcof_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+</a><a href="#h6-7-4" id="h6-7-4" class="i">+			switch v := v.(*BCOFEntrySubentry); i {
+</a><a href="#h6-7-5" id="h6-7-5" class="i">+			case 0:
+</a><a href="#h6-7-6" id="h6-7-6" class="i">+				return &amp;v.state
+</a><a href="#h6-7-7" id="h6-7-7" class="i">+			case 1:
+</a><a href="#h6-7-8" id="h6-7-8" class="i">+				return &amp;v.sizeCache
+</a><a href="#h6-7-9" id="h6-7-9" class="i">+			case 2:
+</a><a href="#h6-7-10" id="h6-7-10" class="i">+				return &amp;v.unknownFields
+</a><a href="#h6-7-11" id="h6-7-11" class="i">+			default:
+</a><a href="#h6-7-12" id="h6-7-12" class="i">+				return nil
+</a><a href="#h6-7-13" id="h6-7-13" class="i">+			}
+</a><a href="#h6-7-14" id="h6-7-14" class="i">+		}
+</a> 	}
+<a href="#h6-7-16" id="h6-7-16" class="d">-	file_bcof_proto_msgTypes[0].OneofWrappers = []interface{}{
+</a><a href="#h6-7-17" id="h6-7-17" class="d">-		(*BCOFEntry_Sub)(nil),
+</a><a href="#h6-7-18" id="h6-7-18" class="d">-		(*BCOFEntry_Data)(nil),
+</a><a href="#h6-7-19" id="h6-7-19" class="i">+	file_bcof_proto_msgTypes[2].OneofWrappers = []interface{}{
+</a><a href="#h6-7-20" id="h6-7-20" class="i">+		(*BCOFEntrySubentry_Binary)(nil),
+</a><a href="#h6-7-21" id="h6-7-21" class="i">+		(*BCOFEntrySubentry_Leaf)(nil),
+</a> 	}
+ 	type x struct{}
+ 	out := protoimpl.TypeBuilder{
+<a href="#h6-8" id="h6-8" class="h">@@ -186,7 +353,7 @@ func file_bcof_proto_init() {
+</a> 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+ 			RawDescriptor: file_bcof_proto_rawDesc,
+ 			NumEnums:      0,
+<a href="#h6-8-3" id="h6-8-3" class="d">-			NumMessages:   1,
+</a><a href="#h6-8-4" id="h6-8-4" class="i">+			NumMessages:   3,
+</a> 			NumExtensions: 0,
+ 			NumServices:   0,
+ 		},
+<b>diff --git a/<a id="h7" href="../file/pkg/bcof/bcof_test.go.html">pkg/bcof/bcof_test.go</a> b/<a href="../file/pkg/bcof/bcof_test.go.html">pkg/bcof/bcof_test.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -12,12 +12,30 @@ import (
+</a> 
+ func TestBCOF(t *testing.T) {
+ 	// Create a BCOF file.
+<a href="#h7-0-3" id="h7-0-3" class="i">+
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	bcofData := &amp;BCOFData{
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+		Id:        1,
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+		Rsize:     8,
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+		Signature: &quot;data&quot;,
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+		Payload:   []byte(&quot;hello world&quot;),
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+	}
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+	list := make([]*BCOFEntrySubentry, 2)
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+	list[0] = new(BCOFEntrySubentry)
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+	bin1 := new(BCOFEntrySubentry_Binary)
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+	bin1.Binary = bcofData
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+	list[0].Pl = bin1
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+	list[1] = new(BCOFEntrySubentry)
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	bin2 := new(BCOFEntrySubentry_Binary)
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+	bin2.Binary = bcofData
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+	list[1].Pl = bin2
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+
+</a> 	bcof := &amp;BCOFEntry{
+ 		Id:        1,
+<a href="#h7-0-24" id="h7-0-24" class="i">+		Rsize:     8,
+</a> 		Signature: &quot;sub&quot;,
+<a href="#h7-0-26" id="h7-0-26" class="d">-		Payload: &amp;BCOFEntry_Data{
+</a><a href="#h7-0-27" id="h7-0-27" class="d">-			Data: []byte(&quot;hello world&quot;),
+</a><a href="#h7-0-28" id="h7-0-28" class="d">-		},
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+		Data:      list,
+</a> 	}
+ 
+ 	fmt.Println(bcof)
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a> b/<a href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -249,35 +249,49 @@ func (arch *Arch) Assembler_process_line(line []byte) (string, error) {
+</a> 
+ func (arch *Arch) Assembler(inp []byte) (Program, error) {
+ 	// TODO keep in mind this
+<a href="#h8-0-3" id="h8-0-3" class="d">-	currline := make([]byte, 256)
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	curLine := make([]byte, 256)
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+	var maxLines []string
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+	switch arch.Modes[0] {
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+	case &quot;ha&quot;:
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+		maxLines = make([]string, int(1&lt;&lt;arch.O))
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+	case &quot;vn&quot;:
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+		maxLines = make([]string, int(1&lt;&lt;arch.L))
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+	case &quot;hy&quot;:
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+			maxLines = make([]string, int(1&lt;&lt;arch.O))
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+		} else {
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+			maxLines = make([]string, int(1&lt;&lt;arch.L))
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+		}
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	}
+</a> 
+<a href="#h8-0-21" id="h8-0-21" class="d">-	maxlines := make([]string, int(1&lt;&lt;arch.O))
+</a><a href="#h8-0-22" id="h8-0-22" class="d">-	iline := 0
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+	iLine := 0
+</a> 	j := 0
+<a href="#h8-0-25" id="h8-0-25" class="d">-	impline := 1
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+	impLine := 1
+</a> 	for _, ch := range inp {
+ 		if ch == 10 {
+ 			//fmt.Println(currline[0:iline])
+ 			//fmt.Println(string(currline[0:iline]))
+<a href="#h8-0-31" id="h8-0-31" class="d">-			if result, err := arch.Assembler_process_line(currline[0:iline]); err == nil {
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+			if result, err := arch.Assembler_process_line(curLine[0:iLine]); err == nil {
+</a> 				if result != &quot;&quot; {
+<a href="#h8-0-34" id="h8-0-34" class="d">-					maxlines[j] = result
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+					maxLines[j] = result
+</a> 					j = j + 1
+<a href="#h8-0-37" id="h8-0-37" class="d">-					impline = impline + 1
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+					impLine = impLine + 1
+</a> 				}
+<a href="#h8-0-40" id="h8-0-40" class="d">-				iline = 0
+</a><a href="#h8-0-41" id="h8-0-41" class="i">+				iLine = 0
+</a> 			} else {
+<a href="#h8-0-43" id="h8-0-43" class="d">-				return Program{}, Prerror{err.Error() + &quot; on line &quot; + strconv.Itoa(impline)}
+</a><a href="#h8-0-44" id="h8-0-44" class="i">+				return Program{}, Prerror{err.Error() + &quot; on line &quot; + strconv.Itoa(impLine)}
+</a> 			}
+ 		} else {
+<a href="#h8-0-47" id="h8-0-47" class="d">-			currline[iline] = ch
+</a><a href="#h8-0-48" id="h8-0-48" class="d">-			iline = iline + 1
+</a><a href="#h8-0-49" id="h8-0-49" class="i">+			curLine[iLine] = ch
+</a><a href="#h8-0-50" id="h8-0-50" class="i">+			iLine = iLine + 1
+</a> 		}
+ 	}
+ 
+<a href="#h8-0-54" id="h8-0-54" class="d">-	lines := make([]string, impline-1)
+</a><a href="#h8-0-55" id="h8-0-55" class="i">+	lines := make([]string, impLine-1)
+</a> 	for i, _ := range lines {
+<a href="#h8-0-57" id="h8-0-57" class="d">-		lines[i] = maxlines[i]
+</a><a href="#h8-0-58" id="h8-0-58" class="i">+		lines[i] = maxLines[i]
+</a> 	}
+ 
+ 	//	for i := j; i &lt; int(1&lt;&lt;arch.O); i++ {
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -24,13 +24,37 @@ func (op J) Op_get_desc() string {
+</a> 
+ func (op J) Op_show_assembler(arch *Arch) string {
+ 	opbits := arch.Opcodes_bits()
+<a href="#h9-0-3" id="h9-0-3" class="d">-	result := &quot;j [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	result := &quot;&quot;
+</a><a href="#h9-0-5" id="h9-0-5" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-0-6" id="h9-0-6" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h9-0-8" id="h9-0-8" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-0-9" id="h9-0-9" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)]	// Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.L)) + &quot;]\n&quot;
+</a><a href="#h9-0-10" id="h9-0-10" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-0-11" id="h9-0-11" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h9-0-13" id="h9-0-13" class="i">+		} else {
+</a><a href="#h9-0-14" id="h9-0-14" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)]	// Jump to a program location [&quot; + strconv.Itoa(opbits+int(arch.L)) + &quot;]\n&quot;
+</a><a href="#h9-0-15" id="h9-0-15" class="i">+		}
+</a><a href="#h9-0-16" id="h9-0-16" class="i">+	}
+</a> 	return result
+ }
+ 
+ func (op J) Op_get_instruction_len(arch *Arch) int {
+ 	opbits := arch.Opcodes_bits()
+<a href="#h9-0-22" id="h9-0-22" class="d">-	return opbits + int(arch.O) // The bits for the opcode + bits for a location
+</a><a href="#h9-0-23" id="h9-0-23" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-0-24" id="h9-0-24" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-0-25" id="h9-0-25" class="i">+		return opbits + int(arch.O) // The bits for the opcode + bits for a location
+</a><a href="#h9-0-26" id="h9-0-26" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-0-27" id="h9-0-27" class="i">+		return opbits + int(arch.L) // The bits for the opcode + bits for a location
+</a><a href="#h9-0-28" id="h9-0-28" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-0-29" id="h9-0-29" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h9-0-30" id="h9-0-30" class="i">+			return opbits + int(arch.O) // The bits for the opcode + bits for a location
+</a><a href="#h9-0-31" id="h9-0-31" class="i">+		} else {
+</a><a href="#h9-0-32" id="h9-0-32" class="i">+			return opbits + int(arch.L) // The bits for the opcode + bits for a location
+</a><a href="#h9-0-33" id="h9-0-33" class="i">+		}
+</a><a href="#h9-0-34" id="h9-0-34" class="i">+	}
+</a><a href="#h9-0-35" id="h9-0-35" class="i">+	return 0
+</a> }
+ 
+ func (op J) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h9-1" id="h9-1" class="h">@@ -53,13 +77,28 @@ func (op J) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *b
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h9-1-3" id="h9-1-3" class="i">+	locationBits := arch.O
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+
+</a><a href="#h9-1-5" id="h9-1-5" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-1-6" id="h9-1-6" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-1-7" id="h9-1-7" class="i">+		locationBits = arch.O
+</a><a href="#h9-1-8" id="h9-1-8" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-1-9" id="h9-1-9" class="i">+		locationBits = arch.L
+</a><a href="#h9-1-10" id="h9-1-10" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-1-11" id="h9-1-11" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h9-1-12" id="h9-1-12" class="i">+			locationBits = arch.O
+</a><a href="#h9-1-13" id="h9-1-13" class="i">+		} else {
+</a><a href="#h9-1-14" id="h9-1-14" class="i">+			locationBits = arch.L
+</a><a href="#h9-1-15" id="h9-1-15" class="i">+		}
+</a><a href="#h9-1-16" id="h9-1-16" class="i">+	}
+</a><a href="#h9-1-17" id="h9-1-17" class="i">+
+</a> 	result := &quot;&quot;
+ 	result += &quot;					J: begin\n&quot;
+<a href="#h9-1-20" id="h9-1-20" class="d">-	if arch.O == 1 {
+</a><a href="#h9-1-21" id="h9-1-21" class="i">+	if locationBits == 1 {
+</a> 		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;]&quot;)
+ 		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+ 	} else {
+<a href="#h9-1-25" id="h9-1-25" class="d">-		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(arch.O))+&quot;]&quot;)
+</a><a href="#h9-1-26" id="h9-1-26" class="i">+		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(locationBits))+&quot;]&quot;)
+</a> 		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.O)) + &quot;]);\n&quot;
+ 	}
+ 	result += &quot;					end\n&quot;
+<a href="#h9-2" id="h9-2" class="h">@@ -74,18 +113,33 @@ func (op J) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	opbits := arch.Opcodes_bits()
+ 	rom_word := arch.Max_word()
+ 
+<a href="#h9-2-3" id="h9-2-3" class="i">+	locationBits := arch.O
+</a><a href="#h9-2-4" id="h9-2-4" class="i">+
+</a><a href="#h9-2-5" id="h9-2-5" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-2-6" id="h9-2-6" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-2-7" id="h9-2-7" class="i">+		locationBits = arch.O
+</a><a href="#h9-2-8" id="h9-2-8" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-2-9" id="h9-2-9" class="i">+		locationBits = arch.L
+</a><a href="#h9-2-10" id="h9-2-10" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-2-11" id="h9-2-11" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h9-2-12" id="h9-2-12" class="i">+			locationBits = arch.O
+</a><a href="#h9-2-13" id="h9-2-13" class="i">+		} else {
+</a><a href="#h9-2-14" id="h9-2-14" class="i">+			locationBits = arch.L
+</a><a href="#h9-2-15" id="h9-2-15" class="i">+		}
+</a><a href="#h9-2-16" id="h9-2-16" class="i">+	}
+</a><a href="#h9-2-17" id="h9-2-17" class="i">+
+</a> 	if len(words) != 1 {
+ 		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+ 	}
+ 
+ 	result := &quot;&quot;
+ 	if partial, err := Process_number(words[0]); err == nil {
+<a href="#h9-2-24" id="h9-2-24" class="d">-		result += zeros_prefix(int(arch.O), partial)
+</a><a href="#h9-2-25" id="h9-2-25" class="i">+		result += zeros_prefix(int(locationBits), partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h9-2-30" id="h9-2-30" class="d">-	for i := opbits + int(arch.O); i &lt; rom_word; i++ {
+</a><a href="#h9-2-31" id="h9-2-31" class="i">+	for i := opbits + int(locationBits); i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h9-3" id="h9-3" class="h">@@ -93,7 +147,23 @@ func (op J) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op J) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h9-3-3" id="h9-3-3" class="d">-	value := get_id(instr[:arch.O])
+</a><a href="#h9-3-4" id="h9-3-4" class="i">+
+</a><a href="#h9-3-5" id="h9-3-5" class="i">+	locationBits := arch.O
+</a><a href="#h9-3-6" id="h9-3-6" class="i">+
+</a><a href="#h9-3-7" id="h9-3-7" class="i">+	switch arch.Modes[0] {
+</a><a href="#h9-3-8" id="h9-3-8" class="i">+	case &quot;ha&quot;:
+</a><a href="#h9-3-9" id="h9-3-9" class="i">+		locationBits = arch.O
+</a><a href="#h9-3-10" id="h9-3-10" class="i">+	case &quot;vn&quot;:
+</a><a href="#h9-3-11" id="h9-3-11" class="i">+		locationBits = arch.L
+</a><a href="#h9-3-12" id="h9-3-12" class="i">+	case &quot;hy&quot;:
+</a><a href="#h9-3-13" id="h9-3-13" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h9-3-14" id="h9-3-14" class="i">+			locationBits = arch.O
+</a><a href="#h9-3-15" id="h9-3-15" class="i">+		} else {
+</a><a href="#h9-3-16" id="h9-3-16" class="i">+			locationBits = arch.L
+</a><a href="#h9-3-17" id="h9-3-17" class="i">+		}
+</a><a href="#h9-3-18" id="h9-3-18" class="i">+	}
+</a><a href="#h9-3-19" id="h9-3-19" class="i">+
+</a><a href="#h9-3-20" id="h9-3-20" class="i">+	value := get_id(instr[:locationBits])
+</a> 	result := strconv.Itoa(value)
+ 	return result, nil
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Basic AXI stream interface - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8d2a443af0abfd395661a855cfbcc844da33d48a.html">8d2a443af0abfd395661a855cfbcc844da33d48a</a>
+<b>parent</b> <a href="../commit/09941eb166b41d5fd39d0caef6119456d51fb5c5.html">09941eb166b41d5fd39d0caef6119456d51fb5c5</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 17 Feb 2023 18:11:58 +0100
+
+Basic AXI stream interface
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/bmapi.go</a></td><td> | </td><td class="num">48</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/bmapi_axist_basic.go</a></td><td> | </td><td class="num">628</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bondmachine/bmapi_axist_optimized.go</a></td><td> | </td><td class="num">657</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bondmachine/exmod_bmapi.go</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>5 files changed, 1349 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -132,6 +132,7 @@ var usebmapi = flag.Bool(&quot;use-bmapi&quot;, false, &quot;Build a BMAPI interface&quot;)
+</a> var bmapiLanguage = flag.String(&quot;bmapi-language&quot;, &quot;go&quot;, &quot;Choose BMAPI language (go,c,python)&quot;)
+ var bmapiFramework = flag.String(&quot;bmapi-framework&quot;, &quot;&quot;, &quot;Choose BMAPI framework (pynq)&quot;)
+ var bmapiFlavor = flag.String(&quot;bmapi-flavor&quot;, &quot;&quot;, &quot;Choose the BMAPI interconnect&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var bmapiFlavorVersion = flag.String(&quot;bmapi-flavor-version&quot;, &quot;&quot;, &quot;Choose the BMAPI interconnect version&quot;)
+</a> var bmapiMapfile = flag.String(&quot;bmapi-mapfile&quot;, &quot;&quot;, &quot;File mapping the bondmachine IO the BMAPI.&quot;)
+ var bmapiLibOutDir = flag.String(&quot;bmapi-liboutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI library.&quot;)
+ var bmapiModOutDir = flag.String(&quot;bmapi-modoutdir&quot;, &quot;&quot;, &quot;Output directory for the BMAPI kernel module.&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -470,6 +471,8 @@ func main() {
+</a> 				// TOTO Error checking
+ 				bmapi.Language = *bmapiLanguage
+ 				bmapi.Flavor = *bmapiFlavor
+<a href="#h0-1-3" id="h0-1-3" class="i">+				bmapi.FlavorVersion = *bmapiFlavorVersion
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				bmapi.Framework = *bmapiFramework
+</a> 				bmapi.LibOutDir = *bmapiLibOutDir
+ 				bmapi.ModOutDir = *bmapiModOutDir
+ 				bmapi.AuxOutDir = *bmapiAuxOutDir
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a> b/<a href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -15,7 +15,9 @@ import (
+</a> func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap, extramods []ExtraModule, sbox *simbox.Simbox) error {
+ 
+ 	var bmapiFlavor string
+<a href="#h1-0-3" id="h1-0-3" class="i">+	var bmapiFlavorVersion string
+</a> 	var bmapiLanguage string
+<a href="#h1-0-5" id="h1-0-5" class="i">+	var bmapiFramework string
+</a> 	var bmapiLibOutDir string
+ 	var bmapiModOutDir string
+ 	var bmapiAuxOutDir string
+<a href="#h1-1" id="h1-1" class="h">@@ -35,12 +37,24 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 				return errors.New(&quot;Missing bmapi flavor&quot;)
+ 			}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+			if val, ok := bmapiParams[&quot;bmapi_flavor_version&quot;]; ok {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+				bmapiFlavorVersion = val
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+			} else {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+				return errors.New(&quot;Missing bmapi flavor version&quot;)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+			}
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+
+</a> 			if val, ok := bmapiParams[&quot;bmapi_language&quot;]; ok {
+ 				bmapiLanguage = val
+ 			} else {
+ 				return errors.New(&quot;Missing bmapi language&quot;)
+ 			}
+ 
+<a href="#h1-1-15" id="h1-1-15" class="i">+			if val, ok := bmapiParams[&quot;bmapi_framework&quot;]; ok {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+				bmapiFramework = val
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+			} else {
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+				return errors.New(&quot;Missing bmapi framework&quot;)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+			}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+
+</a> 			if val, ok := bmapiParams[&quot;bmapi_liboutdir&quot;]; ok {
+ 				bmapiLibOutDir = val
+ 			} else {
+<a href="#h1-2" id="h1-2" class="h">@@ -76,6 +90,40 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 	}
+ 
+ 	switch bmapiFlavor {
+<a href="#h1-2-3" id="h1-2-3" class="i">+	case &quot;axist&quot;:
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		// This is the generation of the AXI Stream interface
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		axiStData := bmach.createBasicTemplateData()
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		vFiles := make(map[string]string)
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		if bmapiFlavorVersion == &quot;basic&quot; {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+			vFiles[&quot;axistream.v&quot;] = basicAXIStream
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		} else if bmapiFlavorVersion == &quot;optimized&quot; {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			vFiles[&quot;axistream.v&quot;] = optimizedAXIStream
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+		} else {
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+			return errors.New(&quot;unknown AXI Stream flavor version&quot;)
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		}
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+		for file, temp := range vFiles {
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+			t, err := template.New(file).Parse(temp)
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+			if err != nil {
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+				return err
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+			}
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+			f, err := os.Create(file)
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+			if err != nil {
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+				return err
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+			}
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+			err = t.Execute(f, axiStData)
+</a><a href="#h1-2-30" id="h1-2-30" class="i">+			if err != nil {
+</a><a href="#h1-2-31" id="h1-2-31" class="i">+				return err
+</a><a href="#h1-2-32" id="h1-2-32" class="i">+			}
+</a><a href="#h1-2-33" id="h1-2-33" class="i">+
+</a><a href="#h1-2-34" id="h1-2-34" class="i">+			f.Close()
+</a><a href="#h1-2-35" id="h1-2-35" class="i">+		}
+</a><a href="#h1-2-36" id="h1-2-36" class="i">+		fmt.Println(bmapiFramework)
+</a> 	case &quot;aximm&quot;:
+ 
+ 		// This is the generation of the Linux kernel module
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/bmapi_axist_basic.go.html">pkg/bondmachine/bmapi_axist_basic.go</a> b/<a href="../file/pkg/bondmachine/bmapi_axist_basic.go.html">pkg/bondmachine/bmapi_axist_basic.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,628 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	basicAXIStream = `
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+module bmstream_v1_0 #
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+(
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	parameter integer C_M00_AXIS_START_COUNT	= 32
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+)
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+(
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	input wire  s00_axis_aclk,
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	input wire  s00_axis_aresetn,
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	output wire  s00_axis_tready,
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	input wire [(C_S00_AXIS_TDATA_WIDTH/8)-1 : 0] s00_axis_tstrb,
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	input wire  s00_axis_tlast,
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	input wire  s00_axis_tvalid,
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	input wire  m00_axis_aclk,
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	input wire  m00_axis_aresetn,
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	output wire  m00_axis_tvalid,
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	output wire [(C_M00_AXIS_TDATA_WIDTH/8)-1 : 0] m00_axis_tstrb,
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	output wire  m00_axis_tlast,
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	input wire  m00_axis_tready
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+);
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+    
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+    localparam samples = 64; // number of samples that I expect from the client
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+    localparam fifodepth = 256; // Should be multiple of samples
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+    
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+    localparam bminputs = 4;  // number of bminputs for each sample
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+    localparam BATCH_IN_ELEMENTS = samples*bminputs;
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	localparam TOT_IN_ELEMENTS  = fifodepth*bminputs;                                     
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	localparam bmoutputs = 1;
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	localparam BATCH_OUT_ELEMENTS = samples*bmoutputs;
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+	localparam TOT_OUT_ELEMENTS = fifodepth*bmoutputs;
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+	// Receiver object
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	parameter [1:0] IDLE = 1&#39;b0,
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+	                WRITE_FIFO  = 1&#39;b1; 
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	                                    
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	wire  	   axis_tready;
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	reg        mst_exec_state;     
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	wire       fifo_wren;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+	reg        fifo_full_flag;
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	reg [31:0] fifo2bm_write_pointer;
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+	reg [31:0] fifo2bm_read_pointer;
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+	reg [31:0] fifo2bm_batch_pointer;
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+	reg [31:0] fifo2bm_count;
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+	reg        writes_done;
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+	reg fifo_wren_old;
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] stream_data_fifo [0 : TOT_IN_ELEMENTS-1];
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+    
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+    wire [31:0] i0;
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+    wire [31:0] i1;
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+    wire [31:0] i2;
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+    wire [31:0] i3;
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+    wire i0_valid;
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+    wire i1_valid;
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+    wire i2_valid;
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+    wire i3_valid;
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+    wire i0_received;
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+    wire i1_received;
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+    wire i2_received;
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+    wire i3_received;
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+    reg fifo2bm_impulse;
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+    wire fifo2bm_ready;
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+    reg [31:0] fifo2bm_data; 
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+	
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+    // Sender objects
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+	parameter [0:0] IDLE_M = 1&#39;b0,                                              
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+	                SEND_STREAM_M   = 1&#39;b1; 
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+                                                          
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+	reg [0:0]   mst_exec_state_M;
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+    wire  	axis_tvalid;
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+    reg  	axis_tvalid_delay;
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+    wire  	axis_tlast;
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+    reg  	axis_tlast_delay;
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+    reg [C_M00_AXIS_TDATA_WIDTH-1 : 0] 	stream_data_out;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+    wire  	tx_en;
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+    reg  	tx_done;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+    wire [31:0] o0;
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+    wire o0_valid;
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+    wire o0_received;
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+    reg bm2fifo_ack;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+    wire bm2fifo_ready;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+    wire [31:0] bm2fifo_data;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+	reg [31:0] bm2fifo_write_pointer;
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+	reg [31:0] bm2fifo_read_pointer;
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+	reg [31:0] bm2fifo_batch_pointer;
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+	reg [31:0] bm2fifo_count;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+    reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] outstream_data_fifo [0 : TOT_OUT_ELEMENTS-1];
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+                         
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+    /*
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+        NOW START THE AXIS SLAVE SECTION, corresponding to BM Inputs
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+    */
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+    assign m00_axis_tvalid	= axis_tvalid_delay;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+	assign m00_axis_tdata	= stream_data_out;
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+	assign m00_axis_tlast	= axis_tlast_delay;
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+	assign s00_axis_tready	= axis_tready;
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+	
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+	always @(posedge s00_axis_aclk) 
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+	begin  
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+	  if (!s00_axis_aresetn) 
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+	    begin
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+	      mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+	    end  
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+	  else
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+	    case (mst_exec_state)
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+	      IDLE:
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+	          if (s00_axis_tvalid &amp;&amp; (fifo2bm_count + BATCH_IN_ELEMENTS &lt;= TOT_IN_ELEMENTS))
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+	            begin
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+	              mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+	            end
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+	          else
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+	            begin
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+	              mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+	            end
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+	      WRITE_FIFO:
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+	        if (writes_done)
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+	          begin
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+	            mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+	          end
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+	        else
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+	          begin
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+	            mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+	          end
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+	    endcase
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+	end
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1));
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+    reg reset_pointer = 1&#39;b0;
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+	always@(posedge s00_axis_aclk)
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+	begin
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+	
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+	  if (tx_done) begin
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+       writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+	  end
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+	   
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+	  if(!s00_axis_aresetn)
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+	    begin
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+	      fifo2bm_batch_pointer &lt;= 0;
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+	      writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+	    end  
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+	   else
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+           begin
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+            if (fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1)
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+              begin
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+                if (fifo_wren)
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+                  begin
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+                    fifo2bm_batch_pointer &lt;= fifo2bm_batch_pointer + 1;
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+                    writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+                  end
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+                  if (fifo2bm_batch_pointer == BATCH_IN_ELEMENTS-1 )
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+                    begin
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+                      writes_done &lt;= 1&#39;b1;
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+                      fifo2bm_batch_pointer &lt;= 0;
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+                    end
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+                end
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+	      end
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+	end 
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+	        
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+	assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+	always @( posedge s00_axis_aclk ) begin
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+	   fifo_wren_old &lt;= fifo_wren;
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+	end
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+	
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+    always @( posedge s00_axis_aclk )
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+    begin
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+      if (fifo_wren)
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+        begin
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+          stream_data_fifo[fifo2bm_write_pointer+fifo2bm_batch_pointer] &lt;= s00_axis_tdata;
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+        end  
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+    end      
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+	               
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+    always @( posedge s00_axis_aclk )
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+    begin
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+        if (!fifo_wren &amp;&amp; fifo_wren_old) begin
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+            fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+            if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS == TOT_IN_ELEMENTS) begin
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+                fifo2bm_write_pointer &lt;= 0;
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+                fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer;
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+            end
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+            else begin
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+                fifo2bm_write_pointer &lt;= fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+                if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS &gt; fifo2bm_read_pointer) begin
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+                    fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+                end
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+                else begin
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+                    fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+                end
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+            end
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+        end
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+        else begin
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+            if (fifo2bm_count &gt; 0) begin
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+                if (fifo2bm_ready &amp;&amp; !fifo2bm_impulse) begin
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+                    fifo2bm_impulse &lt;= 1&#39;b1;
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+                    fifo2bm_data &lt;= stream_data_fifo[fifo2bm_read_pointer];
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+                    
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+                    if (fifo2bm_read_pointer+1 == TOT_IN_ELEMENTS) begin
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+                        fifo2bm_read_pointer &lt;= 0;
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+                        fifo2bm_count &lt;= fifo2bm_write_pointer;
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+                    end
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+                    else begin
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+                        fifo2bm_read_pointer &lt;= fifo2bm_read_pointer +1;
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+                        if (fifo2bm_write_pointer &lt; fifo2bm_read_pointer + 1) begin
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+                            fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer - 1;
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+                        end
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+                        else begin
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+                            fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer - 1;
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+                        end
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+                    end
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+                end
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+                else begin
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+                    fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+                end
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+            end
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+            else begin
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+                fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+            end
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+        end
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+    end
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+   
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+    
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+bmdeserialize fifo2bm(.clk(m00_axis_aclk),
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+	.impulse(fifo2bm_impulse),
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+	.data(fifo2bm_data),
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+	.ready(fifo2bm_ready),
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+    .i0(i0),
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+    .i0_valid(i0_valid),
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+    .i0_recv(i0_received),
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+    .i1(i1),
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+    .i1_valid(i1_valid),
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+    .i1_recv(i1_received),
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+    .i2(i2),
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+    .i2_valid(i2_valid),
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+    .i2_recv(i2_received),
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+    .i3(i3),
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+    .i3_valid(i3_valid),
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+    .i3_recv(i3_received)
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+);
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+bondmachine bm(.clk(m00_axis_aclk),
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+    .i0(i0),
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+    .i0_valid(i0_valid),
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+    .i0_received(i0_received),
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+    .i1(i1),
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+    .i1_valid(i1_valid),
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+    .i1_received(i1_received),
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+    .i2(i2),
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+    .i2_valid(i2_valid),
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+    .i2_received(i2_received),
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+    .i3(i3),
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+    .i3_valid(i3_valid),
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+    .i3_received(i3_received),
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+    .o0(o0),
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+    .o0_valid(o0_valid),
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+    .o0_received(o0_received)
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+    );
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+    
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+bmserialize bm2fifo(.clk(m00_axis_aclk),
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+	.ack(bm2fifo_ack),
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+	.data(bm2fifo_data),
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+	.ready(bm2fifo_ready),
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+    .o0(o0),
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+    .o0_valid(o0_valid),
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+    .o0_recv(o0_received)
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+);    
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+      	               
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+    /*
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+        NOW START THE MASTER AXIS SECTION corrponfing to BM outputs
+</a><a href="#h2-0-299" id="h2-0-299" class="i">+    */
+</a><a href="#h2-0-300" id="h2-0-300" class="i">+
+</a><a href="#h2-0-301" id="h2-0-301" class="i">+
+</a><a href="#h2-0-302" id="h2-0-302" class="i">+	always @(posedge m00_axis_aclk)                                             
+</a><a href="#h2-0-303" id="h2-0-303" class="i">+	begin                                                                     
+</a><a href="#h2-0-304" id="h2-0-304" class="i">+	  if (!m00_axis_aresetn)                                                  
+</a><a href="#h2-0-305" id="h2-0-305" class="i">+	    begin
+</a><a href="#h2-0-306" id="h2-0-306" class="i">+	           bm2fifo_count &lt;= 0;                                                            
+</a><a href="#h2-0-307" id="h2-0-307" class="i">+               bm2fifo_ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-308" id="h2-0-308" class="i">+               bm2fifo_write_pointer &lt;= 0;
+</a><a href="#h2-0-309" id="h2-0-309" class="i">+               bm2fifo_read_pointer &lt;= 0;
+</a><a href="#h2-0-310" id="h2-0-310" class="i">+               // TODO reset fifo                              
+</a><a href="#h2-0-311" id="h2-0-311" class="i">+	    end                                                                   
+</a><a href="#h2-0-312" id="h2-0-312" class="i">+	  else
+</a><a href="#h2-0-313" id="h2-0-313" class="i">+	   begin
+</a><a href="#h2-0-314" id="h2-0-314" class="i">+	       if (tx_done) begin
+</a><a href="#h2-0-315" id="h2-0-315" class="i">+                if (bm2fifo_read_pointer+BATCH_OUT_ELEMENTS == TOT_OUT_ELEMENTS) begin
+</a><a href="#h2-0-316" id="h2-0-316" class="i">+                    bm2fifo_read_pointer &lt;= 0;
+</a><a href="#h2-0-317" id="h2-0-317" class="i">+                    bm2fifo_count &lt;= bm2fifo_write_pointer;
+</a><a href="#h2-0-318" id="h2-0-318" class="i">+                end
+</a><a href="#h2-0-319" id="h2-0-319" class="i">+                else begin
+</a><a href="#h2-0-320" id="h2-0-320" class="i">+                    bm2fifo_read_pointer &lt;= bm2fifo_read_pointer + BATCH_OUT_ELEMENTS;
+</a><a href="#h2-0-321" id="h2-0-321" class="i">+                    if (bm2fifo_write_pointer &lt; bm2fifo_read_pointer + BATCH_OUT_ELEMENTS) begin
+</a><a href="#h2-0-322" id="h2-0-322" class="i">+                        bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS + bm2fifo_write_pointer;
+</a><a href="#h2-0-323" id="h2-0-323" class="i">+                    end
+</a><a href="#h2-0-324" id="h2-0-324" class="i">+                    else
+</a><a href="#h2-0-325" id="h2-0-325" class="i">+                    begin
+</a><a href="#h2-0-326" id="h2-0-326" class="i">+                        bm2fifo_count &lt;= bm2fifo_write_pointer - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS;
+</a><a href="#h2-0-327" id="h2-0-327" class="i">+                    end
+</a><a href="#h2-0-328" id="h2-0-328" class="i">+                end
+</a><a href="#h2-0-329" id="h2-0-329" class="i">+	       end
+</a><a href="#h2-0-330" id="h2-0-330" class="i">+	       else
+</a><a href="#h2-0-331" id="h2-0-331" class="i">+	       begin
+</a><a href="#h2-0-332" id="h2-0-332" class="i">+	           if (bm2fifo_ready &amp;&amp; !bm2fifo_ack) begin
+</a><a href="#h2-0-333" id="h2-0-333" class="i">+    	           outstream_data_fifo[bm2fifo_write_pointer] &lt;= bm2fifo_data[31:0];
+</a><a href="#h2-0-334" id="h2-0-334" class="i">+    	           bm2fifo_ack &lt;= 1&#39;b1;
+</a><a href="#h2-0-335" id="h2-0-335" class="i">+	           
+</a><a href="#h2-0-336" id="h2-0-336" class="i">+    	           if (bm2fifo_write_pointer + 1 == TOT_OUT_ELEMENTS) begin
+</a><a href="#h2-0-337" id="h2-0-337" class="i">+    	               bm2fifo_write_pointer &lt;= 0;
+</a><a href="#h2-0-338" id="h2-0-338" class="i">+    	               bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer;
+</a><a href="#h2-0-339" id="h2-0-339" class="i">+    	           end
+</a><a href="#h2-0-340" id="h2-0-340" class="i">+    	           else
+</a><a href="#h2-0-341" id="h2-0-341" class="i">+    	           begin
+</a><a href="#h2-0-342" id="h2-0-342" class="i">+    	               bm2fifo_write_pointer &lt;= bm2fifo_write_pointer + 1;
+</a><a href="#h2-0-343" id="h2-0-343" class="i">+    	               if (bm2fifo_write_pointer + 1 &gt; bm2fifo_read_pointer) begin
+</a><a href="#h2-0-344" id="h2-0-344" class="i">+    	                   bm2fifo_count &lt;= bm2fifo_write_pointer + 1 - bm2fifo_read_pointer;
+</a><a href="#h2-0-345" id="h2-0-345" class="i">+    	               end
+</a><a href="#h2-0-346" id="h2-0-346" class="i">+    	               else
+</a><a href="#h2-0-347" id="h2-0-347" class="i">+    	               begin
+</a><a href="#h2-0-348" id="h2-0-348" class="i">+    	                   bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer + bm2fifo_write_pointer + 1;
+</a><a href="#h2-0-349" id="h2-0-349" class="i">+    	               end
+</a><a href="#h2-0-350" id="h2-0-350" class="i">+    	           end
+</a><a href="#h2-0-351" id="h2-0-351" class="i">+    	       end
+</a><a href="#h2-0-352" id="h2-0-352" class="i">+    	       else
+</a><a href="#h2-0-353" id="h2-0-353" class="i">+    	       begin
+</a><a href="#h2-0-354" id="h2-0-354" class="i">+    	           bm2fifo_ack &lt;= 1&#39;b0;
+</a><a href="#h2-0-355" id="h2-0-355" class="i">+    	       end
+</a><a href="#h2-0-356" id="h2-0-356" class="i">+           end
+</a><a href="#h2-0-357" id="h2-0-357" class="i">+	   end
+</a><a href="#h2-0-358" id="h2-0-358" class="i">+	end  
+</a><a href="#h2-0-359" id="h2-0-359" class="i">+                              
+</a><a href="#h2-0-360" id="h2-0-360" class="i">+
+</a><a href="#h2-0-361" id="h2-0-361" class="i">+
+</a><a href="#h2-0-362" id="h2-0-362" class="i">+	always @(posedge m00_axis_aclk)                                             
+</a><a href="#h2-0-363" id="h2-0-363" class="i">+	begin                                                                     
+</a><a href="#h2-0-364" id="h2-0-364" class="i">+	  if (!m00_axis_aresetn)                                                  
+</a><a href="#h2-0-365" id="h2-0-365" class="i">+	    begin                                                                 
+</a><a href="#h2-0-366" id="h2-0-366" class="i">+	      mst_exec_state_M &lt;= IDLE_M;                                                                                                   
+</a><a href="#h2-0-367" id="h2-0-367" class="i">+	    end                                                                   
+</a><a href="#h2-0-368" id="h2-0-368" class="i">+	  else                                                                    
+</a><a href="#h2-0-369" id="h2-0-369" class="i">+	    case (mst_exec_state_M)                                                 
+</a><a href="#h2-0-370" id="h2-0-370" class="i">+	      IDLE_M:
+</a><a href="#h2-0-371" id="h2-0-371" class="i">+	            if (bm2fifo_count &gt;= BATCH_OUT_ELEMENTS)                                                        
+</a><a href="#h2-0-372" id="h2-0-372" class="i">+	               mst_exec_state_M  &lt;= SEND_STREAM_M;                                                            
+</a><a href="#h2-0-373" id="h2-0-373" class="i">+	      SEND_STREAM_M:                          
+</a><a href="#h2-0-374" id="h2-0-374" class="i">+	        if (tx_done)                                                      
+</a><a href="#h2-0-375" id="h2-0-375" class="i">+	          begin                                                           
+</a><a href="#h2-0-376" id="h2-0-376" class="i">+	            mst_exec_state_M &lt;= IDLE_M;                                       
+</a><a href="#h2-0-377" id="h2-0-377" class="i">+	          end                                                             
+</a><a href="#h2-0-378" id="h2-0-378" class="i">+	        else                                                              
+</a><a href="#h2-0-379" id="h2-0-379" class="i">+	          begin                                                           
+</a><a href="#h2-0-380" id="h2-0-380" class="i">+	            mst_exec_state_M &lt;= SEND_STREAM_M;                                
+</a><a href="#h2-0-381" id="h2-0-381" class="i">+	          end                                                             
+</a><a href="#h2-0-382" id="h2-0-382" class="i">+	    endcase                                                               
+</a><a href="#h2-0-383" id="h2-0-383" class="i">+	end
+</a><a href="#h2-0-384" id="h2-0-384" class="i">+
+</a><a href="#h2-0-385" id="h2-0-385" class="i">+	assign axis_tvalid = (mst_exec_state_M == SEND_STREAM_M);
+</a><a href="#h2-0-386" id="h2-0-386" class="i">+    assign axis_tlast = (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS-1);
+</a><a href="#h2-0-387" id="h2-0-387" class="i">+
+</a><a href="#h2-0-388" id="h2-0-388" class="i">+    always @(posedge m00_axis_aclk)                                                                  
+</a><a href="#h2-0-389" id="h2-0-389" class="i">+	begin        
+</a><a href="#h2-0-390" id="h2-0-390" class="i">+	if (tx_done) begin
+</a><a href="#h2-0-391" id="h2-0-391" class="i">+	       axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h2-0-392" id="h2-0-392" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;         
+</a><a href="#h2-0-393" id="h2-0-393" class="i">+	end     
+</a><a href="#h2-0-394" id="h2-0-394" class="i">+	else begin                                                                             
+</a><a href="#h2-0-395" id="h2-0-395" class="i">+	  if (!m00_axis_aresetn)                                                                         
+</a><a href="#h2-0-396" id="h2-0-396" class="i">+	    begin                                                                                      
+</a><a href="#h2-0-397" id="h2-0-397" class="i">+	      axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h2-0-398" id="h2-0-398" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;                                                                
+</a><a href="#h2-0-399" id="h2-0-399" class="i">+	    end                                                                                        
+</a><a href="#h2-0-400" id="h2-0-400" class="i">+	  else                                                                                         
+</a><a href="#h2-0-401" id="h2-0-401" class="i">+	    begin                                                                                      
+</a><a href="#h2-0-402" id="h2-0-402" class="i">+	      axis_tvalid_delay &lt;= axis_tvalid;                                                        
+</a><a href="#h2-0-403" id="h2-0-403" class="i">+	      axis_tlast_delay &lt;= axis_tlast;                                                          
+</a><a href="#h2-0-404" id="h2-0-404" class="i">+	    end                                                                                        
+</a><a href="#h2-0-405" id="h2-0-405" class="i">+	end 
+</a><a href="#h2-0-406" id="h2-0-406" class="i">+	end
+</a><a href="#h2-0-407" id="h2-0-407" class="i">+
+</a><a href="#h2-0-408" id="h2-0-408" class="i">+    always@(posedge m00_axis_aclk)                                               
+</a><a href="#h2-0-409" id="h2-0-409" class="i">+	begin     
+</a><a href="#h2-0-410" id="h2-0-410" class="i">+	  
+</a><a href="#h2-0-411" id="h2-0-411" class="i">+	  if (tx_done) begin
+</a><a href="#h2-0-412" id="h2-0-412" class="i">+	       bm2fifo_batch_pointer &lt;= 0;
+</a><a href="#h2-0-413" id="h2-0-413" class="i">+	       tx_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-414" id="h2-0-414" class="i">+	  end
+</a><a href="#h2-0-415" id="h2-0-415" class="i">+	  else begin                                                      
+</a><a href="#h2-0-416" id="h2-0-416" class="i">+          if(!m00_axis_aresetn)                                                            
+</a><a href="#h2-0-417" id="h2-0-417" class="i">+          begin                                                                        
+</a><a href="#h2-0-418" id="h2-0-418" class="i">+              bm2fifo_batch_pointer &lt;= 0;                                                         
+</a><a href="#h2-0-419" id="h2-0-419" class="i">+              tx_done &lt;= 1&#39;b0;                                                           
+</a><a href="#h2-0-420" id="h2-0-420" class="i">+          end                                                                          
+</a><a href="#h2-0-421" id="h2-0-421" class="i">+          else
+</a><a href="#h2-0-422" id="h2-0-422" class="i">+          begin                                                                           
+</a><a href="#h2-0-423" id="h2-0-423" class="i">+            if (bm2fifo_batch_pointer &lt;= BATCH_OUT_ELEMENTS-1)                                
+</a><a href="#h2-0-424" id="h2-0-424" class="i">+            begin                                                                      
+</a><a href="#h2-0-425" id="h2-0-425" class="i">+                if (tx_en)                                                                
+</a><a href="#h2-0-426" id="h2-0-426" class="i">+                  begin                                                                  
+</a><a href="#h2-0-427" id="h2-0-427" class="i">+                    bm2fifo_batch_pointer &lt;= bm2fifo_batch_pointer + 1;
+</a><a href="#h2-0-428" id="h2-0-428" class="i">+                    if (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS - 1) 
+</a><a href="#h2-0-429" id="h2-0-429" class="i">+                    begin
+</a><a href="#h2-0-430" id="h2-0-430" class="i">+                       tx_done &lt;= 1&#39;b1;
+</a><a href="#h2-0-431" id="h2-0-431" class="i">+                    end                           
+</a><a href="#h2-0-432" id="h2-0-432" class="i">+                  end                                                                       
+</a><a href="#h2-0-433" id="h2-0-433" class="i">+                end 
+</a><a href="#h2-0-434" id="h2-0-434" class="i">+         end
+</a><a href="#h2-0-435" id="h2-0-435" class="i">+       end
+</a><a href="#h2-0-436" id="h2-0-436" class="i">+    end
+</a><a href="#h2-0-437" id="h2-0-437" class="i">+       
+</a><a href="#h2-0-438" id="h2-0-438" class="i">+    assign tx_en = m00_axis_tready &amp;&amp; axis_tvalid;   
+</a><a href="#h2-0-439" id="h2-0-439" class="i">+	                                                     
+</a><a href="#h2-0-440" id="h2-0-440" class="i">+	    always @( posedge m00_axis_aclk )                  
+</a><a href="#h2-0-441" id="h2-0-441" class="i">+	    begin                                         
+</a><a href="#h2-0-442" id="h2-0-442" class="i">+	      if(!m00_axis_aresetn)                            
+</a><a href="#h2-0-443" id="h2-0-443" class="i">+	        begin                                        
+</a><a href="#h2-0-444" id="h2-0-444" class="i">+	          stream_data_out &lt;= 1;                      
+</a><a href="#h2-0-445" id="h2-0-445" class="i">+	        end                                          
+</a><a href="#h2-0-446" id="h2-0-446" class="i">+	      else if (tx_en)
+</a><a href="#h2-0-447" id="h2-0-447" class="i">+	        begin                           
+</a><a href="#h2-0-448" id="h2-0-448" class="i">+                stream_data_out &lt;= outstream_data_fifo[bm2fifo_read_pointer+bm2fifo_batch_pointer];
+</a><a href="#h2-0-449" id="h2-0-449" class="i">+	        end                                          
+</a><a href="#h2-0-450" id="h2-0-450" class="i">+	    end
+</a><a href="#h2-0-451" id="h2-0-451" class="i">+
+</a><a href="#h2-0-452" id="h2-0-452" class="i">+	endmodule
+</a><a href="#h2-0-453" id="h2-0-453" class="i">+	
+</a><a href="#h2-0-454" id="h2-0-454" class="i">+module bmdeserialize(
+</a><a href="#h2-0-455" id="h2-0-455" class="i">+	   input clk,
+</a><a href="#h2-0-456" id="h2-0-456" class="i">+	   input reset,
+</a><a href="#h2-0-457" id="h2-0-457" class="i">+	   input impulse,
+</a><a href="#h2-0-458" id="h2-0-458" class="i">+	   input [31:0] data,
+</a><a href="#h2-0-459" id="h2-0-459" class="i">+	   output reg ready,
+</a><a href="#h2-0-460" id="h2-0-460" class="i">+	   
+</a><a href="#h2-0-461" id="h2-0-461" class="i">+	   output wire [31:0] i0,
+</a><a href="#h2-0-462" id="h2-0-462" class="i">+	   output i0_valid,
+</a><a href="#h2-0-463" id="h2-0-463" class="i">+	   input i0_recv,
+</a><a href="#h2-0-464" id="h2-0-464" class="i">+	   
+</a><a href="#h2-0-465" id="h2-0-465" class="i">+	   output wire [31:0] i1,
+</a><a href="#h2-0-466" id="h2-0-466" class="i">+	   output i1_valid,
+</a><a href="#h2-0-467" id="h2-0-467" class="i">+	   input i1_recv,
+</a><a href="#h2-0-468" id="h2-0-468" class="i">+	   
+</a><a href="#h2-0-469" id="h2-0-469" class="i">+	   output wire [31:0] i2,
+</a><a href="#h2-0-470" id="h2-0-470" class="i">+	   output i2_valid,
+</a><a href="#h2-0-471" id="h2-0-471" class="i">+	   input i2_recv,
+</a><a href="#h2-0-472" id="h2-0-472" class="i">+	   
+</a><a href="#h2-0-473" id="h2-0-473" class="i">+	   output wire [31:0] i3,
+</a><a href="#h2-0-474" id="h2-0-474" class="i">+	   output i3_valid,
+</a><a href="#h2-0-475" id="h2-0-475" class="i">+	   input i3_recv	   	   
+</a><a href="#h2-0-476" id="h2-0-476" class="i">+	);
+</a><a href="#h2-0-477" id="h2-0-477" class="i">+	
+</a><a href="#h2-0-478" id="h2-0-478" class="i">+	reg [2:0] input_index;
+</a><a href="#h2-0-479" id="h2-0-479" class="i">+    reg [0:0] SM;
+</a><a href="#h2-0-480" id="h2-0-480" class="i">+    
+</a><a href="#h2-0-481" id="h2-0-481" class="i">+    reg [31:0] localdata;
+</a><a href="#h2-0-482" id="h2-0-482" class="i">+
+</a><a href="#h2-0-483" id="h2-0-483" class="i">+    reg [3:0] valids;
+</a><a href="#h2-0-484" id="h2-0-484" class="i">+
+</a><a href="#h2-0-485" id="h2-0-485" class="i">+    wire [3:0] recvs;
+</a><a href="#h2-0-486" id="h2-0-486" class="i">+    
+</a><a href="#h2-0-487" id="h2-0-487" class="i">+    localparam SMIDLE=1&#39;b0,
+</a><a href="#h2-0-488" id="h2-0-488" class="i">+                SMBM=1&#39;b1;
+</a><a href="#h2-0-489" id="h2-0-489" class="i">+	
+</a><a href="#h2-0-490" id="h2-0-490" class="i">+	always @( posedge clk) begin
+</a><a href="#h2-0-491" id="h2-0-491" class="i">+	   if (reset) begin
+</a><a href="#h2-0-492" id="h2-0-492" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-493" id="h2-0-493" class="i">+	       input_index &lt;= 3&#39;b000;
+</a><a href="#h2-0-494" id="h2-0-494" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h2-0-495" id="h2-0-495" class="i">+	       localdata[31:0] &lt;= 32&#39;b0;
+</a><a href="#h2-0-496" id="h2-0-496" class="i">+	       valids[3:0] &lt;= 4&#39;b0000;
+</a><a href="#h2-0-497" id="h2-0-497" class="i">+	   end 
+</a><a href="#h2-0-498" id="h2-0-498" class="i">+	   else begin
+</a><a href="#h2-0-499" id="h2-0-499" class="i">+	       case (SM)
+</a><a href="#h2-0-500" id="h2-0-500" class="i">+	       SMIDLE: begin
+</a><a href="#h2-0-501" id="h2-0-501" class="i">+	               if (impulse) begin
+</a><a href="#h2-0-502" id="h2-0-502" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-503" id="h2-0-503" class="i">+	                   localdata[31:0] &lt;= data[31:0];
+</a><a href="#h2-0-504" id="h2-0-504" class="i">+	                   SM&lt;=SMBM;
+</a><a href="#h2-0-505" id="h2-0-505" class="i">+	               end
+</a><a href="#h2-0-506" id="h2-0-506" class="i">+	               else begin
+</a><a href="#h2-0-507" id="h2-0-507" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h2-0-508" id="h2-0-508" class="i">+	               end
+</a><a href="#h2-0-509" id="h2-0-509" class="i">+	           end
+</a><a href="#h2-0-510" id="h2-0-510" class="i">+	       SMBM: begin
+</a><a href="#h2-0-511" id="h2-0-511" class="i">+	           if (recvs[input_index] == 1&#39;b0) begin
+</a><a href="#h2-0-512" id="h2-0-512" class="i">+	               valids[input_index] &lt;= 1&#39;b1;
+</a><a href="#h2-0-513" id="h2-0-513" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-514" id="h2-0-514" class="i">+	           end
+</a><a href="#h2-0-515" id="h2-0-515" class="i">+	           else begin
+</a><a href="#h2-0-516" id="h2-0-516" class="i">+	               valids[input_index] &lt;= 1&#39;b0;
+</a><a href="#h2-0-517" id="h2-0-517" class="i">+	               if (input_index + 1 == 4&#39;d4) begin
+</a><a href="#h2-0-518" id="h2-0-518" class="i">+	                   input_index &lt;= 0;
+</a><a href="#h2-0-519" id="h2-0-519" class="i">+	               end
+</a><a href="#h2-0-520" id="h2-0-520" class="i">+	               else begin
+</a><a href="#h2-0-521" id="h2-0-521" class="i">+	                   input_index &lt;= input_index + 1;
+</a><a href="#h2-0-522" id="h2-0-522" class="i">+	               end
+</a><a href="#h2-0-523" id="h2-0-523" class="i">+	               SM&lt;=SMIDLE;
+</a><a href="#h2-0-524" id="h2-0-524" class="i">+	               ready &lt;= 1&#39;b1;
+</a><a href="#h2-0-525" id="h2-0-525" class="i">+	           end
+</a><a href="#h2-0-526" id="h2-0-526" class="i">+	       end
+</a><a href="#h2-0-527" id="h2-0-527" class="i">+	       endcase
+</a><a href="#h2-0-528" id="h2-0-528" class="i">+	   end
+</a><a href="#h2-0-529" id="h2-0-529" class="i">+	end
+</a><a href="#h2-0-530" id="h2-0-530" class="i">+	
+</a><a href="#h2-0-531" id="h2-0-531" class="i">+	assign i0[31:0] = localdata[31:0];
+</a><a href="#h2-0-532" id="h2-0-532" class="i">+	assign i1[31:0] = localdata[31:0];
+</a><a href="#h2-0-533" id="h2-0-533" class="i">+	assign i2[31:0] = localdata[31:0];
+</a><a href="#h2-0-534" id="h2-0-534" class="i">+	assign i3[31:0] = localdata[31:0];
+</a><a href="#h2-0-535" id="h2-0-535" class="i">+	
+</a><a href="#h2-0-536" id="h2-0-536" class="i">+	assign i0_valid=valids[0];
+</a><a href="#h2-0-537" id="h2-0-537" class="i">+	assign i1_valid=valids[1];
+</a><a href="#h2-0-538" id="h2-0-538" class="i">+	assign i2_valid=valids[2];
+</a><a href="#h2-0-539" id="h2-0-539" class="i">+	assign i3_valid=valids[3];
+</a><a href="#h2-0-540" id="h2-0-540" class="i">+	
+</a><a href="#h2-0-541" id="h2-0-541" class="i">+	assign recvs[3:0] = {i3_recv, i2_recv, i1_recv, i0_recv};
+</a><a href="#h2-0-542" id="h2-0-542" class="i">+	
+</a><a href="#h2-0-543" id="h2-0-543" class="i">+	endmodule
+</a><a href="#h2-0-544" id="h2-0-544" class="i">+	
+</a><a href="#h2-0-545" id="h2-0-545" class="i">+module bmserialize(
+</a><a href="#h2-0-546" id="h2-0-546" class="i">+	   input clk,
+</a><a href="#h2-0-547" id="h2-0-547" class="i">+	   input reset,
+</a><a href="#h2-0-548" id="h2-0-548" class="i">+	   input ack,
+</a><a href="#h2-0-549" id="h2-0-549" class="i">+	   output [31:0] data,
+</a><a href="#h2-0-550" id="h2-0-550" class="i">+	   output reg ready,
+</a><a href="#h2-0-551" id="h2-0-551" class="i">+	   
+</a><a href="#h2-0-552" id="h2-0-552" class="i">+	   input [31:0] o0,
+</a><a href="#h2-0-553" id="h2-0-553" class="i">+	   input o0_valid,
+</a><a href="#h2-0-554" id="h2-0-554" class="i">+	   output o0_recv   	   
+</a><a href="#h2-0-555" id="h2-0-555" class="i">+	);
+</a><a href="#h2-0-556" id="h2-0-556" class="i">+	
+</a><a href="#h2-0-557" id="h2-0-557" class="i">+	
+</a><a href="#h2-0-558" id="h2-0-558" class="i">+	reg [1:0] output_index;
+</a><a href="#h2-0-559" id="h2-0-559" class="i">+    reg [1:0] SM;
+</a><a href="#h2-0-560" id="h2-0-560" class="i">+    
+</a><a href="#h2-0-561" id="h2-0-561" class="i">+    reg [31:0] localdata;
+</a><a href="#h2-0-562" id="h2-0-562" class="i">+
+</a><a href="#h2-0-563" id="h2-0-563" class="i">+    wire [1:0] valids;
+</a><a href="#h2-0-564" id="h2-0-564" class="i">+
+</a><a href="#h2-0-565" id="h2-0-565" class="i">+    reg [1:0] recvs;
+</a><a href="#h2-0-566" id="h2-0-566" class="i">+    
+</a><a href="#h2-0-567" id="h2-0-567" class="i">+    wire [31:0]outputs;
+</a><a href="#h2-0-568" id="h2-0-568" class="i">+    
+</a><a href="#h2-0-569" id="h2-0-569" class="i">+    localparam SMIDLE=2&#39;b00,
+</a><a href="#h2-0-570" id="h2-0-570" class="i">+                SMRES=2&#39;b01,
+</a><a href="#h2-0-571" id="h2-0-571" class="i">+                SMBM=2&#39;b10;
+</a><a href="#h2-0-572" id="h2-0-572" class="i">+	
+</a><a href="#h2-0-573" id="h2-0-573" class="i">+	always @( posedge clk) begin
+</a><a href="#h2-0-574" id="h2-0-574" class="i">+	   if (reset) begin
+</a><a href="#h2-0-575" id="h2-0-575" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-576" id="h2-0-576" class="i">+	       output_index &lt;= 2&#39;b00;
+</a><a href="#h2-0-577" id="h2-0-577" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h2-0-578" id="h2-0-578" class="i">+	       recvs[1:0] &lt;= 2&#39;b00;
+</a><a href="#h2-0-579" id="h2-0-579" class="i">+	   end 
+</a><a href="#h2-0-580" id="h2-0-580" class="i">+	   else begin
+</a><a href="#h2-0-581" id="h2-0-581" class="i">+	       case (SM)
+</a><a href="#h2-0-582" id="h2-0-582" class="i">+	       SMIDLE: begin
+</a><a href="#h2-0-583" id="h2-0-583" class="i">+	               if (valids[output_index]) begin
+</a><a href="#h2-0-584" id="h2-0-584" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h2-0-585" id="h2-0-585" class="i">+	                   localdata[31:0] &lt;= outputs;
+</a><a href="#h2-0-586" id="h2-0-586" class="i">+	                   SM&lt;=SMRES;
+</a><a href="#h2-0-587" id="h2-0-587" class="i">+	               end
+</a><a href="#h2-0-588" id="h2-0-588" class="i">+	               else begin
+</a><a href="#h2-0-589" id="h2-0-589" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-590" id="h2-0-590" class="i">+	               end
+</a><a href="#h2-0-591" id="h2-0-591" class="i">+	           end
+</a><a href="#h2-0-592" id="h2-0-592" class="i">+	       SMRES: begin
+</a><a href="#h2-0-593" id="h2-0-593" class="i">+	           if (ack) begin
+</a><a href="#h2-0-594" id="h2-0-594" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h2-0-595" id="h2-0-595" class="i">+	               SM&lt;=SMBM;
+</a><a href="#h2-0-596" id="h2-0-596" class="i">+	           end   
+</a><a href="#h2-0-597" id="h2-0-597" class="i">+	       end
+</a><a href="#h2-0-598" id="h2-0-598" class="i">+	       SMBM: begin
+</a><a href="#h2-0-599" id="h2-0-599" class="i">+	           if (!valids[output_index]) begin
+</a><a href="#h2-0-600" id="h2-0-600" class="i">+	               if (output_index + 1 == 2&#39;d1) begin
+</a><a href="#h2-0-601" id="h2-0-601" class="i">+	                   output_index &lt;= 0;
+</a><a href="#h2-0-602" id="h2-0-602" class="i">+	               end
+</a><a href="#h2-0-603" id="h2-0-603" class="i">+	               else begin
+</a><a href="#h2-0-604" id="h2-0-604" class="i">+	                   output_index &lt;= output_index + 1;
+</a><a href="#h2-0-605" id="h2-0-605" class="i">+	               end
+</a><a href="#h2-0-606" id="h2-0-606" class="i">+	               recvs[output_index] &lt;= 1&#39;b0;
+</a><a href="#h2-0-607" id="h2-0-607" class="i">+	               SM&lt;=SMIDLE;           
+</a><a href="#h2-0-608" id="h2-0-608" class="i">+	           end
+</a><a href="#h2-0-609" id="h2-0-609" class="i">+	           else
+</a><a href="#h2-0-610" id="h2-0-610" class="i">+	           begin
+</a><a href="#h2-0-611" id="h2-0-611" class="i">+	               recvs[output_index] &lt;= 1&#39;b1;
+</a><a href="#h2-0-612" id="h2-0-612" class="i">+	           end
+</a><a href="#h2-0-613" id="h2-0-613" class="i">+	       end
+</a><a href="#h2-0-614" id="h2-0-614" class="i">+	       endcase
+</a><a href="#h2-0-615" id="h2-0-615" class="i">+	   end
+</a><a href="#h2-0-616" id="h2-0-616" class="i">+	end
+</a><a href="#h2-0-617" id="h2-0-617" class="i">+	
+</a><a href="#h2-0-618" id="h2-0-618" class="i">+	assign data[31:0] = localdata[31:0];
+</a><a href="#h2-0-619" id="h2-0-619" class="i">+	assign outputs={o0[31:0]};
+</a><a href="#h2-0-620" id="h2-0-620" class="i">+	assign o0_recv=recvs[0];
+</a><a href="#h2-0-621" id="h2-0-621" class="i">+
+</a><a href="#h2-0-622" id="h2-0-622" class="i">+	assign valids[0] = o0_valid;	
+</a><a href="#h2-0-623" id="h2-0-623" class="i">+	
+</a><a href="#h2-0-624" id="h2-0-624" class="i">+endmodule
+</a><a href="#h2-0-625" id="h2-0-625" class="i">+
+</a><a href="#h2-0-626" id="h2-0-626" class="i">+`
+</a><a href="#h2-0-627" id="h2-0-627" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/bmapi_axist_optimized.go.html">pkg/bondmachine/bmapi_axist_optimized.go</a> b/<a href="../file/pkg/bondmachine/bmapi_axist_optimized.go.html">pkg/bondmachine/bmapi_axist_optimized.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,657 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bondmachine
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+const (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	optimizedAXIStream = `
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+module bmstream_v1_0 #
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+(
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	parameter integer C_M00_AXIS_START_COUNT	= 32
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+)
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+(
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	input wire  s00_axis_aclk,
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	input wire  s00_axis_aresetn,
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	output wire  s00_axis_tready,
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	input wire [(C_S00_AXIS_TDATA_WIDTH/8)-1 : 0] s00_axis_tstrb,
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	input wire  s00_axis_tlast,
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	input wire  s00_axis_tvalid,
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	input wire  m00_axis_aclk,
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	input wire  m00_axis_aresetn,
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	output wire  m00_axis_tvalid,
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	output wire [(C_M00_AXIS_TDATA_WIDTH/8)-1 : 0] m00_axis_tstrb,
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+	output wire  m00_axis_tlast,
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	input wire  m00_axis_tready
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+);
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+    
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+    localparam [31:0] samples = 16; // number of samples that I expect from the client
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+    localparam [31:0] fifodepth = 256; // Should be multiple of samples
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+    
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+    localparam [31:0] bminputs = 4;  // number of bminputs for each sample
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+    localparam [31:0] BATCH_IN_ELEMENTS = samples*bminputs;
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	localparam [31:0] TOT_IN_ELEMENTS  = fifodepth*bminputs;                                     
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	localparam [31:0] bmoutputs = 1;
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	localparam [31:0] BATCH_OUT_ELEMENTS = samples*bmoutputs;
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	localparam [31:0] TOT_OUT_ELEMENTS = fifodepth*bmoutputs;
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+	// Receiver object
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	localparam [1:0] IDLE = 1&#39;b0,
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	                 WRITE_FIFO  = 1&#39;b1; 
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+	                                    
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+	wire  	   axis_tready;
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+	reg        mst_exec_state;     
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	wire       fifo_wren;
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+	reg        fifo_full_flag;
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	reg [31:0] fifo2bm_write_pointer;
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+	reg [31:0] fifo2bm_read_pointer;
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+	reg [31:0] fifo2bm_batch_pointer;
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+	reg [31:0] fifo2bm_count;
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+	reg        writes_done;
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+	reg fifo_wren_old;
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+	reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] stream_data_fifo [0 : TOT_IN_ELEMENTS-1];
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+    
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+    wire [31:0] i0;
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+    wire [31:0] i1;
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+    wire [31:0] i2;
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+    wire [31:0] i3;
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+    wire i0_valid;
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+    wire i1_valid;
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+    wire i2_valid;
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+    wire i3_valid;
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+    wire i0_received;
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+    wire i1_received;
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+    wire i2_received;
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+    wire i3_received;
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+    reg fifo2bm_impulse;
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+    wire fifo2bm_ready;
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+    reg [31:0] fifo2bm_data; 
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+	
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+    // Sender objects
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+	localparam [1:0] IDLE_M = 2&#39;b00,                                              
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+	                 SEND_STREAM_M = 2&#39;b01,
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+	                 WAIT_M = 2&#39;b10; 
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+                                                          
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+	reg [1:0]   mst_exec_state_M;
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+    wire  	axis_tvalid;
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+    reg  	axis_tvalid_delay;
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+    wire  	axis_tlast;
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+    reg  	axis_tlast_delay;
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+    reg [C_M00_AXIS_TDATA_WIDTH-1 : 0] 	stream_data_out;
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+    wire  	tx_en;
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+    reg  	tx_done;
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+    wire [31:0] o0;
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+    wire o0_valid;
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+    wire o0_received;
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+    reg bm2fifo_ack;
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+    wire bm2fifo_ready;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+    wire [31:0] bm2fifo_data;
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+	reg [31:0] bm2fifo_write_pointer;
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+	reg [31:0] bm2fifo_read_pointer;
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+	reg [31:0] bm2fifo_batch_pointer;
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+	reg [31:0] bm2fifo_count;
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+    reg  [(C_S00_AXIS_TDATA_WIDTH)-1:0] outstream_data_fifo [0 : TOT_OUT_ELEMENTS-1];
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+    integer i,j;
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+    initial begin
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+         bm2fifo_write_pointer=0;
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+         bm2fifo_read_pointer=0;
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+         bm2fifo_batch_pointer=0;
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+         bm2fifo_count=0;
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+         bm2fifo_ack=0;
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+         fifo2bm_data=0;
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+         fifo2bm_write_pointer=0;
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+	     fifo2bm_read_pointer=0;
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+	     fifo2bm_batch_pointer=0;
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+	     fifo2bm_count=0;
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+         writes_done=0;
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+         mst_exec_state=0;
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+         fifo_wren_old=0;
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+         fifo2bm_impulse=0;
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+         fifo2bm_data=0;
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+         tx_done=0;
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+         bm2fifo_ack=0;
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+         for (i=0;i&lt;TOT_OUT_ELEMENTS;i=i+1) begin
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+            outstream_data_fifo[i]&lt;=0;
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+         end
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+         for (j=0;j&lt;TOT_IN_ELEMENTS;j=j+1) begin
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+            stream_data_fifo[j]&lt;=0;
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+         end
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+    end
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+                         
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+    /*
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+        NOW START THE AXIS SLAVE SECTION, corresponding to BM Inputs
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+    */
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+    assign m00_axis_tvalid	= axis_tvalid_delay;
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+	assign m00_axis_tdata[31:0]	= stream_data_out[31:0];
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+	assign m00_axis_tlast	= axis_tlast_delay;
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+	assign s00_axis_tready	= axis_tready;
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+	
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+	always @(posedge s00_axis_aclk) 
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+	begin  
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+	  if (!s00_axis_aresetn) 
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+	    begin
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+	      mst_exec_state &lt;= IDLE;
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+	    end  
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+	  else
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+	    case (mst_exec_state)
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+	      IDLE:
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+	          if (s00_axis_tvalid &amp;&amp; (fifo_wren == fifo_wren_old) &amp;&amp; (fifo2bm_count + BATCH_IN_ELEMENTS &lt;= TOT_IN_ELEMENTS))
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+	            begin
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+	              mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+	            end
+</a><a href="#h3-0-163" id="h3-0-163" class="i">+	          else
+</a><a href="#h3-0-164" id="h3-0-164" class="i">+	            begin
+</a><a href="#h3-0-165" id="h3-0-165" class="i">+	              mst_exec_state &lt;= IDLE;
+</a><a href="#h3-0-166" id="h3-0-166" class="i">+	            end
+</a><a href="#h3-0-167" id="h3-0-167" class="i">+	      WRITE_FIFO:
+</a><a href="#h3-0-168" id="h3-0-168" class="i">+	        if (writes_done || !s00_axis_tvalid)
+</a><a href="#h3-0-169" id="h3-0-169" class="i">+	          begin
+</a><a href="#h3-0-170" id="h3-0-170" class="i">+	            mst_exec_state &lt;= IDLE;
+</a><a href="#h3-0-171" id="h3-0-171" class="i">+	          end
+</a><a href="#h3-0-172" id="h3-0-172" class="i">+	        else
+</a><a href="#h3-0-173" id="h3-0-173" class="i">+	          begin
+</a><a href="#h3-0-174" id="h3-0-174" class="i">+	            mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h3-0-175" id="h3-0-175" class="i">+	          end
+</a><a href="#h3-0-176" id="h3-0-176" class="i">+
+</a><a href="#h3-0-177" id="h3-0-177" class="i">+	    endcase
+</a><a href="#h3-0-178" id="h3-0-178" class="i">+	end
+</a><a href="#h3-0-179" id="h3-0-179" class="i">+
+</a><a href="#h3-0-180" id="h3-0-180" class="i">+	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1));
+</a><a href="#h3-0-181" id="h3-0-181" class="i">+
+</a><a href="#h3-0-182" id="h3-0-182" class="i">+	always@(posedge s00_axis_aclk)
+</a><a href="#h3-0-183" id="h3-0-183" class="i">+	begin
+</a><a href="#h3-0-184" id="h3-0-184" class="i">+	  if(!s00_axis_aresetn)
+</a><a href="#h3-0-185" id="h3-0-185" class="i">+	    begin
+</a><a href="#h3-0-186" id="h3-0-186" class="i">+	      fifo2bm_batch_pointer &lt;= 0;
+</a><a href="#h3-0-187" id="h3-0-187" class="i">+	      writes_done &lt;= 1&#39;b0;
+</a><a href="#h3-0-188" id="h3-0-188" class="i">+	    end  
+</a><a href="#h3-0-189" id="h3-0-189" class="i">+	  else
+</a><a href="#h3-0-190" id="h3-0-190" class="i">+	    if (!writes_done &amp;&amp; fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1)
+</a><a href="#h3-0-191" id="h3-0-191" class="i">+	      begin
+</a><a href="#h3-0-192" id="h3-0-192" class="i">+	        if (fifo_wren)
+</a><a href="#h3-0-193" id="h3-0-193" class="i">+	          begin
+</a><a href="#h3-0-194" id="h3-0-194" class="i">+	            fifo2bm_batch_pointer &lt;= fifo2bm_batch_pointer + 1;
+</a><a href="#h3-0-195" id="h3-0-195" class="i">+	            writes_done &lt;= 1&#39;b0;
+</a><a href="#h3-0-196" id="h3-0-196" class="i">+	          end
+</a><a href="#h3-0-197" id="h3-0-197" class="i">+	          if (fifo2bm_batch_pointer == BATCH_IN_ELEMENTS-1)
+</a><a href="#h3-0-198" id="h3-0-198" class="i">+	            begin
+</a><a href="#h3-0-199" id="h3-0-199" class="i">+	              writes_done &lt;= 1&#39;b1;
+</a><a href="#h3-0-200" id="h3-0-200" class="i">+	              fifo2bm_batch_pointer &lt;= 1&#39;b0;
+</a><a href="#h3-0-201" id="h3-0-201" class="i">+	            end
+</a><a href="#h3-0-202" id="h3-0-202" class="i">+	      end
+</a><a href="#h3-0-203" id="h3-0-203" class="i">+	      else
+</a><a href="#h3-0-204" id="h3-0-204" class="i">+	        writes_done &lt;= 1&#39;b0;
+</a><a href="#h3-0-205" id="h3-0-205" class="i">+	end 
+</a><a href="#h3-0-206" id="h3-0-206" class="i">+	       
+</a><a href="#h3-0-207" id="h3-0-207" class="i">+	       
+</a><a href="#h3-0-208" id="h3-0-208" class="i">+	assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+</a><a href="#h3-0-209" id="h3-0-209" class="i">+
+</a><a href="#h3-0-210" id="h3-0-210" class="i">+	
+</a><a href="#h3-0-211" id="h3-0-211" class="i">+	always @( posedge s00_axis_aclk ) begin
+</a><a href="#h3-0-212" id="h3-0-212" class="i">+	   fifo_wren_old &lt;= fifo_wren;
+</a><a href="#h3-0-213" id="h3-0-213" class="i">+	end
+</a><a href="#h3-0-214" id="h3-0-214" class="i">+	
+</a><a href="#h3-0-215" id="h3-0-215" class="i">+
+</a><a href="#h3-0-216" id="h3-0-216" class="i">+    always @( posedge s00_axis_aclk )
+</a><a href="#h3-0-217" id="h3-0-217" class="i">+    begin
+</a><a href="#h3-0-218" id="h3-0-218" class="i">+      if (fifo_wren)
+</a><a href="#h3-0-219" id="h3-0-219" class="i">+        begin
+</a><a href="#h3-0-220" id="h3-0-220" class="i">+          stream_data_fifo[fifo2bm_write_pointer+fifo2bm_batch_pointer] &lt;= s00_axis_tdata[31:0];
+</a><a href="#h3-0-221" id="h3-0-221" class="i">+        end  
+</a><a href="#h3-0-222" id="h3-0-222" class="i">+    end      
+</a><a href="#h3-0-223" id="h3-0-223" class="i">+	               
+</a><a href="#h3-0-224" id="h3-0-224" class="i">+    always @( posedge s00_axis_aclk )
+</a><a href="#h3-0-225" id="h3-0-225" class="i">+    begin
+</a><a href="#h3-0-226" id="h3-0-226" class="i">+        if (!fifo_wren &amp;&amp; fifo_wren_old) begin
+</a><a href="#h3-0-227" id="h3-0-227" class="i">+            fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h3-0-228" id="h3-0-228" class="i">+            if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS == TOT_IN_ELEMENTS) begin
+</a><a href="#h3-0-229" id="h3-0-229" class="i">+                fifo2bm_write_pointer &lt;= 0;
+</a><a href="#h3-0-230" id="h3-0-230" class="i">+                fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer;
+</a><a href="#h3-0-231" id="h3-0-231" class="i">+            end
+</a><a href="#h3-0-232" id="h3-0-232" class="i">+            else begin
+</a><a href="#h3-0-233" id="h3-0-233" class="i">+                fifo2bm_write_pointer &lt;= fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h3-0-234" id="h3-0-234" class="i">+                if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS &gt; fifo2bm_read_pointer) begin
+</a><a href="#h3-0-235" id="h3-0-235" class="i">+                    fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h3-0-236" id="h3-0-236" class="i">+                end
+</a><a href="#h3-0-237" id="h3-0-237" class="i">+                else begin
+</a><a href="#h3-0-238" id="h3-0-238" class="i">+                    fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h3-0-239" id="h3-0-239" class="i">+                end
+</a><a href="#h3-0-240" id="h3-0-240" class="i">+            end
+</a><a href="#h3-0-241" id="h3-0-241" class="i">+        end
+</a><a href="#h3-0-242" id="h3-0-242" class="i">+        else begin
+</a><a href="#h3-0-243" id="h3-0-243" class="i">+            if (fifo2bm_count &gt; 0) begin
+</a><a href="#h3-0-244" id="h3-0-244" class="i">+                if (fifo2bm_ready &amp;&amp; !fifo2bm_impulse) begin
+</a><a href="#h3-0-245" id="h3-0-245" class="i">+                    fifo2bm_impulse &lt;= 1&#39;b1;
+</a><a href="#h3-0-246" id="h3-0-246" class="i">+                    fifo2bm_data &lt;= stream_data_fifo[fifo2bm_read_pointer];
+</a><a href="#h3-0-247" id="h3-0-247" class="i">+                    
+</a><a href="#h3-0-248" id="h3-0-248" class="i">+                    if (fifo2bm_read_pointer+1 == TOT_IN_ELEMENTS) begin
+</a><a href="#h3-0-249" id="h3-0-249" class="i">+                        fifo2bm_read_pointer &lt;= 0;
+</a><a href="#h3-0-250" id="h3-0-250" class="i">+                        fifo2bm_count &lt;= fifo2bm_write_pointer;
+</a><a href="#h3-0-251" id="h3-0-251" class="i">+                    end
+</a><a href="#h3-0-252" id="h3-0-252" class="i">+                    else begin
+</a><a href="#h3-0-253" id="h3-0-253" class="i">+                        fifo2bm_read_pointer &lt;= fifo2bm_read_pointer +1;
+</a><a href="#h3-0-254" id="h3-0-254" class="i">+                        if (fifo2bm_write_pointer &lt; fifo2bm_read_pointer + 1) begin
+</a><a href="#h3-0-255" id="h3-0-255" class="i">+                            fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer - 1;
+</a><a href="#h3-0-256" id="h3-0-256" class="i">+                        end
+</a><a href="#h3-0-257" id="h3-0-257" class="i">+                        else begin
+</a><a href="#h3-0-258" id="h3-0-258" class="i">+                            fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer - 1;
+</a><a href="#h3-0-259" id="h3-0-259" class="i">+                        end
+</a><a href="#h3-0-260" id="h3-0-260" class="i">+                    end
+</a><a href="#h3-0-261" id="h3-0-261" class="i">+                end
+</a><a href="#h3-0-262" id="h3-0-262" class="i">+                else begin
+</a><a href="#h3-0-263" id="h3-0-263" class="i">+                    fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h3-0-264" id="h3-0-264" class="i">+                end
+</a><a href="#h3-0-265" id="h3-0-265" class="i">+            end
+</a><a href="#h3-0-266" id="h3-0-266" class="i">+            else begin
+</a><a href="#h3-0-267" id="h3-0-267" class="i">+                fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h3-0-268" id="h3-0-268" class="i">+            end
+</a><a href="#h3-0-269" id="h3-0-269" class="i">+        end
+</a><a href="#h3-0-270" id="h3-0-270" class="i">+    end
+</a><a href="#h3-0-271" id="h3-0-271" class="i">+   
+</a><a href="#h3-0-272" id="h3-0-272" class="i">+    
+</a><a href="#h3-0-273" id="h3-0-273" class="i">+bmdeserialize fifo2bm(.clk(m00_axis_aclk),
+</a><a href="#h3-0-274" id="h3-0-274" class="i">+	.impulse(fifo2bm_impulse),
+</a><a href="#h3-0-275" id="h3-0-275" class="i">+	.data(fifo2bm_data[31:0]),
+</a><a href="#h3-0-276" id="h3-0-276" class="i">+	.ready(fifo2bm_ready),
+</a><a href="#h3-0-277" id="h3-0-277" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h3-0-278" id="h3-0-278" class="i">+    .i0(i0),
+</a><a href="#h3-0-279" id="h3-0-279" class="i">+    .i0_valid(i0_valid),
+</a><a href="#h3-0-280" id="h3-0-280" class="i">+    .i0_recv(i0_received),
+</a><a href="#h3-0-281" id="h3-0-281" class="i">+    .i1(i1[31:0]),
+</a><a href="#h3-0-282" id="h3-0-282" class="i">+    .i1_valid(i1_valid),
+</a><a href="#h3-0-283" id="h3-0-283" class="i">+    .i1_recv(i1_received),
+</a><a href="#h3-0-284" id="h3-0-284" class="i">+    .i2(i2[31:0]),
+</a><a href="#h3-0-285" id="h3-0-285" class="i">+    .i2_valid(i2_valid),
+</a><a href="#h3-0-286" id="h3-0-286" class="i">+    .i2_recv(i2_received),
+</a><a href="#h3-0-287" id="h3-0-287" class="i">+    .i3(i3[31:0]),
+</a><a href="#h3-0-288" id="h3-0-288" class="i">+    .i3_valid(i3_valid),
+</a><a href="#h3-0-289" id="h3-0-289" class="i">+    .i3_recv(i3_received)
+</a><a href="#h3-0-290" id="h3-0-290" class="i">+);
+</a><a href="#h3-0-291" id="h3-0-291" class="i">+
+</a><a href="#h3-0-292" id="h3-0-292" class="i">+bondmachine bm(.clk(m00_axis_aclk),
+</a><a href="#h3-0-293" id="h3-0-293" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h3-0-294" id="h3-0-294" class="i">+    .i0(i0[31:0]),
+</a><a href="#h3-0-295" id="h3-0-295" class="i">+    .i0_valid(i0_valid),
+</a><a href="#h3-0-296" id="h3-0-296" class="i">+    .i0_received(i0_received),
+</a><a href="#h3-0-297" id="h3-0-297" class="i">+    .i1(i1[31:0]),
+</a><a href="#h3-0-298" id="h3-0-298" class="i">+    .i1_valid(i1_valid),
+</a><a href="#h3-0-299" id="h3-0-299" class="i">+    .i1_received(i1_received),
+</a><a href="#h3-0-300" id="h3-0-300" class="i">+    .i2(i2[31:0]),
+</a><a href="#h3-0-301" id="h3-0-301" class="i">+    .i2_valid(i2_valid),
+</a><a href="#h3-0-302" id="h3-0-302" class="i">+    .i2_received(i2_received),
+</a><a href="#h3-0-303" id="h3-0-303" class="i">+    .i3(i3[31:0]),
+</a><a href="#h3-0-304" id="h3-0-304" class="i">+    .i3_valid(i3_valid),
+</a><a href="#h3-0-305" id="h3-0-305" class="i">+    .i3_received(i3_received),
+</a><a href="#h3-0-306" id="h3-0-306" class="i">+    .o0(o0[31:0]),
+</a><a href="#h3-0-307" id="h3-0-307" class="i">+    .o0_valid(o0_valid),
+</a><a href="#h3-0-308" id="h3-0-308" class="i">+    .o0_received(o0_received)
+</a><a href="#h3-0-309" id="h3-0-309" class="i">+    );
+</a><a href="#h3-0-310" id="h3-0-310" class="i">+
+</a><a href="#h3-0-311" id="h3-0-311" class="i">+    
+</a><a href="#h3-0-312" id="h3-0-312" class="i">+bmserialize bm2fifo(.clk(m00_axis_aclk),
+</a><a href="#h3-0-313" id="h3-0-313" class="i">+	.ack(bm2fifo_ack),
+</a><a href="#h3-0-314" id="h3-0-314" class="i">+	.data(bm2fifo_data[31:0]),
+</a><a href="#h3-0-315" id="h3-0-315" class="i">+	.ready(bm2fifo_ready),
+</a><a href="#h3-0-316" id="h3-0-316" class="i">+    .reset(!m00_axis_aresetn),
+</a><a href="#h3-0-317" id="h3-0-317" class="i">+    .o0(o0[31:0]),
+</a><a href="#h3-0-318" id="h3-0-318" class="i">+    .o0_valid(o0_valid),
+</a><a href="#h3-0-319" id="h3-0-319" class="i">+    .o0_recv(o0_received)
+</a><a href="#h3-0-320" id="h3-0-320" class="i">+);    
+</a><a href="#h3-0-321" id="h3-0-321" class="i">+      	               
+</a><a href="#h3-0-322" id="h3-0-322" class="i">+    /*
+</a><a href="#h3-0-323" id="h3-0-323" class="i">+        NOW START THE MASTER AXIS SECTION corrponfing to BM outputs
+</a><a href="#h3-0-324" id="h3-0-324" class="i">+    */
+</a><a href="#h3-0-325" id="h3-0-325" class="i">+
+</a><a href="#h3-0-326" id="h3-0-326" class="i">+
+</a><a href="#h3-0-327" id="h3-0-327" class="i">+	always @(posedge m00_axis_aclk)                                             
+</a><a href="#h3-0-328" id="h3-0-328" class="i">+	begin                                                                     
+</a><a href="#h3-0-329" id="h3-0-329" class="i">+	  if (!m00_axis_aresetn)                                                  
+</a><a href="#h3-0-330" id="h3-0-330" class="i">+	    begin
+</a><a href="#h3-0-331" id="h3-0-331" class="i">+	           bm2fifo_count &lt;= 0;                                                            
+</a><a href="#h3-0-332" id="h3-0-332" class="i">+               bm2fifo_ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-333" id="h3-0-333" class="i">+               bm2fifo_write_pointer &lt;= 0;
+</a><a href="#h3-0-334" id="h3-0-334" class="i">+               bm2fifo_read_pointer &lt;= 0;
+</a><a href="#h3-0-335" id="h3-0-335" class="i">+               // TODO reset fifo                              
+</a><a href="#h3-0-336" id="h3-0-336" class="i">+	    end                                                                   
+</a><a href="#h3-0-337" id="h3-0-337" class="i">+	  else
+</a><a href="#h3-0-338" id="h3-0-338" class="i">+	   begin
+</a><a href="#h3-0-339" id="h3-0-339" class="i">+	       if (tx_done) begin
+</a><a href="#h3-0-340" id="h3-0-340" class="i">+	            bm2fifo_ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-341" id="h3-0-341" class="i">+//	            bm2fifo_count &lt;= bm2fifo_count - BATCH_OUT_ELEMENTS;
+</a><a href="#h3-0-342" id="h3-0-342" class="i">+                if (bm2fifo_read_pointer+BATCH_OUT_ELEMENTS == TOT_OUT_ELEMENTS) begin
+</a><a href="#h3-0-343" id="h3-0-343" class="i">+                    bm2fifo_read_pointer &lt;= 0;
+</a><a href="#h3-0-344" id="h3-0-344" class="i">+                    bm2fifo_count &lt;= bm2fifo_write_pointer;
+</a><a href="#h3-0-345" id="h3-0-345" class="i">+                end
+</a><a href="#h3-0-346" id="h3-0-346" class="i">+                else begin
+</a><a href="#h3-0-347" id="h3-0-347" class="i">+                    bm2fifo_read_pointer &lt;= bm2fifo_read_pointer + BATCH_OUT_ELEMENTS;
+</a><a href="#h3-0-348" id="h3-0-348" class="i">+                    if (bm2fifo_write_pointer &lt; bm2fifo_read_pointer + BATCH_OUT_ELEMENTS) begin
+</a><a href="#h3-0-349" id="h3-0-349" class="i">+                        bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS + bm2fifo_write_pointer;
+</a><a href="#h3-0-350" id="h3-0-350" class="i">+                    end
+</a><a href="#h3-0-351" id="h3-0-351" class="i">+                    else
+</a><a href="#h3-0-352" id="h3-0-352" class="i">+                    begin
+</a><a href="#h3-0-353" id="h3-0-353" class="i">+                        bm2fifo_count &lt;= bm2fifo_write_pointer - bm2fifo_read_pointer - BATCH_OUT_ELEMENTS;
+</a><a href="#h3-0-354" id="h3-0-354" class="i">+                    end
+</a><a href="#h3-0-355" id="h3-0-355" class="i">+                end
+</a><a href="#h3-0-356" id="h3-0-356" class="i">+	       end
+</a><a href="#h3-0-357" id="h3-0-357" class="i">+	       else
+</a><a href="#h3-0-358" id="h3-0-358" class="i">+	       begin
+</a><a href="#h3-0-359" id="h3-0-359" class="i">+	           if (bm2fifo_ready &amp;&amp; !bm2fifo_ack) begin
+</a><a href="#h3-0-360" id="h3-0-360" class="i">+    	           outstream_data_fifo[bm2fifo_write_pointer] &lt;= bm2fifo_data[31:0];
+</a><a href="#h3-0-361" id="h3-0-361" class="i">+    	           bm2fifo_ack &lt;= 1&#39;b1;
+</a><a href="#h3-0-362" id="h3-0-362" class="i">+//	               bm2fifo_count &lt;= bm2fifo_count + 1;
+</a><a href="#h3-0-363" id="h3-0-363" class="i">+    	           if (bm2fifo_write_pointer + 1 == TOT_OUT_ELEMENTS) begin
+</a><a href="#h3-0-364" id="h3-0-364" class="i">+    	               bm2fifo_write_pointer &lt;= 0;
+</a><a href="#h3-0-365" id="h3-0-365" class="i">+    	               bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer;
+</a><a href="#h3-0-366" id="h3-0-366" class="i">+    	           end
+</a><a href="#h3-0-367" id="h3-0-367" class="i">+    	           else
+</a><a href="#h3-0-368" id="h3-0-368" class="i">+    	           begin
+</a><a href="#h3-0-369" id="h3-0-369" class="i">+    	               bm2fifo_write_pointer &lt;= bm2fifo_write_pointer + 1;
+</a><a href="#h3-0-370" id="h3-0-370" class="i">+    	               if (bm2fifo_write_pointer + 1 &gt; bm2fifo_read_pointer) begin
+</a><a href="#h3-0-371" id="h3-0-371" class="i">+    	                   bm2fifo_count &lt;= bm2fifo_write_pointer + 1 - bm2fifo_read_pointer;
+</a><a href="#h3-0-372" id="h3-0-372" class="i">+    	               end
+</a><a href="#h3-0-373" id="h3-0-373" class="i">+    	               else
+</a><a href="#h3-0-374" id="h3-0-374" class="i">+    	               begin
+</a><a href="#h3-0-375" id="h3-0-375" class="i">+    	                   bm2fifo_count &lt;= TOT_OUT_ELEMENTS - bm2fifo_read_pointer + bm2fifo_write_pointer + 1;
+</a><a href="#h3-0-376" id="h3-0-376" class="i">+    	               end
+</a><a href="#h3-0-377" id="h3-0-377" class="i">+    	           end
+</a><a href="#h3-0-378" id="h3-0-378" class="i">+    	       end
+</a><a href="#h3-0-379" id="h3-0-379" class="i">+    	       else
+</a><a href="#h3-0-380" id="h3-0-380" class="i">+    	       begin
+</a><a href="#h3-0-381" id="h3-0-381" class="i">+    	           bm2fifo_ack &lt;= 1&#39;b0;
+</a><a href="#h3-0-382" id="h3-0-382" class="i">+    	       end
+</a><a href="#h3-0-383" id="h3-0-383" class="i">+           end
+</a><a href="#h3-0-384" id="h3-0-384" class="i">+	   end
+</a><a href="#h3-0-385" id="h3-0-385" class="i">+	end  
+</a><a href="#h3-0-386" id="h3-0-386" class="i">+                              
+</a><a href="#h3-0-387" id="h3-0-387" class="i">+
+</a><a href="#h3-0-388" id="h3-0-388" class="i">+	always @(posedge m00_axis_aclk)                                             
+</a><a href="#h3-0-389" id="h3-0-389" class="i">+	begin                                                                     
+</a><a href="#h3-0-390" id="h3-0-390" class="i">+	  if (!m00_axis_aresetn)                                                  
+</a><a href="#h3-0-391" id="h3-0-391" class="i">+	    begin                                                                 
+</a><a href="#h3-0-392" id="h3-0-392" class="i">+	      mst_exec_state_M &lt;= IDLE_M;                                                                                                   
+</a><a href="#h3-0-393" id="h3-0-393" class="i">+	    end                                                                   
+</a><a href="#h3-0-394" id="h3-0-394" class="i">+	  else                                                                    
+</a><a href="#h3-0-395" id="h3-0-395" class="i">+	    case (mst_exec_state_M)                                                 
+</a><a href="#h3-0-396" id="h3-0-396" class="i">+	      IDLE_M: 
+</a><a href="#h3-0-397" id="h3-0-397" class="i">+	            if (bm2fifo_count &gt;= BATCH_OUT_ELEMENTS)                                                        
+</a><a href="#h3-0-398" id="h3-0-398" class="i">+	               mst_exec_state_M  &lt;= SEND_STREAM_M;                                                        
+</a><a href="#h3-0-399" id="h3-0-399" class="i">+	      SEND_STREAM_M:                          
+</a><a href="#h3-0-400" id="h3-0-400" class="i">+	        if (tx_done)                                                      
+</a><a href="#h3-0-401" id="h3-0-401" class="i">+	          begin                                                           
+</a><a href="#h3-0-402" id="h3-0-402" class="i">+	            mst_exec_state_M &lt;= IDLE_M;                                       
+</a><a href="#h3-0-403" id="h3-0-403" class="i">+	          end                                                             
+</a><a href="#h3-0-404" id="h3-0-404" class="i">+	        else                                                              
+</a><a href="#h3-0-405" id="h3-0-405" class="i">+	          begin                                                           
+</a><a href="#h3-0-406" id="h3-0-406" class="i">+	            mst_exec_state_M &lt;= SEND_STREAM_M;                                
+</a><a href="#h3-0-407" id="h3-0-407" class="i">+	          end                                                             
+</a><a href="#h3-0-408" id="h3-0-408" class="i">+	    endcase                                                               
+</a><a href="#h3-0-409" id="h3-0-409" class="i">+	end
+</a><a href="#h3-0-410" id="h3-0-410" class="i">+
+</a><a href="#h3-0-411" id="h3-0-411" class="i">+	assign axis_tvalid = (mst_exec_state_M == SEND_STREAM_M);
+</a><a href="#h3-0-412" id="h3-0-412" class="i">+    assign axis_tlast = (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS-1);
+</a><a href="#h3-0-413" id="h3-0-413" class="i">+
+</a><a href="#h3-0-414" id="h3-0-414" class="i">+    always @(posedge m00_axis_aclk)                                                                  
+</a><a href="#h3-0-415" id="h3-0-415" class="i">+	begin        
+</a><a href="#h3-0-416" id="h3-0-416" class="i">+	if (tx_done) begin
+</a><a href="#h3-0-417" id="h3-0-417" class="i">+	       axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h3-0-418" id="h3-0-418" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;         
+</a><a href="#h3-0-419" id="h3-0-419" class="i">+	end     
+</a><a href="#h3-0-420" id="h3-0-420" class="i">+	else begin                                                                             
+</a><a href="#h3-0-421" id="h3-0-421" class="i">+	  if (!m00_axis_aresetn)                                                                         
+</a><a href="#h3-0-422" id="h3-0-422" class="i">+	    begin                                                                                      
+</a><a href="#h3-0-423" id="h3-0-423" class="i">+	      axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h3-0-424" id="h3-0-424" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;                                                                
+</a><a href="#h3-0-425" id="h3-0-425" class="i">+	    end                                                                                        
+</a><a href="#h3-0-426" id="h3-0-426" class="i">+	  else                                                                                         
+</a><a href="#h3-0-427" id="h3-0-427" class="i">+	    begin                                                                                      
+</a><a href="#h3-0-428" id="h3-0-428" class="i">+	      axis_tvalid_delay &lt;= axis_tvalid;                                                        
+</a><a href="#h3-0-429" id="h3-0-429" class="i">+	      axis_tlast_delay &lt;= axis_tlast;                                                          
+</a><a href="#h3-0-430" id="h3-0-430" class="i">+	    end                                                                                        
+</a><a href="#h3-0-431" id="h3-0-431" class="i">+	end 
+</a><a href="#h3-0-432" id="h3-0-432" class="i">+	end
+</a><a href="#h3-0-433" id="h3-0-433" class="i">+
+</a><a href="#h3-0-434" id="h3-0-434" class="i">+    always@(posedge m00_axis_aclk)                                               
+</a><a href="#h3-0-435" id="h3-0-435" class="i">+	begin     
+</a><a href="#h3-0-436" id="h3-0-436" class="i">+	  
+</a><a href="#h3-0-437" id="h3-0-437" class="i">+	  if (tx_done) begin
+</a><a href="#h3-0-438" id="h3-0-438" class="i">+	       bm2fifo_batch_pointer &lt;= 0;
+</a><a href="#h3-0-439" id="h3-0-439" class="i">+	       tx_done &lt;= 1&#39;b0;
+</a><a href="#h3-0-440" id="h3-0-440" class="i">+	  end
+</a><a href="#h3-0-441" id="h3-0-441" class="i">+	  else begin                                                      
+</a><a href="#h3-0-442" id="h3-0-442" class="i">+          if(!m00_axis_aresetn)                                                            
+</a><a href="#h3-0-443" id="h3-0-443" class="i">+          begin                                                                        
+</a><a href="#h3-0-444" id="h3-0-444" class="i">+              bm2fifo_batch_pointer &lt;= 0;                                                         
+</a><a href="#h3-0-445" id="h3-0-445" class="i">+              tx_done &lt;= 1&#39;b0;                                                           
+</a><a href="#h3-0-446" id="h3-0-446" class="i">+          end                                                                          
+</a><a href="#h3-0-447" id="h3-0-447" class="i">+          else
+</a><a href="#h3-0-448" id="h3-0-448" class="i">+          begin                                                                           
+</a><a href="#h3-0-449" id="h3-0-449" class="i">+//            if (bm2fifo_batch_pointer &lt;= BATCH_OUT_ELEMENTS-1)                                
+</a><a href="#h3-0-450" id="h3-0-450" class="i">+//            begin                                                                      
+</a><a href="#h3-0-451" id="h3-0-451" class="i">+            if (tx_en)                                                                
+</a><a href="#h3-0-452" id="h3-0-452" class="i">+              begin                                                                  
+</a><a href="#h3-0-453" id="h3-0-453" class="i">+                bm2fifo_batch_pointer &lt;= bm2fifo_batch_pointer + 1;                                    
+</a><a href="#h3-0-454" id="h3-0-454" class="i">+                if (bm2fifo_batch_pointer + 1 == BATCH_OUT_ELEMENTS) 
+</a><a href="#h3-0-455" id="h3-0-455" class="i">+                begin
+</a><a href="#h3-0-456" id="h3-0-456" class="i">+                   tx_done &lt;= 1&#39;b1;
+</a><a href="#h3-0-457" id="h3-0-457" class="i">+                end
+</a><a href="#h3-0-458" id="h3-0-458" class="i">+//                else
+</a><a href="#h3-0-459" id="h3-0-459" class="i">+//                begin
+</a><a href="#h3-0-460" id="h3-0-460" class="i">+//                   tx_done &lt;= 1&#39;b0;
+</a><a href="#h3-0-461" id="h3-0-461" class="i">+//                end                             
+</a><a href="#h3-0-462" id="h3-0-462" class="i">+              end                                                                       
+</a><a href="#h3-0-463" id="h3-0-463" class="i">+//            end 
+</a><a href="#h3-0-464" id="h3-0-464" class="i">+         end
+</a><a href="#h3-0-465" id="h3-0-465" class="i">+       end
+</a><a href="#h3-0-466" id="h3-0-466" class="i">+    end
+</a><a href="#h3-0-467" id="h3-0-467" class="i">+       
+</a><a href="#h3-0-468" id="h3-0-468" class="i">+    assign tx_en = m00_axis_tready &amp;&amp; axis_tvalid;   
+</a><a href="#h3-0-469" id="h3-0-469" class="i">+	                                                     
+</a><a href="#h3-0-470" id="h3-0-470" class="i">+	    always @( posedge m00_axis_aclk )                  
+</a><a href="#h3-0-471" id="h3-0-471" class="i">+	    begin                                         
+</a><a href="#h3-0-472" id="h3-0-472" class="i">+	      if(!m00_axis_aresetn)                            
+</a><a href="#h3-0-473" id="h3-0-473" class="i">+	        begin                                        
+</a><a href="#h3-0-474" id="h3-0-474" class="i">+	          stream_data_out &lt;= 1;                      
+</a><a href="#h3-0-475" id="h3-0-475" class="i">+	        end                                          
+</a><a href="#h3-0-476" id="h3-0-476" class="i">+	      else if (tx_en)
+</a><a href="#h3-0-477" id="h3-0-477" class="i">+	        begin                           
+</a><a href="#h3-0-478" id="h3-0-478" class="i">+                stream_data_out[31:0] &lt;= outstream_data_fifo[bm2fifo_read_pointer+bm2fifo_batch_pointer];
+</a><a href="#h3-0-479" id="h3-0-479" class="i">+	        end                                          
+</a><a href="#h3-0-480" id="h3-0-480" class="i">+	    end
+</a><a href="#h3-0-481" id="h3-0-481" class="i">+
+</a><a href="#h3-0-482" id="h3-0-482" class="i">+	endmodule
+</a><a href="#h3-0-483" id="h3-0-483" class="i">+	
+</a><a href="#h3-0-484" id="h3-0-484" class="i">+module bmdeserialize(
+</a><a href="#h3-0-485" id="h3-0-485" class="i">+	   input clk,
+</a><a href="#h3-0-486" id="h3-0-486" class="i">+	   input reset,
+</a><a href="#h3-0-487" id="h3-0-487" class="i">+	   input impulse,
+</a><a href="#h3-0-488" id="h3-0-488" class="i">+	   input [31:0] data,
+</a><a href="#h3-0-489" id="h3-0-489" class="i">+	   output reg ready,
+</a><a href="#h3-0-490" id="h3-0-490" class="i">+	   
+</a><a href="#h3-0-491" id="h3-0-491" class="i">+	   output wire [31:0] i0,
+</a><a href="#h3-0-492" id="h3-0-492" class="i">+	   output i0_valid,
+</a><a href="#h3-0-493" id="h3-0-493" class="i">+	   input i0_recv,
+</a><a href="#h3-0-494" id="h3-0-494" class="i">+	   
+</a><a href="#h3-0-495" id="h3-0-495" class="i">+	   output wire [31:0] i1,
+</a><a href="#h3-0-496" id="h3-0-496" class="i">+	   output i1_valid,
+</a><a href="#h3-0-497" id="h3-0-497" class="i">+	   input i1_recv,
+</a><a href="#h3-0-498" id="h3-0-498" class="i">+	   
+</a><a href="#h3-0-499" id="h3-0-499" class="i">+	   output wire [31:0] i2,
+</a><a href="#h3-0-500" id="h3-0-500" class="i">+	   output i2_valid,
+</a><a href="#h3-0-501" id="h3-0-501" class="i">+	   input i2_recv,
+</a><a href="#h3-0-502" id="h3-0-502" class="i">+	   
+</a><a href="#h3-0-503" id="h3-0-503" class="i">+	   output wire [31:0] i3,
+</a><a href="#h3-0-504" id="h3-0-504" class="i">+	   output i3_valid,
+</a><a href="#h3-0-505" id="h3-0-505" class="i">+	   input i3_recv	   	   
+</a><a href="#h3-0-506" id="h3-0-506" class="i">+	);
+</a><a href="#h3-0-507" id="h3-0-507" class="i">+	
+</a><a href="#h3-0-508" id="h3-0-508" class="i">+	reg [2:0] input_index;
+</a><a href="#h3-0-509" id="h3-0-509" class="i">+    reg [0:0] SM;
+</a><a href="#h3-0-510" id="h3-0-510" class="i">+    
+</a><a href="#h3-0-511" id="h3-0-511" class="i">+    reg [31:0] localdata;
+</a><a href="#h3-0-512" id="h3-0-512" class="i">+
+</a><a href="#h3-0-513" id="h3-0-513" class="i">+    reg [3:0] valids;
+</a><a href="#h3-0-514" id="h3-0-514" class="i">+
+</a><a href="#h3-0-515" id="h3-0-515" class="i">+    wire [3:0] recvs;
+</a><a href="#h3-0-516" id="h3-0-516" class="i">+    
+</a><a href="#h3-0-517" id="h3-0-517" class="i">+    localparam SMIDLE=1&#39;b0,
+</a><a href="#h3-0-518" id="h3-0-518" class="i">+                SMBM=1&#39;b1;
+</a><a href="#h3-0-519" id="h3-0-519" class="i">+	
+</a><a href="#h3-0-520" id="h3-0-520" class="i">+	always @( posedge clk) begin
+</a><a href="#h3-0-521" id="h3-0-521" class="i">+	   if (reset) begin
+</a><a href="#h3-0-522" id="h3-0-522" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-523" id="h3-0-523" class="i">+	       input_index &lt;= 3&#39;b000;
+</a><a href="#h3-0-524" id="h3-0-524" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h3-0-525" id="h3-0-525" class="i">+	       localdata[31:0] &lt;= 32&#39;b0;
+</a><a href="#h3-0-526" id="h3-0-526" class="i">+	       valids[3:0] &lt;= 4&#39;b0000;
+</a><a href="#h3-0-527" id="h3-0-527" class="i">+	   end 
+</a><a href="#h3-0-528" id="h3-0-528" class="i">+	   else begin
+</a><a href="#h3-0-529" id="h3-0-529" class="i">+	       case (SM)
+</a><a href="#h3-0-530" id="h3-0-530" class="i">+	       SMIDLE: begin
+</a><a href="#h3-0-531" id="h3-0-531" class="i">+	               if (impulse) begin
+</a><a href="#h3-0-532" id="h3-0-532" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-533" id="h3-0-533" class="i">+	                   localdata[31:0] &lt;= data[31:0];
+</a><a href="#h3-0-534" id="h3-0-534" class="i">+	                   SM&lt;=SMBM;
+</a><a href="#h3-0-535" id="h3-0-535" class="i">+	               end
+</a><a href="#h3-0-536" id="h3-0-536" class="i">+	               else begin
+</a><a href="#h3-0-537" id="h3-0-537" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-538" id="h3-0-538" class="i">+	               end
+</a><a href="#h3-0-539" id="h3-0-539" class="i">+	           end
+</a><a href="#h3-0-540" id="h3-0-540" class="i">+	       SMBM: begin
+</a><a href="#h3-0-541" id="h3-0-541" class="i">+	           if (recvs[input_index] == 1&#39;b0) begin
+</a><a href="#h3-0-542" id="h3-0-542" class="i">+	               valids[input_index] &lt;= 1&#39;b1;
+</a><a href="#h3-0-543" id="h3-0-543" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-544" id="h3-0-544" class="i">+	           end
+</a><a href="#h3-0-545" id="h3-0-545" class="i">+	           else begin
+</a><a href="#h3-0-546" id="h3-0-546" class="i">+	               valids[input_index] &lt;= 1&#39;b0;
+</a><a href="#h3-0-547" id="h3-0-547" class="i">+	               if (input_index + 1 == 4&#39;d4) begin
+</a><a href="#h3-0-548" id="h3-0-548" class="i">+	                   input_index &lt;= 0;
+</a><a href="#h3-0-549" id="h3-0-549" class="i">+	               end
+</a><a href="#h3-0-550" id="h3-0-550" class="i">+	               else begin
+</a><a href="#h3-0-551" id="h3-0-551" class="i">+	                   input_index &lt;= input_index + 1;
+</a><a href="#h3-0-552" id="h3-0-552" class="i">+	               end
+</a><a href="#h3-0-553" id="h3-0-553" class="i">+	               SM&lt;=SMIDLE;
+</a><a href="#h3-0-554" id="h3-0-554" class="i">+	               ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-555" id="h3-0-555" class="i">+	           end
+</a><a href="#h3-0-556" id="h3-0-556" class="i">+	       end
+</a><a href="#h3-0-557" id="h3-0-557" class="i">+	       endcase
+</a><a href="#h3-0-558" id="h3-0-558" class="i">+	   end
+</a><a href="#h3-0-559" id="h3-0-559" class="i">+	end
+</a><a href="#h3-0-560" id="h3-0-560" class="i">+	
+</a><a href="#h3-0-561" id="h3-0-561" class="i">+	assign i0[31:0] = localdata[31:0];
+</a><a href="#h3-0-562" id="h3-0-562" class="i">+	assign i1[31:0] = localdata[31:0];
+</a><a href="#h3-0-563" id="h3-0-563" class="i">+	assign i2[31:0] = localdata[31:0];
+</a><a href="#h3-0-564" id="h3-0-564" class="i">+	assign i3[31:0] = localdata[31:0];
+</a><a href="#h3-0-565" id="h3-0-565" class="i">+	
+</a><a href="#h3-0-566" id="h3-0-566" class="i">+	assign i0_valid=valids[0];
+</a><a href="#h3-0-567" id="h3-0-567" class="i">+	assign i1_valid=valids[1];
+</a><a href="#h3-0-568" id="h3-0-568" class="i">+	assign i2_valid=valids[2];
+</a><a href="#h3-0-569" id="h3-0-569" class="i">+	assign i3_valid=valids[3];
+</a><a href="#h3-0-570" id="h3-0-570" class="i">+	
+</a><a href="#h3-0-571" id="h3-0-571" class="i">+	assign recvs[3:0] = {i3_recv, i2_recv, i1_recv, i0_recv};
+</a><a href="#h3-0-572" id="h3-0-572" class="i">+	
+</a><a href="#h3-0-573" id="h3-0-573" class="i">+	endmodule
+</a><a href="#h3-0-574" id="h3-0-574" class="i">+	
+</a><a href="#h3-0-575" id="h3-0-575" class="i">+module bmserialize(
+</a><a href="#h3-0-576" id="h3-0-576" class="i">+	   input clk,
+</a><a href="#h3-0-577" id="h3-0-577" class="i">+	   input reset,
+</a><a href="#h3-0-578" id="h3-0-578" class="i">+	   input ack,
+</a><a href="#h3-0-579" id="h3-0-579" class="i">+	   output [31:0] data,
+</a><a href="#h3-0-580" id="h3-0-580" class="i">+	   output reg ready,
+</a><a href="#h3-0-581" id="h3-0-581" class="i">+	   
+</a><a href="#h3-0-582" id="h3-0-582" class="i">+	   input [31:0] o0,
+</a><a href="#h3-0-583" id="h3-0-583" class="i">+	   input o0_valid,
+</a><a href="#h3-0-584" id="h3-0-584" class="i">+	   output o0_recv   	   
+</a><a href="#h3-0-585" id="h3-0-585" class="i">+	);
+</a><a href="#h3-0-586" id="h3-0-586" class="i">+	
+</a><a href="#h3-0-587" id="h3-0-587" class="i">+	
+</a><a href="#h3-0-588" id="h3-0-588" class="i">+	reg [1:0] output_index;
+</a><a href="#h3-0-589" id="h3-0-589" class="i">+    reg [1:0] SM;
+</a><a href="#h3-0-590" id="h3-0-590" class="i">+    
+</a><a href="#h3-0-591" id="h3-0-591" class="i">+    reg [31:0] localdata;
+</a><a href="#h3-0-592" id="h3-0-592" class="i">+
+</a><a href="#h3-0-593" id="h3-0-593" class="i">+    wire [1:0] valids;
+</a><a href="#h3-0-594" id="h3-0-594" class="i">+
+</a><a href="#h3-0-595" id="h3-0-595" class="i">+    reg [1:0] recvs;
+</a><a href="#h3-0-596" id="h3-0-596" class="i">+    
+</a><a href="#h3-0-597" id="h3-0-597" class="i">+    wire [31:0]outputs;
+</a><a href="#h3-0-598" id="h3-0-598" class="i">+    
+</a><a href="#h3-0-599" id="h3-0-599" class="i">+    localparam SMIDLE=2&#39;b00,
+</a><a href="#h3-0-600" id="h3-0-600" class="i">+                SMRES=2&#39;b01,
+</a><a href="#h3-0-601" id="h3-0-601" class="i">+                SMBM=2&#39;b10;
+</a><a href="#h3-0-602" id="h3-0-602" class="i">+	
+</a><a href="#h3-0-603" id="h3-0-603" class="i">+	always @( posedge clk) begin
+</a><a href="#h3-0-604" id="h3-0-604" class="i">+	   if (reset) begin
+</a><a href="#h3-0-605" id="h3-0-605" class="i">+	       ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-606" id="h3-0-606" class="i">+	       output_index &lt;= 2&#39;b00;
+</a><a href="#h3-0-607" id="h3-0-607" class="i">+	       SM&lt;=SMIDLE;
+</a><a href="#h3-0-608" id="h3-0-608" class="i">+	       recvs[1:0] &lt;= 2&#39;b00;
+</a><a href="#h3-0-609" id="h3-0-609" class="i">+	   end 
+</a><a href="#h3-0-610" id="h3-0-610" class="i">+	   else begin
+</a><a href="#h3-0-611" id="h3-0-611" class="i">+	       case (SM)
+</a><a href="#h3-0-612" id="h3-0-612" class="i">+	       SMIDLE: begin
+</a><a href="#h3-0-613" id="h3-0-613" class="i">+	               if (valids[output_index]) begin
+</a><a href="#h3-0-614" id="h3-0-614" class="i">+	                   ready &lt;= 1&#39;b1;
+</a><a href="#h3-0-615" id="h3-0-615" class="i">+	                   localdata[31:0] &lt;= outputs[31:0];
+</a><a href="#h3-0-616" id="h3-0-616" class="i">+	                   SM&lt;=SMRES;
+</a><a href="#h3-0-617" id="h3-0-617" class="i">+	               end
+</a><a href="#h3-0-618" id="h3-0-618" class="i">+	               else begin
+</a><a href="#h3-0-619" id="h3-0-619" class="i">+	                   ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-620" id="h3-0-620" class="i">+	               end
+</a><a href="#h3-0-621" id="h3-0-621" class="i">+	           end
+</a><a href="#h3-0-622" id="h3-0-622" class="i">+	       SMRES: begin
+</a><a href="#h3-0-623" id="h3-0-623" class="i">+	           if (ack) begin
+</a><a href="#h3-0-624" id="h3-0-624" class="i">+	               ready &lt;= 1&#39;b0;
+</a><a href="#h3-0-625" id="h3-0-625" class="i">+	               SM&lt;=SMBM;
+</a><a href="#h3-0-626" id="h3-0-626" class="i">+	           end   
+</a><a href="#h3-0-627" id="h3-0-627" class="i">+	       end
+</a><a href="#h3-0-628" id="h3-0-628" class="i">+	       SMBM: begin
+</a><a href="#h3-0-629" id="h3-0-629" class="i">+	           if (!valids[output_index]) begin
+</a><a href="#h3-0-630" id="h3-0-630" class="i">+	               if (output_index + 1 == 2&#39;d1) begin
+</a><a href="#h3-0-631" id="h3-0-631" class="i">+	                   output_index &lt;= 0;
+</a><a href="#h3-0-632" id="h3-0-632" class="i">+	               end
+</a><a href="#h3-0-633" id="h3-0-633" class="i">+	               else begin
+</a><a href="#h3-0-634" id="h3-0-634" class="i">+	                   output_index &lt;= output_index + 1;
+</a><a href="#h3-0-635" id="h3-0-635" class="i">+	               end
+</a><a href="#h3-0-636" id="h3-0-636" class="i">+	               recvs[output_index] &lt;= 1&#39;b0;
+</a><a href="#h3-0-637" id="h3-0-637" class="i">+	               SM&lt;=SMIDLE;           
+</a><a href="#h3-0-638" id="h3-0-638" class="i">+	           end
+</a><a href="#h3-0-639" id="h3-0-639" class="i">+	           else
+</a><a href="#h3-0-640" id="h3-0-640" class="i">+	           begin
+</a><a href="#h3-0-641" id="h3-0-641" class="i">+	               recvs[output_index] &lt;= 1&#39;b1;
+</a><a href="#h3-0-642" id="h3-0-642" class="i">+	           end
+</a><a href="#h3-0-643" id="h3-0-643" class="i">+	       end
+</a><a href="#h3-0-644" id="h3-0-644" class="i">+	       endcase
+</a><a href="#h3-0-645" id="h3-0-645" class="i">+	   end
+</a><a href="#h3-0-646" id="h3-0-646" class="i">+	end
+</a><a href="#h3-0-647" id="h3-0-647" class="i">+	
+</a><a href="#h3-0-648" id="h3-0-648" class="i">+	assign data[31:0] = localdata[31:0];
+</a><a href="#h3-0-649" id="h3-0-649" class="i">+	assign outputs={o0[31:0]};
+</a><a href="#h3-0-650" id="h3-0-650" class="i">+	assign o0_recv=recvs[0];
+</a><a href="#h3-0-651" id="h3-0-651" class="i">+
+</a><a href="#h3-0-652" id="h3-0-652" class="i">+	assign valids[0] = o0_valid;	
+</a><a href="#h3-0-653" id="h3-0-653" class="i">+	
+</a><a href="#h3-0-654" id="h3-0-654" class="i">+endmodule 
+</a><a href="#h3-0-655" id="h3-0-655" class="i">+`
+</a><a href="#h3-0-656" id="h3-0-656" class="i">+)
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a> b/<a href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -7,15 +7,17 @@ import &quot;strings&quot;
+</a> //	&quot;strings&quot;
+ 
+ type BMAPIExtra struct {
+<a href="#h4-0-3" id="h4-0-3" class="d">-	Maps        *IOmap
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	Language    string
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-	Flavor      string
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-	LibOutDir   string
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-	ModOutDir   string
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-	AuxOutDir   string
+</a><a href="#h4-0-9" id="h4-0-9" class="d">-	PackageName string
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-	ModuleName  string
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-	Rsize       uint8
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	Maps          *IOmap
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	Language      string
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	Flavor        string // &quot;uartusb&quot; or &quot;aximm&quot; or &quot;axist&quot;
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	FlavorVersion string
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	Framework     string // &quot;pynq&quot; or &quot;&quot;
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	LibOutDir     string
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	ModOutDir     string
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	AuxOutDir     string
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	PackageName   string
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+	ModuleName    string
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	Rsize         uint8
+</a> }
+ 
+ func (sl *BMAPIExtra) Get_Name() string {
+<a href="#h4-1" id="h4-1" class="h">@@ -28,6 +30,8 @@ func (sl *BMAPIExtra) Get_Params() *ExtraParams {
+</a> 
+ 	result.Params[&quot;bmapi_language&quot;] = sl.Language
+ 	result.Params[&quot;bmapi_flavor&quot;] = sl.Flavor
+<a href="#h4-1-3" id="h4-1-3" class="i">+	result.Params[&quot;bmapi_flavor_version&quot;] = sl.FlavorVersion
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+	result.Params[&quot;bmapi_framework&quot;] = sl.Framework
+</a> 	result.Params[&quot;bmapi_liboutdir&quot;] = sl.LibOutDir
+ 	result.Params[&quot;bmapi_auxoutdir&quot;] = sl.AuxOutDir
+ 	result.Params[&quot;bmapi_modoutdir&quot;] = sl.ModOutDir
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fixed names of jupyter notebook and added pivot run - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/95d95c41ffe48e11a1cc0ca188c696272864acb6.html">95d95c41ffe48e11a1cc0ca188c696272864acb6</a>
+<b>parent</b> <a href="../commit/2feafb3221f488f3090e328244805ac4da118957.html">2feafb3221f488f3090e328244805ac4da118957</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Fri, 17 Mar 2023 10:48:35 +0100
+
+fixed names of jupyter notebook and added pivot run
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmanalysis/bmanalysis.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmanalysis/bmanalysis.go</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmanalysis/bmanalysis_test.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmanalysis/jupiterfile.go</a></td><td> | </td><td class="num">35</td><td><span class="i">++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>4 files changed, 39 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmanalysis/bmanalysis.go.html">cmd/bmanalysis/bmanalysis.go</a> b/<a href="../file/cmd/bmanalysis/bmanalysis.go.html">cmd/bmanalysis/bmanalysis.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,9 +8,9 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmanalysis&quot;
+ )
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var projectLists = flag.String(&quot;projectLists&quot;, &quot;&quot;, &quot;Comma separeted lists of projects&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-var hdlFile = flag.String(&quot;ipynb-file&quot;, &quot;analysis.ipynb&quot;, &quot;Name of the file to write the Python&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+var projectsList = flag.String(&quot;projects-list&quot;, &quot;&quot;, &quot;Comma separeted lists of projects&quot;)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+var pythonFile = flag.String(&quot;ipynb-file&quot;, &quot;analysis.ipynb&quot;, &quot;Name of the file to write the Python&quot;)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+var pivotRun = flag.Int(&quot;pivot-run&quot;, 0, &quot;Index of run to use as pivot to compare with other results&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h0-1" id="h0-1" class="h">@@ -19,27 +19,32 @@ func init() {
+</a> func main() {
+ 	bmanalysis := bmanalysis.CreateAnalysisTemplate()
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if *projectLists != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		for _, project := range strings.Split(*projectLists, &quot;,&quot;) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			bmanalysis.ProjectLists = append(bmanalysis.ProjectLists, project)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if *projectsList != &quot;&quot; {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		for _, project := range strings.Split(*projectsList, &quot;,&quot;) {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			bmanalysis.ProjectsList = append(bmanalysis.ProjectsList, project)
+</a> 		}
+ 	} else {
+ 		log.Fatal(&quot;No project lists specified&quot;)
+ 	}
+ 
+<a href="#h0-1-14" id="h0-1-14" class="d">-	if *hdlFile != &quot;&quot; {
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		hdl, err := bmanalysis.WritePython()
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	if *pivotRun &lt; 0 &amp;&amp; *pivotRun &gt; len(bmanalysis.ProjectsList) {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		log.Fatal(&quot;Invalid data width&quot;)
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	bmanalysis.PivotRun = *pivotRun
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	if *pythonFile != &quot;&quot; {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		python, err := bmanalysis.WritePython()
+</a> 		if err != nil {
+ 			log.Fatal(err)
+ 		}
+ 
+<a href="#h0-1-27" id="h0-1-27" class="d">-		f, err := os.Create(*hdlFile)
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		f, err := os.Create(*pythonFile)
+</a> 		if err != nil {
+ 			log.Fatal(err)
+ 		}
+ 		defer f.Close()
+ 
+<a href="#h0-1-34" id="h0-1-34" class="d">-		_, err = f.WriteString(hdl)
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+		_, err = f.WriteString(python)
+</a> 		if err != nil {
+ 			log.Fatal(err)
+ 		}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmanalysis/bmanalysis.go.html">pkg/bmanalysis/bmanalysis.go</a> b/<a href="../file/pkg/bmanalysis/bmanalysis.go.html">pkg/bmanalysis/bmanalysis.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,11 +6,19 @@ import (
+</a> )
+ 
+ type BmAnalysis struct {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	ProjectLists    []string
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	ProjectsList    []string
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	PivotRun		int
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	funcMap template.FuncMap
+</a> }
+ 
+ func CreateAnalysisTemplate() *BmAnalysis {
+ 	result := new(BmAnalysis)
+<a href="#h1-0-11" id="h1-0-11" class="i">+	funcMap := template.FuncMap{
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		&quot;inc&quot;: func(i int) int {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			return i + 1
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		},
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	result.funcMap = funcMap
+</a> 	return result
+ }
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -18,7 +26,7 @@ func (s *BmAnalysis) WritePython() (string, error) {
+</a> 
+ 	var f bytes.Buffer
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	t, err := template.New(&quot;analysis&quot;).Parse(notebook)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	t, err := template.New(&quot;analysis&quot;).Funcs(s.funcMap).Parse(notebook)
+</a> 	
+ 	if err != nil {
+ 		return &quot;&quot;, err
+<b>diff --git a/<a id="h2" href="../file/pkg/bmanalysis/bmanalysis_test.go.html">pkg/bmanalysis/bmanalysis_test.go</a> b/<a href="../file/pkg/bmanalysis/bmanalysis_test.go.html">pkg/bmanalysis/bmanalysis_test.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -7,7 +7,8 @@ import (
+</a> 
+ func TestNotebookGeneration(t *testing.T) {
+ 	s := CreateAnalysisTemplate()
+<a href="#h2-0-3" id="h2-0-3" class="d">-	s.ProjectLists = []string{&quot;proj_zedboard_1&quot;, &quot;proj_zedboard_2&quot;}
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	s.ProjectsList = []string{&quot;proj_zedboard_1&quot;, &quot;proj_zedboard_2&quot;}
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	s.PivotRun = 0;
+</a> 
+ 	f, err := os.Create(&quot;test.ipynb&quot;)
+ 	if err != nil {
+<b>diff --git a/<a id="h3" href="../file/pkg/bmanalysis/jupiterfile.go.html">pkg/bmanalysis/jupiterfile.go</a> b/<a href="../file/pkg/bmanalysis/jupiterfile.go.html">pkg/bmanalysis/jupiterfile.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -6,7 +6,7 @@ const (
+</a> 		&quot;cells&quot;: [
+ 		 {
+ 		  &quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-0-3" id="h3-0-3" class="d">-		  &quot;execution_count&quot;: 9,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		  &quot;execution_count&quot;: null,
+</a> 		  &quot;id&quot;: &quot;6293e6e8-1433-4161-9e04-6c3d670b0e8c&quot;,
+ 		  &quot;metadata&quot;: {},
+ 		  &quot;outputs&quot;: [],
+<a href="#h3-1" id="h3-1" class="h">@@ -18,7 +18,7 @@ const (
+</a> 		 },
+ 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-1-3" id="h3-1-3" class="d">-			&quot;execution_count&quot;: 17,
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;ff7dc30b-f076-446f-977d-5534a4120f20&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-2" id="h3-2" class="h">@@ -33,7 +33,7 @@ const (
+</a> 		},
+ 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-2-3" id="h3-2-3" class="d">-			&quot;execution_count&quot;: 18,
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;1cf6e3c0-5f9f-48ac-99c5-a074ffc955a0&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-3" id="h3-3" class="h">@@ -66,7 +66,7 @@ const (
+</a> 		},
+ 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-3-3" id="h3-3-3" class="d">-			&quot;execution_count&quot;: 122,
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;c9269fa0-2479-47ee-a261-1981ab82ddf2&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-4" id="h3-4" class="h">@@ -130,7 +130,7 @@ const (
+</a> 		},
+ 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-4-3" id="h3-4-3" class="d">-			&quot;execution_count&quot;: 216,
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;5d8e2b9f-f5d0-41b7-9a44-e46f5e1462b8&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-5" id="h3-5" class="h">@@ -178,7 +178,7 @@ const (
+</a> 		},
+ 		   {
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-5-3" id="h3-5-3" class="d">-			&quot;execution_count&quot;: 217,
+</a><a href="#h3-5-4" id="h3-5-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;ddcd0fd8-3352-437b-8560-aa4865c2aeeb&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-6" id="h3-6" class="h">@@ -204,7 +204,7 @@ const (
+</a> 		},
+ 		   {
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-6-3" id="h3-6-3" class="d">-			&quot;execution_count&quot;: 234,
+</a><a href="#h3-6-4" id="h3-6-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;3fdf043c-fba9-41bf-ad47-11b2cbcb9454&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-7" id="h3-7" class="h">@@ -226,22 +226,11 @@ const (
+</a> 			 &quot;#     runplot(runs, pivot_run, \&quot;cps\&quot;, \&quot;power\&quot;, \&quot;Power consumption (cps vs power)\&quot;)&quot;
+ 			]
+ 		   },
+<a href="#h3-7-3" id="h3-7-3" class="d">-		   {
+</a><a href="#h3-7-4" id="h3-7-4" class="d">-			&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h3-7-5" id="h3-7-5" class="d">-			&quot;execution_count&quot;: 226,
+</a><a href="#h3-7-6" id="h3-7-6" class="d">-			&quot;id&quot;: &quot;a2f43b12-5cf2-4e63-b646-c525a573adc9&quot;,
+</a><a href="#h3-7-7" id="h3-7-7" class="d">-			&quot;metadata&quot;: {},
+</a><a href="#h3-7-8" id="h3-7-8" class="d">-			&quot;outputs&quot;: [],
+</a><a href="#h3-7-9" id="h3-7-9" class="d">-			&quot;source&quot;: [
+</a><a href="#h3-7-10" id="h3-7-10" class="d">-			 &quot;soft=load_run(\&quot;sw\&quot;)\n&quot;,
+</a><a href="#h3-7-11" id="h3-7-11" class="d">-			 &quot;sim=load_run(\&quot;sim\&quot;)&quot;
+</a><a href="#h3-7-12" id="h3-7-12" class="d">-			]
+</a><a href="#h3-7-13" id="h3-7-13" class="d">-		},
+</a><a href="#h3-7-14" id="h3-7-14" class="d">-		{{- if .ProjectLists }}
+</a><a href="#h3-7-15" id="h3-7-15" class="d">-    	{{- range .ProjectLists }}
+</a><a href="#h3-7-16" id="h3-7-16" class="i">+		{{- if .ProjectsList }}
+</a><a href="#h3-7-17" id="h3-7-17" class="i">+    	{{- range .ProjectsList }}
+</a> 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-7-20" id="h3-7-20" class="d">-			&quot;execution_count&quot;: 232,
+</a><a href="#h3-7-21" id="h3-7-21" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;976bd531-2a31-4a80-b1d9-0cc7f4cc9ce8&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+<a href="#h3-8" id="h3-8" class="h">@@ -253,12 +242,12 @@ const (
+</a>     	{{- end }}
+ 		{
+ 			&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#h3-8-3" id="h3-8-3" class="d">-			&quot;execution_count&quot;: 250,
+</a><a href="#h3-8-4" id="h3-8-4" class="i">+			&quot;execution_count&quot;: null,
+</a> 			&quot;id&quot;: &quot;42a2b462-4534-4475-83d4-cb691c758894&quot;,
+ 			&quot;metadata&quot;: {},
+ 			&quot;outputs&quot;: [],
+ 			&quot;source&quot;: [
+<a href="#h3-8-9" id="h3-8-9" class="d">-			 &quot;analyze([soft, sim {{- if .ProjectLists }} {{- range .ProjectLists }},expanded_{{ . }} {{- end }} {{- end }}],0)&quot;
+</a><a href="#h3-8-10" id="h3-8-10" class="i">+			 &quot;analyze([{{- if .ProjectsList }} {{- $projectLen := len .ProjectsList }} {{- range $i, $project := .ProjectsList }} {{- if eq (inc $i) $projectLen }} expanded_{{ $project }} {{- else }} expanded_{{ $project }}, {{- end }} {{- end }} {{- end }}])&quot;
+</a> 			]
+ 		},
+ 		{
+</pre>
+</div>
+</body>
+</html>

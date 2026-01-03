@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UART to separate file - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ce6e97d8628f48508724191073c9844b44081ec7.html">ce6e97d8628f48508724191073c9844b44081ec7</a>
+<b>parent</b> <a href="../commit/8d2a443af0abfd395661a855cfbcc844da33d48a.html">8d2a443af0abfd395661a855cfbcc844da33d48a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 17 Feb 2023 23:04:57 +0100
+
+UART to separate file
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/exmod_bmapi.go</a></td><td> | </td><td class="num">317</td><td><span class="i">+</span><span class="d">------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bondmachine/files_uart.go</a></td><td> | </td><td class="num">319</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 320 insertions(+), 316 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a> b/<a href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -80,322 +80,7 @@ func (sl *BMAPIExtra) StaticVerilog() string {
+</a> 
+ 	switch sl.Flavor {
+ 	case &quot;uartusb&quot;:
+<a href="#h0-0-3" id="h0-0-3" class="d">-		result += &quot;`timescale 1ns / 1ps\n&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		result += `
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-// Documented Verilog UART
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-// Copyright (C) 2010 Timothy Goddard (tim@goddard.net.nz)
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-//               2013 Aaron Dahlen
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-// Distributed under the MIT licence.
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-//
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-// Permission is hereby granted, free of charge, to any person obtaining a copy
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-// of this software and associated documentation files (the &quot;Software&quot;), to deal
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-// in the Software without restriction, including without limitation the rights
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-// copies of the Software, and to permit persons to whom the Software is
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-// furnished to do so, subject to the following conditions:
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-// 
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-// The above copyright notice and this permission notice shall be included in
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-// all copies or substantial portions of the Software.
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-// 
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-// THE SOFTWARE.
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-// 
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-//** INSTANTIATION ********************************************
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-//
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-//  To instantiate this module copy this section to your main code...
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-//
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-//    uart #(
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-//        .baud_rate(baud_rate),            // default is 9600
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-//        .sys_clk_freq(sys_clk_freq)       // default is 100000000
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-//     )
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-//    instance_name(
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-//        .clk(clk),                        // The master clock for this module
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-//        .rst(rst),                        // Synchronous reset
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-//        .rx(rx),                          // Incoming serial line
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-//        .tx(tx),                          // Outgoing serial line
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-//        .transmit(transmit),              // Signal to transmit
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-//        .tx_byte(tx_byte),                // Byte to transmit       
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-//        .received(received),              // Indicated that a byte has been received
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-//        .rx_byte(rx_byte),                // Byte received
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-//        .is_receiving(is_receiving),      // Low when receive line is idle
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-//        .is_transmitting(is_transmitting),// Low when transmit line is idle
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-//        .recv_error(recv_error)           // Indicates error in receiving packet.
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-//      //.recv_state(recv_state),          // for test bench
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-//      //.tx_state(tx_state)               // for test bench
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-//    );
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-//
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-
+</a><a href="#h0-0-53" id="h0-0-53" class="d">- module uart(
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-    input clk,                  // The master clock for this module
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-    input rst,                  // Synchronous reset
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-    input rx,                   // Incoming serial line
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-    output tx,                  // Outgoing serial line
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-    input transmit,             // Assert to begin transmission
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-    input [7:0] tx_byte,        // Byte to transmit
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-    output received,            // Indicates that a byte has been received
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-    output [7:0] rx_byte,       // Byte received
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-    output wire is_receiving,   // Low when receive line is idle.
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-    output wire is_transmitting,// Low when transmit line is idle.
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-    output wire recv_error,      // Indicates error in receiving packet.
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-    output reg [3:0] rx_samples,
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-    output reg [3:0] rx_sample_countdown
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-);
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-// The clock_divider is calculated using baud_rate and sys_clk_freq.  
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-// To modify baud rate you can modify the defaults shown below or instantiate
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-// the module using the template shown in the INSTANTIATION section above. 
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-// For aditional information about instantiation please see:
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-// http://www.sunburst-design.com/papers/CummingsHDLCON2002_Parameters_rev1_2.pdf
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-    parameter baud_rate = 115200;
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-    parameter sys_clk_freq = 100000000;
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-   
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-    localparam one_baud_cnt = sys_clk_freq / (baud_rate);
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-//** SYMBOLIC STATE DECLARATIONS ******************************
+</a><a href="#h0-0-81" id="h0-0-81" class="d">-
+</a><a href="#h0-0-82" id="h0-0-82" class="d">-    localparam [2:0]     
+</a><a href="#h0-0-83" id="h0-0-83" class="d">-        RX_IDLE             = 3&#39;d0, 
+</a><a href="#h0-0-84" id="h0-0-84" class="d">-        RX_CHECK_START      = 3&#39;d1, 
+</a><a href="#h0-0-85" id="h0-0-85" class="d">-        RX_SAMPLE_BITS      = 3&#39;d2,
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-        RX_READ_BITS        = 3&#39;d3,      
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-        RX_CHECK_STOP       = 3&#39;d4, 
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-        RX_DELAY_RESTART    = 3&#39;d5,
+</a><a href="#h0-0-89" id="h0-0-89" class="d">-        RX_ERROR            = 3&#39;d6,      
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-        RX_RECEIVED         = 3&#39;d7; 
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-    localparam [1:0]     
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-        TX_IDLE             = 2&#39;d0,
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-        TX_SENDING          = 2&#39;d1,
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-        TX_DELAY_RESTART    = 2&#39;d2,
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-        TX_RECOVER          = 2&#39;d3;
+</a><a href="#h0-0-97" id="h0-0-97" class="d">-  
+</a><a href="#h0-0-98" id="h0-0-98" class="d">-  
+</a><a href="#h0-0-99" id="h0-0-99" class="d">-//** SIGNAL DECLARATIONS **************************************
+</a><a href="#h0-0-100" id="h0-0-100" class="d">-
+</a><a href="#h0-0-101" id="h0-0-101" class="d">-    reg [log2(one_baud_cnt * 16)-1:0] rx_clk;
+</a><a href="#h0-0-102" id="h0-0-102" class="d">-    reg [log2(one_baud_cnt)-1:0] tx_clk;
+</a><a href="#h0-0-103" id="h0-0-103" class="d">-
+</a><a href="#h0-0-104" id="h0-0-104" class="d">-    reg [2:0] recv_state = RX_IDLE;
+</a><a href="#h0-0-105" id="h0-0-105" class="d">-    reg [3:0] rx_bits_remaining;
+</a><a href="#h0-0-106" id="h0-0-106" class="d">-    reg [7:0] rx_data;
+</a><a href="#h0-0-107" id="h0-0-107" class="d">-     
+</a><a href="#h0-0-108" id="h0-0-108" class="d">-    reg tx_out = 1&#39;b1;
+</a><a href="#h0-0-109" id="h0-0-109" class="d">-    reg [1:0] tx_state = TX_IDLE;
+</a><a href="#h0-0-110" id="h0-0-110" class="d">-    reg [3:0] tx_bits_remaining;
+</a><a href="#h0-0-111" id="h0-0-111" class="d">-    reg [7:0] tx_data;
+</a><a href="#h0-0-112" id="h0-0-112" class="d">-    
+</a><a href="#h0-0-113" id="h0-0-113" class="d">-
+</a><a href="#h0-0-114" id="h0-0-114" class="d">-//** ASSIGN STATEMENTS ****************************************
+</a><a href="#h0-0-115" id="h0-0-115" class="d">-
+</a><a href="#h0-0-116" id="h0-0-116" class="d">-    assign received = recv_state == RX_RECEIVED;
+</a><a href="#h0-0-117" id="h0-0-117" class="d">-    assign recv_error = recv_state == RX_ERROR;
+</a><a href="#h0-0-118" id="h0-0-118" class="d">-    assign is_receiving = recv_state != RX_IDLE;
+</a><a href="#h0-0-119" id="h0-0-119" class="d">-    assign rx_byte = rx_data;
+</a><a href="#h0-0-120" id="h0-0-120" class="d">-
+</a><a href="#h0-0-121" id="h0-0-121" class="d">-    assign tx = tx_out;
+</a><a href="#h0-0-122" id="h0-0-122" class="d">-    assign is_transmitting = tx_state != TX_IDLE;
+</a><a href="#h0-0-123" id="h0-0-123" class="d">-
+</a><a href="#h0-0-124" id="h0-0-124" class="d">-
+</a><a href="#h0-0-125" id="h0-0-125" class="d">-//** TASKS / FUNCTIONS **************************************** 
+</a><a href="#h0-0-126" id="h0-0-126" class="d">-
+</a><a href="#h0-0-127" id="h0-0-127" class="d">-    function integer log2(input integer M);
+</a><a href="#h0-0-128" id="h0-0-128" class="d">-        integer i;
+</a><a href="#h0-0-129" id="h0-0-129" class="d">-    begin
+</a><a href="#h0-0-130" id="h0-0-130" class="d">-        log2 = 1;
+</a><a href="#h0-0-131" id="h0-0-131" class="d">-        for (i = 0; 2**i &lt;= M; i = i + 1)
+</a><a href="#h0-0-132" id="h0-0-132" class="d">-            log2 = i + 1;
+</a><a href="#h0-0-133" id="h0-0-133" class="d">-    end endfunction
+</a><a href="#h0-0-134" id="h0-0-134" class="d">-    
+</a><a href="#h0-0-135" id="h0-0-135" class="d">-    
+</a><a href="#h0-0-136" id="h0-0-136" class="d">-//** Body *****************************************************
+</a><a href="#h0-0-137" id="h0-0-137" class="d">-
+</a><a href="#h0-0-138" id="h0-0-138" class="d">-    always @(posedge clk) begin
+</a><a href="#h0-0-139" id="h0-0-139" class="d">-        if (rst) begin
+</a><a href="#h0-0-140" id="h0-0-140" class="d">-            recv_state = RX_IDLE;
+</a><a href="#h0-0-141" id="h0-0-141" class="d">-            tx_state = TX_IDLE;
+</a><a href="#h0-0-142" id="h0-0-142" class="d">-        end
+</a><a href="#h0-0-143" id="h0-0-143" class="d">-                              
+</a><a href="#h0-0-144" id="h0-0-144" class="d">-        // Countdown timers for the receiving and transmitting
+</a><a href="#h0-0-145" id="h0-0-145" class="d">-        // state machines are decremented.
+</a><a href="#h0-0-146" id="h0-0-146" class="d">-        
+</a><a href="#h0-0-147" id="h0-0-147" class="d">-        if(rx_clk) begin
+</a><a href="#h0-0-148" id="h0-0-148" class="d">-            rx_clk = rx_clk - 1&#39;d1;
+</a><a href="#h0-0-149" id="h0-0-149" class="d">-        end
+</a><a href="#h0-0-150" id="h0-0-150" class="d">-    
+</a><a href="#h0-0-151" id="h0-0-151" class="d">-        if(tx_clk) begin
+</a><a href="#h0-0-152" id="h0-0-152" class="d">-            tx_clk = tx_clk - 1&#39;d1;
+</a><a href="#h0-0-153" id="h0-0-153" class="d">-        end
+</a><a href="#h0-0-154" id="h0-0-154" class="d">-        
+</a><a href="#h0-0-155" id="h0-0-155" class="d">-    
+</a><a href="#h0-0-156" id="h0-0-156" class="d">-//** Receive state machine ************************************
+</a><a href="#h0-0-157" id="h0-0-157" class="d">-
+</a><a href="#h0-0-158" id="h0-0-158" class="d">-        case (recv_state)
+</a><a href="#h0-0-159" id="h0-0-159" class="d">-            RX_IDLE: begin
+</a><a href="#h0-0-160" id="h0-0-160" class="d">-                // A low pulse on the receive line indicates the
+</a><a href="#h0-0-161" id="h0-0-161" class="d">-                // start of data.
+</a><a href="#h0-0-162" id="h0-0-162" class="d">-                if (!rx) begin
+</a><a href="#h0-0-163" id="h0-0-163" class="d">-                    // Wait 1/2 of the bit period
+</a><a href="#h0-0-164" id="h0-0-164" class="d">-                    rx_clk = one_baud_cnt / 2;
+</a><a href="#h0-0-165" id="h0-0-165" class="d">-                    recv_state = RX_CHECK_START;
+</a><a href="#h0-0-166" id="h0-0-166" class="d">-                end
+</a><a href="#h0-0-167" id="h0-0-167" class="d">-            end
+</a><a href="#h0-0-168" id="h0-0-168" class="d">-            
+</a><a href="#h0-0-169" id="h0-0-169" class="d">-            RX_CHECK_START: begin
+</a><a href="#h0-0-170" id="h0-0-170" class="d">-                if (!rx_clk) begin
+</a><a href="#h0-0-171" id="h0-0-171" class="d">-                    // Check the pulse is still there
+</a><a href="#h0-0-172" id="h0-0-172" class="d">-                    if (!rx) begin
+</a><a href="#h0-0-173" id="h0-0-173" class="d">-                        // Pulse still there - good
+</a><a href="#h0-0-174" id="h0-0-174" class="d">-                        // Wait the bit period plus 3/8 of the next
+</a><a href="#h0-0-175" id="h0-0-175" class="d">-                        rx_clk = (one_baud_cnt / 2) + (one_baud_cnt * 3) / 8; 
+</a><a href="#h0-0-176" id="h0-0-176" class="d">-                        rx_bits_remaining = 8;  
+</a><a href="#h0-0-177" id="h0-0-177" class="d">-                        recv_state = RX_SAMPLE_BITS;
+</a><a href="#h0-0-178" id="h0-0-178" class="d">-                        rx_samples = 0;
+</a><a href="#h0-0-179" id="h0-0-179" class="d">-                        rx_sample_countdown = 5;
+</a><a href="#h0-0-180" id="h0-0-180" class="d">-                    end else begin
+</a><a href="#h0-0-181" id="h0-0-181" class="d">-                        // Pulse lasted less than half the period -
+</a><a href="#h0-0-182" id="h0-0-182" class="d">-                        // not a valid transmission.
+</a><a href="#h0-0-183" id="h0-0-183" class="d">-                        recv_state = RX_ERROR;
+</a><a href="#h0-0-184" id="h0-0-184" class="d">-                    end
+</a><a href="#h0-0-185" id="h0-0-185" class="d">-                end
+</a><a href="#h0-0-186" id="h0-0-186" class="d">-            end
+</a><a href="#h0-0-187" id="h0-0-187" class="d">-            
+</a><a href="#h0-0-188" id="h0-0-188" class="d">-            RX_SAMPLE_BITS: begin
+</a><a href="#h0-0-189" id="h0-0-189" class="d">-                // sample the rx line multiple times 
+</a><a href="#h0-0-190" id="h0-0-190" class="d">-                if (!rx_clk) begin
+</a><a href="#h0-0-191" id="h0-0-191" class="d">-                    if (rx) begin
+</a><a href="#h0-0-192" id="h0-0-192" class="d">-                        rx_samples =  rx_samples + 1&#39;d1;
+</a><a href="#h0-0-193" id="h0-0-193" class="d">-                    end
+</a><a href="#h0-0-194" id="h0-0-194" class="d">-                    rx_clk = one_baud_cnt / 8;
+</a><a href="#h0-0-195" id="h0-0-195" class="d">-                    rx_sample_countdown = rx_sample_countdown -1&#39;d1;
+</a><a href="#h0-0-196" id="h0-0-196" class="d">-                    recv_state = rx_sample_countdown ? RX_SAMPLE_BITS : RX_READ_BITS;
+</a><a href="#h0-0-197" id="h0-0-197" class="d">-                end
+</a><a href="#h0-0-198" id="h0-0-198" class="d">-            end
+</a><a href="#h0-0-199" id="h0-0-199" class="d">-            
+</a><a href="#h0-0-200" id="h0-0-200" class="d">-            RX_READ_BITS: begin
+</a><a href="#h0-0-201" id="h0-0-201" class="d">-                if (!rx_clk) begin
+</a><a href="#h0-0-202" id="h0-0-202" class="d">-                    // Should be finished sampling the pulse here.
+</a><a href="#h0-0-203" id="h0-0-203" class="d">-                    // Update and prep for next
+</a><a href="#h0-0-204" id="h0-0-204" class="d">-                    if (rx_samples &gt; 3) begin
+</a><a href="#h0-0-205" id="h0-0-205" class="d">-                        rx_data = {1&#39;d1, rx_data[7:1]};
+</a><a href="#h0-0-206" id="h0-0-206" class="d">-                    end else begin
+</a><a href="#h0-0-207" id="h0-0-207" class="d">-                        rx_data = {1&#39;d0, rx_data[7:1]};
+</a><a href="#h0-0-208" id="h0-0-208" class="d">-                    end
+</a><a href="#h0-0-209" id="h0-0-209" class="d">-                    
+</a><a href="#h0-0-210" id="h0-0-210" class="d">-                    rx_clk = (one_baud_cnt * 3) / 8;
+</a><a href="#h0-0-211" id="h0-0-211" class="d">-                    rx_samples = 0;
+</a><a href="#h0-0-212" id="h0-0-212" class="d">-                    rx_sample_countdown = 5;
+</a><a href="#h0-0-213" id="h0-0-213" class="d">-                    rx_bits_remaining = rx_bits_remaining - 1&#39;d1;
+</a><a href="#h0-0-214" id="h0-0-214" class="d">-                    
+</a><a href="#h0-0-215" id="h0-0-215" class="d">-                    if(rx_bits_remaining)begin
+</a><a href="#h0-0-216" id="h0-0-216" class="d">-                        recv_state = RX_SAMPLE_BITS;
+</a><a href="#h0-0-217" id="h0-0-217" class="d">-                    end else begin
+</a><a href="#h0-0-218" id="h0-0-218" class="d">-                        recv_state = RX_CHECK_STOP;
+</a><a href="#h0-0-219" id="h0-0-219" class="d">-                        rx_clk = one_baud_cnt / 2;
+</a><a href="#h0-0-220" id="h0-0-220" class="d">-                    end
+</a><a href="#h0-0-221" id="h0-0-221" class="d">-                end
+</a><a href="#h0-0-222" id="h0-0-222" class="d">-            end
+</a><a href="#h0-0-223" id="h0-0-223" class="d">-            
+</a><a href="#h0-0-224" id="h0-0-224" class="d">-            RX_CHECK_STOP: begin
+</a><a href="#h0-0-225" id="h0-0-225" class="d">-                if (!rx_clk) begin
+</a><a href="#h0-0-226" id="h0-0-226" class="d">-                    // Should resume half-way through the stop bit
+</a><a href="#h0-0-227" id="h0-0-227" class="d">-                    // This should be high - if not, reject the
+</a><a href="#h0-0-228" id="h0-0-228" class="d">-                    // transmission and signal an error.
+</a><a href="#h0-0-229" id="h0-0-229" class="d">-                    recv_state = rx ? RX_RECEIVED : RX_ERROR;
+</a><a href="#h0-0-230" id="h0-0-230" class="d">-                end
+</a><a href="#h0-0-231" id="h0-0-231" class="d">-            end
+</a><a href="#h0-0-232" id="h0-0-232" class="d">-            
+</a><a href="#h0-0-233" id="h0-0-233" class="d">-
+</a><a href="#h0-0-234" id="h0-0-234" class="d">-            
+</a><a href="#h0-0-235" id="h0-0-235" class="d">-            RX_ERROR: begin
+</a><a href="#h0-0-236" id="h0-0-236" class="d">-                // There was an error receiving.
+</a><a href="#h0-0-237" id="h0-0-237" class="d">-                // Raises the recv_error flag for one clock
+</a><a href="#h0-0-238" id="h0-0-238" class="d">-                // cycle while in this state and then waits
+</a><a href="#h0-0-239" id="h0-0-239" class="d">-                // 2 bit periods before accepting another
+</a><a href="#h0-0-240" id="h0-0-240" class="d">-                // transmission.
+</a><a href="#h0-0-241" id="h0-0-241" class="d">-                rx_clk = 8 * sys_clk_freq / (baud_rate);
+</a><a href="#h0-0-242" id="h0-0-242" class="d">-                recv_state = RX_DELAY_RESTART;
+</a><a href="#h0-0-243" id="h0-0-243" class="d">-            end
+</a><a href="#h0-0-244" id="h0-0-244" class="d">-            
+</a><a href="#h0-0-245" id="h0-0-245" class="d">-    // why is this state needed?  Why not go to idle and wait for next? 
+</a><a href="#h0-0-246" id="h0-0-246" class="d">-    
+</a><a href="#h0-0-247" id="h0-0-247" class="d">-            RX_DELAY_RESTART: begin
+</a><a href="#h0-0-248" id="h0-0-248" class="d">-                // Waits a set number of cycles before accepting
+</a><a href="#h0-0-249" id="h0-0-249" class="d">-                // another transmission.
+</a><a href="#h0-0-250" id="h0-0-250" class="d">-                recv_state = rx_clk ? RX_DELAY_RESTART : RX_IDLE;
+</a><a href="#h0-0-251" id="h0-0-251" class="d">-            end
+</a><a href="#h0-0-252" id="h0-0-252" class="d">-            
+</a><a href="#h0-0-253" id="h0-0-253" class="d">-            
+</a><a href="#h0-0-254" id="h0-0-254" class="d">-            RX_RECEIVED: begin
+</a><a href="#h0-0-255" id="h0-0-255" class="d">-                // Successfully received a byte.
+</a><a href="#h0-0-256" id="h0-0-256" class="d">-                // Raises the received flag for one clock
+</a><a href="#h0-0-257" id="h0-0-257" class="d">-                // cycle while in this state.
+</a><a href="#h0-0-258" id="h0-0-258" class="d">-                recv_state = RX_IDLE;
+</a><a href="#h0-0-259" id="h0-0-259" class="d">-            end
+</a><a href="#h0-0-260" id="h0-0-260" class="d">-            
+</a><a href="#h0-0-261" id="h0-0-261" class="d">-        endcase
+</a><a href="#h0-0-262" id="h0-0-262" class="d">-        
+</a><a href="#h0-0-263" id="h0-0-263" class="d">-        
+</a><a href="#h0-0-264" id="h0-0-264" class="d">-//** Transmit state machine ***********************************
+</a><a href="#h0-0-265" id="h0-0-265" class="d">-
+</a><a href="#h0-0-266" id="h0-0-266" class="d">-        case (tx_state)
+</a><a href="#h0-0-267" id="h0-0-267" class="d">-            TX_IDLE: begin
+</a><a href="#h0-0-268" id="h0-0-268" class="d">-                if (transmit) begin
+</a><a href="#h0-0-269" id="h0-0-269" class="d">-                    // If the transmit flag is raised in the idle
+</a><a href="#h0-0-270" id="h0-0-270" class="d">-                    // state, start transmitting the current content
+</a><a href="#h0-0-271" id="h0-0-271" class="d">-                    // of the tx_byte input.
+</a><a href="#h0-0-272" id="h0-0-272" class="d">-                    tx_data = tx_byte;
+</a><a href="#h0-0-273" id="h0-0-273" class="d">-                    // Send the initial, low pulse of 1 bit period
+</a><a href="#h0-0-274" id="h0-0-274" class="d">-                    // to signal the start, followed by the data
+</a><a href="#h0-0-275" id="h0-0-275" class="d">-                  //  tx_clk_divider =  clock_divide;                                
+</a><a href="#h0-0-276" id="h0-0-276" class="d">-                    tx_clk = one_baud_cnt;
+</a><a href="#h0-0-277" id="h0-0-277" class="d">-                    tx_out = 0;
+</a><a href="#h0-0-278" id="h0-0-278" class="d">-                    tx_bits_remaining = 8;
+</a><a href="#h0-0-279" id="h0-0-279" class="d">-                    tx_state = TX_SENDING;
+</a><a href="#h0-0-280" id="h0-0-280" class="d">-                end
+</a><a href="#h0-0-281" id="h0-0-281" class="d">-            end
+</a><a href="#h0-0-282" id="h0-0-282" class="d">-            
+</a><a href="#h0-0-283" id="h0-0-283" class="d">-            TX_SENDING: begin
+</a><a href="#h0-0-284" id="h0-0-284" class="d">-                if (!tx_clk) begin
+</a><a href="#h0-0-285" id="h0-0-285" class="d">-                    if (tx_bits_remaining) begin
+</a><a href="#h0-0-286" id="h0-0-286" class="d">-                        tx_bits_remaining = tx_bits_remaining - 1&#39;d1;
+</a><a href="#h0-0-287" id="h0-0-287" class="d">-                        tx_out = tx_data[0];
+</a><a href="#h0-0-288" id="h0-0-288" class="d">-                        tx_data = {1&#39;b0, tx_data[7:1]};
+</a><a href="#h0-0-289" id="h0-0-289" class="d">-                        tx_clk = one_baud_cnt;
+</a><a href="#h0-0-290" id="h0-0-290" class="d">-                        tx_state = TX_SENDING;
+</a><a href="#h0-0-291" id="h0-0-291" class="d">-                    end else begin
+</a><a href="#h0-0-292" id="h0-0-292" class="d">-                        // Set delay to send out 2 stop bits.
+</a><a href="#h0-0-293" id="h0-0-293" class="d">-                        tx_out = 1;
+</a><a href="#h0-0-294" id="h0-0-294" class="d">-                        tx_clk = 16 * one_baud_cnt;// tx_countdown = 16;
+</a><a href="#h0-0-295" id="h0-0-295" class="d">-                        tx_state = TX_DELAY_RESTART;
+</a><a href="#h0-0-296" id="h0-0-296" class="d">-                    end
+</a><a href="#h0-0-297" id="h0-0-297" class="d">-                end
+</a><a href="#h0-0-298" id="h0-0-298" class="d">-            end
+</a><a href="#h0-0-299" id="h0-0-299" class="d">-            
+</a><a href="#h0-0-300" id="h0-0-300" class="d">-            TX_DELAY_RESTART: begin
+</a><a href="#h0-0-301" id="h0-0-301" class="d">-                // Wait until tx_countdown reaches the end before
+</a><a href="#h0-0-302" id="h0-0-302" class="d">-                // we send another transmission. This covers the
+</a><a href="#h0-0-303" id="h0-0-303" class="d">-                // &quot;stop bit&quot; delay.
+</a><a href="#h0-0-304" id="h0-0-304" class="d">-                tx_state = tx_clk ? TX_DELAY_RESTART : TX_RECOVER;// TX_IDLE;
+</a><a href="#h0-0-305" id="h0-0-305" class="d">-            end
+</a><a href="#h0-0-306" id="h0-0-306" class="d">-            
+</a><a href="#h0-0-307" id="h0-0-307" class="d">-            TX_RECOVER: begin
+</a><a href="#h0-0-308" id="h0-0-308" class="d">-                // Wait unitil the transmit line is deactivated.  This prevents repeated characters
+</a><a href="#h0-0-309" id="h0-0-309" class="d">-                tx_state = transmit ? TX_RECOVER : TX_IDLE;
+</a><a href="#h0-0-310" id="h0-0-310" class="d">-           
+</a><a href="#h0-0-311" id="h0-0-311" class="d">-            end
+</a><a href="#h0-0-312" id="h0-0-312" class="d">-            
+</a><a href="#h0-0-313" id="h0-0-313" class="d">-        endcase
+</a><a href="#h0-0-314" id="h0-0-314" class="d">-    end
+</a><a href="#h0-0-315" id="h0-0-315" class="d">-
+</a><a href="#h0-0-316" id="h0-0-316" class="d">-endmodule
+</a><a href="#h0-0-317" id="h0-0-317" class="d">-
+</a><a href="#h0-0-318" id="h0-0-318" class="d">-`
+</a><a href="#h0-0-319" id="h0-0-319" class="i">+		result += verilogUART
+</a> 	}
+ 	return result
+ }
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_uart.go.html">pkg/bondmachine/files_uart.go</a> b/<a href="../file/pkg/bondmachine/files_uart.go.html">pkg/bondmachine/files_uart.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,319 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bondmachine
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+const (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	verilogUART = &quot;`timescale 1ns / 1ps\n&quot; + `
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+// Documented Verilog UART
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+// Copyright (C) 2010 Timothy Goddard (tim@goddard.net.nz)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+//               2013 Aaron Dahlen
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+// Distributed under the MIT licence.
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+//
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+// Permission is hereby granted, free of charge, to any person obtaining a copy
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+// of this software and associated documentation files (the &quot;Software&quot;), to deal
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+// in the Software without restriction, including without limitation the rights
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+// copies of the Software, and to permit persons to whom the Software is
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+// furnished to do so, subject to the following conditions:
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+// 
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+// The above copyright notice and this permission notice shall be included in
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+// all copies or substantial portions of the Software.
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+// 
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+// THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+// THE SOFTWARE.
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+// 
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+//** INSTANTIATION ********************************************
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+//
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+//  To instantiate this module copy this section to your main code...
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+//
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+//    uart #(
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+//        .baud_rate(baud_rate),            // default is 9600
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+//        .sys_clk_freq(sys_clk_freq)       // default is 100000000
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+//     )
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+//    instance_name(
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+//        .clk(clk),                        // The master clock for this module
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+//        .rst(rst),                        // Synchronous reset
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+//        .rx(rx),                          // Incoming serial line
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+//        .tx(tx),                          // Outgoing serial line
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+//        .transmit(transmit),              // Signal to transmit
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+//        .tx_byte(tx_byte),                // Byte to transmit       
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+//        .received(received),              // Indicated that a byte has been received
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+//        .rx_byte(rx_byte),                // Byte received
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+//        .is_receiving(is_receiving),      // Low when receive line is idle
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+//        .is_transmitting(is_transmitting),// Low when transmit line is idle
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+//        .recv_error(recv_error)           // Indicates error in receiving packet.
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+//      //.recv_state(recv_state),          // for test bench
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+//      //.tx_state(tx_state)               // for test bench
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+//    );
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+//
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+ module uart(
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+    input clk,                  // The master clock for this module
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+    input rst,                  // Synchronous reset
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+    input rx,                   // Incoming serial line
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+    output tx,                  // Outgoing serial line
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+    input transmit,             // Assert to begin transmission
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+    input [7:0] tx_byte,        // Byte to transmit
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+    output received,            // Indicates that a byte has been received
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+    output [7:0] rx_byte,       // Byte received
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+    output wire is_receiving,   // Low when receive line is idle.
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+    output wire is_transmitting,// Low when transmit line is idle.
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+    output wire recv_error,      // Indicates error in receiving packet.
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+    output reg [3:0] rx_samples,
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+    output reg [3:0] rx_sample_countdown
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+);
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+// The clock_divider is calculated using baud_rate and sys_clk_freq.  
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+// To modify baud rate you can modify the defaults shown below or instantiate
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+// the module using the template shown in the INSTANTIATION section above. 
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+// For aditional information about instantiation please see:
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+// http://www.sunburst-design.com/papers/CummingsHDLCON2002_Parameters_rev1_2.pdf
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+    parameter baud_rate = 115200;
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+    parameter sys_clk_freq = 100000000;
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+   
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+    localparam one_baud_cnt = sys_clk_freq / (baud_rate);
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+//** SYMBOLIC STATE DECLARATIONS ******************************
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+    localparam [2:0]     
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+        RX_IDLE             = 3&#39;d0, 
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+        RX_CHECK_START      = 3&#39;d1, 
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+        RX_SAMPLE_BITS      = 3&#39;d2,
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+        RX_READ_BITS        = 3&#39;d3,      
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+        RX_CHECK_STOP       = 3&#39;d4, 
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+        RX_DELAY_RESTART    = 3&#39;d5,
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+        RX_ERROR            = 3&#39;d6,      
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+        RX_RECEIVED         = 3&#39;d7; 
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+    localparam [1:0]     
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+        TX_IDLE             = 2&#39;d0,
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+        TX_SENDING          = 2&#39;d1,
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+        TX_DELAY_RESTART    = 2&#39;d2,
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+        TX_RECOVER          = 2&#39;d3;
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+  
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+  
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+//** SIGNAL DECLARATIONS **************************************
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+    reg [log2(one_baud_cnt * 16)-1:0] rx_clk;
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+    reg [log2(one_baud_cnt)-1:0] tx_clk;
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+    reg [2:0] recv_state = RX_IDLE;
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+    reg [3:0] rx_bits_remaining;
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+    reg [7:0] rx_data;
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+     
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+    reg tx_out = 1&#39;b1;
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+    reg [1:0] tx_state = TX_IDLE;
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+    reg [3:0] tx_bits_remaining;
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+    reg [7:0] tx_data;
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+    
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+//** ASSIGN STATEMENTS ****************************************
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+    assign received = recv_state == RX_RECEIVED;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+    assign recv_error = recv_state == RX_ERROR;
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+    assign is_receiving = recv_state != RX_IDLE;
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+    assign rx_byte = rx_data;
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+    assign tx = tx_out;
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+    assign is_transmitting = tx_state != TX_IDLE;
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+//** TASKS / FUNCTIONS **************************************** 
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+    function integer log2(input integer M);
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+        integer i;
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+    begin
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+        log2 = 1;
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+        for (i = 0; 2**i &lt;= M; i = i + 1)
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+            log2 = i + 1;
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+    end endfunction
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+    
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+    
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+//** Body *****************************************************
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+    always @(posedge clk) begin
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+        if (rst) begin
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+            recv_state = RX_IDLE;
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+            tx_state = TX_IDLE;
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+        end
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+                              
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+        // Countdown timers for the receiving and transmitting
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+        // state machines are decremented.
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+        
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+        if(rx_clk) begin
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+            rx_clk = rx_clk - 1&#39;d1;
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+        end
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+    
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+        if(tx_clk) begin
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+            tx_clk = tx_clk - 1&#39;d1;
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+        end
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+        
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+    
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+//** Receive state machine ************************************
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+        case (recv_state)
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+            RX_IDLE: begin
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+                // A low pulse on the receive line indicates the
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+                // start of data.
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+                if (!rx) begin
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+                    // Wait 1/2 of the bit period
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+                    rx_clk = one_baud_cnt / 2;
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+                    recv_state = RX_CHECK_START;
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+                end
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+            end
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+            
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+            RX_CHECK_START: begin
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+                if (!rx_clk) begin
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+                    // Check the pulse is still there
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+                    if (!rx) begin
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+                        // Pulse still there - good
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+                        // Wait the bit period plus 3/8 of the next
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+                        rx_clk = (one_baud_cnt / 2) + (one_baud_cnt * 3) / 8; 
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+                        rx_bits_remaining = 8;  
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+                        recv_state = RX_SAMPLE_BITS;
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+                        rx_samples = 0;
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+                        rx_sample_countdown = 5;
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+                    end else begin
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+                        // Pulse lasted less than half the period -
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+                        // not a valid transmission.
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+                        recv_state = RX_ERROR;
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+                    end
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+                end
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+            end
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+            
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+            RX_SAMPLE_BITS: begin
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+                // sample the rx line multiple times 
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+                if (!rx_clk) begin
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+                    if (rx) begin
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+                        rx_samples =  rx_samples + 1&#39;d1;
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+                    end
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+                    rx_clk = one_baud_cnt / 8;
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+                    rx_sample_countdown = rx_sample_countdown -1&#39;d1;
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+                    recv_state = rx_sample_countdown ? RX_SAMPLE_BITS : RX_READ_BITS;
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+                end
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+            end
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+            
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+            RX_READ_BITS: begin
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+                if (!rx_clk) begin
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+                    // Should be finished sampling the pulse here.
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+                    // Update and prep for next
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+                    if (rx_samples &gt; 3) begin
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+                        rx_data = {1&#39;d1, rx_data[7:1]};
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+                    end else begin
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+                        rx_data = {1&#39;d0, rx_data[7:1]};
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+                    end
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+                    
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+                    rx_clk = (one_baud_cnt * 3) / 8;
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+                    rx_samples = 0;
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+                    rx_sample_countdown = 5;
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+                    rx_bits_remaining = rx_bits_remaining - 1&#39;d1;
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+                    
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+                    if(rx_bits_remaining)begin
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+                        recv_state = RX_SAMPLE_BITS;
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+                    end else begin
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+                        recv_state = RX_CHECK_STOP;
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+                        rx_clk = one_baud_cnt / 2;
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+                    end
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+                end
+</a><a href="#h1-0-221" id="h1-0-221" class="i">+            end
+</a><a href="#h1-0-222" id="h1-0-222" class="i">+            
+</a><a href="#h1-0-223" id="h1-0-223" class="i">+            RX_CHECK_STOP: begin
+</a><a href="#h1-0-224" id="h1-0-224" class="i">+                if (!rx_clk) begin
+</a><a href="#h1-0-225" id="h1-0-225" class="i">+                    // Should resume half-way through the stop bit
+</a><a href="#h1-0-226" id="h1-0-226" class="i">+                    // This should be high - if not, reject the
+</a><a href="#h1-0-227" id="h1-0-227" class="i">+                    // transmission and signal an error.
+</a><a href="#h1-0-228" id="h1-0-228" class="i">+                    recv_state = rx ? RX_RECEIVED : RX_ERROR;
+</a><a href="#h1-0-229" id="h1-0-229" class="i">+                end
+</a><a href="#h1-0-230" id="h1-0-230" class="i">+            end
+</a><a href="#h1-0-231" id="h1-0-231" class="i">+            
+</a><a href="#h1-0-232" id="h1-0-232" class="i">+
+</a><a href="#h1-0-233" id="h1-0-233" class="i">+            
+</a><a href="#h1-0-234" id="h1-0-234" class="i">+            RX_ERROR: begin
+</a><a href="#h1-0-235" id="h1-0-235" class="i">+                // There was an error receiving.
+</a><a href="#h1-0-236" id="h1-0-236" class="i">+                // Raises the recv_error flag for one clock
+</a><a href="#h1-0-237" id="h1-0-237" class="i">+                // cycle while in this state and then waits
+</a><a href="#h1-0-238" id="h1-0-238" class="i">+                // 2 bit periods before accepting another
+</a><a href="#h1-0-239" id="h1-0-239" class="i">+                // transmission.
+</a><a href="#h1-0-240" id="h1-0-240" class="i">+                rx_clk = 8 * sys_clk_freq / (baud_rate);
+</a><a href="#h1-0-241" id="h1-0-241" class="i">+                recv_state = RX_DELAY_RESTART;
+</a><a href="#h1-0-242" id="h1-0-242" class="i">+            end
+</a><a href="#h1-0-243" id="h1-0-243" class="i">+            
+</a><a href="#h1-0-244" id="h1-0-244" class="i">+    // why is this state needed?  Why not go to idle and wait for next? 
+</a><a href="#h1-0-245" id="h1-0-245" class="i">+    
+</a><a href="#h1-0-246" id="h1-0-246" class="i">+            RX_DELAY_RESTART: begin
+</a><a href="#h1-0-247" id="h1-0-247" class="i">+                // Waits a set number of cycles before accepting
+</a><a href="#h1-0-248" id="h1-0-248" class="i">+                // another transmission.
+</a><a href="#h1-0-249" id="h1-0-249" class="i">+                recv_state = rx_clk ? RX_DELAY_RESTART : RX_IDLE;
+</a><a href="#h1-0-250" id="h1-0-250" class="i">+            end
+</a><a href="#h1-0-251" id="h1-0-251" class="i">+            
+</a><a href="#h1-0-252" id="h1-0-252" class="i">+            
+</a><a href="#h1-0-253" id="h1-0-253" class="i">+            RX_RECEIVED: begin
+</a><a href="#h1-0-254" id="h1-0-254" class="i">+                // Successfully received a byte.
+</a><a href="#h1-0-255" id="h1-0-255" class="i">+                // Raises the received flag for one clock
+</a><a href="#h1-0-256" id="h1-0-256" class="i">+                // cycle while in this state.
+</a><a href="#h1-0-257" id="h1-0-257" class="i">+                recv_state = RX_IDLE;
+</a><a href="#h1-0-258" id="h1-0-258" class="i">+            end
+</a><a href="#h1-0-259" id="h1-0-259" class="i">+            
+</a><a href="#h1-0-260" id="h1-0-260" class="i">+        endcase
+</a><a href="#h1-0-261" id="h1-0-261" class="i">+        
+</a><a href="#h1-0-262" id="h1-0-262" class="i">+        
+</a><a href="#h1-0-263" id="h1-0-263" class="i">+//** Transmit state machine ***********************************
+</a><a href="#h1-0-264" id="h1-0-264" class="i">+
+</a><a href="#h1-0-265" id="h1-0-265" class="i">+        case (tx_state)
+</a><a href="#h1-0-266" id="h1-0-266" class="i">+            TX_IDLE: begin
+</a><a href="#h1-0-267" id="h1-0-267" class="i">+                if (transmit) begin
+</a><a href="#h1-0-268" id="h1-0-268" class="i">+                    // If the transmit flag is raised in the idle
+</a><a href="#h1-0-269" id="h1-0-269" class="i">+                    // state, start transmitting the current content
+</a><a href="#h1-0-270" id="h1-0-270" class="i">+                    // of the tx_byte input.
+</a><a href="#h1-0-271" id="h1-0-271" class="i">+                    tx_data = tx_byte;
+</a><a href="#h1-0-272" id="h1-0-272" class="i">+                    // Send the initial, low pulse of 1 bit period
+</a><a href="#h1-0-273" id="h1-0-273" class="i">+                    // to signal the start, followed by the data
+</a><a href="#h1-0-274" id="h1-0-274" class="i">+                  //  tx_clk_divider =  clock_divide;                                
+</a><a href="#h1-0-275" id="h1-0-275" class="i">+                    tx_clk = one_baud_cnt;
+</a><a href="#h1-0-276" id="h1-0-276" class="i">+                    tx_out = 0;
+</a><a href="#h1-0-277" id="h1-0-277" class="i">+                    tx_bits_remaining = 8;
+</a><a href="#h1-0-278" id="h1-0-278" class="i">+                    tx_state = TX_SENDING;
+</a><a href="#h1-0-279" id="h1-0-279" class="i">+                end
+</a><a href="#h1-0-280" id="h1-0-280" class="i">+            end
+</a><a href="#h1-0-281" id="h1-0-281" class="i">+            
+</a><a href="#h1-0-282" id="h1-0-282" class="i">+            TX_SENDING: begin
+</a><a href="#h1-0-283" id="h1-0-283" class="i">+                if (!tx_clk) begin
+</a><a href="#h1-0-284" id="h1-0-284" class="i">+                    if (tx_bits_remaining) begin
+</a><a href="#h1-0-285" id="h1-0-285" class="i">+                        tx_bits_remaining = tx_bits_remaining - 1&#39;d1;
+</a><a href="#h1-0-286" id="h1-0-286" class="i">+                        tx_out = tx_data[0];
+</a><a href="#h1-0-287" id="h1-0-287" class="i">+                        tx_data = {1&#39;b0, tx_data[7:1]};
+</a><a href="#h1-0-288" id="h1-0-288" class="i">+                        tx_clk = one_baud_cnt;
+</a><a href="#h1-0-289" id="h1-0-289" class="i">+                        tx_state = TX_SENDING;
+</a><a href="#h1-0-290" id="h1-0-290" class="i">+                    end else begin
+</a><a href="#h1-0-291" id="h1-0-291" class="i">+                        // Set delay to send out 2 stop bits.
+</a><a href="#h1-0-292" id="h1-0-292" class="i">+                        tx_out = 1;
+</a><a href="#h1-0-293" id="h1-0-293" class="i">+                        tx_clk = 16 * one_baud_cnt;// tx_countdown = 16;
+</a><a href="#h1-0-294" id="h1-0-294" class="i">+                        tx_state = TX_DELAY_RESTART;
+</a><a href="#h1-0-295" id="h1-0-295" class="i">+                    end
+</a><a href="#h1-0-296" id="h1-0-296" class="i">+                end
+</a><a href="#h1-0-297" id="h1-0-297" class="i">+            end
+</a><a href="#h1-0-298" id="h1-0-298" class="i">+            
+</a><a href="#h1-0-299" id="h1-0-299" class="i">+            TX_DELAY_RESTART: begin
+</a><a href="#h1-0-300" id="h1-0-300" class="i">+                // Wait until tx_countdown reaches the end before
+</a><a href="#h1-0-301" id="h1-0-301" class="i">+                // we send another transmission. This covers the
+</a><a href="#h1-0-302" id="h1-0-302" class="i">+                // &quot;stop bit&quot; delay.
+</a><a href="#h1-0-303" id="h1-0-303" class="i">+                tx_state = tx_clk ? TX_DELAY_RESTART : TX_RECOVER;// TX_IDLE;
+</a><a href="#h1-0-304" id="h1-0-304" class="i">+            end
+</a><a href="#h1-0-305" id="h1-0-305" class="i">+            
+</a><a href="#h1-0-306" id="h1-0-306" class="i">+            TX_RECOVER: begin
+</a><a href="#h1-0-307" id="h1-0-307" class="i">+                // Wait unitil the transmit line is deactivated.  This prevents repeated characters
+</a><a href="#h1-0-308" id="h1-0-308" class="i">+                tx_state = transmit ? TX_RECOVER : TX_IDLE;
+</a><a href="#h1-0-309" id="h1-0-309" class="i">+           
+</a><a href="#h1-0-310" id="h1-0-310" class="i">+            end
+</a><a href="#h1-0-311" id="h1-0-311" class="i">+            
+</a><a href="#h1-0-312" id="h1-0-312" class="i">+        endcase
+</a><a href="#h1-0-313" id="h1-0-313" class="i">+    end
+</a><a href="#h1-0-314" id="h1-0-314" class="i">+
+</a><a href="#h1-0-315" id="h1-0-315" class="i">+endmodule
+</a><a href="#h1-0-316" id="h1-0-316" class="i">+
+</a><a href="#h1-0-317" id="h1-0-317" class="i">+`
+</a><a href="#h1-0-318" id="h1-0-318" class="i">+)
+</a></pre>
+</div>
+</body>
+</html>

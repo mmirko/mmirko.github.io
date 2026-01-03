@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>melbond - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6b625dca954bd2c0f69ffca9699b0f08da9c6a99.html">6b625dca954bd2c0f69ffca9699b0f08da9c6a99</a>
+<b>parent</b> <a href="../commit/a5bdc35afd8ea5c8cdb8d02b21f3402c2b712434.html">a5bdc35afd8ea5c8cdb8d02b21f3402c2b712434</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat,  8 Apr 2023 00:59:22 +0200
+
+melbond
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/melbond/melbond.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/melbond/test.mel</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/melbond/m3number_add.basm</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">library/melbond/m3number_m3numberconst.basm</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/fragmentcomposer.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/melbond/evaluator.go</a></td><td> | </td><td class="num">123</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/melbond/melbond.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>7 files changed, 175 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a> b/<a href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,7 +8,6 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/melbond&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/neuralbond&quot;
+</a> 	&quot;github.com/mmirko/mel/pkg/m3melbond&quot;
+ 	&quot;github.com/mmirko/mel/pkg/mel&quot;
+ )
+<a href="#h0-1" id="h0-1" class="h">@@ -85,9 +84,9 @@ func main() {
+</a> 
+ 	switch *iomode {
+ 	case &quot;async&quot;:
+<a href="#h0-1-3" id="h0-1-3" class="d">-		bc.IOMode = neuralbond.ASYNC
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		bc.IOMode = melbond.ASYNC
+</a> 	case &quot;sync&quot;:
+<a href="#h0-1-6" id="h0-1-6" class="d">-		bc.IOMode = neuralbond.SYNC
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		bc.IOMode = melbond.SYNC
+</a> 	default:
+ 		panic(&quot;Unknown IO mode&quot;)
+ 	}
+<a href="#h0-2" id="h0-2" class="h">@@ -142,7 +141,7 @@ func main() {
+</a> 	var ep *mel.EvolutionParameters
+ 	c := new(mel.MelConfig)
+ 	a.Mel3Object.DefaultCreator = bc.BasmCreator
+<a href="#h0-2-3" id="h0-2-3" class="d">-	c.Debug = false
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	c.Debug = *debug
+</a> 
+ 	a.Init(c, ep, []string{&quot;m3uint&quot;, &quot;m3uintcmp&quot;, &quot;m3number&quot;, &quot;m3bool&quot;, &quot;m3boolcmp&quot;, &quot;m3statements&quot;})
+ 
+<b>diff --git a/<a id="h1" href="../file/cmd/melbond/test.mel.html">cmd/melbond/test.mel</a> b/<a href="../file/cmd/melbond/test.mel.html">cmd/melbond/test.mel</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,13 +1,13 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-	add(
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+	output(0,add(
+</a> 		add(
+ 			m3numberconst(1),
+ 			m3numberconst(66)
+ 		),
+<a href="#h1-0-6" id="h1-0-6" class="d">-		add(
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		group(pippo,add(
+</a> 			m3numberconst(1),
+ 			mult(
+ 				m3numberconst(2),
+ 				input(0,m3numberconst(11))
+ 			)
+<a href="#h1-0-13" id="h1-0-13" class="d">-		)
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-	)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		))
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	))
+</a><b>diff --git a/<a id="h2" href="../file/library/melbond/m3number_add.basm.html">library/melbond/m3number_add.basm</a> b/<a href="../file/library/melbond/m3number_add.basm.html">library/melbond/m3number_add.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,3 +1,3 @@
+</a> %fragment m3number_add template:true resin:r0:r1 resout:r0
+ 	{{.Params.addop}}	r0, r1
+<a href="#h2-0-2" id="h2-0-2" class="d">-%endfragment
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-\ No newline at end of file
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+%endfragment
+</a><b>diff --git a/<a id="h3" href="../file/library/melbond/m3number_m3numberconst.basm.html">library/melbond/m3number_m3numberconst.basm</a> b/<a href="../file/library/melbond/m3number_m3numberconst.basm.html">library/melbond/m3number_m3numberconst.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,3 +1,3 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="d">-%fragment m3numben_m3numberconst template:true resout:r0
+</a><a href="#h3-0-1" id="h3-0-1" class="d">-	rset	r0, {{ .Params.m3numberconst }}
+</a><a href="#h3-0-2" id="h3-0-2" class="d">-%endfragment
+</a><a href="#h3-0-3" id="h3-0-3" class="d">-\ No newline at end of file
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+%fragment m3number_m3numberconst template:true resout:r0
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	mov	r0,{{.Params.m3numberconst}}
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+%endfragment
+</a><b>diff --git a/<a id="h4" href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a> b/<a href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -305,6 +305,10 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 				for j, out := range newOutputs[i] {
+ 					if out != &quot;&quot; {
+ 						newLine := new(bmline.BasmLine)
+<a href="#h4-0-3" id="h4-0-3" class="i">+						if firstLine {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;label&quot;, &quot;_start&quot;)
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+							firstLine = false
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+						}
+</a> 						newOperation := new(bmline.BasmElement)
+ 						newOperation.SetValue(&quot;mov&quot;)
+ 						newReg := new(bmline.BasmElement)
+<a href="#h4-1" id="h4-1" class="h">@@ -324,6 +328,10 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 				for j, out := range newRegAsOutputs[i] {
+ 					if out != &quot;&quot; {
+ 						newLine := new(bmline.BasmLine)
+<a href="#h4-1-3" id="h4-1-3" class="i">+						if firstLine {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;label&quot;, &quot;_start&quot;)
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+							firstLine = false
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+						}
+</a> 						newOperation := new(bmline.BasmElement)
+ 						newOperation.SetValue(&quot;mov&quot;)
+ 						newReg := new(bmline.BasmElement)
+<b>diff --git a/<a id="h5" href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a> b/<a href="../file/pkg/melbond/evaluator.go.html">pkg/melbond/evaluator.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -13,6 +13,8 @@ type BasmEvaluator struct {
+</a> 	error
+ 	Result *mel3program.Mel3Program
+ 	index  string
+<a href="#h5-0-3" id="h5-0-3" class="i">+	group  string
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	groups *Groups
+</a> }
+ 
+ func (ev *BasmEvaluator) GetName() string {
+<a href="#h5-1" id="h5-1" class="h">@@ -25,6 +27,10 @@ func (ev *BasmEvaluator) GetMel3Object() *mel3program.Mel3Object {
+</a> 
+ func (ev *BasmEvaluator) SetMel3Object(mel3o *mel3program.Mel3Object) {
+ 	ev.Mel3Object = mel3o
+<a href="#h5-1-3" id="h5-1-3" class="i">+	groupsPI := mel3o.Environment
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	groupsI := *groupsPI
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	groups := groupsI.(Groups)
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	ev.groups = &amp;groups
+</a> }
+ 
+ func (ev *BasmEvaluator) GetError() error {
+<a href="#h5-2" id="h5-2" class="h">@@ -55,9 +61,99 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 			ev.Result = result
+ 			return nil
+ 		case mel3program.B_IN_OUTPUT:
+<a href="#h5-2-3" id="h5-2-3" class="i">+			arg_num := len(iProg.NextPrograms) // It will be 1
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+			evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+			names := make([]string, arg_num)
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+			for i, prog := range iProg.NextPrograms {
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+				evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+				names[i] = nodeName + string(byte(97+i))
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+				evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+				evaluators[i].(*BasmEvaluator).groups = ev.groups
+</a><a href="#h5-2-11" id="h5-2-11" class="i">+				evaluators[i].(*BasmEvaluator).group = ev.group
+</a><a href="#h5-2-12" id="h5-2-12" class="i">+				evaluators[i].Visit(prog)
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+				if evaluators[i].GetError() != nil {
+</a><a href="#h5-2-14" id="h5-2-14" class="i">+					ev.error = evaluators[i].GetError()
+</a><a href="#h5-2-15" id="h5-2-15" class="i">+					return nil
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+				}
+</a><a href="#h5-2-17" id="h5-2-17" class="i">+				result := evaluators[i].GetResult()
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+				ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkdef &quot; + nodeName + &quot;_&quot; + names[i] + &quot; type:fl&quot;)
+</a><a href="#h5-2-19" id="h5-2-19" class="i">+				if result != nil {
+</a><a href="#h5-2-20" id="h5-2-20" class="i">+					if !(result.LibraryID == mel3program.BUILTINS &amp;&amp; result.ProgramID == mel3program.B_IN_INPUT) {
+</a><a href="#h5-2-21" id="h5-2-21" class="i">+						ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:ext, type:output, index:&quot; + iProg.ProgramValue)
+</a><a href="#h5-2-22" id="h5-2-22" class="i">+						ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:&quot; + names[i] + &quot;, type:output, index:0&quot;)
+</a><a href="#h5-2-23" id="h5-2-23" class="i">+					} else {
+</a><a href="#h5-2-24" id="h5-2-24" class="i">+						ev.error = errors.New(&quot;an input is directly connected to an output&quot;)
+</a><a href="#h5-2-25" id="h5-2-25" class="i">+						return nil
+</a><a href="#h5-2-26" id="h5-2-26" class="i">+					}
+</a><a href="#h5-2-27" id="h5-2-27" class="i">+				} else {
+</a><a href="#h5-2-28" id="h5-2-28" class="i">+					ev.error = errors.New(&quot;no result&quot;)
+</a><a href="#h5-2-29" id="h5-2-29" class="i">+					return nil
+</a><a href="#h5-2-30" id="h5-2-30" class="i">+				}
+</a><a href="#h5-2-31" id="h5-2-31" class="i">+				ev.Result = result
+</a><a href="#h5-2-32" id="h5-2-32" class="i">+				return nil
+</a><a href="#h5-2-33" id="h5-2-33" class="i">+			}
+</a><a href="#h5-2-34" id="h5-2-34" class="i">+
+</a> 		case mel3program.B_IN_GROUP:
+<a href="#h5-2-36" id="h5-2-36" class="i">+			if ev.group != &quot;&quot; {
+</a><a href="#h5-2-37" id="h5-2-37" class="i">+				ev.error = errors.New(&quot;group already defined&quot;)
+</a><a href="#h5-2-38" id="h5-2-38" class="i">+				return nil
+</a><a href="#h5-2-39" id="h5-2-39" class="i">+			}
+</a><a href="#h5-2-40" id="h5-2-40" class="i">+
+</a><a href="#h5-2-41" id="h5-2-41" class="i">+			ev.group = iProg.ProgramValue
+</a><a href="#h5-2-42" id="h5-2-42" class="i">+			arg_num := len(iProg.NextPrograms) // It will be 1
+</a><a href="#h5-2-43" id="h5-2-43" class="i">+			evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h5-2-44" id="h5-2-44" class="i">+			names := make([]string, arg_num)
+</a><a href="#h5-2-45" id="h5-2-45" class="i">+			for i, prog := range iProg.NextPrograms {
+</a><a href="#h5-2-46" id="h5-2-46" class="i">+				evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h5-2-47" id="h5-2-47" class="i">+				names[i] = nodeName + string(byte(97+i))
+</a><a href="#h5-2-48" id="h5-2-48" class="i">+				evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h5-2-49" id="h5-2-49" class="i">+				evaluators[i].(*BasmEvaluator).groups = ev.groups
+</a><a href="#h5-2-50" id="h5-2-50" class="i">+				evaluators[i].(*BasmEvaluator).group = ev.group
+</a><a href="#h5-2-51" id="h5-2-51" class="i">+				evaluators[i].Visit(prog)
+</a><a href="#h5-2-52" id="h5-2-52" class="i">+				if evaluators[i].GetError() != nil {
+</a><a href="#h5-2-53" id="h5-2-53" class="i">+					ev.error = evaluators[i].GetError()
+</a><a href="#h5-2-54" id="h5-2-54" class="i">+					return nil
+</a><a href="#h5-2-55" id="h5-2-55" class="i">+				}
+</a><a href="#h5-2-56" id="h5-2-56" class="i">+				result := evaluators[i].GetResult()
+</a><a href="#h5-2-57" id="h5-2-57" class="i">+				if result == nil {
+</a><a href="#h5-2-58" id="h5-2-58" class="i">+					ev.error = errors.New(&quot;no result&quot;)
+</a><a href="#h5-2-59" id="h5-2-59" class="i">+					return nil
+</a><a href="#h5-2-60" id="h5-2-60" class="i">+				}
+</a><a href="#h5-2-61" id="h5-2-61" class="i">+				ev.Result = result
+</a><a href="#h5-2-62" id="h5-2-62" class="i">+				return nil
+</a><a href="#h5-2-63" id="h5-2-63" class="i">+			}
+</a><a href="#h5-2-64" id="h5-2-64" class="i">+
+</a> 		case mel3program.B_IN_UNGROUP:
+<a href="#h5-2-66" id="h5-2-66" class="i">+			if ev.group == &quot;&quot; {
+</a><a href="#h5-2-67" id="h5-2-67" class="i">+				ev.error = errors.New(&quot;no group defined&quot;)
+</a><a href="#h5-2-68" id="h5-2-68" class="i">+				return nil
+</a><a href="#h5-2-69" id="h5-2-69" class="i">+			}
+</a><a href="#h5-2-70" id="h5-2-70" class="i">+			ev.group = &quot;&quot;
+</a><a href="#h5-2-71" id="h5-2-71" class="i">+			arg_num := len(iProg.NextPrograms) // It will be 1
+</a><a href="#h5-2-72" id="h5-2-72" class="i">+			evaluators := make([]mel3program.Mel3Visitor, arg_num)
+</a><a href="#h5-2-73" id="h5-2-73" class="i">+			names := make([]string, arg_num)
+</a><a href="#h5-2-74" id="h5-2-74" class="i">+			for i, prog := range iProg.NextPrograms {
+</a><a href="#h5-2-75" id="h5-2-75" class="i">+				evaluators[i] = mel3program.ProgMux(ev, prog)
+</a><a href="#h5-2-76" id="h5-2-76" class="i">+				names[i] = nodeName + string(byte(97+i))
+</a><a href="#h5-2-77" id="h5-2-77" class="i">+				evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+</a><a href="#h5-2-78" id="h5-2-78" class="i">+				evaluators[i].(*BasmEvaluator).groups = ev.groups
+</a><a href="#h5-2-79" id="h5-2-79" class="i">+				evaluators[i].(*BasmEvaluator).group = ev.group
+</a><a href="#h5-2-80" id="h5-2-80" class="i">+				evaluators[i].Visit(prog)
+</a><a href="#h5-2-81" id="h5-2-81" class="i">+				if evaluators[i].GetError() != nil {
+</a><a href="#h5-2-82" id="h5-2-82" class="i">+					ev.error = evaluators[i].GetError()
+</a><a href="#h5-2-83" id="h5-2-83" class="i">+					return nil
+</a><a href="#h5-2-84" id="h5-2-84" class="i">+				}
+</a><a href="#h5-2-85" id="h5-2-85" class="i">+				result := evaluators[i].GetResult()
+</a><a href="#h5-2-86" id="h5-2-86" class="i">+				if result == nil {
+</a><a href="#h5-2-87" id="h5-2-87" class="i">+					ev.error = errors.New(&quot;no result&quot;)
+</a><a href="#h5-2-88" id="h5-2-88" class="i">+					return nil
+</a><a href="#h5-2-89" id="h5-2-89" class="i">+				}
+</a><a href="#h5-2-90" id="h5-2-90" class="i">+				ev.Result = result
+</a><a href="#h5-2-91" id="h5-2-91" class="i">+				return nil
+</a><a href="#h5-2-92" id="h5-2-92" class="i">+			}
+</a> 		default:
+<a href="#h5-2-94" id="h5-2-94" class="i">+			ev.error = errors.New(&quot;unknown builtin&quot;)
+</a><a href="#h5-2-95" id="h5-2-95" class="i">+			return nil
+</a> 		}
+ 	} else {
+ 		implementation := ev.Implementation[iProg.LibraryID]
+<a href="#h5-3" id="h5-3" class="h">@@ -67,6 +163,24 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 		if neuron, ok := ev.MelBondConfig.Neurons[nodeCodeName]; ok {
+ 
+ 			ev.MelBondConfig.CodeChan &lt;- fmt.Sprint(&quot;%meta fidef &quot; + nodeName + &quot; fragment:&quot; + nodeCodeName)
+<a href="#h5-3-3" id="h5-3-3" class="i">+			fmt.Println(ev.groups)
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+			// groups management
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+			myGroup := nodeName
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+			if ev.group != &quot;&quot; {
+</a><a href="#h5-3-7" id="h5-3-7" class="i">+				myGroup = ev.group
+</a><a href="#h5-3-8" id="h5-3-8" class="i">+			}
+</a><a href="#h5-3-9" id="h5-3-9" class="i">+
+</a><a href="#h5-3-10" id="h5-3-10" class="i">+			if ev.groups == nil {
+</a><a href="#h5-3-11" id="h5-3-11" class="i">+				newGroups := make(Groups)
+</a><a href="#h5-3-12" id="h5-3-12" class="i">+				ev.groups = &amp;newGroups
+</a><a href="#h5-3-13" id="h5-3-13" class="i">+			}
+</a><a href="#h5-3-14" id="h5-3-14" class="i">+			groups := *ev.groups
+</a><a href="#h5-3-15" id="h5-3-15" class="i">+			if _, ok := groups[myGroup]; !ok {
+</a><a href="#h5-3-16" id="h5-3-16" class="i">+				groups[myGroup] = make([]string, 1)
+</a><a href="#h5-3-17" id="h5-3-17" class="i">+				groups[myGroup][0] = nodeName
+</a><a href="#h5-3-18" id="h5-3-18" class="i">+			} else {
+</a><a href="#h5-3-19" id="h5-3-19" class="i">+				groups[myGroup] = append(groups[myGroup], nodeName)
+</a><a href="#h5-3-20" id="h5-3-20" class="i">+			}
+</a> 
+ 			isFunctional := true
+ 
+<a href="#h5-4" id="h5-4" class="h">@@ -99,6 +213,8 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 				evaluators[i] = mel3program.ProgMux(ev, prog)
+ 				names[i] = nodeName + string(byte(97+i))
+ 				evaluators[i].(*BasmEvaluator).index = ev.index + string(byte(97+i))
+<a href="#h5-4-3" id="h5-4-3" class="i">+				evaluators[i].(*BasmEvaluator).groups = ev.groups
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+				evaluators[i].(*BasmEvaluator).group = ev.group
+</a> 				evaluators[i].Visit(prog)
+ 				if evaluators[i].GetError() != nil {
+ 					ev.error = evaluators[i].GetError()
+<a href="#h5-5" id="h5-5" class="h">@@ -115,15 +231,16 @@ func (ev *BasmEvaluator) Visit(iProg *mel3program.Mel3Program) mel3program.Mel3V
+</a> 						ev.MelBondConfig.CodeChan &lt;- fmt.Sprintln(&quot;%meta filinkatt &quot; + nodeName + &quot;_&quot; + names[i] + &quot; fi:ext, type:input, index:&quot; + result.ProgramValue)
+ 					}
+ 				} else {
+<a href="#h5-5-3" id="h5-5-3" class="d">-					// ev.error = errors.New(&quot;no result&quot;)
+</a><a href="#h5-5-4" id="h5-5-4" class="d">-					// return nil
+</a><a href="#h5-5-5" id="h5-5-5" class="i">+					ev.error = errors.New(&quot;no result&quot;)
+</a><a href="#h5-5-6" id="h5-5-6" class="i">+					return nil
+</a> 				}
+<a href="#h5-5-8" id="h5-5-8" class="d">-
+</a> 			}
+ 		} else {
+ 			ev.error = errors.New(&quot;Unknown neuron &quot; + nodeCodeName)
+<a href="#h5-5-12" id="h5-5-12" class="i">+			return nil
+</a> 		}
+ 	}
+<a href="#h5-5-15" id="h5-5-15" class="i">+	ev.Result = iProg
+</a> 	return nil
+ }
+ 
+<b>diff --git a/<a id="h6" href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a> b/<a href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -3,19 +3,29 @@ package melbond
+</a> import (
+ 	&quot;context&quot;
+ 	&quot;encoding/json&quot;
+<a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;fmt&quot;
+</a> 	&quot;io/ioutil&quot;
+<a href="#h6-0-5" id="h6-0-5" class="i">+	&quot;time&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/mmirko/mel/pkg/m3melbond&quot;
+ )
+ 
+<a href="#h6-0-11" id="h6-0-11" class="i">+const (
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+	ASYNC = uint8(0) + iota
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+	SYNC
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+)
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+
+</a> type Group []string
+ 
+<a href="#h6-0-18" id="h6-0-18" class="i">+type Groups map[string]Group
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a> type Neuron struct {
+ 	Params []string
+ }
+ 
+ type MelBondConfig struct {
+<a href="#h6-0-25" id="h6-0-25" class="i">+	*bminfo.BMinfo
+</a> 	RegisterSize  uint8
+ 	DataType      string
+ 	TypePrefix    string
+<a href="#h6-1" id="h6-1" class="h">@@ -27,9 +37,8 @@ type MelBondConfig struct {
+</a> 	Verbose       bool
+ 	NeuronLibPath string
+ 	IOMode        uint8
+<a href="#h6-1-3" id="h6-1-3" class="d">-	*bminfo.BMinfo
+</a><a href="#h6-1-4" id="h6-1-4" class="d">-	CodeChan  chan string
+</a><a href="#h6-1-5" id="h6-1-5" class="d">-	CancelCtx context.CancelFunc
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+	CodeChan      chan string
+</a><a href="#h6-1-7" id="h6-1-7" class="i">+	CancelCtx     context.CancelFunc
+</a> }
+ 
+ type MelBondProgram struct {
+<a href="#h6-2" id="h6-2" class="h">@@ -70,6 +79,12 @@ func (p *MelBondProgram) WriteBasm() (string, error) {
+</a> 	p.CodeChan = make(chan string)
+ 	p.CancelCtx = cancel
+ 
+<a href="#h6-2-3" id="h6-2-3" class="i">+	//Create the groups map and copy it to the environment
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+
+</a><a href="#h6-2-5" id="h6-2-5" class="i">+	var groups interface{}
+</a><a href="#h6-2-6" id="h6-2-6" class="i">+	groups = make(Groups)
+</a><a href="#h6-2-7" id="h6-2-7" class="i">+	p.Mel3Object.Environment = &amp;groups
+</a><a href="#h6-2-8" id="h6-2-8" class="i">+
+</a> 	go func() {
+ 		for {
+ 			select {
+<a href="#h6-3" id="h6-3" class="h">@@ -86,9 +101,27 @@ func (p *MelBondProgram) WriteBasm() (string, error) {
+</a> 	if err := p.MelStringImport(p.Source); err != nil {
+ 		return &quot;&quot;, err
+ 	} else {
+<a href="#h6-3-3" id="h6-3-3" class="i">+
+</a><a href="#h6-3-4" id="h6-3-4" class="i">+		regSize := p.RegisterSize
+</a><a href="#h6-3-5" id="h6-3-5" class="i">+		p.CodeChan &lt;- fmt.Sprintf(&quot;%%meta bmdef     global registersize:%d\n&quot;, regSize)
+</a><a href="#h6-3-6" id="h6-3-6" class="i">+		switch p.IOMode {
+</a><a href="#h6-3-7" id="h6-3-7" class="i">+		case ASYNC:
+</a><a href="#h6-3-8" id="h6-3-8" class="i">+			p.CodeChan &lt;- fmt.Sprintf(&quot;%%meta bmdef     global iomode:async\n&quot;)
+</a><a href="#h6-3-9" id="h6-3-9" class="i">+		case SYNC:
+</a><a href="#h6-3-10" id="h6-3-10" class="i">+			p.CodeChan &lt;- fmt.Sprintf(&quot;%%meta bmdef     global iomode:sync\n&quot;)
+</a><a href="#h6-3-11" id="h6-3-11" class="i">+		}
+</a><a href="#h6-3-12" id="h6-3-12" class="i">+
+</a> 		if err := p.Compute(); err != nil {
+ 			return &quot;&quot;, err
+ 		} else {
+<a href="#h6-3-16" id="h6-3-16" class="i">+			for gName, group := range groups.(Groups) {
+</a><a href="#h6-3-17" id="h6-3-17" class="i">+				nodeList := &quot;&quot;
+</a><a href="#h6-3-18" id="h6-3-18" class="i">+				for _, nName := range group {
+</a><a href="#h6-3-19" id="h6-3-19" class="i">+					nodeList += &quot;:&quot; + nName
+</a><a href="#h6-3-20" id="h6-3-20" class="i">+				}
+</a><a href="#h6-3-21" id="h6-3-21" class="i">+				p.CodeChan &lt;- fmt.Sprintln(&quot;%meta cpdef  &quot; + gName + &quot; fragcollapse&quot; + nodeList)
+</a><a href="#h6-3-22" id="h6-3-22" class="i">+			}
+</a><a href="#h6-3-23" id="h6-3-23" class="i">+			time.Sleep(1 * time.Second)
+</a> 			return p.BasmCode, nil
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>shr_channel.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> shr_channel.go (40292B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;strconv&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;strings&quot;
+<a href="#l6" class="line" id="l6">      6</a> )
+<a href="#l7" class="line" id="l7">      7</a> 
+<a href="#l8" class="line" id="l8">      8</a> // The placeholder struct
+<a href="#l9" class="line" id="l9">      9</a> 
+<a href="#l10" class="line" id="l10">     10</a> type Channel struct{}
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> func (op Channel) Shr_get_name() string {
+<a href="#l13" class="line" id="l13">     13</a> 	return &quot;channel&quot;
+<a href="#l14" class="line" id="l14">     14</a> }
+<a href="#l15" class="line" id="l15">     15</a> 
+<a href="#l16" class="line" id="l16">     16</a> func (op Channel) Shr_get_desc() string {
+<a href="#l17" class="line" id="l17">     17</a> 	return &quot;Channel&quot;
+<a href="#l18" class="line" id="l18">     18</a> }
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> func (op Channel) Shortname() string {
+<a href="#l21" class="line" id="l21">     21</a> 	return &quot;ch&quot;
+<a href="#l22" class="line" id="l22">     22</a> }
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> func (op Channel) GV_config(element uint8) string {
+<a href="#l25" class="line" id="l25">     25</a> 	result := &quot;&quot;
+<a href="#l26" class="line" id="l26">     26</a> 	switch element {
+<a href="#l27" class="line" id="l27">     27</a> 	case GVNODEINPROC:
+<a href="#l28" class="line" id="l28">     28</a> 		result += &quot;style=filled fillcolor=yellow color=black&quot;
+<a href="#l29" class="line" id="l29">     29</a> 	case GVNODE:
+<a href="#l30" class="line" id="l30">     30</a> 		result += &quot;style=filled fillcolor=yellow color=black&quot;
+<a href="#l31" class="line" id="l31">     31</a> 	case GVEDGE:
+<a href="#l32" class="line" id="l32">     32</a> 		result += &quot;arrowhead=none&quot;
+<a href="#l33" class="line" id="l33">     33</a> 	case GVCLUS:
+<a href="#l34" class="line" id="l34">     34</a> 		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey60&quot;
+<a href="#l35" class="line" id="l35">     35</a> 	case GVCLUSINPROC:
+<a href="#l36" class="line" id="l36">     36</a> 		result += &quot;style=filled;\n\t\tcolor=black;\n\t\tfillcolor=grey60&quot;
+<a href="#l37" class="line" id="l37">     37</a> 	}
+<a href="#l38" class="line" id="l38">     38</a> 	return result
+<a href="#l39" class="line" id="l39">     39</a> }
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a> func (op Channel) Instantiate(s string) (Shared_instance, bool) {
+<a href="#l42" class="line" id="l42">     42</a> 	if strings.HasPrefix(s, &quot;channel:&quot;) {
+<a href="#l43" class="line" id="l43">     43</a> 		result := new(Channel_instance)
+<a href="#l44" class="line" id="l44">     44</a> 		result.Shared_element = op
+<a href="#l45" class="line" id="l45">     45</a> 		return *result, true
+<a href="#l46" class="line" id="l46">     46</a> 	}
+<a href="#l47" class="line" id="l47">     47</a> 	return nil, false
+<a href="#l48" class="line" id="l48">     48</a> }
+<a href="#l49" class="line" id="l49">     49</a> 
+<a href="#l50" class="line" id="l50">     50</a> // The instance struct
+<a href="#l51" class="line" id="l51">     51</a> 
+<a href="#l52" class="line" id="l52">     52</a> type Channel_instance struct {
+<a href="#l53" class="line" id="l53">     53</a> 	Shared_element
+<a href="#l54" class="line" id="l54">     54</a> }
+<a href="#l55" class="line" id="l55">     55</a> 
+<a href="#l56" class="line" id="l56">     56</a> func (sm Channel_instance) String() string {
+<a href="#l57" class="line" id="l57">     57</a> 	return &quot;channel:&quot;
+<a href="#l58" class="line" id="l58">     58</a> }
+<a href="#l59" class="line" id="l59">     59</a> 
+<a href="#l60" class="line" id="l60">     60</a> func (sm Channel_instance) Write_verilog(bmach *Bondmachine, so_index int, channel_name string, flavor string) string {
+<a href="#l61" class="line" id="l61">     61</a> 
+<a href="#l62" class="line" id="l62">     62</a> 	result := &quot;&quot;
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> 	subresult := &quot;&quot;
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 	num_processors := 0
+<a href="#l67" class="line" id="l67">     67</a> 
+<a href="#l68" class="line" id="l68">     68</a> 	for _, solist := range bmach.Shared_links {
+<a href="#l69" class="line" id="l69">     69</a> 		for _, so_id := range solist {
+<a href="#l70" class="line" id="l70">     70</a> 			if so_id == so_index {
+<a href="#l71" class="line" id="l71">     71</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;chin&quot;
+<a href="#l72" class="line" id="l72">     72</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;w2w&quot;
+<a href="#l73" class="line" id="l73">     73</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;w2r&quot;
+<a href="#l74" class="line" id="l74">     74</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;ack_ch_ready&quot;
+<a href="#l75" class="line" id="l75">     75</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;op_check_ready&quot;
+<a href="#l76" class="line" id="l76">     76</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;finish_channel&quot;
+<a href="#l77" class="line" id="l77">     77</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;chout&quot;
+<a href="#l78" class="line" id="l78">     78</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;ack_w2w&quot;
+<a href="#l79" class="line" id="l79">     79</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;ack_w2r&quot;
+<a href="#l80" class="line" id="l80">     80</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;ch_ready&quot;
+<a href="#l81" class="line" id="l81">     81</a> 				subresult += &quot;, p&quot; + strconv.Itoa(num_processors) + &quot;ch_w_r_ready&quot;
+<a href="#l82" class="line" id="l82">     82</a> 				num_processors++
+<a href="#l83" class="line" id="l83">     83</a> 			}
+<a href="#l84" class="line" id="l84">     84</a> 		}
+<a href="#l85" class="line" id="l85">     85</a> 	}
+<a href="#l86" class="line" id="l86">     86</a> 	//result += &quot;module Channel(clk, reset, ch2proc_0 (pchin), proc2ch_0(pchout), ch2proc_1, proc2ch_1, wr_strobe, ack_w2w, rd_strobe, ack_w2r, ack_ch, ready);\n&quot;
+<a href="#l87" class="line" id="l87">     87</a> 	result += &quot;\n&quot;
+<a href="#l88" class="line" id="l88">     88</a> 	result += &quot;`timescale 1ns/1ps\n&quot;
+<a href="#l89" class="line" id="l89">     89</a> 	result += &quot;module &quot; + channel_name + &quot;(clk, reset&quot; + subresult + &quot;);\n&quot;
+<a href="#l90" class="line" id="l90">     90</a> 	result += &quot;\n&quot;
+<a href="#l91" class="line" id="l91">     91</a> 	result += &quot;	//--------------Input Ports-----------------------\n&quot;
+<a href="#l92" class="line" id="l92">     92</a> 	result += &quot;	input clk;\n&quot;
+<a href="#l93" class="line" id="l93">     93</a> 	result += &quot;	input reset;\n&quot;
+<a href="#l94" class="line" id="l94">     94</a> 
+<a href="#l95" class="line" id="l95">     95</a> 	subresult_in := &quot;&quot;
+<a href="#l96" class="line" id="l96">     96</a> 	subresult_out := &quot;&quot;
+<a href="#l97" class="line" id="l97">     97</a> 	num_processors = 0
+<a href="#l98" class="line" id="l98">     98</a> 
+<a href="#l99" class="line" id="l99">     99</a> 	for _, solist := range bmach.Shared_links {
+<a href="#l100" class="line" id="l100">    100</a> 		for _, so_id := range solist {
+<a href="#l101" class="line" id="l101">    101</a> 			if so_id == so_index {
+<a href="#l102" class="line" id="l102">    102</a> 				subresult_in += &quot;	input [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(num_processors) + &quot;chin;\n&quot;
+<a href="#l103" class="line" id="l103">    103</a> 				subresult_in += &quot;	input p&quot; + strconv.Itoa(num_processors) + &quot;w2w;\n&quot;
+<a href="#l104" class="line" id="l104">    104</a> 				subresult_in += &quot;	input p&quot; + strconv.Itoa(num_processors) + &quot;w2r;\n&quot;
+<a href="#l105" class="line" id="l105">    105</a> 				subresult_in += &quot;	input p&quot; + strconv.Itoa(num_processors) + &quot;ack_ch_ready;\n&quot;
+<a href="#l106" class="line" id="l106">    106</a> 				subresult_in += &quot;	input p&quot; + strconv.Itoa(num_processors) + &quot;op_check_ready;\n&quot;
+<a href="#l107" class="line" id="l107">    107</a> 				subresult_out += &quot;	output p&quot; + strconv.Itoa(num_processors) + &quot;finish_channel;\n&quot;
+<a href="#l108" class="line" id="l108">    108</a> 				subresult_out += &quot;	output [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(num_processors) + &quot;chout;\n&quot;
+<a href="#l109" class="line" id="l109">    109</a> 				subresult_out += &quot;	output p&quot; + strconv.Itoa(num_processors) + &quot;ack_w2w;\n&quot;
+<a href="#l110" class="line" id="l110">    110</a> 				subresult_out += &quot;	output p&quot; + strconv.Itoa(num_processors) + &quot;ack_w2r;\n&quot;
+<a href="#l111" class="line" id="l111">    111</a> 				subresult_out += &quot;	output p&quot; + strconv.Itoa(num_processors) + &quot;ch_ready;\n&quot;
+<a href="#l112" class="line" id="l112">    112</a> 				subresult_out += &quot;	output [1:0] p&quot; + strconv.Itoa(num_processors) + &quot;ch_w_r_ready;\n&quot;
+<a href="#l113" class="line" id="l113">    113</a> 				num_processors++
+<a href="#l114" class="line" id="l114">    114</a> 			}
+<a href="#l115" class="line" id="l115">    115</a> 		}
+<a href="#l116" class="line" id="l116">    116</a> 	}
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a> 	result += subresult_in
+<a href="#l119" class="line" id="l119">    119</a> 	result += &quot;\n&quot;
+<a href="#l120" class="line" id="l120">    120</a> 	result += &quot;	//--------------Output Ports-----------------------\n&quot;
+<a href="#l121" class="line" id="l121">    121</a> 	result += subresult_out
+<a href="#l122" class="line" id="l122">    122</a> 	result += &quot;\n&quot;
+<a href="#l123" class="line" id="l123">    123</a> 
+<a href="#l124" class="line" id="l124">    124</a> 	result += &quot;	//--------------Generic Parameter-------------------\n&quot;
+<a href="#l125" class="line" id="l125">    125</a> 	result += &quot;	parameter RAM_CH_DEPTH = 1 &lt;&lt; &quot; + strconv.Itoa(int(bmach.Rsize)) + &quot;;\n&quot;
+<a href="#l126" class="line" id="l126">    126</a> 
+<a href="#l127" class="line" id="l127">    127</a> 	result += &quot;	//--------------Reg declaration---------------------------------------------\n&quot;
+<a href="#l128" class="line" id="l128">    128</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] ch2proc_i [0:&quot; + strconv.Itoa((num_processors)-1) + &quot;];\n&quot;
+<a href="#l129" class="line" id="l129">    129</a> 	result += &quot;\n&quot;
+<a href="#l130" class="line" id="l130">    130</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] p_w2w_i_d1;\n&quot;
+<a href="#l131" class="line" id="l131">    131</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] p_w2r_i_d1;                                    \n&quot;
+<a href="#l132" class="line" id="l132">    132</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] en_wrd_storbe;\n&quot;
+<a href="#l133" class="line" id="l133">    133</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] en_wwr_storbe;\n&quot;
+<a href="#l134" class="line" id="l134">    134</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] wr_pointer_w2w; 	//write pointer for the W2W request\n&quot;
+<a href="#l135" class="line" id="l135">    135</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] wr_pointer_w2r; 	//write pointer for the W2W request\n&quot;
+<a href="#l136" class="line" id="l136">    136</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] status_w2w_pointer [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0];\n&quot;
+<a href="#l137" class="line" id="l137">    137</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] status_w2w_reg;\n&quot;
+<a href="#l138" class="line" id="l138">    138</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] status_w2r_pointer [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0];\n&quot;
+<a href="#l139" class="line" id="l139">    139</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] status_w2r_reg;\n&quot;
+<a href="#l140" class="line" id="l140">    140</a> 
+<a href="#l141" class="line" id="l141">    141</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] wwr_tag_tmp;\n&quot;
+<a href="#l142" class="line" id="l142">    142</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] wrd_tag_tmp;\n&quot;
+<a href="#l143" class="line" id="l143">    143</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] count_wwr;\n&quot;
+<a href="#l144" class="line" id="l144">    144</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] count_wrd;\n&quot;
+<a href="#l145" class="line" id="l145">    145</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] w2w_proc;\n&quot;
+<a href="#l146" class="line" id="l146">    146</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] w2r_proc;\n&quot;
+<a href="#l147" class="line" id="l147">    147</a> 
+<a href="#l148" class="line" id="l148">    148</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] wwr_ready_ch;\n&quot;
+<a href="#l149" class="line" id="l149">    149</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] wrd_ready_ch;\n&quot;
+<a href="#l150" class="line" id="l150">    150</a> 
+<a href="#l151" class="line" id="l151">    151</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] find_wwr;\n&quot;
+<a href="#l152" class="line" id="l152">    152</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] find_wrd;\n&quot;
+<a href="#l153" class="line" id="l153">    153</a> 	result += &quot;\treg wwr_finish, wrd_finish;\n&quot;
+<a href="#l154" class="line" id="l154">    154</a> 	result += &quot;\twire wwr_finish_pulse, wrd_finish_pulse;\n&quot;
+<a href="#l155" class="line" id="l155">    155</a> 	result += &quot;\treg wwr_finish_d1, wrd_finish_d1;\n&quot;
+<a href="#l156" class="line" id="l156">    156</a> 
+<a href="#l157" class="line" id="l157">    157</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] mem_tag_w2w [0:RAM_CH_DEPTH-1];\n&quot;
+<a href="#l158" class="line" id="l158">    158</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] rd_pointer_w2w;\n&quot;
+<a href="#l159" class="line" id="l159">    159</a> 
+<a href="#l160" class="line" id="l160">    160</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] mem_tag_w2r [0:RAM_CH_DEPTH-1];\n&quot;
+<a href="#l161" class="line" id="l161">    161</a> 	result += &quot;	reg [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] rd_pointer_w2r;\n&quot;
+<a href="#l162" class="line" id="l162">    162</a> 
+<a href="#l163" class="line" id="l163">    163</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] finish_channel_wwr;\n&quot;
+<a href="#l164" class="line" id="l164">    164</a> 	result += &quot;	reg [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] finish_channel_wrd;\n&quot;
+<a href="#l165" class="line" id="l165">    165</a> 	result += &quot;\n&quot;
+<a href="#l166" class="line" id="l166">    166</a> 
+<a href="#l167" class="line" id="l167">    167</a> 	result += &quot;	//--------------Wire declaration--------------------------------------------\n&quot;
+<a href="#l168" class="line" id="l168">    168</a> 	result += &quot;	wire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] proc2ch_i [0:&quot; + strconv.Itoa(num_processors) + &quot;-1];\n&quot;
+<a href="#l169" class="line" id="l169">    169</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] p_w2w_i;\n&quot;
+<a href="#l170" class="line" id="l170">    170</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] p_w2r_i;\n&quot;
+<a href="#l171" class="line" id="l171">    171</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] ch_ready;\n&quot;
+<a href="#l172" class="line" id="l172">    172</a> 	result += &quot;	wire [1:0] ch_w_r_ready [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0];\n&quot;
+<a href="#l173" class="line" id="l173">    173</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] ack_w2w_i;\n&quot;
+<a href="#l174" class="line" id="l174">    174</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] ack_w2r_i;\n&quot;
+<a href="#l175" class="line" id="l175">    175</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] ack_ch_ready_i;\n&quot;
+<a href="#l176" class="line" id="l176">    176</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] op_check_ready_i;\n&quot;
+<a href="#l177" class="line" id="l177">    177</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] finish_channel_i;\n&quot;
+<a href="#l178" class="line" id="l178">    178</a> 	result += &quot;\n&quot;
+<a href="#l179" class="line" id="l179">    179</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] reset_w2w_storbe;\n&quot;
+<a href="#l180" class="line" id="l180">    180</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] reset_w2r_storbe;\n&quot;
+<a href="#l181" class="line" id="l181">    181</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] search_wwr;\n&quot;
+<a href="#l182" class="line" id="l182">    182</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] search_w2r;\n&quot;
+<a href="#l183" class="line" id="l183">    183</a> 	result += &quot;	wire dv_w2w;\n&quot;
+<a href="#l184" class="line" id="l184">    184</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] tag_w2w;\n&quot;
+<a href="#l185" class="line" id="l185">    185</a> 	result += &quot;	wire dv_w2r;\n&quot;
+<a href="#l186" class="line" id="l186">    186</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] tag_w2r;\n&quot;
+<a href="#l187" class="line" id="l187">    187</a> 	result += &quot;	wire valid_w2w_pulse;\n&quot;
+<a href="#l188" class="line" id="l188">    188</a> 	result += &quot;	wire valid_w2r_pulse;\n&quot;
+<a href="#l189" class="line" id="l189">    189</a> 	result += &quot;	wire w2r_reg_check;\n&quot;
+<a href="#l190" class="line" id="l190">    190</a> 	result += &quot;	wire w2r_pointer_check;\n&quot;
+<a href="#l191" class="line" id="l191">    191</a> 	result += &quot;	wire w2w_reg_check;\n&quot;
+<a href="#l192" class="line" id="l192">    192</a> 	result += &quot;	wire w2w_pointer_check;\n&quot;
+<a href="#l193" class="line" id="l193">    193</a> 
+<a href="#l194" class="line" id="l194">    194</a> 	result += &quot;	//--------------Define the tag parameters of the processor----------------------------\n&quot;
+<a href="#l195" class="line" id="l195">    195</a> 	result += &quot;	wire [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0] TAG_CH [&quot; + strconv.Itoa((num_processors)-1) + &quot;:0];\n&quot;
+<a href="#l196" class="line" id="l196">    196</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l197" class="line" id="l197">    197</a> 		result += &quot;\tlocalparam TAG_CH_&quot; + strconv.Itoa(proc_id) + &quot; = &#39;b&quot; + strconv.Itoa(proc_id) + &quot;;\n&quot;
+<a href="#l198" class="line" id="l198">    198</a> 		result += &quot;\tassign TAG_CH[&quot; + strconv.Itoa(proc_id) + &quot;] = TAG_CH_&quot; + strconv.Itoa(proc_id) + &quot;;\n&quot;
+<a href="#l199" class="line" id="l199">    199</a> 	}
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> 	result += &quot;	//--------------Internal input signal assignment----------------------------\n&quot;
+<a href="#l202" class="line" id="l202">    202</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l203" class="line" id="l203">    203</a> 		result += &quot;	assign proc2ch_i[&quot; + strconv.Itoa(proc_id) + &quot;] = p&quot; + strconv.Itoa(proc_id) + &quot;chin;\n&quot;
+<a href="#l204" class="line" id="l204">    204</a> 		result += &quot;	assign p_w2w_i[&quot; + strconv.Itoa(proc_id) + &quot;] = p&quot; + strconv.Itoa(proc_id) + &quot;w2w;\n&quot; //wr_strobe
+<a href="#l205" class="line" id="l205">    205</a> 		result += &quot;	assign p_w2r_i[&quot; + strconv.Itoa(proc_id) + &quot;] = p&quot; + strconv.Itoa(proc_id) + &quot;w2r;\n&quot; //rd_strobe
+<a href="#l206" class="line" id="l206">    206</a> 		result += &quot;	assign ack_ch_ready_i[&quot; + strconv.Itoa(proc_id) + &quot;] = p&quot; + strconv.Itoa(proc_id) + &quot;ack_ch_ready;\n&quot;
+<a href="#l207" class="line" id="l207">    207</a> 		result += &quot;	assign op_check_ready_i[&quot; + strconv.Itoa(proc_id) + &quot;] = p&quot; + strconv.Itoa(proc_id) + &quot;op_check_ready;\n&quot;
+<a href="#l208" class="line" id="l208">    208</a> 
+<a href="#l209" class="line" id="l209">    209</a> 	}
+<a href="#l210" class="line" id="l210">    210</a> 	result += &quot;\n&quot;
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> 	result += &quot;	//--------------Internal output signal assignment----------------------------------\n&quot;
+<a href="#l213" class="line" id="l213">    213</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l214" class="line" id="l214">    214</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;finish_channel = finish_channel_i[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l215" class="line" id="l215">    215</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;ch_ready = ch_ready[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l216" class="line" id="l216">    216</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;ch_w_r_ready = ch_w_r_ready[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l217" class="line" id="l217">    217</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;ack_w2w = ack_w2w_i[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l218" class="line" id="l218">    218</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;ack_w2r = ack_w2r_i[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l219" class="line" id="l219">    219</a> 		result += &quot;	assign p&quot; + strconv.Itoa(proc_id) + &quot;chout = ch2proc_i[&quot; + strconv.Itoa(proc_id) + &quot;];\n&quot;
+<a href="#l220" class="line" id="l220">    220</a> 	}
+<a href="#l221" class="line" id="l221">    221</a> 
+<a href="#l222" class="line" id="l222">    222</a> 	result += &quot;\n&quot;
+<a href="#l223" class="line" id="l223">    223</a> 	result += &quot;	//---------------------Delay Register---------------------------------------------\n&quot;
+<a href="#l224" class="line" id="l224">    224</a> 	result += &quot;	always@(posedge clk)\n&quot;
+<a href="#l225" class="line" id="l225">    225</a> 	result += &quot;	begin\n&quot;
+<a href="#l226" class="line" id="l226">    226</a> 	result += &quot;		if(reset) begin\n&quot;
+<a href="#l227" class="line" id="l227">    227</a> 	result += &quot;			p_w2w_i_d1 &lt;= #1 &#39;b0;\n&quot;
+<a href="#l228" class="line" id="l228">    228</a> 	result += &quot;        	p_w2r_i_d1 &lt;= #1 &#39;b0;\n&quot;
+<a href="#l229" class="line" id="l229">    229</a> 	result += &quot;    	end\n&quot;
+<a href="#l230" class="line" id="l230">    230</a> 	result += &quot;    	else begin\n&quot;
+<a href="#l231" class="line" id="l231">    231</a> 	result += &quot;			p_w2w_i_d1 &lt;= #1 p_w2w_i;\n&quot;
+<a href="#l232" class="line" id="l232">    232</a> 	result += &quot;        	p_w2r_i_d1 &lt;= #1 p_w2r_i;\n&quot;
+<a href="#l233" class="line" id="l233">    233</a> 	result += &quot;     end\n&quot;
+<a href="#l234" class="line" id="l234">    234</a> 	result += &quot;	end\n&quot;
+<a href="#l235" class="line" id="l235">    235</a> 	result += &quot;\n&quot;
+<a href="#l236" class="line" id="l236">    236</a> 
+<a href="#l237" class="line" id="l237">    237</a> 	result += &quot;	//-------------- Logic design ---------------------------------------------\n&quot;
+<a href="#l238" class="line" id="l238">    238</a> 	result += &quot;	//Define the TAG ID for each processor attached to the channel\n&quot;
+<a href="#l239" class="line" id="l239">    239</a> 	result += &quot;	/*genvar i_tag;\n&quot;
+<a href="#l240" class="line" id="l240">    240</a> 	result += &quot;	generate\n&quot;
+<a href="#l241" class="line" id="l241">    241</a> 	result += &quot;		for (i_tag=0; i_tag &lt; &quot; + strconv.Itoa(num_processors) + &quot;; i_tag=i_tag+1) begin\n&quot;
+<a href="#l242" class="line" id="l242">    242</a> 	result += &quot;			always @(posedge clk) begin\n&quot;
+<a href="#l243" class="line" id="l243">    243</a> 	result += &quot;				if(reset)\n&quot;
+<a href="#l244" class="line" id="l244">    244</a> 	result += &quot;					TAG_CH[i_tag] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l245" class="line" id="l245">    245</a> 	result += &quot;				else\n&quot;
+<a href="#l246" class="line" id="l246">    246</a> 	result += &quot;					TAG_CH[i_tag] &lt;= #1 i_tag;\n&quot;
+<a href="#l247" class="line" id="l247">    247</a> 	result += &quot;			end\n&quot;
+<a href="#l248" class="line" id="l248">    248</a> 	result += &quot;		end\n&quot;
+<a href="#l249" class="line" id="l249">    249</a> 	result += &quot;	endgenerate*/\n&quot;
+<a href="#l250" class="line" id="l250">    250</a> 	result += &quot;\n&quot;
+<a href="#l251" class="line" id="l251">    251</a> 
+<a href="#l252" class="line" id="l252">    252</a> 	result += &quot;	//insert the satus register for each processor the Write Operation\n&quot;
+<a href="#l253" class="line" id="l253">    253</a> 	result += &quot;	//the register is enabled when the write_strobe is asserted\n&quot;
+<a href="#l254" class="line" id="l254">    254</a> 	result += &quot;	//the register is reset when the write_storge is asserted\n&quot;
+<a href="#l255" class="line" id="l255">    255</a> 	result += &quot;	//the write pointer is inserted in the status register\n&quot;
+<a href="#l256" class="line" id="l256">    256</a> 	result += &quot;	genvar i_status;\n&quot;
+<a href="#l257" class="line" id="l257">    257</a> 	result += &quot;	generate\n&quot;
+<a href="#l258" class="line" id="l258">    258</a> 	result += &quot;		for (i_status=0; i_status &lt; &quot; + strconv.Itoa(num_processors) + &quot;; i_status = i_status + 1) begin\n&quot;
+<a href="#l259" class="line" id="l259">    259</a> 	result += &quot;			always @(posedge clk or posedge reset) begin\n&quot;
+<a href="#l260" class="line" id="l260">    260</a> 	result += &quot;				if(reset) begin\n&quot;
+<a href="#l261" class="line" id="l261">    261</a> 	result += &quot;					status_w2w_pointer[i_status] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l262" class="line" id="l262">    262</a> 	result += &quot;					status_w2w_reg[i_status] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l263" class="line" id="l263">    263</a> 	result += &quot;				end\n&quot;
+<a href="#l264" class="line" id="l264">    264</a> 	result += &quot;				else begin\n&quot;
+<a href="#l265" class="line" id="l265">    265</a> 	result += &quot;					if(reset_w2w_storbe[i_status]) begin\n&quot;
+<a href="#l266" class="line" id="l266">    266</a> 	result += &quot;						status_w2w_pointer[i_status] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l267" class="line" id="l267">    267</a> 	result += &quot;						status_w2w_reg[i_status] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l268" class="line" id="l268">    268</a> 	result += &quot;					end\n&quot;
+<a href="#l269" class="line" id="l269">    269</a> 	result += &quot;					else if(en_wwr_storbe[i_status]) begin\n&quot;
+<a href="#l270" class="line" id="l270">    270</a> 	result += &quot;						status_w2w_pointer[i_status] &lt;= #1 wr_pointer_w2w;\n&quot;
+<a href="#l271" class="line" id="l271">    271</a> 	result += &quot;						status_w2w_reg[i_status] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l272" class="line" id="l272">    272</a> 	result += &quot;					end\n&quot;
+<a href="#l273" class="line" id="l273">    273</a> 	result += &quot;				end\n&quot;
+<a href="#l274" class="line" id="l274">    274</a> 	result += &quot;			end\n&quot;
+<a href="#l275" class="line" id="l275">    275</a> 	result += &quot;		end\n&quot;
+<a href="#l276" class="line" id="l276">    276</a> 	result += &quot;	endgenerate\n&quot;
+<a href="#l277" class="line" id="l277">    277</a> 	result += &quot;\n&quot;
+<a href="#l278" class="line" id="l278">    278</a> 	result += &quot;	assign reset_w2w_storbe = (~p_w2w_i) &amp; p_w2w_i_d1;\n&quot;
+<a href="#l279" class="line" id="l279">    279</a> 	result += &quot;\n&quot;
+<a href="#l280" class="line" id="l280">    280</a> 
+<a href="#l281" class="line" id="l281">    281</a> 	result += &quot;	//insert the satus register for each processor the Read Operation\n&quot;
+<a href="#l282" class="line" id="l282">    282</a> 	result += &quot;	//the register is enabled when the read_strobe is asserted\n&quot;
+<a href="#l283" class="line" id="l283">    283</a> 	result += &quot;	//the register is reset when the read_strobe is asserted\n&quot;
+<a href="#l284" class="line" id="l284">    284</a> 	result += &quot;	//the write pointer for the read is inserted in the status register\n&quot;
+<a href="#l285" class="line" id="l285">    285</a> 	result += &quot;	genvar i_status_w2r;\n&quot;
+<a href="#l286" class="line" id="l286">    286</a> 	result += &quot;	generate\n&quot;
+<a href="#l287" class="line" id="l287">    287</a> 	result += &quot;		for (i_status_w2r=0; i_status_w2r &lt; &quot; + strconv.Itoa(num_processors) + &quot;; i_status_w2r=i_status_w2r+1) begin\n&quot;
+<a href="#l288" class="line" id="l288">    288</a> 	result += &quot;			always @(posedge clk or posedge reset) begin\n&quot;
+<a href="#l289" class="line" id="l289">    289</a> 	result += &quot;				if(reset) begin\n&quot;
+<a href="#l290" class="line" id="l290">    290</a> 	result += &quot;					status_w2r_pointer[i_status_w2r] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l291" class="line" id="l291">    291</a> 	result += &quot;					status_w2r_reg[i_status_w2r] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l292" class="line" id="l292">    292</a> 	result += &quot;				end\n&quot;
+<a href="#l293" class="line" id="l293">    293</a> 	result += &quot;				else begin\n&quot;
+<a href="#l294" class="line" id="l294">    294</a> 	result += &quot;					if(reset_w2r_storbe[i_status_w2r]) begin\n&quot;
+<a href="#l295" class="line" id="l295">    295</a> 	result += &quot;						status_w2r_pointer[i_status_w2r] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l296" class="line" id="l296">    296</a> 	result += &quot;						status_w2r_reg[i_status_w2r] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l297" class="line" id="l297">    297</a> 	result += &quot;					end\n&quot;
+<a href="#l298" class="line" id="l298">    298</a> 	result += &quot;					else if(en_wrd_storbe[i_status_w2r]) begin\n&quot;
+<a href="#l299" class="line" id="l299">    299</a> 	result += &quot;						status_w2r_pointer[i_status_w2r] &lt;= #1 wr_pointer_w2r;\n&quot;
+<a href="#l300" class="line" id="l300">    300</a> 	result += &quot;						status_w2r_reg[i_status_w2r] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l301" class="line" id="l301">    301</a> 	result += &quot;					end\n&quot;
+<a href="#l302" class="line" id="l302">    302</a> 	result += &quot;				end\n&quot;
+<a href="#l303" class="line" id="l303">    303</a> 	result += &quot;			end\n&quot;
+<a href="#l304" class="line" id="l304">    304</a> 	result += &quot;		end\n&quot;
+<a href="#l305" class="line" id="l305">    305</a> 	result += &quot;	endgenerate\n&quot;
+<a href="#l306" class="line" id="l306">    306</a> 	result += &quot;\n&quot;
+<a href="#l307" class="line" id="l307">    307</a> 	result += &quot;	assign reset_w2r_storbe = (~p_w2r_i) &amp; p_w2r_i_d1;\n&quot;
+<a href="#l308" class="line" id="l308">    308</a> 	result += &quot;\n&quot;
+<a href="#l309" class="line" id="l309">    309</a> 
+<a href="#l310" class="line" id="l310">    310</a> 	result += &quot;	//define the counter to randmly select the tag                                                   \n&quot;
+<a href="#l311" class="line" id="l311">    311</a> 	result += &quot;	//the down and up signal define the searching range to                                           \n&quot;
+<a href="#l312" class="line" id="l312">    312</a> 	result += &quot;	//select the tag                                                                                 \n&quot;
+<a href="#l313" class="line" id="l313">    313</a> 	result += &quot;	assign search_wwr =  p_w2w_i &amp; (p_w2w_i ^ status_w2w_reg);                               \n&quot;
+<a href="#l314" class="line" id="l314">    314</a> 	result += &quot;\n&quot;
+<a href="#l315" class="line" id="l315">    315</a> 	result += &quot;\tinteger idy;\n&quot;
+<a href="#l316" class="line" id="l316">    316</a> 	result += &quot;\talways @(posedge clk or posedge reset) begin\n&quot;
+<a href="#l317" class="line" id="l317">    317</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l318" class="line" id="l318">    318</a> 	result += &quot;\t		wwr_tag_tmp &lt;= #1 &#39;b0;\n&quot;
+<a href="#l319" class="line" id="l319">    319</a> 	result += &quot;\t      	find_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l320" class="line" id="l320">    320</a> 	result += &quot;\t      	en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l321" class="line" id="l321">    321</a> 	result += &quot;\t	end\n&quot;
+<a href="#l322" class="line" id="l322">    322</a> 	result += &quot;\t   else begin\n&quot;
+<a href="#l323" class="line" id="l323">    323</a> 	result += &quot;\t   	en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l324" class="line" id="l324">    324</a> 	result += &quot;\t       for( idy = 0; idy &lt; &quot; + strconv.Itoa(num_processors) + &quot;; idy = idy + 1) begin\n&quot;
+<a href="#l325" class="line" id="l325">    325</a> 	result += &quot;\t           if(reset_w2r_storbe[idy]) begin\n&quot;
+<a href="#l326" class="line" id="l326">    326</a> 	result += &quot;\t               find_wwr[idy] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l327" class="line" id="l327">    327</a> 	result += &quot;\t           end\n&quot;
+<a href="#l328" class="line" id="l328">    328</a> 	result += &quot;\t           else if(search_wwr[idy]==1 &amp; find_wwr[idy]==1&#39;b0) begin\n&quot;
+<a href="#l329" class="line" id="l329">    329</a> 	result += &quot;\t                wwr_tag_tmp &lt;= #1 TAG_CH[idy];\n&quot;
+<a href="#l330" class="line" id="l330">    330</a> 	result += &quot;\t                en_wwr_storbe[idy] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l331" class="line" id="l331">    331</a> 	result += &quot;\t                find_wwr[idy] &lt;= #1 &#39;b1;\n&quot;
+<a href="#l332" class="line" id="l332">    332</a> 	result += &quot;\t           end\n&quot;
+<a href="#l333" class="line" id="l333">    333</a> 	result += &quot;\t       end\n&quot;
+<a href="#l334" class="line" id="l334">    334</a> 	result += &quot;\t   end\n&quot;
+<a href="#l335" class="line" id="l335">    335</a> 	result += &quot;\tend\n&quot;
+<a href="#l336" class="line" id="l336">    336</a> 	/*result += &quot;\tinteger idy;\n&quot;
+<a href="#l337" class="line" id="l337">    337</a> 	result += &quot;\talways @(posedge clk) begin\n&quot;
+<a href="#l338" class="line" id="l338">    338</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l339" class="line" id="l339">    339</a> 	result += &quot;\t    	wwr_tag_tmp &lt;= #1 &#39;b0;\n&quot;
+<a href="#l340" class="line" id="l340">    340</a> 	result += &quot;\t       count_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l341" class="line" id="l341">    341</a> 	result += &quot;\t       find_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l342" class="line" id="l342">    342</a> 	result += &quot;\t       en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l343" class="line" id="l343">    343</a> 	result += &quot;\t	end\n&quot;
+<a href="#l344" class="line" id="l344">    344</a> 	result += &quot;\t   else begin\n&quot;
+<a href="#l345" class="line" id="l345">    345</a> 	result += &quot;\t   	find_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l346" class="line" id="l346">    346</a> 	result += &quot;\t       en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l347" class="line" id="l347">    347</a> 	result += &quot;\t       if(|p_w2w_i==0) begin\n&quot;
+<a href="#l348" class="line" id="l348">    348</a> 	result += &quot;\t        	count_wwr = #1 count_wwr +1;\n&quot;
+<a href="#l349" class="line" id="l349">    349</a> 	result += &quot;\t       end\n&quot;
+<a href="#l350" class="line" id="l350">    350</a> 	result += &quot;\t       else begin\n&quot;
+<a href="#l351" class="line" id="l351">    351</a> 	result += &quot;\t       	for( idy = 0; idy &lt; &quot; + strconv.Itoa(num_processors) + &quot;; idy = idy + 1) begin\n&quot;
+<a href="#l352" class="line" id="l352">    352</a> 	result += &quot;\t            	if(search_wwr[idy]==1 &amp; idy &gt;= count_wwr &amp; find_wwr==1&#39;b0) begin\n&quot;
+<a href="#l353" class="line" id="l353">    353</a> 	result += &quot;\t           	   	wwr_tag_tmp &lt;= #1 TAG_CH[idy];\n&quot;
+<a href="#l354" class="line" id="l354">    354</a> 	//result += &quot;\t                  	en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l355" class="line" id="l355">    355</a> 	result += &quot;\t                  	en_wwr_storbe[idy] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l356" class="line" id="l356">    356</a> 	result += &quot;\t                  	find_wwr &lt;= #1 &#39;b1;\n&quot;
+<a href="#l357" class="line" id="l357">    357</a> 	result += &quot;\t               end\n&quot;
+<a href="#l358" class="line" id="l358">    358</a> 	result += &quot;\t               if(search_wwr[idy]==1 &amp; idy &lt; count_wwr &amp; find_wwr==1&#39;b0) begin\n&quot;
+<a href="#l359" class="line" id="l359">    359</a> 	result += &quot;\t                	wwr_tag_tmp &lt;= #1 TAG_CH[idy];\n&quot;
+<a href="#l360" class="line" id="l360">    360</a> 	result += &quot;\t                  	find_wwr &lt;= #1 &#39;b1;\n&quot;
+<a href="#l361" class="line" id="l361">    361</a> 	//result += &quot;\t                  	en_wwr_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l362" class="line" id="l362">    362</a> 	result += &quot;\t                  	en_wwr_storbe[idy] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l363" class="line" id="l363">    363</a> 	result += &quot;\t               end\n&quot;
+<a href="#l364" class="line" id="l364">    364</a> 	result += &quot;\t           end\n&quot;
+<a href="#l365" class="line" id="l365">    365</a> 	result += &quot;\t       end\n&quot;
+<a href="#l366" class="line" id="l366">    366</a> 	result += &quot;\t   end\n&quot;
+<a href="#l367" class="line" id="l367">    367</a> 	result += &quot;\tend\n&quot;
+<a href="#l368" class="line" id="l368">    368</a> 	result += &quot;\n&quot;*/
+<a href="#l369" class="line" id="l369">    369</a> 
+<a href="#l370" class="line" id="l370">    370</a> 	result += &quot;	//signal valid to write in the memory                                                            \n&quot;
+<a href="#l371" class="line" id="l371">    371</a> 	result += &quot;	assign valid_w2w_pulse = |en_wwr_storbe;\n&quot;
+<a href="#l372" class="line" id="l372">    372</a> 	result += &quot;	assign ack_w2w_i = en_wwr_storbe;\n&quot;
+<a href="#l373" class="line" id="l373">    373</a> 	result += &quot;\n&quot;
+<a href="#l374" class="line" id="l374">    374</a> 
+<a href="#l375" class="line" id="l375">    375</a> 	result += &quot;	//define the counter to randmly select the tag                                                   \n&quot;
+<a href="#l376" class="line" id="l376">    376</a> 	result += &quot;	//the down and up signal define the searching range to                                           \n&quot;
+<a href="#l377" class="line" id="l377">    377</a> 	result += &quot;	//select the tag                                                                                 \n&quot;
+<a href="#l378" class="line" id="l378">    378</a> 	result += &quot;	assign search_w2r =  p_w2r_i &amp; (p_w2r_i ^ status_w2r_reg);                               \n&quot;
+<a href="#l379" class="line" id="l379">    379</a> 	result += &quot;                                                                                                 \n&quot;
+<a href="#l380" class="line" id="l380">    380</a> 	result += &quot;\tinteger idx;\n&quot;
+<a href="#l381" class="line" id="l381">    381</a> 	result += &quot;\talways @(posedge clk or posedge reset) begin\n&quot;
+<a href="#l382" class="line" id="l382">    382</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l383" class="line" id="l383">    383</a> 	result += &quot;\t		wrd_tag_tmp &lt;= #1 &#39;b0;\n&quot;
+<a href="#l384" class="line" id="l384">    384</a> 	result += &quot;\t      	find_wrd &lt;= #1 &#39;b0;\n&quot;
+<a href="#l385" class="line" id="l385">    385</a> 	result += &quot;\t      	en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l386" class="line" id="l386">    386</a> 	result += &quot;\t	end\n&quot;
+<a href="#l387" class="line" id="l387">    387</a> 	result += &quot;\t   else begin\n&quot;
+<a href="#l388" class="line" id="l388">    388</a> 	result += &quot;\t   	en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l389" class="line" id="l389">    389</a> 	result += &quot;\t       for( idx = 0; idx &lt; &quot; + strconv.Itoa(num_processors) + &quot;; idx = idx + 1) begin\n&quot;
+<a href="#l390" class="line" id="l390">    390</a> 	result += &quot;\t           if(reset_w2r_storbe[idx]) begin\n&quot;
+<a href="#l391" class="line" id="l391">    391</a> 	result += &quot;\t               find_wrd[idx] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l392" class="line" id="l392">    392</a> 	result += &quot;\t           end\n&quot;
+<a href="#l393" class="line" id="l393">    393</a> 	result += &quot;\t           else if(search_w2r[idx]==1 &amp; find_wrd[idx]==1&#39;b0) begin\n&quot;
+<a href="#l394" class="line" id="l394">    394</a> 	result += &quot;\t                wrd_tag_tmp &lt;= #1 TAG_CH[idx];\n&quot;
+<a href="#l395" class="line" id="l395">    395</a> 	result += &quot;\t                en_wrd_storbe[idx] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l396" class="line" id="l396">    396</a> 	result += &quot;\t                find_wrd[idx] &lt;= #1 &#39;b1;\n&quot;
+<a href="#l397" class="line" id="l397">    397</a> 	result += &quot;\t           end\n&quot;
+<a href="#l398" class="line" id="l398">    398</a> 	result += &quot;\t       end\n&quot;
+<a href="#l399" class="line" id="l399">    399</a> 	result += &quot;\t   end\n&quot;
+<a href="#l400" class="line" id="l400">    400</a> 	result += &quot;\tend\n&quot;
+<a href="#l401" class="line" id="l401">    401</a> 
+<a href="#l402" class="line" id="l402">    402</a> 	/*result += &quot;\talways @(posedge clk) begin\n&quot;
+<a href="#l403" class="line" id="l403">    403</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l404" class="line" id="l404">    404</a> 	result += &quot;\t    	wrd_tag_tmp &lt;= #1 &#39;b0;\n&quot;
+<a href="#l405" class="line" id="l405">    405</a> 	result += &quot;\t       count_wrd &lt;= #1 &#39;b0;\n&quot;
+<a href="#l406" class="line" id="l406">    406</a> 	result += &quot;\t       find_wrd &lt;= #1 &#39;b0;\n&quot;
+<a href="#l407" class="line" id="l407">    407</a> 	result += &quot;\t       en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l408" class="line" id="l408">    408</a> 	result += &quot;\t   end\n&quot;
+<a href="#l409" class="line" id="l409">    409</a> 	result += &quot;\t   else begin\n&quot;
+<a href="#l410" class="line" id="l410">    410</a> 	result += &quot;\t   	find_wrd &lt;= #1 &#39;b0;\n&quot;
+<a href="#l411" class="line" id="l411">    411</a> 	result += &quot;\t       en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l412" class="line" id="l412">    412</a> 	result += &quot;\t       if(|p_w2r_i==0) begin\n&quot;
+<a href="#l413" class="line" id="l413">    413</a> 	result += &quot;\t        	count_wrd = #1 count_wrd +1;\n&quot;
+<a href="#l414" class="line" id="l414">    414</a> 	result += &quot;\t       end\n&quot;
+<a href="#l415" class="line" id="l415">    415</a> 	result += &quot;\t       else begin\n&quot;
+<a href="#l416" class="line" id="l416">    416</a> 	result += &quot;\t       	for( idx = 0; idx &lt; &quot; + strconv.Itoa(num_processors) + &quot;; idx = idx + 1) begin\n&quot;
+<a href="#l417" class="line" id="l417">    417</a> 	result += &quot;\t              	if(search_w2r[idx]==1 &amp; idx &gt;= count_wrd &amp; find_wrd==1&#39;b0) begin\n&quot;
+<a href="#l418" class="line" id="l418">    418</a> 	result += &quot;\t                  	wrd_tag_tmp &lt;= #1 TAG_CH[idx];\n&quot;
+<a href="#l419" class="line" id="l419">    419</a> 	//result += &quot;\t                  	en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l420" class="line" id="l420">    420</a> 	result += &quot;\t                  	en_wrd_storbe[idx] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l421" class="line" id="l421">    421</a> 	result += &quot;\t                  	find_wrd &lt;= #1 &#39;b1;\n&quot;
+<a href="#l422" class="line" id="l422">    422</a> 	result += &quot;\t              	end\n&quot;
+<a href="#l423" class="line" id="l423">    423</a> 	result += &quot;\t              	if(search_w2r[idx]==1 &amp; idx &lt; count_wrd &amp; find_wrd==1&#39;b0) begin \n&quot;
+<a href="#l424" class="line" id="l424">    424</a> 	result += &quot;\t                  	wrd_tag_tmp &lt;= #1 TAG_CH[idx];\n&quot;
+<a href="#l425" class="line" id="l425">    425</a> 	result += &quot;\t                  	find_wrd &lt;= #1 &#39;b1;\n&quot;
+<a href="#l426" class="line" id="l426">    426</a> 	//result += &quot;\t                  	en_wrd_storbe &lt;= #1 &#39;b0;\n&quot;
+<a href="#l427" class="line" id="l427">    427</a> 	result += &quot;\t                  	en_wrd_storbe[idx] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l428" class="line" id="l428">    428</a> 	result += &quot;\t              	end\n&quot;
+<a href="#l429" class="line" id="l429">    429</a> 	result += &quot;\t           end\n&quot;
+<a href="#l430" class="line" id="l430">    430</a> 	result += &quot;\t       end\n&quot;
+<a href="#l431" class="line" id="l431">    431</a> 	result += &quot;\t   end\n&quot;
+<a href="#l432" class="line" id="l432">    432</a> 	result += &quot;\tend\n&quot;
+<a href="#l433" class="line" id="l433">    433</a> 	result += &quot;\n&quot;*/
+<a href="#l434" class="line" id="l434">    434</a> 
+<a href="#l435" class="line" id="l435">    435</a> 	result += &quot;	//signal valid to write in the memory                                                            \n&quot;
+<a href="#l436" class="line" id="l436">    436</a> 	result += &quot;	assign valid_w2r_pulse = |en_wrd_storbe;   //change as function of processor     \n&quot;
+<a href="#l437" class="line" id="l437">    437</a> 	result += &quot;	assign ack_w2r_i = en_wrd_storbe;\n&quot;
+<a href="#l438" class="line" id="l438">    438</a> 	result += &quot;\n&quot;
+<a href="#l439" class="line" id="l439">    439</a> 
+<a href="#l440" class="line" id="l440">    440</a> 	result += &quot;	// Memory Circular Block to store the W2W                                                        \n&quot;
+<a href="#l441" class="line" id="l441">    441</a> 	result += &quot;	//this memeory store the tag of the incoming processor                                           \n&quot;
+<a href="#l442" class="line" id="l442">    442</a> 	result += &quot;	//for the reading oepration                                                                      \n&quot;
+<a href="#l443" class="line" id="l443">    443</a> 	result += &quot;	always @ (posedge clk)                                                                           \n&quot;
+<a href="#l444" class="line" id="l444">    444</a> 	result += &quot;	begin : TAG_MEM                                                                                  \n&quot;
+<a href="#l445" class="line" id="l445">    445</a> 	result += &quot; 	integer k;                                                                                     \n&quot;
+<a href="#l446" class="line" id="l446">    446</a> 	result += &quot;    	if (reset) begin                                                                             \n&quot;
+<a href="#l447" class="line" id="l447">    447</a> 	result += &quot;     	for(k=0;k&lt;RAM_CH_DEPTH;k=k+1)                                                                \n&quot;
+<a href="#l448" class="line" id="l448">    448</a> 	result += &quot;     		mem_tag_w2w[k] &lt;= #1 &#39;b0;                                                                \n&quot;
+<a href="#l449" class="line" id="l449">    449</a> 	result += &quot;    	end                                                                                          \n&quot;
+<a href="#l450" class="line" id="l450">    450</a> 	result += &quot;    	else if (valid_w2w_pulse) begin                                                              \n&quot;
+<a href="#l451" class="line" id="l451">    451</a> 	result += &quot;     	mem_tag_w2w[wr_pointer_w2w] &lt;= #1  wwr_tag_tmp;                                          \n&quot;
+<a href="#l452" class="line" id="l452">    452</a> 	result += &quot;    	end                                                                                          \n&quot;
+<a href="#l453" class="line" id="l453">    453</a> 	result += &quot;	end                                                                                              \n&quot;
+<a href="#l454" class="line" id="l454">    454</a> 	result += &quot;                                                                                                 \n&quot;
+<a href="#l455" class="line" id="l455">    455</a> 	result += &quot;	always @ (posedge clk)                                                                          \n&quot;
+<a href="#l456" class="line" id="l456">    456</a> 	result += &quot;	begin                                                                                            \n&quot;
+<a href="#l457" class="line" id="l457">    457</a> 	result += &quot; 	if(reset)                                                                                    \n&quot;
+<a href="#l458" class="line" id="l458">    458</a> 	result += &quot;     	wr_pointer_w2w &lt;= #1 &#39;b0;                                                                \n&quot;
+<a href="#l459" class="line" id="l459">    459</a> 	result += &quot;    	else if (valid_w2w_pulse)                                                                    \n&quot;
+<a href="#l460" class="line" id="l460">    460</a> 	result += &quot;     	wr_pointer_w2w &lt;= #1 wr_pointer_w2w + 1;                                                 \n&quot;
+<a href="#l461" class="line" id="l461">    461</a> 	result += &quot;	end                                                                                              \n&quot;
+<a href="#l462" class="line" id="l462">    462</a> 	result += &quot;                                                                                                 \n&quot;
+<a href="#l463" class="line" id="l463">    463</a> 	result += &quot;	assign w2w_reg_check = status_w2w_reg[mem_tag_w2w[rd_pointer_w2w]]==1&#39;b1 ? 1&#39;b1 : 1&#39;b0;            \n&quot;
+<a href="#l464" class="line" id="l464">    464</a> 	result += &quot;	assign w2w_pointer_check = status_w2w_pointer[mem_tag_w2w[rd_pointer_w2w]]==rd_pointer_w2w ? 1&#39;b1 : 1&#39;b0; 				\n&quot;
+<a href="#l465" class="line" id="l465">    465</a> 	result += &quot;\n&quot;
+<a href="#l466" class="line" id="l466">    466</a> 
+<a href="#l467" class="line" id="l467">    467</a> 	result += &quot;\treg of_wwr;\n&quot;
+<a href="#l468" class="line" id="l468">    468</a> 	result += &quot;\talways @(rd_pointer_w2w, wr_pointer_w2w)\n&quot;
+<a href="#l469" class="line" id="l469">    469</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l470" class="line" id="l470">    470</a> 	result += &quot;\t	if(rd_pointer_w2w &lt;= wr_pointer_w2w)\n&quot;
+<a href="#l471" class="line" id="l471">    471</a> 	result += &quot;\t   	of_wwr &lt;= 1&#39;b0;\n&quot;
+<a href="#l472" class="line" id="l472">    472</a> 	result += &quot;\t   else if (rd_pointer_w2w &gt; wr_pointer_w2w)\n&quot;
+<a href="#l473" class="line" id="l473">    473</a> 	result += &quot;\t   	of_wwr &lt;= 1&#39;b1;\n&quot;
+<a href="#l474" class="line" id="l474">    474</a> 	result += &quot;\tend\n&quot;
+<a href="#l475" class="line" id="l475">    475</a> 
+<a href="#l476" class="line" id="l476">    476</a> 	result += &quot;\talways @ (posedge clk )\n&quot;
+<a href="#l477" class="line" id="l477">    477</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l478" class="line" id="l478">    478</a> 	result += &quot;\t	if(reset)\n&quot;
+<a href="#l479" class="line" id="l479">    479</a> 	result += &quot;\t    	rd_pointer_w2w &lt;= #1 &#39;b0;\n&quot;
+<a href="#l480" class="line" id="l480">    480</a> 	result += &quot;\t	else begin\n&quot;
+<a href="#l481" class="line" id="l481">    481</a> 	result += &quot;\t		if((rd_pointer_w2w &lt; wr_pointer_w2w) | of_wwr) begin\n&quot;
+<a href="#l482" class="line" id="l482">    482</a> 	result += &quot;\t			if(~w2w_reg_check)\n&quot;
+<a href="#l483" class="line" id="l483">    483</a> 	result += &quot;\t				rd_pointer_w2w &lt;= #1 rd_pointer_w2w + 1;\n&quot;
+<a href="#l484" class="line" id="l484">    484</a> 	result += &quot;\t			else if(wwr_finish_pulse)\n&quot;
+<a href="#l485" class="line" id="l485">    485</a> 	result += &quot;\t				rd_pointer_w2w &lt;= #1 rd_pointer_w2w + 1;\n&quot;
+<a href="#l486" class="line" id="l486">    486</a> 	result += &quot;\t		end\n&quot;
+<a href="#l487" class="line" id="l487">    487</a> 	result += &quot;\t	end\n&quot;
+<a href="#l488" class="line" id="l488">    488</a> 	result += &quot;\tend\n&quot;
+<a href="#l489" class="line" id="l489">    489</a> 	result += &quot;\n&quot;
+<a href="#l490" class="line" id="l490">    490</a> 
+<a href="#l491" class="line" id="l491">    491</a> 	result += &quot;	// Memory Circular Block to store the W2R                                                                            \n&quot;
+<a href="#l492" class="line" id="l492">    492</a> 	result += &quot;	//this memeory store the tag of the incoming processor                                                               \n&quot;
+<a href="#l493" class="line" id="l493">    493</a> 	result += &quot;	//for the reading oepration                                                                                          \n&quot;
+<a href="#l494" class="line" id="l494">    494</a> 	result += &quot;	always @ (posedge clk)                                                                                               \n&quot;
+<a href="#l495" class="line" id="l495">    495</a> 	result += &quot;	begin : TAG_MEM_W2R                                                                                                  \n&quot;
+<a href="#l496" class="line" id="l496">    496</a> 	result += &quot; 	integer k;                                                                                                         \n&quot;
+<a href="#l497" class="line" id="l497">    497</a> 	result += &quot;    	if (reset) begin                                                                                                 \n&quot;
+<a href="#l498" class="line" id="l498">    498</a> 	result += &quot;     	for(k=0;k&lt;RAM_CH_DEPTH;k=k+1)                                                                                    \n&quot;
+<a href="#l499" class="line" id="l499">    499</a> 	result += &quot;        		mem_tag_w2r[k] &lt;= #1 8&#39;b0;                                                                                   \n&quot;
+<a href="#l500" class="line" id="l500">    500</a> 	result += &quot;   	end                                                                                                              \n&quot;
+<a href="#l501" class="line" id="l501">    501</a> 	result += &quot;    	else if (valid_w2r_pulse) begin                                                                                  \n&quot;
+<a href="#l502" class="line" id="l502">    502</a> 	result += &quot;     	mem_tag_w2r[wr_pointer_w2r] &lt;= #1  wrd_tag_tmp;                                                              \n&quot;
+<a href="#l503" class="line" id="l503">    503</a> 	result += &quot;    	end                                                                                                              \n&quot;
+<a href="#l504" class="line" id="l504">    504</a> 	result += &quot;	end                                                                                                                  \n&quot;
+<a href="#l505" class="line" id="l505">    505</a> 	result += &quot;                                                                                                                     \n&quot;
+<a href="#l506" class="line" id="l506">    506</a> 	result += &quot;	assign w2r_reg_check = status_w2r_reg[mem_tag_w2r[rd_pointer_w2r]]==1&#39;b1 ? 1&#39;b1 : 1&#39;b0;                                \n&quot;
+<a href="#l507" class="line" id="l507">    507</a> 	result += &quot;	assign w2r_pointer_check = status_w2r_pointer[mem_tag_w2r[rd_pointer_w2r]]==rd_pointer_w2r ? 1&#39;b1 : 1&#39;b0;              \n&quot;
+<a href="#l508" class="line" id="l508">    508</a> 	result += &quot;\n&quot;
+<a href="#l509" class="line" id="l509">    509</a> 
+<a href="#l510" class="line" id="l510">    510</a> 	result += &quot;\treg of_wrd;\n&quot;
+<a href="#l511" class="line" id="l511">    511</a> 	result += &quot;\talways @(rd_pointer_w2r, wr_pointer_w2r)\n&quot;
+<a href="#l512" class="line" id="l512">    512</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l513" class="line" id="l513">    513</a> 	result += &quot;\t	if(rd_pointer_w2r &lt;= wr_pointer_w2r)\n&quot;
+<a href="#l514" class="line" id="l514">    514</a> 	result += &quot;\t   	of_wrd &lt;= 1&#39;b0;\n&quot;
+<a href="#l515" class="line" id="l515">    515</a> 	result += &quot;\t   else if (rd_pointer_w2r &gt; wr_pointer_w2r)\n&quot;
+<a href="#l516" class="line" id="l516">    516</a> 	result += &quot;\t   	of_wrd &lt;= 1&#39;b1;\n&quot;
+<a href="#l517" class="line" id="l517">    517</a> 	result += &quot;\tend\n&quot;
+<a href="#l518" class="line" id="l518">    518</a> 
+<a href="#l519" class="line" id="l519">    519</a> 	result += &quot;\talways @ (posedge clk )                                                                                              \n&quot;
+<a href="#l520" class="line" id="l520">    520</a> 	result += &quot;\tbegin                                                                                                                \n&quot;
+<a href="#l521" class="line" id="l521">    521</a> 	result += &quot;\t	if(reset)                                                                                                        \n&quot;
+<a href="#l522" class="line" id="l522">    522</a> 	result += &quot;\t   	wr_pointer_w2r &lt;= #1 &#39;b0;                                                                                    \n&quot;
+<a href="#l523" class="line" id="l523">    523</a> 	result += &quot;\t   else if (valid_w2r_pulse)                                                                                        \n&quot;
+<a href="#l524" class="line" id="l524">    524</a> 	result += &quot;\t   	wr_pointer_w2r &lt;= #1 wr_pointer_w2r + 1;                                                                     \n&quot;
+<a href="#l525" class="line" id="l525">    525</a> 	result += &quot;\tend                                                                                                                  \n&quot;
+<a href="#l526" class="line" id="l526">    526</a> 	result += &quot;\t                                                                                                                    \n&quot;
+<a href="#l527" class="line" id="l527">    527</a> 	result += &quot;\talways @ (posedge clk )                                                                                              \n&quot;
+<a href="#l528" class="line" id="l528">    528</a> 	result += &quot;\tbegin                                                                                                                \n&quot;
+<a href="#l529" class="line" id="l529">    529</a> 	result += &quot;\t	if(reset)                                                                                                        \n&quot;
+<a href="#l530" class="line" id="l530">    530</a> 	result += &quot;\t		rd_pointer_w2r &lt;= #1 &#39;b0;                                                                                    \n&quot;
+<a href="#l531" class="line" id="l531">    531</a> 	result += &quot;\t   else begin\n&quot;
+<a href="#l532" class="line" id="l532">    532</a> 	result += &quot;\t		if((rd_pointer_w2r &lt; wr_pointer_w2r) | of_wrd) begin\n&quot;
+<a href="#l533" class="line" id="l533">    533</a> 	result += &quot;\t			if(~w2r_reg_check)\n&quot;
+<a href="#l534" class="line" id="l534">    534</a> 	result += &quot;\t				rd_pointer_w2r &lt;= #1 rd_pointer_w2r + 1;\n&quot;
+<a href="#l535" class="line" id="l535">    535</a> 	result += &quot;\t			else if(wrd_finish_pulse)\n&quot;
+<a href="#l536" class="line" id="l536">    536</a> 	result += &quot;\t				rd_pointer_w2r &lt;= #1 rd_pointer_w2r + 1;\n&quot;
+<a href="#l537" class="line" id="l537">    537</a> 	result += &quot;\t		end\n&quot;
+<a href="#l538" class="line" id="l538">    538</a> 	result += &quot;\t	end\n&quot;
+<a href="#l539" class="line" id="l539">    539</a> 	result += &quot;\tend\n&quot;
+<a href="#l540" class="line" id="l540">    540</a> 	result += &quot;\n&quot;
+<a href="#l541" class="line" id="l541">    541</a> 
+<a href="#l542" class="line" id="l542">    542</a> 	result += &quot;	//data valid for generate the ack connection                                                                         \n&quot;
+<a href="#l543" class="line" id="l543">    543</a> 	result += &quot;	assign tag_w2w = mem_tag_w2w[rd_pointer_w2w];\n&quot;
+<a href="#l544" class="line" id="l544">    544</a> 	result += &quot;	assign tag_w2r = mem_tag_w2r[rd_pointer_w2r];\n&quot;
+<a href="#l545" class="line" id="l545">    545</a> 	result += &quot;	assign dv_w2w = w2w_reg_check &amp; w2w_pointer_check; //status_tag_mem_w2w;//status_w2w_reg[mem_tag[rd_pointer_w2w]];     \n&quot;
+<a href="#l546" class="line" id="l546">    546</a> 	result += &quot;	assign dv_w2r = w2r_reg_check &amp; w2r_pointer_check; 																	\n&quot;
+<a href="#l547" class="line" id="l547">    547</a> 
+<a href="#l548" class="line" id="l548">    548</a> 	result += &quot;\t//logic to assert the ACK operation\n&quot;
+<a href="#l549" class="line" id="l549">    549</a> 	result += &quot;\tassign ch_ready = (wwr_ready_ch | wrd_ready_ch) &amp; {&quot; + strconv.Itoa(num_processors) + &quot;{|wwr_ready_ch}} &amp; {&quot; + strconv.Itoa(num_processors) + &quot;{|wrd_ready_ch}};\n&quot;
+<a href="#l550" class="line" id="l550">    550</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l551" class="line" id="l551">    551</a> 		result += &quot;\tassign ch_w_r_ready[&quot; + strconv.Itoa(proc_id) + &quot;] = {wrd_ready_ch[&quot; + strconv.Itoa(proc_id) + &quot;], wwr_ready_ch[&quot; + strconv.Itoa(proc_id) + &quot;]};\n&quot;
+<a href="#l552" class="line" id="l552">    552</a> 	}
+<a href="#l553" class="line" id="l553">    553</a> 	result += &quot;\n&quot;
+<a href="#l554" class="line" id="l554">    554</a> 	result += &quot;\talways @(posedge clk or posedge reset)\n&quot;
+<a href="#l555" class="line" id="l555">    555</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l556" class="line" id="l556">    556</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l557" class="line" id="l557">    557</a> 	result += &quot;\t		wwr_ready_ch &lt;= #1 &#39;b0;\n&quot;
+<a href="#l558" class="line" id="l558">    558</a> 	result += &quot;\t		wrd_ready_ch &lt;= #1 &#39;b0;\n&quot;
+<a href="#l559" class="line" id="l559">    559</a> 	result += &quot;\t	end\n&quot;
+<a href="#l560" class="line" id="l560">    560</a> 	result += &quot;\t	else begin\n&quot;
+<a href="#l561" class="line" id="l561">    561</a> 	result += &quot;\t		if(dv_w2w &amp; dv_w2r &amp; op_check_ready_i[tag_w2w]  &amp; tag_w2w!=tag_w2r)\n&quot;
+<a href="#l562" class="line" id="l562">    562</a> 	result += &quot;\t			wwr_ready_ch[tag_w2w] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l563" class="line" id="l563">    563</a> 	result += &quot;\t		else\n&quot;
+<a href="#l564" class="line" id="l564">    564</a> 	result += &quot;\t			wwr_ready_ch[tag_w2w] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l565" class="line" id="l565">    565</a> 	result += &quot;\t		if(dv_w2r &amp; dv_w2w &amp; op_check_ready_i[tag_w2r]  &amp; tag_w2w!=tag_w2r)\n&quot;
+<a href="#l566" class="line" id="l566">    566</a> 	result += &quot;\t			wrd_ready_ch[tag_w2r] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l567" class="line" id="l567">    567</a> 	result += &quot;\t		else\n&quot;
+<a href="#l568" class="line" id="l568">    568</a> 	result += &quot;\t			wrd_ready_ch[tag_w2r] &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l569" class="line" id="l569">    569</a> 	result += &quot;\t	end\n&quot;
+<a href="#l570" class="line" id="l570">    570</a> 	result += &quot;\tend\n&quot;
+<a href="#l571" class="line" id="l571">    571</a> 
+<a href="#l572" class="line" id="l572">    572</a> 	result += &quot;//define the ready logic to pass the data\n&quot;
+<a href="#l573" class="line" id="l573">    573</a> 	result += &quot;\talways @(posedge clk or posedge reset)\n&quot;
+<a href="#l574" class="line" id="l574">    574</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l575" class="line" id="l575">    575</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l576" class="line" id="l576">    576</a> 	result += &quot;\t		wwr_finish &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l577" class="line" id="l577">    577</a> 	result += &quot;\t		finish_channel_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l578" class="line" id="l578">    578</a> 	result += &quot;\t		wrd_finish &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l579" class="line" id="l579">    579</a> 	result += &quot;\t		finish_channel_wrd[tag_w2r] &lt;= #1 &#39;b0;\n&quot;
+<a href="#l580" class="line" id="l580">    580</a> 	result += &quot;\t	end\n&quot;
+<a href="#l581" class="line" id="l581">    581</a> 	result += &quot;\t	else begin\n&quot;
+<a href="#l582" class="line" id="l582">    582</a> 	result += &quot;\t		if(ack_ch_ready_i[tag_w2w]==1&#39;b1) begin\n&quot;
+<a href="#l583" class="line" id="l583">    583</a> 	result += &quot;\t			wwr_finish &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l584" class="line" id="l584">    584</a> 	result += &quot;\t			finish_channel_wwr[tag_w2w] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l585" class="line" id="l585">    585</a> 	result += &quot;\t		end\n&quot;
+<a href="#l586" class="line" id="l586">    586</a> 	result += &quot;\t		else begin\n&quot;
+<a href="#l587" class="line" id="l587">    587</a> 	result += &quot;\t			wwr_finish &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l588" class="line" id="l588">    588</a> 	result += &quot;\t			finish_channel_wwr &lt;= #1 &#39;b0;\n&quot;
+<a href="#l589" class="line" id="l589">    589</a> 	result += &quot;\t		end\n&quot;
+<a href="#l590" class="line" id="l590">    590</a> 	result += &quot;\t		if(ack_ch_ready_i[tag_w2r]==1&#39;b1) begin\n&quot;
+<a href="#l591" class="line" id="l591">    591</a> 	result += &quot;\t			wrd_finish &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l592" class="line" id="l592">    592</a> 	result += &quot;\t			finish_channel_wrd[tag_w2r] &lt;= #1 1&#39;b1;\n&quot;
+<a href="#l593" class="line" id="l593">    593</a> 	result += &quot;\t		end\n&quot;
+<a href="#l594" class="line" id="l594">    594</a> 	result += &quot;\t		else begin\n&quot;
+<a href="#l595" class="line" id="l595">    595</a> 	result += &quot;\t			wrd_finish &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l596" class="line" id="l596">    596</a> 	result += &quot;\t			finish_channel_wrd &lt;= #1 &#39;b0;\n&quot;
+<a href="#l597" class="line" id="l597">    597</a> 	result += &quot;\t		end\n&quot;
+<a href="#l598" class="line" id="l598">    598</a> 	result += &quot;\t	end\n&quot;
+<a href="#l599" class="line" id="l599">    599</a> 	result += &quot;\tend\n&quot;
+<a href="#l600" class="line" id="l600">    600</a> 	result += &quot;\t\n&quot;
+<a href="#l601" class="line" id="l601">    601</a> 	//result += &quot;\talways @(tag_w2r or tag_w2w)\n&quot;
+<a href="#l602" class="line" id="l602">    602</a> 	//result += &quot;\tbegin\n&quot;
+<a href="#l603" class="line" id="l603">    603</a> 	//result += &quot;\t	ch2proc_i[tag_w2r] &lt;= proc2ch_i[tag_w2w];\n&quot;
+<a href="#l604" class="line" id="l604">    604</a> 	//result += &quot;\tend\n&quot;
+<a href="#l605" class="line" id="l605">    605</a> 
+<a href="#l606" class="line" id="l606">    606</a> 	result += &quot;\t\n&quot;
+<a href="#l607" class="line" id="l607">    607</a> 	result += &quot;\tassign finish_channel_i = (finish_channel_wrd | finish_channel_wwr) &amp; {&quot; + strconv.Itoa(num_processors) + &quot;{wrd_finish}}  &amp; {&quot; + strconv.Itoa(num_processors) + &quot;{wwr_finish}};\n&quot;
+<a href="#l608" class="line" id="l608">    608</a> 	result += &quot;\n&quot;
+<a href="#l609" class="line" id="l609">    609</a> 	result += &quot;\t//process finish\n&quot;
+<a href="#l610" class="line" id="l610">    610</a> 	result += &quot;\talways @ (posedge clk)\n&quot;
+<a href="#l611" class="line" id="l611">    611</a> 	result += &quot;\tbegin\n&quot;
+<a href="#l612" class="line" id="l612">    612</a> 	result += &quot;\t	if(reset) begin\n&quot;
+<a href="#l613" class="line" id="l613">    613</a> 	result += &quot;\t		wrd_finish_d1 &lt;= #1 &#39;b0;\n&quot;
+<a href="#l614" class="line" id="l614">    614</a> 	result += &quot;\t		wwr_finish_d1 &lt;= #1 &#39;b0;\n&quot;
+<a href="#l615" class="line" id="l615">    615</a> 	result += &quot;\t	end\n&quot;
+<a href="#l616" class="line" id="l616">    616</a> 	result += &quot;\t	else begin\n&quot;
+<a href="#l617" class="line" id="l617">    617</a> 	result += &quot;\t    	wrd_finish_d1 &lt;= #1 wrd_finish;\n&quot;
+<a href="#l618" class="line" id="l618">    618</a> 	result += &quot;\t		wwr_finish_d1 &lt;= #1 wwr_finish;\n&quot;
+<a href="#l619" class="line" id="l619">    619</a> 	result += &quot;\t	end\n&quot;
+<a href="#l620" class="line" id="l620">    620</a> 	result += &quot;\tend\n&quot;
+<a href="#l621" class="line" id="l621">    621</a> 	result += &quot;\n&quot;
+<a href="#l622" class="line" id="l622">    622</a> 	result += &quot;\tassign wrd_finish_pulse = ~wrd_finish &amp; wrd_finish_d1 &amp; finish_channel_i;\n&quot;
+<a href="#l623" class="line" id="l623">    623</a> 	result += &quot;\tassign wwr_finish_pulse = ~wwr_finish &amp; wwr_finish_d1 &amp; finish_channel_i;\n&quot;
+<a href="#l624" class="line" id="l624">    624</a> 	result += &quot;\n&quot;
+<a href="#l625" class="line" id="l625">    625</a> 
+<a href="#l626" class="line" id="l626">    626</a> 	result += &quot;\tinteger i_ch2proc;\n&quot;
+<a href="#l627" class="line" id="l627">    627</a> 	result += &quot;\talways @ (*) begin//(posedge clk or posedge reset) begin\n&quot;
+<a href="#l628" class="line" id="l628">    628</a> 	result += &quot;\t	for (i_ch2proc=0; i_ch2proc &lt; 2; i_ch2proc=i_ch2proc+1) begin\n&quot;
+<a href="#l629" class="line" id="l629">    629</a> 	result += &quot;\t		ch2proc_i[i_ch2proc] &lt;= &#39;b0;\n&quot;
+<a href="#l630" class="line" id="l630">    630</a> 	result += &quot;\t	if(tag_w2r==i_ch2proc)\n&quot;
+<a href="#l631" class="line" id="l631">    631</a> 	result += &quot;\t		ch2proc_i[i_ch2proc] &lt;= proc2ch_i[tag_w2w];\n&quot;
+<a href="#l632" class="line" id="l632">    632</a> 	result += &quot;\t	end\n&quot;
+<a href="#l633" class="line" id="l633">    633</a> 	result += &quot;\tend\n&quot;
+<a href="#l634" class="line" id="l634">    634</a> 
+<a href="#l635" class="line" id="l635">    635</a> 	result += &quot;\n&quot;
+<a href="#l636" class="line" id="l636">    636</a> 	result += &quot;	// synthesis translate_off\n&quot;
+<a href="#l637" class="line" id="l637">    637</a> 	result += &quot;	//define assertion to check the enaable_wr_strobe assertion                                                                                                                  \n&quot;
+<a href="#l638" class="line" id="l638">    638</a> 	result += &quot;	generate                                                                                                                                                                     \n&quot;
+<a href="#l639" class="line" id="l639">    639</a> 	result += &quot;		for (genvar j = 0; j &lt; &quot; + strconv.Itoa(num_processors) + &quot;; j++)                                                                                                                               \n&quot;
+<a href="#l640" class="line" id="l640">    640</a> 	result += &quot;			begin : assert_array                                                                                                                                                    \n&quot;
+<a href="#l641" class="line" id="l641">    641</a> 	result += &quot;			//controllo che dopo il read strobe si abilita l&#39;enable                                                                                                                 \n&quot;
+<a href="#l642" class="line" id="l642">    642</a> 	result += &quot;			rd_strobe_enable:assert property (@(posedge clk) disable iff(reset) $rose(en_wrd_storbe[j]) |-&gt; ##1 status_w2r_reg[j]);                                              \n&quot;
+<a href="#l643" class="line" id="l643">    643</a> 	result += &quot;			wr_strobe_enable:assert property (@(posedge clk) disable iff(reset) $rose(en_wwr_storbe[j]) |-&gt; ##1 status_w2w_reg[j]);                                              \n&quot;
+<a href="#l644" class="line" id="l644">    644</a> 	result += &quot;			//controllo che dopo il read strobe basso si abilita il reset                                                                                                           \n&quot;
+<a href="#l645" class="line" id="l645">    645</a> 	result += &quot;			reset_wr_strobe:assert property (@(posedge clk) disable iff(reset) $fell(p_w2w_i[j]) |-&gt; ##0 reset_w2w_storbe[j]);                                                     \n&quot;
+<a href="#l646" class="line" id="l646">    646</a> 	result += &quot;			reset_rd_strobe:assert property (@(posedge clk) disable iff(reset) $fell(p_w2r_i[j]) |-&gt; ##0 reset_w2r_storbe[j]);                                                     \n&quot;
+<a href="#l647" class="line" id="l647">    647</a> 	result += &quot;			//controllo l&#39;abilitazione del data valid                                                                                                                               \n&quot;
+<a href="#l648" class="line" id="l648">    648</a> 	result += &quot;		                                                                                                                                                                        \n&quot;
+<a href="#l649" class="line" id="l649">    649</a> 	result += &quot;			//il data valid non si deve abilitare se viene tolto il read                                                                                                            \n&quot;
+<a href="#l650" class="line" id="l650">    650</a> 	result += &quot;		                                                                                                                                                                        \n&quot;
+<a href="#l651" class="line" id="l651">    651</a> 	result += &quot;			//devo ricevere un solo ready dal canale per read e write                                                                                                               \n&quot;
+<a href="#l652" class="line" id="l652">    652</a> 	result += &quot;                                                                                                                                                                             \n&quot;
+<a href="#l653" class="line" id="l653">    653</a> 	result += &quot;	end\n&quot;
+<a href="#l654" class="line" id="l654">    654</a> 	result += &quot;	endgenerate\n&quot;
+<a href="#l655" class="line" id="l655">    655</a> 	result += &quot;\n&quot;
+<a href="#l656" class="line" id="l656">    656</a> 	result += &quot;\t//devo mandare dal canale un solo wwr o wrd ai canali perchè il canale ne sceglie sono una coppia\n&quot;
+<a href="#l657" class="line" id="l657">    657</a> 	result += &quot;\twwr_ch:assert property (@(posedge clk) disable iff(reset | ~(&quot;
+<a href="#l658" class="line" id="l658">    658</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l659" class="line" id="l659">    659</a> 		result += &quot; ack_ch_ready_i[&quot; + strconv.Itoa(proc_id) + &quot;] &quot;
+<a href="#l660" class="line" id="l660">    660</a> 		if proc_id &lt; num_processors-1 {
+<a href="#l661" class="line" id="l661">    661</a> 			result += &quot;&amp;&quot;
+<a href="#l662" class="line" id="l662">    662</a> 		}
+<a href="#l663" class="line" id="l663">    663</a> 	}
+<a href="#l664" class="line" id="l664">    664</a> 	result += &quot;)) $onehot(wwr_ready_ch));\n&quot;
+<a href="#l665" class="line" id="l665">    665</a> 	result += &quot;\tw2r_ch:assert property (@(posedge clk) disable iff(reset | ~(&quot;
+<a href="#l666" class="line" id="l666">    666</a> 	for proc_id := 0; proc_id &lt; num_processors; proc_id++ {
+<a href="#l667" class="line" id="l667">    667</a> 		result += &quot; ack_ch_ready_i[&quot; + strconv.Itoa(proc_id) + &quot;] &quot;
+<a href="#l668" class="line" id="l668">    668</a> 		if proc_id &lt; num_processors-1 {
+<a href="#l669" class="line" id="l669">    669</a> 			result += &quot;&amp;&quot;
+<a href="#l670" class="line" id="l670">    670</a> 		}
+<a href="#l671" class="line" id="l671">    671</a> 	}
+<a href="#l672" class="line" id="l672">    672</a> 	result += &quot;))$onehot(wrd_ready_ch));\n&quot;
+<a href="#l673" class="line" id="l673">    673</a> 	result += &quot;\t// synthesis translate_on                                                                                                                                                    \n&quot;
+<a href="#l674" class="line" id="l674">    674</a> 	result += &quot;\n&quot;
+<a href="#l675" class="line" id="l675">    675</a> 	result += &quot;endmodule \n&quot;
+<a href="#l676" class="line" id="l676">    676</a> 
+<a href="#l677" class="line" id="l677">    677</a> 	return result
+<a href="#l678" class="line" id="l678">    678</a> }
+<a href="#l679" class="line" id="l679">    679</a> 
+<a href="#l680" class="line" id="l680">    680</a> func (sm Channel_instance) GetPerProcPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+<a href="#l681" class="line" id="l681">    681</a> 	result := &quot;&quot;
+<a href="#l682" class="line" id="l682">    682</a> 	if soname, ok := bmach.Get_so_name(so_id); ok {
+<a href="#l683" class="line" id="l683">    683</a> 		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;chin;\n&quot;
+<a href="#l684" class="line" id="l684">    684</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;w2w;\n&quot;
+<a href="#l685" class="line" id="l685">    685</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;w2r;\n&quot;
+<a href="#l686" class="line" id="l686">    686</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_ch_ready;\n&quot;
+<a href="#l687" class="line" id="l687">    687</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;op_check_ready;\n&quot;
+<a href="#l688" class="line" id="l688">    688</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;finish_channel;\n&quot;
+<a href="#l689" class="line" id="l689">    689</a> 		result += &quot;\twire [&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;chout;\n&quot;
+<a href="#l690" class="line" id="l690">    690</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_w2w;\n&quot;
+<a href="#l691" class="line" id="l691">    691</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_w2r;\n&quot;
+<a href="#l692" class="line" id="l692">    692</a> 		result += &quot;\twire p&quot; + strconv.Itoa(proc_id) + soname + &quot;ch_ready;\n&quot;
+<a href="#l693" class="line" id="l693">    693</a> 		result += &quot;\twire [1:0] p&quot; + strconv.Itoa(proc_id) + soname + &quot;ch_w_r_ready;\n&quot;
+<a href="#l694" class="line" id="l694">    694</a> 		result += &quot;\n&quot;
+<a href="#l695" class="line" id="l695">    695</a> 	}
+<a href="#l696" class="line" id="l696">    696</a> 	return result
+<a href="#l697" class="line" id="l697">    697</a> }
+<a href="#l698" class="line" id="l698">    698</a> 
+<a href="#l699" class="line" id="l699">    699</a> func (sm Channel_instance) GetPerProcPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+<a href="#l700" class="line" id="l700">    700</a> 	result := &quot;&quot;
+<a href="#l701" class="line" id="l701">    701</a> 	if soname, ok := bmach.Get_so_name(so_id); ok {
+<a href="#l702" class="line" id="l702">    702</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;chin&quot;
+<a href="#l703" class="line" id="l703">    703</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;w2w&quot;
+<a href="#l704" class="line" id="l704">    704</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;w2r&quot;
+<a href="#l705" class="line" id="l705">    705</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_ch_ready&quot;
+<a href="#l706" class="line" id="l706">    706</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;op_check_ready&quot;
+<a href="#l707" class="line" id="l707">    707</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;finish_channel&quot;
+<a href="#l708" class="line" id="l708">    708</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;chout&quot;
+<a href="#l709" class="line" id="l709">    709</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_w2w&quot;
+<a href="#l710" class="line" id="l710">    710</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;ack_w2r&quot;
+<a href="#l711" class="line" id="l711">    711</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;ch_ready&quot;
+<a href="#l712" class="line" id="l712">    712</a> 		result += &quot;, p&quot; + strconv.Itoa(proc_id) + soname + &quot;ch_w_r_ready&quot;
+<a href="#l713" class="line" id="l713">    713</a> 	}
+<a href="#l714" class="line" id="l714">    714</a> 	return result
+<a href="#l715" class="line" id="l715">    715</a> }
+<a href="#l716" class="line" id="l716">    716</a> 
+<a href="#l717" class="line" id="l717">    717</a> func (sm Channel_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+<a href="#l718" class="line" id="l718">    718</a> 	result := &quot;&quot;
+<a href="#l719" class="line" id="l719">    719</a> 	return result
+<a href="#l720" class="line" id="l720">    720</a> }
+<a href="#l721" class="line" id="l721">    721</a> 
+<a href="#l722" class="line" id="l722">    722</a> func (sm Channel_instance) GetExternalPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+<a href="#l723" class="line" id="l723">    723</a> 	result := &quot;&quot;
+<a href="#l724" class="line" id="l724">    724</a> 	return result
+<a href="#l725" class="line" id="l725">    725</a> }
+<a href="#l726" class="line" id="l726">    726</a> 
+<a href="#l727" class="line" id="l727">    727</a> func (sm Channel_instance) GetCPSharedPortsHeader(bmach *Bondmachine, so_id int, flavor string) string {
+<a href="#l728" class="line" id="l728">    728</a> 	result := &quot;&quot;
+<a href="#l729" class="line" id="l729">    729</a> 	return result
+<a href="#l730" class="line" id="l730">    730</a> }
+<a href="#l731" class="line" id="l731">    731</a> 
+<a href="#l732" class="line" id="l732">    732</a> func (sm Channel_instance) GetCPSharedPortsWires(bmach *Bondmachine, so_id int, flavor string) string {
+<a href="#l733" class="line" id="l733">    733</a> 	result := &quot;&quot;
+<a href="#l734" class="line" id="l734">    734</a> 	return result
+<a href="#l735" class="line" id="l735">    735</a> }
+</pre>
+</div>
+</body>
+</html>

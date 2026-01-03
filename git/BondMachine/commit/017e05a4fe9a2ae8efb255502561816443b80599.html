@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>simulation bmnumber integration - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/017e05a4fe9a2ae8efb255502561816443b80599.html">017e05a4fe9a2ae8efb255502561816443b80599</a>
+<b>parent</b> <a href="../commit/50deb7126c0177cf76be030192192a95603705d2.html">50deb7126c0177cf76be030192192a95603705d2</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 29 Apr 2023 11:16:30 +0200
+
+simulation bmnumber integration
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmnumbers/import.go</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">100</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 103 insertions(+), 63 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,7 +8,6 @@ import (
+</a> 	&quot;fmt&quot;
+ 	&quot;io/ioutil&quot;
+ 	&quot;log&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;math&quot;
+</a> 	&quot;math/rand&quot;
+ 	&quot;net&quot;
+ 	&quot;os&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -906,12 +905,7 @@ func main() {
+</a> 
+ 				// This will get value to report on this tick
+ 				if rep, exist_reports := srep.AbsGet[i]; exist_reports {
+<a href="#h0-1-3" id="h0-1-3" class="d">-					types := make([]string, len(rep))
+</a> 					for k := range rep {
+<a href="#h0-1-5" id="h0-1-5" class="d">-						if _, ok := rep[k].(float32); ok {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-							types[k] = &quot;float32&quot;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-						}
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-
+</a> 						rep[k] = *srep.Reportables[k]
+ 					}
+ 					keys := make([]int, 0, len(rep))
+<a href="#h0-2" id="h0-2" class="h">@@ -920,11 +914,26 @@ func main() {
+</a> 					}
+ 					sort.Ints(keys)
+ 					for _, k := range keys {
+<a href="#h0-2-3" id="h0-2-3" class="d">-						if types[k] == &quot;float32&quot; {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-							floatFromUint := math.Float32frombits(rep[k].(uint32))
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-							fmt.Print(floatFromUint, &quot;,&quot;)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+						nType := srep.ReportablesTypes[k]
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+						if _, err := bmnumbers.EventuallyCreateType(nType, nil); err != nil {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+							log.Fatal(err)
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+						}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+						if v := bmnumbers.GetType(nType); v == nil {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+							log.Fatal(&quot;Error: Unknown type&quot;)
+</a> 						} else {
+<a href="#h0-2-13" id="h0-2-13" class="d">-							fmt.Print(rep[k], &quot;,,&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+							if number, err := bmnumbers.ImportUint(rep[k]); err != nil {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+								log.Fatal(err)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+							} else {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+								if err := bmnumbers.CastType(number, v); err != nil {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+									log.Fatal(err)
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+								} else {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+									if numberS, err := number.ExportString(); err != nil {
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+										log.Fatal(err)
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+									} else {
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+										fmt.Println(numberS)
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+									}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+								}
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+							}
+</a> 						}
+ 					}
+ 				}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a> b/<a href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -23,6 +23,43 @@ func ImportString(input string) (*BMNumber, error) {
+</a> 	return nil, errors.New(&quot;unknown number format &quot; + input)
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+func ImportUint(input interface{}) (*BMNumber, error) {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	result := new(BMNumber)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	result.nType = Unsigned{}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	switch input.(type) {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	case uint8:
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		result.bits = 8
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		result.number = make([]byte, 1)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		result.number[0] = input.(uint8)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	case uint16:
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		result.bits = 16
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		result.number = make([]byte, 2)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		result.number[1] = uint8(input.(uint16) &gt;&gt; 8 &amp; 0xFF)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		result.number[0] = uint8(input.(uint16) &amp; 0xFF)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	case uint32:
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+		result.bits = 32
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+		result.number = make([]byte, 4)
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		result.number[3] = uint8(input.(uint32) &gt;&gt; 24 &amp; 0xFF)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+		result.number[2] = uint8(input.(uint32) &gt;&gt; 16 &amp; 0xFF)
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+		result.number[1] = uint8(input.(uint32) &gt;&gt; 8 &amp; 0xFF)
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+		result.number[0] = uint8(input.(uint32) &amp; 0xFF)
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	case uint64:
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		result.bits = 64
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		result.number = make([]byte, 8)
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		result.number[7] = uint8(input.(uint64) &gt;&gt; 56 &amp; 0xFF)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		result.number[6] = uint8(input.(uint64) &gt;&gt; 48 &amp; 0xFF)
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+		result.number[5] = uint8(input.(uint64) &gt;&gt; 40 &amp; 0xFF)
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		result.number[4] = uint8(input.(uint64) &gt;&gt; 32 &amp; 0xFF)
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		result.number[3] = uint8(input.(uint64) &gt;&gt; 24 &amp; 0xFF)
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+		result.number[2] = uint8(input.(uint64) &gt;&gt; 16 &amp; 0xFF)
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		result.number[1] = uint8(input.(uint64) &gt;&gt; 8 &amp; 0xFF)
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+		result.number[0] = uint8(input.(uint64) &amp; 0xFF)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	default:
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+		return nil, errors.New(&quot;unknown uint type&quot;)
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	}
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	return result, nil
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+}
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+
+</a> func LoadLinearDataRangesFromFile(filename string) error {
+ 
+ 	// Get the linear quantizer ranges struct
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -54,12 +54,14 @@ type Sim_drive struct {
+</a> type Sim_tick_get map[int]interface{}
+ type Sim_tick_show map[int]bool
+ type Sim_report struct {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	Reportables []*interface{}
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	Showables   []*interface{}
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	AbsGet      map[uint64]Sim_tick_get
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	PerGet      map[uint64]Sim_tick_get
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	AbsShow     map[uint64]Sim_tick_show
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	PerShow     map[uint64]Sim_tick_show
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	Reportables      []*interface{}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	Showables        []*interface{}
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	ReportablesTypes []string
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	ShowablesTypes   []string
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	AbsGet           map[uint64]Sim_tick_get
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	PerGet           map[uint64]Sim_tick_get
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	AbsShow          map[uint64]Sim_tick_show
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	PerShow          map[uint64]Sim_tick_show
+</a> }
+ 
+ func (vm *VM) Processor_execute(psc *procbuilder.Sim_config, instruct &lt;-chan int, resp chan&lt;- int, result_chan chan&lt;- string, proc_id int) {
+<a href="#h2-1" id="h2-1" class="h">@@ -518,6 +520,8 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 
+ 	rep := make([]*interface{}, 0)
+ 	sho := make([]*interface{}, 0)
+<a href="#h2-1-3" id="h2-1-3" class="i">+	repTypes := make([]string, 0)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	shoTypes := make([]string, 0)
+</a> 	absget := make(map[uint64]Sim_tick_get)
+ 	perget := make(map[uint64]Sim_tick_get)
+ 	absshow := make(map[uint64]Sim_tick_show)
+<a href="#h2-2" id="h2-2" class="h">@@ -537,6 +541,11 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				if ipos == -1 {
+ 					ipos = len(rep)
+ 					rep = append(rep, loc)
+<a href="#h2-2-3" id="h2-2-3" class="i">+					if rule.Extra == &quot;&quot; {
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+						repTypes = append(repTypes, &quot;unsigned&quot;)
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+					} else {
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+						repTypes = append(repTypes, rule.Extra)
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+					}
+</a> 				}
+ 
+ 				if strOnTick, ok := absget[rule.Tick]; ok {
+<a href="#h2-3" id="h2-3" class="h">@@ -546,17 +555,9 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 16:
+ 						strOnTick[ipos] = uint16(0)
+ 					case 32:
+<a href="#h2-3-3" id="h2-3-3" class="d">-						if rule.Extra == &quot;float32&quot; {
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-							strOnTick[ipos] = float32(0)
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-						} else {
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-							strOnTick[ipos] = uint32(0)
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-						}
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+						strOnTick[ipos] = uint32(0)
+</a> 					case 64:
+<a href="#h2-3-10" id="h2-3-10" class="d">-						if rule.Extra == &quot;float64&quot; {
+</a><a href="#h2-3-11" id="h2-3-11" class="d">-							strOnTick[ipos] = float64(0)
+</a><a href="#h2-3-12" id="h2-3-12" class="d">-						} else {
+</a><a href="#h2-3-13" id="h2-3-13" class="d">-							strOnTick[ipos] = uint64(0)
+</a><a href="#h2-3-14" id="h2-3-14" class="d">-						}
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+						strOnTick[ipos] = uint64(0)
+</a> 					default:
+ 						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+ 					}
+<a href="#h2-4" id="h2-4" class="h">@@ -568,17 +569,9 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 16:
+ 						strOnTick[ipos] = uint16(0)
+ 					case 32:
+<a href="#h2-4-3" id="h2-4-3" class="d">-						if rule.Extra == &quot;float32&quot; {
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-							strOnTick[ipos] = float32(0)
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-						} else {
+</a><a href="#h2-4-6" id="h2-4-6" class="d">-							strOnTick[ipos] = uint32(0)
+</a><a href="#h2-4-7" id="h2-4-7" class="d">-						}
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+						strOnTick[ipos] = uint32(0)
+</a> 					case 64:
+<a href="#h2-4-10" id="h2-4-10" class="d">-						if rule.Extra == &quot;float64&quot; {
+</a><a href="#h2-4-11" id="h2-4-11" class="d">-							strOnTick[ipos] = float64(0)
+</a><a href="#h2-4-12" id="h2-4-12" class="d">-						} else {
+</a><a href="#h2-4-13" id="h2-4-13" class="d">-							strOnTick[ipos] = uint64(0)
+</a><a href="#h2-4-14" id="h2-4-14" class="d">-						}
+</a><a href="#h2-4-15" id="h2-4-15" class="i">+						strOnTick[ipos] = uint64(0)
+</a> 					default:
+ 						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+ 					}
+<a href="#h2-5" id="h2-5" class="h">@@ -601,6 +594,11 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				if ipos == -1 {
+ 					ipos = len(rep)
+ 					rep = append(rep, loc)
+<a href="#h2-5-3" id="h2-5-3" class="i">+					if rule.Extra == &quot;&quot; {
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+						repTypes = append(repTypes, &quot;unsigned&quot;)
+</a><a href="#h2-5-5" id="h2-5-5" class="i">+					} else {
+</a><a href="#h2-5-6" id="h2-5-6" class="i">+						repTypes = append(repTypes, rule.Extra)
+</a><a href="#h2-5-7" id="h2-5-7" class="i">+					}
+</a> 				}
+ 
+ 				if strOnTick, ok := perget[rule.Tick]; ok {
+<a href="#h2-6" id="h2-6" class="h">@@ -610,17 +608,9 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 16:
+ 						strOnTick[ipos] = uint16(0)
+ 					case 32:
+<a href="#h2-6-3" id="h2-6-3" class="d">-						if rule.Extra == &quot;float32&quot; {
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-							strOnTick[ipos] = float32(0)
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-						} else {
+</a><a href="#h2-6-6" id="h2-6-6" class="d">-							strOnTick[ipos] = uint32(0)
+</a><a href="#h2-6-7" id="h2-6-7" class="d">-						}
+</a><a href="#h2-6-8" id="h2-6-8" class="i">+						strOnTick[ipos] = uint32(0)
+</a> 					case 64:
+<a href="#h2-6-10" id="h2-6-10" class="d">-						if rule.Extra == &quot;float64&quot; {
+</a><a href="#h2-6-11" id="h2-6-11" class="d">-							strOnTick[ipos] = float64(0)
+</a><a href="#h2-6-12" id="h2-6-12" class="d">-						} else {
+</a><a href="#h2-6-13" id="h2-6-13" class="d">-							strOnTick[ipos] = uint64(0)
+</a><a href="#h2-6-14" id="h2-6-14" class="d">-						}
+</a><a href="#h2-6-15" id="h2-6-15" class="i">+						strOnTick[ipos] = uint64(0)
+</a> 					default:
+ 						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+ 					}
+<a href="#h2-7" id="h2-7" class="h">@@ -632,17 +622,9 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 16:
+ 						strOnTick[ipos] = uint16(0)
+ 					case 32:
+<a href="#h2-7-3" id="h2-7-3" class="d">-						if rule.Extra == &quot;float32&quot; {
+</a><a href="#h2-7-4" id="h2-7-4" class="d">-							strOnTick[ipos] = float32(0)
+</a><a href="#h2-7-5" id="h2-7-5" class="d">-						} else {
+</a><a href="#h2-7-6" id="h2-7-6" class="d">-							strOnTick[ipos] = uint32(0)
+</a><a href="#h2-7-7" id="h2-7-7" class="d">-						}
+</a><a href="#h2-7-8" id="h2-7-8" class="i">+						strOnTick[ipos] = uint32(0)
+</a> 					case 64:
+<a href="#h2-7-10" id="h2-7-10" class="d">-						if rule.Extra == &quot;float64&quot; {
+</a><a href="#h2-7-11" id="h2-7-11" class="d">-							strOnTick[ipos] = float64(0)
+</a><a href="#h2-7-12" id="h2-7-12" class="d">-						} else {
+</a><a href="#h2-7-13" id="h2-7-13" class="d">-							strOnTick[ipos] = uint64(0)
+</a><a href="#h2-7-14" id="h2-7-14" class="d">-						}
+</a><a href="#h2-7-15" id="h2-7-15" class="i">+						strOnTick[ipos] = uint64(0)
+</a> 					default:
+ 						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+ 					}
+<a href="#h2-8" id="h2-8" class="h">@@ -665,10 +647,15 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				if ipos == -1 {
+ 					ipos = len(sho)
+ 					sho = append(sho, loc)
+<a href="#h2-8-3" id="h2-8-3" class="i">+					if rule.Extra == &quot;&quot; {
+</a><a href="#h2-8-4" id="h2-8-4" class="i">+						shoTypes = append(shoTypes, &quot;unsigned&quot;)
+</a><a href="#h2-8-5" id="h2-8-5" class="i">+					} else {
+</a><a href="#h2-8-6" id="h2-8-6" class="i">+						shoTypes = append(shoTypes, rule.Extra)
+</a><a href="#h2-8-7" id="h2-8-7" class="i">+					}
+</a> 				}
+ 
+<a href="#h2-8-10" id="h2-8-10" class="d">-				if str_on_tick, ok := absshow[rule.Tick]; ok {
+</a><a href="#h2-8-11" id="h2-8-11" class="d">-					str_on_tick[ipos] = true
+</a><a href="#h2-8-12" id="h2-8-12" class="i">+				if strOnTick, ok := absshow[rule.Tick]; ok {
+</a><a href="#h2-8-13" id="h2-8-13" class="i">+					strOnTick[ipos] = true
+</a> 				} else {
+ 					str_on_tick := make(map[int]bool)
+ 					str_on_tick[ipos] = true
+<a href="#h2-9" id="h2-9" class="h">@@ -691,14 +678,19 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 				if ipos == -1 {
+ 					ipos = len(sho)
+ 					sho = append(sho, loc)
+<a href="#h2-9-3" id="h2-9-3" class="i">+					if rule.Extra == &quot;&quot; {
+</a><a href="#h2-9-4" id="h2-9-4" class="i">+						shoTypes = append(shoTypes, &quot;unsigned&quot;)
+</a><a href="#h2-9-5" id="h2-9-5" class="i">+					} else {
+</a><a href="#h2-9-6" id="h2-9-6" class="i">+						shoTypes = append(shoTypes, rule.Extra)
+</a><a href="#h2-9-7" id="h2-9-7" class="i">+					}
+</a> 				}
+ 
+<a href="#h2-9-10" id="h2-9-10" class="d">-				if str_on_tick, ok := pershow[rule.Tick]; ok {
+</a><a href="#h2-9-11" id="h2-9-11" class="d">-					str_on_tick[ipos] = true
+</a><a href="#h2-9-12" id="h2-9-12" class="i">+				if strOnTick, ok := pershow[rule.Tick]; ok {
+</a><a href="#h2-9-13" id="h2-9-13" class="i">+					strOnTick[ipos] = true
+</a> 				} else {
+<a href="#h2-9-15" id="h2-9-15" class="d">-					str_on_tick := make(map[int]bool)
+</a><a href="#h2-9-16" id="h2-9-16" class="d">-					str_on_tick[ipos] = true
+</a><a href="#h2-9-17" id="h2-9-17" class="d">-					pershow[rule.Tick] = str_on_tick
+</a><a href="#h2-9-18" id="h2-9-18" class="i">+					strOnTick := make(map[int]bool)
+</a><a href="#h2-9-19" id="h2-9-19" class="i">+					strOnTick[ipos] = true
+</a><a href="#h2-9-20" id="h2-9-20" class="i">+					pershow[rule.Tick] = strOnTick
+</a> 				}
+ 			} else {
+ 				return err
+<a href="#h2-10" id="h2-10" class="h">@@ -708,6 +700,8 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 
+ 	sd.Reportables = rep
+ 	sd.Showables = sho
+<a href="#h2-10-3" id="h2-10-3" class="i">+	sd.ReportablesTypes = repTypes
+</a><a href="#h2-10-4" id="h2-10-4" class="i">+	sd.ShowablesTypes = shoTypes
+</a> 	sd.AbsGet = absget
+ 	sd.PerGet = perget
+ 	sd.AbsShow = absshow
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>putstring fragment - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d24d422e33de005e571932ef3b93f8b80528b08e.html">d24d422e33de005e571932ef3b93f8b80528b08e</a>
+<b>parent</b> <a href="../commit/4cccfecae1e83766fb0805a4b41ce5fb769ad4bf.html">4cccfecae1e83766fb0805a4b41ce5fb769ad4bf</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 15 Sep 2023 23:30:42 +0200
+
+putstring fragment
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">library/fragments/putstring.basm</a></td><td> | </td><td class="num">49</td><td><span class="i">++++</span><span class="d">---------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 45 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/fragments/putstring.basm.html">library/fragments/putstring.basm</a> b/<a href="../file/library/fragments/putstring.basm.html">library/fragments/putstring.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,20 +1,8 @@
+</a> ; Ths function writes a string to the screen
+<a href="#h0-0-1" id="h0-0-1" class="d">-; r0: pointer to the null terminated string
+</a><a href="#h0-0-2" id="h0-0-2" class="d">-; r1: x position within the screen (video textual memory)
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+; r0: pointer to the null terminated string (es: mov r0, rom:message)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+; r1: x position within the screen (video textual memory vtm0)
+</a> %fragment putstring
+<a href="#h0-0-6" id="h0-0-6" class="d">-
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-%endfragment 
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-%section constants .romdata
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-        toled   db 0xff
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-        message db &quot;Hello World!&quot;, 0x00
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-%endsection
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-%section code1 .romtext
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-        entry _start    ; Entry point
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-_start:
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-        mov     r0, rom:message
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	mov     r1,0
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+        nop
+</a> putchar:
+         mov     r2, rom:[r0]
+         jz      r2, end
+<a href="#h0-1" id="h0-1" class="h">@@ -22,33 +10,4 @@ putchar:
+</a>         inc     r0
+         inc     r1
+         j putchar
+<a href="#h0-1-3" id="h0-1-3" class="d">-end:
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-        j end
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-%endsection
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-%section code2 .romtext
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-        entry _start    ; Entry point
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-_start:
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-        clr     r0
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-        rset    r0,49
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-	rset	r1,135
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-        mov     vtm0:[r1], r0
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-        rset    r0, 50
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-        r2v     r0, 128
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-        clr     r0
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-        j _start
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-%endsection
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-%meta cpdef	cpu1	romcode: code1
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-%meta cpdef	cpu2	romcode: code2
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-%meta cpdef	cpu1	romdata: constants
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-%meta cpdef	cpu2	romdata: constants
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-%meta cpdef	cpu1	ramsize: 8
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-%meta cpdef	cpu2	ramsize: 8
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-%meta sodef	videomemory    constraint:vtextmem:0:3:3:16:16:1:25:25:16:16
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-%meta soatt	videomemory cp: cpu1, index:0
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-%meta soatt	videomemory cp: cpu2, index:0
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-%meta bmdef	global registersize:8
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+%endfragment
+</a></pre>
+</div>
+</body>
+</html>

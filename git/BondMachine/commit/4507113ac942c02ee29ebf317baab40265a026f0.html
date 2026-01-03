@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bminfo - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4507113ac942c02ee29ebf317baab40265a026f0.html">4507113ac942c02ee29ebf317baab40265a026f0</a>
+<b>parent</b> <a href="../commit/1d64f66cf51df493a15e60f8d886dfb9b6f0d52d.html">1d64f66cf51df493a15e60f8d886dfb9b6f0d52d</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 20 Oct 2022 12:47:38 +0200
+
+bminfo
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">bminfo/bminfo.go</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">20</td><td><span class="i">+++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 59 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bminfo/bminfo.go.html">bminfo/bminfo.go</a> b/<a href="../file/bminfo/bminfo.go.html">bminfo/bminfo.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,38 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package bminfo
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;io/ioutil&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+type BMinfo struct {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	List map[string]string
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+// WriteBMinfo writes a BMinfo struct to a file JSON encoded.
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+func (bmInfo *BMinfo) WriteBMinfo(filename string) error {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	b, err := json.Marshal(bmInfo)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	if err != nil {
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		return err
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	}
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	err = ioutil.WriteFile(filename, b, 0644)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	if err != nil {
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		return err
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	}
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	return nil
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+// ReadBMinfo reads a BMinfo struct from a file JSON encoded
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+func ReadBMinfo(filename string) (*BMinfo, error) {
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	b, err := ioutil.ReadFile(filename)
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	if err != nil {
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		return nil, err
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	}
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	bmInfo := new(BMinfo)
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	err = json.Unmarshal(b, bmInfo)
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	if err != nil {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		return nil, err
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	}
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	return bmInfo, nil
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;flag&quot;
+ 	&quot;io/ioutil&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/bminfo&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/neuralbond&quot;
+ )
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -19,6 +20,7 @@ var neuronLibPath = flag.String(&quot;neuron-lib-path&quot;, &quot;&quot;, &quot;Path to the neuron libra
+</a> 
+ var netFile = flag.String(&quot;net-file&quot;, &quot;&quot;, &quot;JSON description of the net&quot;)
+ var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net configuration&quot;)
+<a href="#h1-1-3" id="h1-1-3" class="i">+var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;JSON description of the BondMachine abstraction&quot;)
+</a> 
+ var operatingMode = flag.String(&quot;operating-mode&quot;, &quot;romcode&quot;, &quot;Operating mode: romcode, fragment&quot;)
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -73,6 +75,18 @@ func main() {
+</a> 		config.Params = make(map[string]string)
+ 	}
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+	config.BMinfo = new(bminfo.BMinfo)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		if bmInfoJSON, err := ioutil.ReadFile(*bmInfoFile); err == nil {
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+			if err := json.Unmarshal(bmInfoJSON, config.BMinfo); err != nil {
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+				panic(err)
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+			}
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		} else {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+			panic(err)
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		}
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	}
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+
+</a> 	if config.Params == nil {
+ 		config.Params = make(map[string]string)
+ 	}
+<a href="#h1-3" id="h1-3" class="h">@@ -103,10 +117,10 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	if *configFile != &quot;&quot; {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	if *bmInfoFile != &quot;&quot; {
+</a> 		// Write the config file
+<a href="#h1-3-6" id="h1-3-6" class="d">-		if configFileJSON, err := json.MarshalIndent(config, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-			ioutil.WriteFile(*configFile, configFileJSON, 0644)
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+		if bmInfoFileJSON, err := json.MarshalIndent(config.BMinfo, &quot;&quot;, &quot;  &quot;); err == nil {
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+			ioutil.WriteFile(*bmInfoFile, bmInfoFileJSON, 0644)
+</a> 		} else {
+ 			panic(err)
+ 		}
+<b>diff --git a/<a id="h2" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -6,6 +6,8 @@ import (
+</a> 	&quot;fmt&quot;
+ 	&quot;io/ioutil&quot;
+ 	&quot;sort&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/bminfo&quot;
+</a> )
+ 
+ const (
+<a href="#h2-1" id="h2-1" class="h">@@ -24,8 +26,8 @@ type TrainedNet struct {
+</a> 
+ type Group []string
+ type Config struct {
+<a href="#h2-1-3" id="h2-1-3" class="d">-	Params        map[string]string
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	List          map[string]string
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	Params map[string]string
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	*bminfo.BMinfo
+</a> 	Pruned        []string
+ 	Collapsed     []Group
+ 	Debug         bool
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uart - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aa338299894aa77108a58f3c5a87bddd8907682f.html">aa338299894aa77108a58f3c5a87bddd8907682f</a>
+<b>parent</b> <a href="../commit/1c445bb664673518670537cab487b302870bbf25.html">1c445bb664673518670537cab487b302870bbf25</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 19 May 2023 12:08:03 +0200
+
+Uart
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/exmod_bmapi.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/files_uart.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/files_uart_so.go</a></td><td> | </td><td class="num">177</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/shr_uart.go</a></td><td> | </td><td class="num">42</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>5 files changed, 238 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a> b/<a href="../file/pkg/bondmachine/exmod_bmapi.go.html">pkg/bondmachine/exmod_bmapi.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,7 +11,9 @@ import (
+</a> // &quot;strings&quot;
+ type UartTemplate struct {
+ 	*templateData
+<a href="#h0-0-3" id="h0-0-3" class="d">-	BaudRate string
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	BaudRate  string
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	Receivers []string
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	Senders   []string
+</a> }
+ 
+ type BMAPIExtra struct {
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_uart.go.html">pkg/bondmachine/files_uart.go</a> b/<a href="../file/pkg/bondmachine/files_uart.go.html">pkg/bondmachine/files_uart.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +1,7 @@
+</a> package bondmachine
+ 
+ const (
+<a href="#h1-0-3" id="h1-0-3" class="d">-	verilogUART = &quot;`timescale 1ns / 1ps\n&quot; + `
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	verilogUART = &quot;`timescale 1ns / 1ps&quot; + `
+</a> // Documented Verilog UART
+ // Copyright (C) 2010 Timothy Goddard (tim@goddard.net.nz)
+ //               2013 Aaron Dahlen
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/files_uart_so.go.html">pkg/bondmachine/files_uart_so.go</a> b/<a href="../file/pkg/bondmachine/files_uart_so.go.html">pkg/bondmachine/files_uart_so.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,177 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	uartSO = &quot;\n`timescale 1ns / 1ps&quot; + `
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+module {{.ModuleName}}(
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+    input clk,
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+    input rst,
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+    {{ range $i, $e := .Receivers }}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+    input [7:0] {{ $e }}Data,
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+    input {{ $e }}Write,
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+    output {{ $e }}Ack,
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+    {{ end }}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+    input [7:0] p0u0senderData,
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+    input p0u0senderWrite,
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+    output p0u0senderAck,
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+    output [7:0] p1u0receiverData,
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+    input p1u0receiverRead,
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+    output p1u0receiverAck,
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+    output wempty,
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+    output wfull,
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+    output rempty,
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+    output rfull,
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+    output TxD,     
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+    input RxD
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+    );
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+    reg transmit;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+    reg [7:0] tx_byte;
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+    wire is_receiving;
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+    wire is_transmitting;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+    wire recv_error;
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+    wire [3:0] rx_samples;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+    wire [3:0] rx_sample_countdown;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+    reg tstart;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+    reg [2:0] istrans;
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+    
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+    wire txactive;
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+    wire tx_ended;
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+    
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+    wire received;
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+    wire [7:0] rx_byte;
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+	wire [7:0] uartwriterData;
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	reg uartwriterRead;
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+	wire uartwriterAck;
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+    reg [7:0] uartreaderData;
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+    reg uartreaderWrite;
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+    wire uartreaderAck;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+    wire [7:0] p1uart_recvData;
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+    reg p1uart_recvRead;
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+    wire p1uart_recvAck;
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+    
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+u0rfifo u0rfifo_inst(.clk(clk),
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+    .reset(reset),
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+    .p1uart_recvData(p1u0receiverData),
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+    .p1uart_recvRead(p1u0receiverRead),
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+    .p1uart_recvAck(p1u0receiverAck),
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+    .uartreaderData(uartreaderData),
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+    .uartreaderWrite(uartreaderWrite),
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+    .uartreaderAck(uartreaderAck),
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+    .empty(rempty),
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+    .full(rfull)
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+);    
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+u0wfifo u0wfifo_inst(.clk(clk),
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+    .reset(reset),
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+    .p0uart_sendData(p0u0senderData),
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+    .p0uart_sendWrite(p0u0senderWrite),
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+    .p0uart_sendAck(p0u0senderAck),
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+    .uartwriterData(uartwriterData),
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+    .uartwriterRead(uartwriterRead),
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+    .uartwriterAck(uartwriterAck),
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+    .empty(wempty),
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+    .full(wfull)
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+);
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+u0uart u0uart_inst(.clk(clk),
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+    .rst(reset),
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+    .rx(RxD),
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+    .tx(TxD),
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+    .transmit(transmit),
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+    .tx_byte(tx_byte),
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+    .received(received),
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+    .rx_byte(rx_byte),
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+    .is_receiving(is_receiving),
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+    .is_transmitting(is_transmitting),
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+    .recv_error(recv_error),
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+    .rx_samples(rx_samples),
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+    .rx_sample_countdown(rx_sample_countdown)
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+);
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+reg [1:0] outSM;
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+ 
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+localparam [1:0]     
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+    OUT_IDLE             = 2&#39;d0,
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+    OUT_WAIT             = 2&#39;d1,
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+    OUT_DONE             = 2&#39;d2;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+        
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+// Sending out to uart from the write FIFO
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+always @(posedge clk) begin
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+        if (reset) begin
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+            uartwriterRead &lt;= 1&#39;b0;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+            transmit &lt;= 1&#39;b0;
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+        end
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+        else begin
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+            case (outSM)
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+            OUT_IDLE: begin
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+                if (!wempty) begin
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+                    if (uartwriterAck &amp;&amp; uartwriterRead) begin
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+                        uartwriterRead &lt;= 1&#39;b0;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+                        tx_byte[7:0] &lt;= uartwriterData[7:0];
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+                        transmit &lt;= 1&#39;b1;
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+                        outSM &lt;= OUT_WAIT;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+                    end
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+                    else begin
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+                        uartwriterRead &lt;= 1&#39;b1;
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+                        transmit &lt;= 1&#39;b0;
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+                    end
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+                end
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+            end
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+            OUT_WAIT: begin
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+                if (is_transmitting) begin
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+                    outSM &lt;= OUT_DONE;
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+                    transmit &lt;= 1&#39;b0;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+                end
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+            end
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+            OUT_DONE: begin
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+                if (!is_transmitting) begin
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+                    outSM &lt;= OUT_IDLE;
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+                    transmit &lt;= 1&#39;b0;
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+                end
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+            end
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+            endcase
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+        end
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+end
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+reg [1:0] inSM;
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+ 
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+    localparam [1:0]     
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+        IN_IDLE             = 2&#39;d0,
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+        IN_WAIT             = 2&#39;d1,
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+        IN_DONE             = 2&#39;d2;
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+// Reading the UART and pushing to the read FIFO
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+always @(posedge clk) begin
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+        if (reset) begin
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+        end
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+        else begin
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+            case (inSM)
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+            IN_IDLE: begin
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+                if (received) begin
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+                    if (!uartreaderAck) begin
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+                        uartreaderData[7:0] &lt;= rx_byte[7:0];
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+                        uartreaderWrite &lt;= #1 1&#39;b1;
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+                        inSM &lt;= IN_WAIT;
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+                    end
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+                end
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+            end
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+            IN_WAIT: begin
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+                if (uartreaderAck) begin
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+                    uartreaderWrite &lt;= #1 1&#39;b0;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+                    inSM &lt;= IN_IDLE;
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+                end
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+            end
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+            endcase
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+        end
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+end
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+    
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+endmodule    
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+`
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a> b/<a href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -141,6 +141,15 @@ func (sm Uart_instance) Write_verilog(bmach *Bondmachine, soIndex int, uartName 
+</a> 	t.Execute(f, uartData)
+ 	f.Close()
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	uartData.ModuleName = uartName
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	// The receivers and senders are inverted because is a cp write to the fifo the uart reads from and viceversa
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	uartData.Receivers = senders
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	uartData.Senders = receivers
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	u, _ := template.New(&quot;uartso&quot;).Parse(uartSO)
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	s, _ := os.Create(uartName + &quot;uartso.v&quot;)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	u.Execute(s, uartData)
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	s.Close()
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a> 	return result
+ 
+ }
+<a href="#h3-1" id="h3-1" class="h">@@ -196,11 +205,22 @@ func (sm Uart_instance) GetPerProcPortsHeader(bmach *Bondmachine, proc_id int, s
+</a> func (sm Uart_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+ 	result := &quot;&quot;
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-		result += &quot;, &quot; + soname + &quot;_rx&quot;
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-		result += &quot;, &quot; + soname + &quot;_tx&quot;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	first := true
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	for procID, soList := range bmach.Shared_links {
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+		for _, soID := range soList {
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+			if soID == so_id &amp;&amp; first {
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+				first = false
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+				if procID == proc_id {
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+					if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+						result += &quot;, &quot; + soname + &quot;_rx&quot;
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+						result += &quot;, &quot; + soname + &quot;_tx&quot;
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+					}
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+				}
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+			}
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+		}
+</a> 	}
+<a href="#h3-1-20" id="h3-1-20" class="d">-	// TODO: Correct this (multiple processors)
+</a><a href="#h3-1-21" id="h3-1-21" class="i">+
+</a><a href="#h3-1-22" id="h3-1-22" class="i">+	// TODO: Suboptimal, but works for now
+</a> 	return result
+ }
+ 
+<a href="#h3-2" id="h3-2" class="h">@@ -212,9 +232,12 @@ func (sm Uart_instance) GetExternalPortsWires(bmach *Bondmachine, proc_id int, s
+</a> func (sm Uart_instance) GetCPSharedPortsHeader(bmach *Bondmachine, soId int, flavor string) string {
+ 	result := &quot;&quot;
+ 	if soName, ok := bmach.Get_so_name(soId); ok {
+<a href="#h3-2-3" id="h3-2-3" class="d">-		result += &quot;, &quot; + soName + &quot;empty&quot;
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-		result += &quot;, &quot; + soName + &quot;full&quot;
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+		result += &quot;, &quot; + soName + &quot;rempty&quot;
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+		result += &quot;, &quot; + soName + &quot;rfull&quot;
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+		result += &quot;, &quot; + soName + &quot;wempty&quot;
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+		result += &quot;, &quot; + soName + &quot;wfull&quot;
+</a> 	}
+<a href="#h3-2-10" id="h3-2-10" class="i">+
+</a> 	return result
+ }
+ 
+<a href="#h3-3" id="h3-3" class="h">@@ -222,8 +245,11 @@ func (sm Uart_instance) GetCPSharedPortsWires(bmach *Bondmachine, soId int, flav
+</a> 	result := &quot;&quot;
+ 	if soName, ok := bmach.Get_so_name(soId); ok {
+ 		result += &quot;\n&quot;
+<a href="#h3-3-3" id="h3-3-3" class="d">-		result += &quot;	wire &quot; + soName + &quot;empty;\n&quot;
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-		result += &quot;	wire &quot; + soName + &quot;full\n;&quot;
+</a><a href="#h3-3-5" id="h3-3-5" class="i">+		result += &quot;	wire &quot; + soName + &quot;rempty;\n&quot;
+</a><a href="#h3-3-6" id="h3-3-6" class="i">+		result += &quot;	wire &quot; + soName + &quot;rfull;\n&quot;
+</a><a href="#h3-3-7" id="h3-3-7" class="i">+		result += &quot;\n&quot;
+</a><a href="#h3-3-8" id="h3-3-8" class="i">+		result += &quot;	wire &quot; + soName + &quot;wempty;\n&quot;
+</a><a href="#h3-3-9" id="h3-3-9" class="i">+		result += &quot;	wire &quot; + soName + &quot;wfull;\n&quot;
+</a> 		result += &quot;\n&quot;
+ 	}
+ 	return result
+<b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -396,11 +396,19 @@ func (bmach *Bondmachine) Write_verilog_main(conf *Config, module_name string, f
+</a> 				for _, soId := range solist {
+ 					if soId == i {
+ 						result += bmach.Shared_objects[soId].GetPerProcPortsHeader(bmach, procId, soId, flavor)
+<a href="#h4-0-3" id="h4-0-3" class="d">-						result += bmach.Shared_objects[soId].GetExternalPortsHeader(bmach, procId, soId, flavor)
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+						// result += bmach.Shared_objects[soId].GetExternalPortsHeader(bmach, procId, soId, flavor)
+</a> 					}
+ 				}
+ 			}
+ 
+<a href="#h4-0-9" id="h4-0-9" class="i">+			for procId, solist := range bmach.Shared_links {
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+				for _, soId := range solist {
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+					if soId == i {
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+						// result += bmach.Shared_objects[soId].GetPerProcPortsHeader(bmach, procId, soId, flavor)
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+						result += bmach.Shared_objects[soId].GetExternalPortsHeader(bmach, procId, soId, flavor)
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+					}
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+				}
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+			}
+</a> 			// Inlcude SO ports eventually shared with CORES (not core dependent)
+ 		sharedLoop:
+ 			for _, soList := range bmach.Shared_links {
+<a href="#h4-1" id="h4-1" class="h">@@ -1803,6 +1811,20 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 		clockString = &quot;divider[&quot; + slow_params[&quot;slow_factor&quot;] + &quot;]&quot;
+ 	}
+ 
+<a href="#h4-1-3" id="h4-1-3" class="i">+	if uartModule {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+		for name, value := range uartParams {
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+			fmt.Println(name[len(name)-3:])
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+			if name[len(name)-3:] == &quot;_rx&quot; {
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+				result += &quot;\twire &quot; + name + &quot;;\n&quot;
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+				result += &quot;\tassign &quot; + name + &quot;=&quot; + value + &quot;;\n&quot;
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+			}
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+			if name[len(name)-3:] == &quot;_tx&quot; {
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+				result += &quot;\twire &quot; + name + &quot;;\n&quot;
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+				result += &quot;\tassign &quot; + value + &quot;=&quot; + name + &quot;;\n&quot;
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+			}
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+		}
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+	}
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+
+</a> 	if vgatext800x600Module {
+ 		result += `
+ 	reg [7:0]   hcount;
+</pre>
+</div>
+</body>
+</html>

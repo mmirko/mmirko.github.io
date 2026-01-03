@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BM creator improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cfdbf5aa80b3487da8c869c86e353d012de18620.html">cfdbf5aa80b3487da8c869c86e353d012de18620</a>
+<b>parent</b> <a href="../commit/1b428d19b5363e692f600b717ceacae66d2fa30b.html">1b428d19b5363e692f600b717ceacae66d2fa30b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 13 Aug 2023 15:57:26 +0200
+
+BM creator improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">198</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 153 insertions(+), 45 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -65,41 +65,43 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 	for i, cp := range bi.cps {
+ 		if bi.debug {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			fmt.Print(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			fmt.Println(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+</a> 		}
+ 		romCode := cp.GetMeta(&quot;romcode&quot;)
+<a href="#h0-0-7" id="h0-0-7" class="d">-		if romCode == &quot;&quot; {
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-			return errors.New(&quot;CP rom code not found&quot;)
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-		}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a> 		if bi.debug {
+<a href="#h0-0-12" id="h0-0-12" class="d">-			fmt.Println(&quot; - &quot; + green(&quot;rom code: &quot;) + yellow(romCode))
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			if romCode != &quot;&quot; {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom code: &quot;) + yellow(romCode))
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			} else {
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom code: &quot;) + yellow(&quot;not specified&quot;))
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			}
+</a> 		}
+ 
+ 		romData := cp.GetMeta(&quot;romdata&quot;)
+ 
+ 		if bi.debug {
+ 			if romData != &quot;&quot; {
+<a href="#h0-0-24" id="h0-0-24" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;rom data: &quot;) + yellow(romData))
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom data: &quot;) + yellow(romData))
+</a> 			} else {
+<a href="#h0-0-27" id="h0-0-27" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;rom data: &quot;) + yellow(&quot;not specified&quot;))
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;rom data: &quot;) + yellow(&quot;not specified&quot;))
+</a> 			}
+ 		}
+ 
+ 		ramCode := cp.GetMeta(&quot;ramcode&quot;)
+ 		if bi.debug {
+ 			if ramCode != &quot;&quot; {
+<a href="#h0-0-35" id="h0-0-35" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;ram code: &quot;) + yellow(ramCode))
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram code: &quot;) + yellow(ramCode))
+</a> 			} else {
+<a href="#h0-0-38" id="h0-0-38" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;ram code: &quot;) + yellow(&quot;not specified&quot;))
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram code: &quot;) + yellow(&quot;not specified&quot;))
+</a> 			}
+ 		}
+ 
+ 		ramData := cp.GetMeta(&quot;ramdata&quot;)
+ 		if bi.debug {
+ 			if ramData != &quot;&quot; {
+<a href="#h0-0-46" id="h0-0-46" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;ram data: &quot;) + yellow(ramData))
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram data: &quot;) + yellow(ramData))
+</a> 			} else {
+<a href="#h0-0-49" id="h0-0-49" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;ram data: &quot;) + yellow(&quot;not specified&quot;))
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;ram data: &quot;) + yellow(&quot;not specified&quot;))
+</a> 			}
+ 		}
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -110,9 +112,9 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 		if bi.debug {
+ 			if execMode != &quot;&quot; {
+<a href="#h0-1-3" id="h0-1-3" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;execution mode: &quot;) + yellow(execMode))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;execution mode: &quot;) + yellow(execMode))
+</a> 			} else {
+<a href="#h0-1-6" id="h0-1-6" class="d">-				fmt.Println(&quot;\t\t&quot; + green(&quot;execution mode: &quot;) + yellow(&quot;not specified, defaulting to &#39;ha&#39;&quot;))
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;execution mode: &quot;) + yellow(&quot;not specified, defaulting to &#39;ha&#39;&quot;))
+</a> 			}
+ 		}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -563,14 +565,17 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 		return nil, errors.New(&quot;no code section specified, neither ROM nor RAM&quot;)
+ 	}
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	opCodesROM := make([]string, 0)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a> 	if romCode != &quot;&quot; {
+ 		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;opcodes&quot;, Op: bmreqs.OpGet})
+ 		if resp.Error != nil {
+ 			return nil, resp.Error
+ 		}
+<a href="#h0-2-10" id="h0-2-10" class="i">+		opCodesROM = strings.Split(resp.Value, &quot;,&quot;)
+</a> 	}
+ 
+<a href="#h0-2-13" id="h0-2-13" class="d">-	opCodesROM := strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	opCodesRAM := make([]string, 0)
+</a> 
+ 	// Getting the RAM code requirements
+ 	if ramCode != &quot;&quot; {
+<a href="#h0-3" id="h0-3" class="h">@@ -578,74 +583,175 @@ func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCo
+</a> 		if resp.Error != nil {
+ 			return nil, resp.Error
+ 		}
+<a href="#h0-3-3" id="h0-3-3" class="i">+		opCodesRAM = strings.Split(resp.Value, &quot;,&quot;)
+</a> 	}
+<a href="#h0-3-5" id="h0-3-5" class="d">-
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	opCodesRAM := strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-	// The final list of opcodes is the union of the two lists
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	opcodes := make([]procbuilder.Opcode, 0)
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	// The final list of opCodes is the union of the two lists
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	opCodes := make([]procbuilder.Opcode, 0)
+</a> 
+ outer:
+ 	for _, op := range procbuilder.Allopcodes {
+ 		for _, opn := range opCodesROM {
+ 			if opn == op.Op_get_name() {
+<a href="#h0-3-17" id="h0-3-17" class="d">-				opcodes = append(opcodes, op)
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+				opCodes = append(opCodes, op)
+</a> 				continue outer
+ 			}
+ 		}
+ 		for _, opn := range opCodesRAM {
+ 			if opn == op.Op_get_name() {
+<a href="#h0-3-24" id="h0-3-24" class="d">-				opcodes = append(opcodes, op)
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+				opCodes = append(opCodes, op)
+</a> 				continue outer
+ 			}
+ 		}
+ 	}
+ 
+<a href="#h0-3-31" id="h0-3-31" class="d">-	sort.Sort(procbuilder.ByName(opcodes))
+</a><a href="#h0-3-32" id="h0-3-32" class="i">+	sort.Sort(procbuilder.ByName(opCodes))
+</a> 
+<a href="#h0-3-34" id="h0-3-34" class="d">-	myArch.Op = opcodes
+</a><a href="#h0-3-35" id="h0-3-35" class="i">+	myArch.Op = opCodes
+</a> 
+<a href="#h0-3-37" id="h0-3-37" class="i">+	// TODO: check how it is used and if it is needed, eventually remove or substitute with the merge of the two lists
+</a> 	bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romCode, &quot;/bm:cps/id:&quot;+strconv.Itoa(procid))
+ 
+<a href="#h0-3-40" id="h0-3-40" class="i">+	regs := make([]string, 0)
+</a><a href="#h0-3-41" id="h0-3-41" class="i">+
+</a> 	// Getting the registers requirements on the ROM code
+<a href="#h0-3-43" id="h0-3-43" class="d">-	resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-44" id="h0-3-44" class="d">-	if resp.Error != nil {
+</a><a href="#h0-3-45" id="h0-3-45" class="d">-		return nil, resp.Error
+</a><a href="#h0-3-46" id="h0-3-46" class="i">+	if romCode != &quot;&quot; {
+</a><a href="#h0-3-47" id="h0-3-47" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-48" id="h0-3-48" class="i">+		if resp.Error != nil {
+</a><a href="#h0-3-49" id="h0-3-49" class="i">+			return nil, resp.Error
+</a><a href="#h0-3-50" id="h0-3-50" class="i">+		}
+</a><a href="#h0-3-51" id="h0-3-51" class="i">+
+</a><a href="#h0-3-52" id="h0-3-52" class="i">+		regs = strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-3-53" id="h0-3-53" class="i">+	}
+</a><a href="#h0-3-54" id="h0-3-54" class="i">+
+</a><a href="#h0-3-55" id="h0-3-55" class="i">+	// Getting the registers requirements on the RAM code, appending to the previous list
+</a><a href="#h0-3-56" id="h0-3-56" class="i">+	if ramCode != &quot;&quot; {
+</a><a href="#h0-3-57" id="h0-3-57" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;registers&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-58" id="h0-3-58" class="i">+		if resp.Error != nil {
+</a><a href="#h0-3-59" id="h0-3-59" class="i">+			return nil, resp.Error
+</a><a href="#h0-3-60" id="h0-3-60" class="i">+		}
+</a><a href="#h0-3-61" id="h0-3-61" class="i">+		for _, reg := range strings.Split(resp.Value, &quot;,&quot;) {
+</a><a href="#h0-3-62" id="h0-3-62" class="i">+			if !stringInSlice(reg, regs) {
+</a><a href="#h0-3-63" id="h0-3-63" class="i">+				regs = append(regs, reg)
+</a><a href="#h0-3-64" id="h0-3-64" class="i">+			}
+</a><a href="#h0-3-65" id="h0-3-65" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-3-68" id="h0-3-68" class="d">-	// TODO CHECK: Only the number is relevant for now
+</a><a href="#h0-3-69" id="h0-3-69" class="d">-	regS := len(strings.Split(resp.Value, &quot;,&quot;))
+</a><a href="#h0-3-70" id="h0-3-70" class="d">-	myArch.R = uint8(Needed_bits(regS))
+</a><a href="#h0-3-71" id="h0-3-71" class="i">+	// Sorting the registers list (ordering using the compareStrings function)
+</a><a href="#h0-3-72" id="h0-3-72" class="i">+	sort.Slice(regs, func(i, j int) bool {
+</a><a href="#h0-3-73" id="h0-3-73" class="i">+		return compareStrings(regs[i], regs[j])
+</a><a href="#h0-3-74" id="h0-3-74" class="i">+	})
+</a> 
+<a href="#h0-3-76" id="h0-3-76" class="d">-	// TODO RAM
+</a><a href="#h0-3-77" id="h0-3-77" class="d">-	// myarch.L = uint8(Needed_bits(preq.Ramsize))
+</a><a href="#h0-3-78" id="h0-3-78" class="d">-	myArch.L = uint8(8)
+</a><a href="#h0-3-79" id="h0-3-79" class="i">+	// Getting the last register in the list
+</a><a href="#h0-3-80" id="h0-3-80" class="i">+	lastReg := regs[len(regs)-1]
+</a><a href="#h0-3-81" id="h0-3-81" class="i">+
+</a><a href="#h0-3-82" id="h0-3-82" class="i">+	// Getting the register number
+</a><a href="#h0-3-83" id="h0-3-83" class="i">+	regNum, _ := strconv.Atoi(lastReg[1:])
+</a><a href="#h0-3-84" id="h0-3-84" class="i">+
+</a><a href="#h0-3-85" id="h0-3-85" class="i">+	// To store up to the last register, we need regNum+1 registers
+</a><a href="#h0-3-86" id="h0-3-86" class="i">+	myArch.R = uint8(Needed_bits(regNum + 1))
+</a><a href="#h0-3-87" id="h0-3-87" class="i">+
+</a><a href="#h0-3-88" id="h0-3-88" class="i">+	// If the length of the register list is different from the number of registers, emit a warning
+</a><a href="#h0-3-89" id="h0-3-89" class="i">+	if len(regs) != regNum+1 {
+</a><a href="#h0-3-90" id="h0-3-90" class="i">+		bi.Warning(&quot;Register list is not complete, some registers are missing. This is not an error provided you know what you are doing.&quot;)
+</a><a href="#h0-3-91" id="h0-3-91" class="i">+	}
+</a><a href="#h0-3-92" id="h0-3-92" class="i">+
+</a><a href="#h0-3-93" id="h0-3-93" class="i">+	ins := make([]string, 0)
+</a> 
+ 	// Getting the Input requirements on the ROM code
+<a href="#h0-3-96" id="h0-3-96" class="d">-	resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;inputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-97" id="h0-3-97" class="d">-	if resp.Error != nil {
+</a><a href="#h0-3-98" id="h0-3-98" class="i">+	if romCode != &quot;&quot; {
+</a><a href="#h0-3-99" id="h0-3-99" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;inputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-100" id="h0-3-100" class="i">+		if resp.Error == nil {
+</a><a href="#h0-3-101" id="h0-3-101" class="i">+			ins = strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-3-102" id="h0-3-102" class="i">+		}
+</a><a href="#h0-3-103" id="h0-3-103" class="i">+	}
+</a><a href="#h0-3-104" id="h0-3-104" class="i">+	// Getting the Input requirements on the RAM code, appending to the previous list
+</a><a href="#h0-3-105" id="h0-3-105" class="i">+	if ramCode != &quot;&quot; {
+</a><a href="#h0-3-106" id="h0-3-106" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;inputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-107" id="h0-3-107" class="i">+		if resp.Error == nil {
+</a><a href="#h0-3-108" id="h0-3-108" class="i">+			for _, in := range strings.Split(resp.Value, &quot;,&quot;) {
+</a><a href="#h0-3-109" id="h0-3-109" class="i">+				if !stringInSlice(in, ins) {
+</a><a href="#h0-3-110" id="h0-3-110" class="i">+					ins = append(ins, in)
+</a><a href="#h0-3-111" id="h0-3-111" class="i">+				}
+</a><a href="#h0-3-112" id="h0-3-112" class="i">+			}
+</a><a href="#h0-3-113" id="h0-3-113" class="i">+		}
+</a><a href="#h0-3-114" id="h0-3-114" class="i">+	}
+</a><a href="#h0-3-115" id="h0-3-115" class="i">+
+</a><a href="#h0-3-116" id="h0-3-116" class="i">+	if len(ins) == 0 {
+</a><a href="#h0-3-117" id="h0-3-117" class="i">+		bi.Warning(&quot;No inputs found on ROM/RAM code, assuming 0&quot;)
+</a> 		myArch.N = uint8(0)
+<a href="#h0-3-119" id="h0-3-119" class="d">-		bi.Warning(&quot;No inputs found on ROM code, assuming 0&quot;)
+</a> 	} else {
+<a href="#h0-3-121" id="h0-3-121" class="d">-		// TODO CHECK: Only the number is relevant for now
+</a><a href="#h0-3-122" id="h0-3-122" class="d">-		inputS := len(strings.Split(resp.Value, &quot;,&quot;))
+</a><a href="#h0-3-123" id="h0-3-123" class="d">-		myArch.N = uint8(inputS)
+</a><a href="#h0-3-124" id="h0-3-124" class="i">+		// Sorting the inputs list (ordering using the compareStrings function)
+</a><a href="#h0-3-125" id="h0-3-125" class="i">+		sort.Slice(ins, func(i, j int) bool {
+</a><a href="#h0-3-126" id="h0-3-126" class="i">+			return compareStrings(ins[i], ins[j])
+</a><a href="#h0-3-127" id="h0-3-127" class="i">+		})
+</a><a href="#h0-3-128" id="h0-3-128" class="i">+
+</a><a href="#h0-3-129" id="h0-3-129" class="i">+		// Getting the last input in the list
+</a><a href="#h0-3-130" id="h0-3-130" class="i">+		lastIn := ins[len(ins)-1]
+</a><a href="#h0-3-131" id="h0-3-131" class="i">+
+</a><a href="#h0-3-132" id="h0-3-132" class="i">+		// Getting the input number
+</a><a href="#h0-3-133" id="h0-3-133" class="i">+		inNum, _ := strconv.Atoi(lastIn[1:])
+</a><a href="#h0-3-134" id="h0-3-134" class="i">+		// To store up to the last input, we need inNum+1 inputs
+</a><a href="#h0-3-135" id="h0-3-135" class="i">+		myArch.N = uint8(inNum + 1)
+</a><a href="#h0-3-136" id="h0-3-136" class="i">+
+</a><a href="#h0-3-137" id="h0-3-137" class="i">+		if len(ins) != inNum+1 {
+</a><a href="#h0-3-138" id="h0-3-138" class="i">+			bi.Warning(&quot;Input list is not complete, some inputs are missing. This is not an error, but you are wasting resources.&quot;)
+</a><a href="#h0-3-139" id="h0-3-139" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-3-142" id="h0-3-142" class="i">+	outs := make([]string, 0)
+</a><a href="#h0-3-143" id="h0-3-143" class="i">+
+</a> 	// Getting the Output requirements on the ROM code
+<a href="#h0-3-145" id="h0-3-145" class="d">-	resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;outputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-146" id="h0-3-146" class="d">-	if resp.Error != nil {
+</a><a href="#h0-3-147" id="h0-3-147" class="i">+	if romCode != &quot;&quot; {
+</a><a href="#h0-3-148" id="h0-3-148" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:romtexts/sections:&quot; + romCode, Name: &quot;outputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-149" id="h0-3-149" class="i">+		if resp.Error == nil {
+</a><a href="#h0-3-150" id="h0-3-150" class="i">+			outs = strings.Split(resp.Value, &quot;,&quot;)
+</a><a href="#h0-3-151" id="h0-3-151" class="i">+		}
+</a><a href="#h0-3-152" id="h0-3-152" class="i">+	}
+</a><a href="#h0-3-153" id="h0-3-153" class="i">+
+</a><a href="#h0-3-154" id="h0-3-154" class="i">+	// Getting the Output requirements on the RAM code, appending to the previous list
+</a><a href="#h0-3-155" id="h0-3-155" class="i">+	if ramCode != &quot;&quot; {
+</a><a href="#h0-3-156" id="h0-3-156" class="i">+		resp = bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/code:ramtexts/sections:&quot; + ramCode, Name: &quot;outputs&quot;, Op: bmreqs.OpGet})
+</a><a href="#h0-3-157" id="h0-3-157" class="i">+		if resp.Error == nil {
+</a><a href="#h0-3-158" id="h0-3-158" class="i">+			for _, out := range strings.Split(resp.Value, &quot;,&quot;) {
+</a><a href="#h0-3-159" id="h0-3-159" class="i">+				if !stringInSlice(out, outs) {
+</a><a href="#h0-3-160" id="h0-3-160" class="i">+					outs = append(outs, out)
+</a><a href="#h0-3-161" id="h0-3-161" class="i">+				}
+</a><a href="#h0-3-162" id="h0-3-162" class="i">+			}
+</a><a href="#h0-3-163" id="h0-3-163" class="i">+		}
+</a><a href="#h0-3-164" id="h0-3-164" class="i">+	}
+</a><a href="#h0-3-165" id="h0-3-165" class="i">+
+</a><a href="#h0-3-166" id="h0-3-166" class="i">+	if len(outs) == 0 {
+</a><a href="#h0-3-167" id="h0-3-167" class="i">+		bi.Warning(&quot;No outputs found on ROM/RAM code, assuming 0&quot;)
+</a> 		myArch.M = uint8(0)
+<a href="#h0-3-169" id="h0-3-169" class="d">-		bi.Warning(&quot;No outputs found on ROM code, assuming 0&quot;)
+</a> 	} else {
+<a href="#h0-3-171" id="h0-3-171" class="d">-		// TODO CHECK: Only the number is relevant for now
+</a><a href="#h0-3-172" id="h0-3-172" class="d">-		outputS := len(strings.Split(resp.Value, &quot;,&quot;))
+</a><a href="#h0-3-173" id="h0-3-173" class="d">-		myArch.M = uint8(outputS)
+</a><a href="#h0-3-174" id="h0-3-174" class="i">+		// Sorting the outputs list (ordering using the compareStrings function)
+</a><a href="#h0-3-175" id="h0-3-175" class="i">+		sort.Slice(outs, func(i, j int) bool {
+</a><a href="#h0-3-176" id="h0-3-176" class="i">+			return compareStrings(outs[i], outs[j])
+</a><a href="#h0-3-177" id="h0-3-177" class="i">+		})
+</a><a href="#h0-3-178" id="h0-3-178" class="i">+
+</a><a href="#h0-3-179" id="h0-3-179" class="i">+		// Getting the last output in the list
+</a><a href="#h0-3-180" id="h0-3-180" class="i">+		lastOut := outs[len(outs)-1]
+</a><a href="#h0-3-181" id="h0-3-181" class="i">+
+</a><a href="#h0-3-182" id="h0-3-182" class="i">+		// Getting the output number
+</a><a href="#h0-3-183" id="h0-3-183" class="i">+		outNum, _ := strconv.Atoi(lastOut[1:])
+</a><a href="#h0-3-184" id="h0-3-184" class="i">+		// To store up to the last output, we need outNum+1 outputs
+</a><a href="#h0-3-185" id="h0-3-185" class="i">+		myArch.M = uint8(outNum + 1)
+</a><a href="#h0-3-186" id="h0-3-186" class="i">+
+</a><a href="#h0-3-187" id="h0-3-187" class="i">+		if len(outs) != outNum+1 {
+</a><a href="#h0-3-188" id="h0-3-188" class="i">+			bi.Warning(&quot;Output list is not complete, some outputs are missing. This is not an error, but you are wasting resources.&quot;)
+</a><a href="#h0-3-189" id="h0-3-189" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-3-192" id="h0-3-192" class="i">+	// Here start the mess with the RAM/ROM size, word size, etc.
+</a><a href="#h0-3-193" id="h0-3-193" class="i">+
+</a> 	myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))
+ 
+<a href="#h0-3-196" id="h0-3-196" class="i">+	// TODO RAM
+</a><a href="#h0-3-197" id="h0-3-197" class="i">+	// myarch.L = uint8(Needed_bits(preq.Ramsize))
+</a><a href="#h0-3-198" id="h0-3-198" class="i">+	myArch.L = uint8(8)
+</a><a href="#h0-3-199" id="h0-3-199" class="i">+
+</a> 	// TODO remove it, just for testing purposes	myArch.WordSize = uint8(8)
+<a href="#h0-3-201" id="h0-3-201" class="i">+
+</a> 	// The shared constrains will be populated later from the basm metadata
+ 	myArch.Shared_constraints = &quot;&quot;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -668,7 +774,7 @@ outer:
+</a> 
+ 	// myArch.WordSize = uint8(16)
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	// If there is a data section, we need to add it to the machine and update the O field prior to assembling
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	// If there is a data section, we need to add it to the machine and update the myArch.O field prior to assembling
+</a> 	if romData != &quot;&quot; {
+ 		wordSize := myMachine.Max_word()
+ 		// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#h0-5" id="h0-5" class="h">@@ -701,6 +807,8 @@ outer:
+</a> 
+ 	}
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+	// TODO ADD ramData
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+
+</a> 	return myMachine, nil
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

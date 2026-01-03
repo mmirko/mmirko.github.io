@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>variable renamed to symbol - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/fc7bd91f03d88745572bafe428c847277d63c132.html">fc7bd91f03d88745572bafe428c847277d63c132</a>
+<b>parent</b> <a href="../commit/328e06e90315cde8dedf9a5f73d73178d8e7b4d6.html">328e06e90315cde8dedf9a5f73d73178d8e7b4d6</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 24 Aug 2023 17:06:00 +0200
+
+variable renamed to symbol
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/metadatainfer.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/romcomposer.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 11 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a> b/<a href="../file/pkg/basm/metadatainfer.go.html">pkg/basm/metadatainfer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -44,12 +44,12 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 				arg.BasmMeta = arg.SetMeta(&quot;location&quot;, location)
+ 				continue
+ 			}
+<a href="#h0-0-3" id="h0-0-3" class="d">-			re = regexp.MustCompile(&quot;^rom:(?P&lt;var&gt;[0-9a-zA-Z_]+)$&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			re = regexp.MustCompile(&quot;^rom:(?P&lt;symb&gt;[0-9a-zA-Z_\\.]+)$&quot;)
+</a> 			if re.MatchString(arg.GetValue()) {
+ 				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;rom&quot;)
+<a href="#h0-0-7" id="h0-0-7" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;romaddressing&quot;, &quot;variable&quot;)
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-				variable := re.ReplaceAllString(arg.GetValue(), &quot;${var}&quot;)
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;variable&quot;, variable)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;romaddressing&quot;, &quot;symbol&quot;)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				symbol := re.ReplaceAllString(arg.GetValue(), &quot;${symb}&quot;)
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;symbol&quot;, symbol)
+</a> 				continue
+ 			}
+ 			re = regexp.MustCompile(&quot;^rom:\\[(?P&lt;reg&gt;r[0-9]+)\\]$&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -68,12 +68,12 @@ func (bi *BasmInstance) bodyMetadataInfer(body *bmline.BasmBody, soShortNames []
+</a> 				arg.BasmMeta = arg.SetMeta(&quot;location&quot;, location)
+ 				continue
+ 			}
+<a href="#h0-1-3" id="h0-1-3" class="d">-			re = regexp.MustCompile(&quot;^ram:(?P&lt;var&gt;[0-9a-zA-Z_]+)$&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			re = regexp.MustCompile(&quot;^ram:(?P&lt;symb&gt;[0-9a-zA-Z_\\.]+)$&quot;)
+</a> 			if re.MatchString(arg.GetValue()) {
+ 				arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;ram&quot;)
+<a href="#h0-1-7" id="h0-1-7" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;ramaddressing&quot;, &quot;variable&quot;)
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-				variable := re.ReplaceAllString(arg.GetValue(), &quot;${var}&quot;)
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-				arg.BasmMeta = arg.SetMeta(&quot;variable&quot;, variable)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;ramaddressing&quot;, &quot;symbol&quot;)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				symbol := re.ReplaceAllString(arg.GetValue(), &quot;${symb}&quot;)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+				arg.BasmMeta = arg.SetMeta(&quot;symbol&quot;, symbol)
+</a> 				continue
+ 			}
+ 			re = regexp.MustCompile(&quot;^ram:\\[(?P&lt;reg&gt;r[0-9]+)\\]$&quot;)
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a> b/<a href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -59,10 +59,10 @@ func romComposer(bi *BasmInstance) error {
+</a> 
+ 		for _, line := range body.Lines {
+ 			for _, arg := range line.Elements {
+<a href="#h1-0-3" id="h1-0-3" class="d">-				if arg.GetMeta(&quot;type&quot;) == &quot;rom&quot; &amp;&amp; arg.GetMeta(&quot;romaddressing&quot;) == &quot;variable&quot; {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+				if arg.GetMeta(&quot;type&quot;) == &quot;rom&quot; &amp;&amp; arg.GetMeta(&quot;romaddressing&quot;) == &quot;symbol&quot; {
+</a> 					removalList[code] = struct{}{}
+ 					usefullSection = true
+<a href="#h1-0-7" id="h1-0-7" class="d">-					romVariable := arg.GetMeta(&quot;variable&quot;)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+					romVariable := arg.GetMeta(&quot;symbol&quot;)
+</a> 					if romVariable == &quot;&quot; {
+ 						return errors.New(&quot;ROM variable cannot be empty&quot;)
+ 					}
+<a href="#h1-1" id="h1-1" class="h">@@ -72,7 +72,7 @@ func romComposer(bi *BasmInstance) error {
+</a> 						arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+ 						arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+ 						arg.BasmMeta.RmMeta(&quot;romaddressing&quot;)
+<a href="#h1-1-3" id="h1-1-3" class="d">-						arg.BasmMeta.RmMeta(&quot;variable&quot;)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+						arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a> 					} else {
+ 						return errors.New(&quot;ROM variable &quot; + romVariable + &quot; not found&quot;)
+ 					}
+</pre>
+</div>
+</body>
+</html>

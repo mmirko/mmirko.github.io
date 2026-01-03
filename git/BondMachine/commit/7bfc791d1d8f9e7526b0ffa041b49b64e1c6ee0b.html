@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Var name changes - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7bfc791d1d8f9e7526b0ffa041b49b64e1c6ee0b.html">7bfc791d1d8f9e7526b0ffa041b49b64e1c6ee0b</a>
+<b>parent</b> <a href="../commit/ec2625934b4563e1e7629d4033c6a056b037a796.html">ec2625934b4563e1e7629d4033c6a056b037a796</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 19 Jan 2023 12:51:28 +0100
+
+Var name changes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">45</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 23 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a> b/<a href="../file/cmd/procbuilder/procbuilder.go.html">cmd/procbuilder/procbuilder.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -34,9 +34,9 @@ var nbit = flag.Int(&quot;inputs&quot;, 1, &quot;Number of n-bit inputs&quot;)
+</a> var mbit = flag.Int(&quot;outputs&quot;, 1, &quot;Number of n-bit outputs&quot;)
+ var obit = flag.Int(&quot;rom&quot;, 8, &quot;Number of ROM memory cells 2^&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var input_assembly = flag.String(&quot;input-assembly&quot;, &quot;&quot;, &quot;Take assembly file as input&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-var input_binary = flag.String(&quot;input-binary&quot;, &quot;&quot;, &quot;Take binary file as input&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-var input_random = flag.Bool(&quot;input-random&quot;, false, &quot;Generate a random input&quot;)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+var inputAssembly = flag.String(&quot;input-assembly&quot;, &quot;&quot;, &quot;Take assembly file as input&quot;)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+var inputBinary = flag.String(&quot;input-binary&quot;, &quot;&quot;, &quot;Take binary file as input&quot;)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+var inputRandom = flag.Bool(&quot;input-random&quot;, false, &quot;Generate a random input&quot;)
+</a> 
+ var opcode_optimizer = flag.Bool(&quot;opcode-optimizer&quot;, false, &quot;Activate opecode optimizator for assembly input&quot;)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -145,31 +145,31 @@ func main() {
+</a> 		//ep.Pars[&quot;procbuilder:o&quot;] = strconv.Itoa(*obit)
+ 
+ 		// Processing enabled opcodes
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if *input_assembly != &quot;&quot; &amp;&amp; *opcode_optimizer {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			if _, err := os.Stat(*input_assembly); err == nil {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-				if prog, err := ioutil.ReadFile(*input_assembly); err == nil {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		if *inputAssembly != &quot;&quot; &amp;&amp; *opcode_optimizer {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			if _, err := os.Stat(*inputAssembly); err == nil {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				if prog, err := ioutil.ReadFile(*inputAssembly); err == nil {
+</a> 
+ 					// TODO keep the opecodes ordered by name
+ 					opcodes := make([]procbuilder.Opcode, 0)
+ 
+<a href="#h0-1-13" id="h0-1-13" class="d">-					currline := make([]byte, 256)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+					curLine := make([]byte, 256)
+</a> 
+<a href="#h0-1-16" id="h0-1-16" class="d">-					iline := 0
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+					iLine := 0
+</a> 
+ 					for _, ch := range prog {
+ 						if ch == 10 {
+<a href="#h0-1-21" id="h0-1-21" class="d">-							currline[iline] = &#39; &#39;
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-							if len(strings.Split(string(currline), &quot; &quot;)) &gt; 0 {
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-								tcheck := false
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-								opn := strings.Split(string(currline), &quot; &quot;)[0]
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+							curLine[iLine] = &#39; &#39;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+							if len(strings.Split(string(curLine), &quot; &quot;)) &gt; 0 {
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+								tCheck := false
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+								opn := strings.Split(string(curLine), &quot; &quot;)[0]
+</a> 								for _, op := range opcodes {
+ 									if opn == op.Op_get_name() {
+<a href="#h0-1-31" id="h0-1-31" class="d">-										tcheck = true
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+										tCheck = true
+</a> 										break
+ 									}
+ 								}
+ 
+<a href="#h0-1-37" id="h0-1-37" class="d">-								if !tcheck {
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+								if !tCheck {
+</a> 									for _, op := range procbuilder.Allopcodes {
+ 										if opn == op.Op_get_name() {
+ 											opcodes = append(opcodes, op)
+<a href="#h0-2" id="h0-2" class="h">@@ -178,11 +178,11 @@ func main() {
+</a> 									}
+ 								}
+ 							}
+<a href="#h0-2-3" id="h0-2-3" class="d">-							iline = 0
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+							iLine = 0
+</a> 
+ 						} else {
+<a href="#h0-2-7" id="h0-2-7" class="d">-							currline[iline] = ch
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-							iline = iline + 1
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+							curLine[iLine] = ch
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+							iLine = iLine + 1
+</a> 						}
+ 					}
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -210,6 +210,7 @@ func main() {
+</a> 			checked := make(map[string]struct{})
+ 
+ 			for i, opName := range eOps {
+<a href="#h0-3-3" id="h0-3-3" class="i">+				// This is the support for dynamic opcodes. It eventually creates the opcode if it does not exist and follows the naming convention
+</a> 				if _, err := procbuilder.EventuallyCreateInstruction(opName); err != nil {
+ 					panic(err)
+ 				}
+<a href="#h0-4" id="h0-4" class="h">@@ -238,9 +239,9 @@ func main() {
+</a> 		}
+ 
+ 		// Precessing assembly
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if *input_assembly != &quot;&quot; {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-			if _, err := os.Stat(*input_assembly); err == nil {
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-				if prog, err := ioutil.ReadFile(*input_assembly); err == nil {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		if *inputAssembly != &quot;&quot; {
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+			if _, err := os.Stat(*inputAssembly); err == nil {
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+				if prog, err := ioutil.ReadFile(*inputAssembly); err == nil {
+</a> 					if prog, err := myarch.Assembler(prog); err == nil {
+ 						mymachine.Program = prog
+ 					} else {
+<a href="#h0-5" id="h0-5" class="h">@@ -253,9 +254,9 @@ func main() {
+</a> 			} else {
+ 				panic(err)
+ 			}
+<a href="#h0-5-3" id="h0-5-3" class="d">-		} else if *input_binary != &quot;&quot; {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		} else if *inputBinary != &quot;&quot; {
+</a> 			//TODO input from binary file
+<a href="#h0-5-6" id="h0-5-6" class="d">-		} else if *input_random {
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		} else if *inputRandom {
+</a> 			//mymachine = procbuilder.Machine_Program_Generate(ep).(*procbuilder.Machine)
+ 		} else {
+ 			fmt.Println(&quot;Warning no program loaded&quot;)
+</pre>
+</div>
+</body>
+</html>

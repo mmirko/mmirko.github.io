@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROM data and code fusion - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f86b5e59f22d726727d3737b20127cb8ddc1fcca.html">f86b5e59f22d726727d3737b20127cb8ddc1fcca</a>
+<b>parent</b> <a href="../commit/4906f7925cfcf4b355aea2702847cf77b883f868.html">4906f7925cfcf4b355aea2702847cf77b883f868</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 15 Jun 2023 17:17:59 +0200
+
+ROM data and code fusion
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/datasects2bytes.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/passes.go</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/basm/romcomposer.go</a></td><td> | </td><td class="num">52</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 61 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -87,7 +87,7 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 	bi.sections = make(map[string]*BasmSection)
+ 	bi.fragments = make(map[string]*BasmFragment)
+ 	bi.chunks = make(map[string]*BasmChunk)
+<a href="#h0-0-3" id="h0-0-3" class="d">-	bi.passes = uint64(4095)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	bi.passes = uint64(8191)
+</a> 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.matchersOps = make([]procbuilder.Opcode, 0)
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a> b/<a href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,6 +17,7 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 			varCheck := make(map[string]struct{})
+ 
+ 			body := section.sectionBody
+<a href="#h1-0-3" id="h1-0-3" class="i">+			offset := 0
+</a> 			for _, line := range body.Lines {
+ 				varName := line.Operation.GetValue()
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -36,6 +37,7 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 
+ 				dataOperator := line.Elements[0].GetValue()
+ 				dataValue := line.Elements[1].GetValue()
+<a href="#h1-1-3" id="h1-1-3" class="i">+				line.Operation.BasmMeta = line.Operation.BasmMeta.SetMeta(&quot;offset&quot;, fmt.Sprintf(&quot;%d&quot;, offset))
+</a> 
+ 				switch dataOperator {
+ 				case &quot;db&quot;:
+<a href="#h1-2" id="h1-2" class="h">@@ -49,8 +51,10 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 							newElements[i] = newArg
+ 						}
+ 						line.Elements = newElements
+<a href="#h1-2-3" id="h1-2-3" class="i">+						offset += len(decodedBytes)
+</a> 					}
+ 				case &quot;equ&quot;:
+<a href="#h1-2-6" id="h1-2-6" class="i">+					// TODO: finish this and the other data operators
+</a> 				default:
+ 					return errors.New(&quot;Unknown data operator &quot; + dataOperator)
+ 				}
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -12,7 +12,8 @@ const (
+</a> 	passDataSections2Bytes    = uint64(256)
+ 	passEntryPoints           = uint64(512)
+ 	passLabelsResolver        = uint64(1024)
+<a href="#h2-0-3" id="h2-0-3" class="d">-	passMatcherResolver       = uint64(2048)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	passRomComposer           = uint64(2048)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	passMatcherResolver       = uint64(4096)
+</a> 	LAST_PASS                 = uint64(2048)
+ )
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -30,6 +31,7 @@ func getPassFunction() map[uint64]func(*BasmInstance) error {
+</a> 		passFragmentAnalyzer:      fragmentAnalyzer,
+ 		passFragmentPruner:        fragmentPruner,
+ 		passFragmentComposer:      fragmentComposer,
+<a href="#h2-1-3" id="h2-1-3" class="i">+		passRomComposer:           romComposer,
+</a> 	}
+ }
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -47,6 +49,7 @@ func getPassFunctionName() map[uint64]string {
+</a> 		passFragmentAnalyzer:      &quot;fragmentAnalyzer&quot;,
+ 		passFragmentPruner:        &quot;fragmentPruner&quot;,
+ 		passFragmentComposer:      &quot;fragmentComposer&quot;,
+<a href="#h2-2-3" id="h2-2-3" class="i">+		passRomComposer:           &quot;romComposer&quot;,
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a> b/<a href="../file/pkg/basm/romcomposer.go.html">pkg/basm/romcomposer.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,52 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package basm
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+func romComposer(bi *BasmInstance) error {
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	if bi.debug {
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+		fmt.Println(green(&quot;\tConnecting CP code and ROM:&quot;))
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	}
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	// Loop over the CP code and data and connect them to the ROM
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	for _, cp := range bi.cps {
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+		code := cp.GetMeta(&quot;romcode&quot;)
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+		data := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+		if code == &quot;&quot; || data == &quot;&quot; {
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+			continue
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+		}
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+		if bi.debug {
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+			fmt.Println(green(&quot;\t\tConnecting code &quot; + code + &quot; and data &quot; + data))
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+		}
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+		sectionCode := bi.sections[code]
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		cpNewSectionName := &quot;coderom_&quot; + code + &quot;_&quot; + data
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+		newSection := new(BasmSection)
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+		newSection.sectionName = cpNewSectionName
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		newSection.sectionType = setcRomText
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+		newSection.sectionBody = new(bmline.BasmBody)
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		newSection.sectionBody.Lines = make([]*bmline.BasmLine, 0)
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+		for _, line := range sectionCode.sectionBody.Lines {
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+			newLine := new(bmline.BasmLine)
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+			newLine.Operation = new(bmline.BasmElement)
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+			newLine.Operation.SetValue(line.Operation.GetValue())
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+			// TODO Finish this
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+			newSection.sectionBody.Lines = append(newSection.sectionBody.Lines, newLine)
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+		}
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+		bi.sections[newSection.sectionName] = newSection
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+	}
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	return nil
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

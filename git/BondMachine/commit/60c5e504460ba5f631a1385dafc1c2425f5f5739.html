@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>rorri bugfix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/60c5e504460ba5f631a1385dafc1c2425f5f5739.html">60c5e504460ba5f631a1385dafc1c2425f5f5739</a>
+<b>parent</b> <a href="../commit/46a865dd63f8b236b20440e66b88bed34d6b1b14.html">46a865dd63f8b236b20440e66b88bed34d6b1b14</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 17 Sep 2023 22:40:59 +0200
+
+rorri bugfix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">83</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 52 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,7 +37,6 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 		if strings.HasPrefix(romCodeName, &quot;romcode&quot;) {
+ 			if section, ok := bi.sections[romCodeName]; ok {
+ 				name := romCodeName[7:]
+<a href="#h0-0-3" id="h0-0-3" class="d">-				fmt.Println(name)
+</a> 				if err := bi.resolveSymbols(section, name); err != nil {
+ 					return err
+ 				}
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -21,14 +21,14 @@ func (op Ro2rri) Op_get_desc() string {
+</a> }
+ 
+ func (op Ro2rri) Op_show_assembler(arch *Arch) string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	result := &quot;ro2rri [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Set a register to the value of the given ROM location [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.O)) + &quot;]\n&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	result := &quot;ro2rri [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)]	// Set a register to the value of the given ROM location [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.O)) + &quot;]\n&quot;
+</a> 	return result
+ }
+ 
+ func (op Ro2rri) Op_get_instruction_len(arch *Arch) int {
+<a href="#h1-0-11" id="h1-0-11" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for a register
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for a register
+</a> }
+ 
+ func (op Ro2rri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h1-1" id="h1-1" class="h">@@ -36,10 +36,10 @@ func (op Ro2rri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor str
+</a> 	result := &quot;&quot;
+ 
+ 	// Check if the romread facility has already been included
+<a href="#h1-1-3" id="h1-1-3" class="d">-	romreadflag := conf.Runinfo.Check(&quot;romread&quot;)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	romReadFlag := conf.Runinfo.Check(&quot;romread&quot;)
+</a> 
+ 	// If not, include it
+<a href="#h1-1-7" id="h1-1-7" class="d">-	if romreadflag {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	if romReadFlag {
+</a> 
+ 		romWord := arch.Max_word()
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -56,36 +56,52 @@ func (op Ro2rri) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor str
+</a> 
+ func (op Ro2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	romWord := arch.Max_word()
+<a href="#h1-2-3" id="h1-2-3" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	opBits := arch.Opcodes_bits()
+</a> 
+ 	regNum := 1 &lt;&lt; arch.R
+<a href="#h1-2-7" id="h1-2-7" class="i">+	rSize := int(arch.Rsize)
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+	// If the WORD size is bigger than the register size, we need to slice the ROM value (that is right padded with zeros)
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	sliceROM := &quot;romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:&quot; + strconv.Itoa(romWord-rSize) + &quot;]&quot;
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+	sliceReg := &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0]&quot;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	// If the register size is bigger than the WORD size, we need to add zeros to the ROM value
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	// TODO: unchecked code, check if it works
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+	if int(arch.Rsize) &gt; romWord {
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		sliceROM = &quot;{ &quot; + strconv.Itoa(int(arch.Rsize)-romWord) + &quot;&#39;b0 ,romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:0] }&quot;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+	}
+</a> 
+ 	result := &quot;&quot;
+ 	result += &quot;					RO2RRI: begin\n&quot;
+ 	if arch.R == 1 {
+<a href="#h1-2-22" id="h1-2-22" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;])\n&quot;
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h1-2-25" id="h1-2-25" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+ 	for i := 0; i &lt; regNum; i++ {
+ 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 
+ 		if arch.R == 1 {
+<a href="#h1-2-32" id="h1-2-32" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h1-2-33" id="h1-2-33" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a> 		} else {
+<a href="#h1-2-35" id="h1-2-35" class="d">-			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h1-2-36" id="h1-2-36" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a> 		}
+ 
+ 		for j := 0; j &lt; regNum; j++ {
+ 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 
+ 			result += &quot;								if (romread_ready == 1&#39;b1) begin\n&quot;
+<a href="#h1-2-43" id="h1-2-43" class="d">-			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:0];\n&quot;
+</a><a href="#h1-2-44" id="h1-2-44" class="i">+			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + sliceReg + &quot; &lt;= #1 &quot; + sliceROM + &quot;;\n&quot;
+</a> 			result += &quot;									romread_ready &lt;= 1&#39;b0;\n&quot;
+ 			result += NextInstruction(conf, arch, 9, &quot;_pc + 1&#39;b1&quot;)
+ 			result += &quot;								end\n&quot;
+ 			result += &quot;								else begin\n&quot;
+<a href="#h1-2-49" id="h1-2-49" class="d">-			result += &quot;									romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h1-2-50" id="h1-2-50" class="i">+			if arch.O &lt;= arch.Rsize {
+</a><a href="#h1-2-51" id="h1-2-51" class="i">+				result += &quot;									romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0];\n&quot;
+</a><a href="#h1-2-52" id="h1-2-52" class="i">+			} else {
+</a><a href="#h1-2-53" id="h1-2-53" class="i">+				// TODO: unchecked code, check if it works
+</a><a href="#h1-2-54" id="h1-2-54" class="i">+				result += &quot;									romread_bus[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] &lt;= { &quot; + strconv.Itoa(int(arch.O)-rSize) + &quot;&#39;b0 ,_&quot; + strings.ToLower(Get_register_name(j)) + &quot;[&quot; + strconv.Itoa(int(arch.O)-1) + &quot;:0] };\n&quot;
+</a><a href="#h1-2-55" id="h1-2-55" class="i">+			}
+</a> 			result += &quot;									romread_ready &lt;= 1&#39;b1;\n&quot;
+ 			result += &quot;								end\n&quot;
+ 			result += &quot;								$display(\&quot;RO2RRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+<a href="#h1-3" id="h1-3" class="h">@@ -103,18 +119,17 @@ func (op Ro2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> }
+ 
+ func (op Ro2rri) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	// TODO
+</a> 	return &quot;&quot;
+ }
+ 
+ func (op Ro2rri) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#h1-3-8" id="h1-3-8" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	opBits := arch.Opcodes_bits()
+</a> 	romWord := arch.Max_word()
+ 
+ 	regNum := 1 &lt;&lt; arch.R
+ 
+ 	if len(words) != 2 {
+<a href="#h1-3-15" id="h1-3-15" class="d">-		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+		return &quot;&quot;, Prerror{&quot;wrong arguments number&quot;}
+</a> 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h1-4" id="h1-4" class="h">@@ -126,7 +141,7 @@ func (op Ro2rri) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if result == &quot;&quot; {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		return &quot;&quot;, Prerror{&quot;unknown register name &quot; + words[0]}
+</a> 	}
+ 
+ 	partial := &quot;&quot;
+<a href="#h1-5" id="h1-5" class="h">@@ -138,12 +153,12 @@ func (op Ro2rri) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if partial == &quot;&quot; {
+<a href="#h1-5-3" id="h1-5-3" class="d">-		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		return &quot;&quot;, Prerror{&quot;unknown register name &quot; + words[1]}
+</a> 	}
+ 
+ 	result += partial
+ 
+<a href="#h1-5-9" id="h1-5-9" class="d">-	for i := opbits + 2*int(arch.R); i &lt; romWord; i++ {
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+	for i := opBits + 2*int(arch.R); i &lt; romWord; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -159,38 +174,44 @@ func (op Ro2rri) Disassembler(arch *Arch, instr string) (string, error) {
+</a> }
+ 
+ func (op Ro2rri) Simulate(vm *VM, instr string) error {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	reg_bits := vm.Mach.R
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	regDest := get_id(instr[:reg_bits])
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-	rSize := vm.Mach.Rsize
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	regBits := vm.Mach.R
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	regDest := get_id(instr[:regBits])
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+	regSrc := get_id(instr[regBits : regBits*2])
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+	sliceSize := int(vm.Mach.Rsize)
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+	rSize := int(vm.Mach.Rsize)
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+	// The slice size is the minimum between the register size and the word size
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+	if sliceSize &gt; len(vm.Mach.Program.Slocs[0]) {
+</a><a href="#h1-6-15" id="h1-6-15" class="i">+		sliceSize = len(vm.Mach.Program.Slocs[0])
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+	}
+</a> 
+ 	if rSize &lt;= 8 {
+ 		loc := int(vm.Registers[regSrc].(uint8))
+ 		if loc &lt; len(vm.Mach.Program.Slocs) {
+<a href="#h1-6-21" id="h1-6-21" class="d">-			vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc][0:rSize]))
+</a><a href="#h1-6-22" id="h1-6-22" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a> 		} else {
+<a href="#h1-6-24" id="h1-6-24" class="d">-			vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:rSize]))
+</a><a href="#h1-6-25" id="h1-6-25" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a> 		}
+ 	} else if rSize &lt;= 16 {
+ 		loc := int(vm.Registers[regSrc].(uint16))
+ 		if loc &lt; len(vm.Mach.Program.Slocs) {
+<a href="#h1-6-30" id="h1-6-30" class="d">-			vm.Registers[regDest] = uint16(get_id(vm.Mach.Program.Slocs[loc][0:rSize]))
+</a><a href="#h1-6-31" id="h1-6-31" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a> 		} else {
+<a href="#h1-6-33" id="h1-6-33" class="d">-			vm.Registers[regDest] = uint16(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:rSize]))
+</a><a href="#h1-6-34" id="h1-6-34" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a> 		}
+ 	} else if rSize &lt;= 32 {
+ 		loc := int(vm.Registers[regSrc].(uint32))
+ 		if loc &lt; len(vm.Mach.Program.Slocs) {
+<a href="#h1-6-39" id="h1-6-39" class="d">-			vm.Registers[regDest] = uint32(get_id(vm.Mach.Program.Slocs[loc][0:rSize]))
+</a><a href="#h1-6-40" id="h1-6-40" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a> 		} else {
+<a href="#h1-6-42" id="h1-6-42" class="d">-			vm.Registers[regDest] = uint32(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:rSize]))
+</a><a href="#h1-6-43" id="h1-6-43" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a> 		}
+ 	} else if rSize &lt;= 64 {
+ 		loc := int(vm.Registers[regSrc].(uint64))
+ 		if loc &lt; len(vm.Mach.Program.Slocs) {
+<a href="#h1-6-48" id="h1-6-48" class="d">-			vm.Registers[regDest] = uint64(get_id(vm.Mach.Program.Slocs[loc][0:rSize]))
+</a><a href="#h1-6-49" id="h1-6-49" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a> 		} else {
+<a href="#h1-6-51" id="h1-6-51" class="d">-			vm.Registers[regDest] = uint64(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:rSize]))
+</a><a href="#h1-6-52" id="h1-6-52" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a> 		}
+ 	} else {
+ 		return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</pre>
+</div>
+</body>
+</html>

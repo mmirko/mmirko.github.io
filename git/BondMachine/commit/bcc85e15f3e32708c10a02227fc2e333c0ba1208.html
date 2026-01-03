@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>minimal chooser - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bcc85e15f3e32708c10a02227fc2e333c0ba1208.html">bcc85e15f3e32708c10a02227fc2e333c0ba1208</a>
+<b>parent</b> <a href="../commit/0b761f0d0552c007010a57c3c7ba93e08b2d3979.html">0b761f0d0552c007010a57c3c7ba93e08b2d3979</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  6 Sep 2023 09:07:41 +0200
+
+minimal chooser
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmconfig/bmconfig.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 40 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -49,6 +49,7 @@ var actOptimizations = flag.String(&quot;activate-optimizations&quot;, &quot;&quot;, &quot;List of comma 
+</a> 
+ // Config
+ var disableDynamicalMatching = flag.Bool(&quot;disable-dynamical-matching&quot;, false, &quot;Disable the dynamical matching&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var chooserMinWordSize = flag.Bool(&quot;chooser-min-word-size&quot;, false, &quot;Choose the minimum word size for the chooser&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h0-1" id="h0-1" class="h">@@ -131,6 +132,9 @@ func main() {
+</a> 	if *disableDynamicalMatching {
+ 		bi.Activate(bmconfig.DisableDynamicalMatching)
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if *chooserMinWordSize {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		bi.Activate(bmconfig.ChooserMinWordSize)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	}
+</a> 
+ 	mne := basm.GetPassMnemonic()
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -870,8 +871,40 @@ func (bi *BasmInstance) CodeChoice(rSize uint8, i int, sh string) error {
+</a> 			}
+ 		}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-		fmt.Println(&quot;params: &quot;, params)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		// TODO Finish the code
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		// Choice of the sections
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		if bi.IsActive(bmconfig.ChooserMinWordSize) {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+			if bi.debug {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;Choosing the code with the minimum word size&quot;))
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+			}
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			var ci string
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+			var cj string
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+			minSize := 1024
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+			for ii, romAlt := range romAlts {
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+				for jj, ramAlt := range ramAlts {
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+					if params[ii*len(ramAlts)+jj].wordSize &lt; minSize {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+						minSize = params[ii*len(ramAlts)+jj].wordSize
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+						ci = romAlt
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+						cj = ramAlt
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+					}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+				}
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+			}
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			if bi.debug {
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;Chosen code: &quot;) + yellow(ci) + green(&quot; - &quot;) + yellow(cj))
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+			}
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+			if ci != &quot;&quot; {
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+				cp.SetMeta(&quot;romcode&quot;, ci)
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+			}
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+			if cj != &quot;&quot; {
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+				cp.SetMeta(&quot;ramcode&quot;, cj)
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+			}
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+			cp.RmMeta(&quot;romalternatives&quot;)
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+			cp.RmMeta(&quot;ramalternatives&quot;)
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+			return nil
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+		}
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+		return errors.New(&quot;unable to choose the code among the alternatives, a criteria is needed&quot;)
+</a> 
+ 	}
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/bmconfig/bmconfig.go.html">pkg/bmconfig/bmconfig.go</a> b/<a href="../file/pkg/bmconfig/bmconfig.go.html">pkg/bmconfig/bmconfig.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,6 +2,7 @@ package bmconfig
+</a> 
+ const (
+ 	DisableDynamicalMatching = uint64(0) + iota
+<a href="#h2-0-3" id="h2-0-3" class="i">+	ChooserMinWordSize
+</a> )
+ 
+ type BmConfig struct {
+<a href="#h2-1" id="h2-1" class="h">@@ -16,7 +17,6 @@ func NewBmConfig() *BmConfig {
+</a> 
+ func (bmc *BmConfig) Activate(key uint64) {
+ 	bmc.config[key] = struct{}{}
+<a href="#h2-1-3" id="h2-1-3" class="d">-	return
+</a> }
+ 
+ func (bmc *BmConfig) Deactivate(key uint64) {
+<a href="#h2-2" id="h2-2" class="h">@@ -24,7 +24,6 @@ func (bmc *BmConfig) Deactivate(key uint64) {
+</a> 		return
+ 	}
+ 	delete(bmc.config, key)
+<a href="#h2-2-3" id="h2-2-3" class="d">-	return
+</a> }
+ 
+ func (bmc *BmConfig) IsActive(key uint64) bool {
+</pre>
+</div>
+</body>
+</html>

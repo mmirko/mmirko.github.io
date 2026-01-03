@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>README.md - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> README.md (10418B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> # BMStack
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> bmstack is part of BondMachine project. Within the project It is used to create stacks and queues distributed among several BondMachine cores. due to its generality it can also be used as standalone tool to produce HDL shared stacks and queues to be used in other projects.
+<a href="#l4" class="line" id="l4">      4</a> The HDL code is build using golang templates that creates the code starting from the following data structure. The comments describe the meaning of each field.
+<a href="#l5" class="line" id="l5">      5</a> 
+<a href="#l6" class="line" id="l6">      6</a> ```go
+<a href="#l7" class="line" id="l7">      7</a> type Push struct {
+<a href="#l8" class="line" id="l8">      8</a>   Agent string // The name of the agent that is pushing
+<a href="#l9" class="line" id="l9">      9</a>   Tick  uint64 // The tick at which the push occurs
+<a href="#l10" class="line" id="l10">     10</a>   Value string // The value that is pushed
+<a href="#l11" class="line" id="l11">     11</a> }
+<a href="#l12" class="line" id="l12">     12</a> 
+<a href="#l13" class="line" id="l13">     13</a> type Pop struct {
+<a href="#l14" class="line" id="l14">     14</a>   Agent string // The name of the agent that is popping
+<a href="#l15" class="line" id="l15">     15</a>   Tick  uint64 // The tick at which the pop occurs
+<a href="#l16" class="line" id="l16">     16</a> }
+<a href="#l17" class="line" id="l17">     17</a> 
+<a href="#l18" class="line" id="l18">     18</a> type TestBenchData struct {
+<a href="#l19" class="line" id="l19">     19</a>   Pops         []Pop    // List of pops
+<a href="#l20" class="line" id="l20">     20</a>   Pushes       []Push   // List of pushes
+<a href="#l21" class="line" id="l21">     21</a>   TestSequence []string // Pushes and pops in order
+<a href="#l22" class="line" id="l22">     22</a> }
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> type BmStack struct {
+<a href="#l25" class="line" id="l25">     25</a>   ModuleName string   // The name of the module
+<a href="#l26" class="line" id="l26">     26</a>   DataSize   int      // The size of the data bus
+<a href="#l27" class="line" id="l27">     27</a>   Depth      int      // The depth of the stack
+<a href="#l28" class="line" id="l28">     28</a>   Senders    []string // The names of the agents that can send data to the stack
+<a href="#l29" class="line" id="l29">     29</a>   Receivers  []string // The names of the agents that can receive data from the stack
+<a href="#l30" class="line" id="l30">     30</a>   MemType    string   // &quot;LIFO&quot; for a stack or &quot;FIFO&quot; for a queue
+<a href="#l31" class="line" id="l31">     31</a>   funcMap    template.FuncMap
+<a href="#l32" class="line" id="l32">     32</a> 
+<a href="#l33" class="line" id="l33">     33</a>   // TestBench data
+<a href="#l34" class="line" id="l34">     34</a>   TestBenchData
+<a href="#l35" class="line" id="l35">     35</a> }
+<a href="#l36" class="line" id="l36">     36</a> ```
+<a href="#l37" class="line" id="l37">     37</a> 
+<a href="#l38" class="line" id="l38">     38</a> ## Usage
+<a href="#l39" class="line" id="l39">     39</a> 
+<a href="#l40" class="line" id="l40">     40</a> ### Usage: API 
+<a href="#l41" class="line" id="l41">     41</a> 
+<a href="#l42" class="line" id="l42">     42</a> The library can be used in two ways.
+<a href="#l43" class="line" id="l43">     43</a> The first one is from a go program. After creating a BmStack structure, the user can call the WriteHDL function to produce the HDL code.
+<a href="#l44" class="line" id="l44">     44</a> An example on how the library can be used this way can be seen in the go test file (bmstack_test.go).
+<a href="#l45" class="line" id="l45">     45</a> 
+<a href="#l46" class="line" id="l46">     46</a> ```go
+<a href="#l47" class="line" id="l47">     47</a> func TestWriteHDL(t *testing.T) {
+<a href="#l48" class="line" id="l48">     48</a>   // Create a new stack with 4 agents
+<a href="#l49" class="line" id="l49">     49</a>   stack := BmStack{
+<a href="#l50" class="line" id="l50">     50</a>     ModuleName: &quot;test&quot;,
+<a href="#l51" class="line" id="l51">     51</a>     DataSize:   32,
+<a href="#l52" class="line" id="l52">     52</a>     Depth:      8,
+<a href="#l53" class="line" id="l53">     53</a>     Senders:    []string{&quot;sender1&quot;, &quot;sender2&quot;},
+<a href="#l54" class="line" id="l54">     54</a>     Receivers:  []string{&quot;receiver1&quot;, &quot;receiver2&quot;},
+<a href="#l55" class="line" id="l55">     55</a>     MemType:    &quot;LIFO&quot;
+<a href="#l56" class="line" id="l56">     56</a>   }
+<a href="#l57" class="line" id="l57">     57</a> 
+<a href="#l58" class="line" id="l58">     58</a>   // write the HDL code
+<a href="#l59" class="line" id="l59">     59</a>   stack.WriteHDL()
+<a href="#l60" class="line" id="l60">     60</a> ```
+<a href="#l61" class="line" id="l61">     61</a> 
+<a href="#l62" class="line" id="l62">     62</a> The second part of the struct can be filled with test data. These data are used to produce a test bench for the stack. Using the test bench the user can verify the correctness of the stack. The test bench is produced by calling the WriteTestBench function.
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> ```go
+<a href="#l65" class="line" id="l65">     65</a> func TestWriteTestBench(t *testing.T) {
+<a href="#l66" class="line" id="l66">     66</a>   stack := BmStack{
+<a href="#l67" class="line" id="l67">     67</a>   // ...
+<a href="#l68" class="line" id="l68">     68</a>     s.Pushes = []Push{
+<a href="#l69" class="line" id="l69">     69</a>       Push{&quot;sender1&quot;, 200, &quot;32&#39;d1&quot;},
+<a href="#l70" class="line" id="l70">     70</a>     }
+<a href="#l71" class="line" id="l71">     71</a>     s.Pops = []Pop{
+<a href="#l72" class="line" id="l72">     72</a>       Pop{&quot;receiver1&quot;, 60},
+<a href="#l73" class="line" id="l73">     73</a>     }
+<a href="#l74" class="line" id="l74">     74</a>   }
+<a href="#l75" class="line" id="l75">     75</a>   // write the test bench
+<a href="#l76" class="line" id="l76">     76</a>   stack.WriteTestBench()
+<a href="#l77" class="line" id="l77">     77</a> }
+<a href="#l78" class="line" id="l78">     78</a> ```
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> The two functions (WriteHDL and WriteTestBench) return a string that contains the HDL code or an error if something went wrong (string, error).
+<a href="#l81" class="line" id="l81">     81</a> The provided go test file (bmstack_test.go) shows how the library can be used in this way. When invoked (go test), it produces the two files (bmstack.v and bmstack_tb.v).
+<a href="#l82" class="line" id="l82">     82</a> This kind of usage is useful when the user needs to create a stack or a queue in HDL and then use it in a bigger project like it is done in the BondMachine project.
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> ### Usage: CLI
+<a href="#l85" class="line" id="l85">     85</a> 
+<a href="#l86" class="line" id="l86">     86</a> The library also came with a companion CLI executable called bmstack that provides the basic interface to the library. This is the second Possible way to use it.
+<a href="#l87" class="line" id="l87">     87</a> With the -h flag the user can see the available options and their meaning.
+<a href="#l88" class="line" id="l88">     88</a> 
+<a href="#l89" class="line" id="l89">     89</a> ```bash
+<a href="#l90" class="line" id="l90">     90</a> $ bmstack -h
+<a href="#l91" class="line" id="l91">     91</a> Usage of bmstack:
+<a href="#l92" class="line" id="l92">     92</a>   -d    Verbose
+<a href="#l93" class="line" id="l93">     93</a>   -data-width int
+<a href="#l94" class="line" id="l94">     94</a>         Width of the data bus (default 32)
+<a href="#l95" class="line" id="l95">     95</a>   -depth int
+<a href="#l96" class="line" id="l96">     96</a>         Depth of the stack/queue (default 8)
+<a href="#l97" class="line" id="l97">     97</a>   -hdl-file string
+<a href="#l98" class="line" id="l98">     98</a>         Name of the file to write the HDL to (empty string to disable) (default &quot;stack.v&quot;)
+<a href="#l99" class="line" id="l99">     99</a>   -memory-type string
+<a href="#l100" class="line" id="l100">    100</a>         Memory type, either stack or queue (default &quot;queue&quot;)
+<a href="#l101" class="line" id="l101">    101</a>   -random-stimulus int
+<a href="#l102" class="line" id="l102">    102</a>         Generate random stimulus including N pushes and pops for every agent (0 to disable)
+<a href="#l103" class="line" id="l103">    103</a>   -receivers string
+<a href="#l104" class="line" id="l104">    104</a>         Comma separated list of names of signal tags that will receive data from the stack/queue
+<a href="#l105" class="line" id="l105">    105</a>   -senders string
+<a href="#l106" class="line" id="l106">    106</a>         Comma separated list of names of signal tags that will send data to the stack/queue
+<a href="#l107" class="line" id="l107">    107</a>   -sim-length int
+<a href="#l108" class="line" id="l108">    108</a>         Length of the simulation in clock cycles (default 1000)
+<a href="#l109" class="line" id="l109">    109</a>   -stimulus-file string
+<a href="#l110" class="line" id="l110">    110</a>         Name of the JSON file to load the stimulus from (empty string to disable)
+<a href="#l111" class="line" id="l111">    111</a>   -tb-file string
+<a href="#l112" class="line" id="l112">    112</a>         Name of the file to write the testbench to (empty string to disable)
+<a href="#l113" class="line" id="l113">    113</a>   -v    Verbose
+<a href="#l114" class="line" id="l114">    114</a> ```
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a> ## Examples
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a> Within the BondMachine project, the library is used to create stacks and queues in HDL whenever needed. Some example of this are:
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> - The queue used by the thread manager in the CP cores to store the CP threads state
+<a href="#l121" class="line" id="l121">    121</a> - The stack used to store the return addresses in the call instruction
+<a href="#l122" class="line" id="l122">    122</a> - The queue used to get data for the keyboard
+<a href="#l123" class="line" id="l123">    123</a> 
+<a href="#l124" class="line" id="l124">    124</a> To further see how the library is used in the BondMachine project, please refer to the BondMachine examples directory that contains many examples of BondMachines using stacks and queues. Instead, here we provide a simple example of how to use the library as standalone tool.
+<a href="#l125" class="line" id="l125">    125</a> 
+<a href="#l126" class="line" id="l126">    126</a> ### Example: API
+<a href="#l127" class="line" id="l127">    127</a> 
+<a href="#l128" class="line" id="l128">    128</a> The provided go test file (bmstack_test.go) shows how the library can be used in this way. When invoked (go test), it produces the two files (bmstack.v and bmstack_tb.v).
+<a href="#l129" class="line" id="l129">    129</a> 
+<a href="#l130" class="line" id="l130">    130</a> ```bash
+<a href="#l131" class="line" id="l131">    131</a> $ go test
+<a href="#l132" class="line" id="l132">    132</a> $ ls *.v
+<a href="#l133" class="line" id="l133">    133</a> bmstack_tb.v  bmstack.v
+<a href="#l134" class="line" id="l134">    134</a> ```
+<a href="#l135" class="line" id="l135">    135</a> 
+<a href="#l136" class="line" id="l136">    136</a> This example sets up a stack with 5 agents (3 senders and 2 receivers) and then produces the HDL code and the test bench for the stack. The test bench contains a sequence of pushes and pops that are used to verify the correctness of the stack.
+<a href="#l137" class="line" id="l137">    137</a> In detail the 3 senders push 6 values (2 each) to the stack at different times, while the 2 receivers pop the 6 values (3 each) from the stack at different times. The 6 values are distributed among the 2 receivers.
+<a href="#l138" class="line" id="l138">    138</a> 
+<a href="#l139" class="line" id="l139">    139</a> ### Example: CLI
+<a href="#l140" class="line" id="l140">    140</a> 
+<a href="#l141" class="line" id="l141">    141</a> The CLI can be used to produce the HDL code and the test bench for the stack. The following command produces the exact same file (bmsta.v) as the API example above.
+<a href="#l142" class="line" id="l142">    142</a> 
+<a href="#l143" class="line" id="l143">    143</a> ```bash
+<a href="#l144" class="line" id="l144">    144</a> $ bmstack -senders sender1,sender2,sender3 -receivers receiver1,receiver2 -hdl-file bmstack.v
+<a href="#l145" class="line" id="l145">    145</a> ```
+<a href="#l146" class="line" id="l146">    146</a> 
+<a href="#l147" class="line" id="l147">    147</a> To also produce the (same) test bench, the user can use the following command.
+<a href="#l148" class="line" id="l148">    148</a> 
+<a href="#l149" class="line" id="l149">    149</a> ```bash
+<a href="#l150" class="line" id="l150">    150</a> $ bmstack -senders sender1,sender2,sender3 -receivers receiver1,receiver2 -hdl-file bmstack.v -tb-file bmstack_tb.v -stimulus-file stimulus.json
+<a href="#l151" class="line" id="l151">    151</a> ```
+<a href="#l152" class="line" id="l152">    152</a> 
+<a href="#l153" class="line" id="l153">    153</a> Where `stimulus.json` is a JSON file that contains the test bench data. The JSON file has the following format.
+<a href="#l154" class="line" id="l154">    154</a> 
+<a href="#l155" class="line" id="l155">    155</a> ```json
+<a href="#l156" class="line" id="l156">    156</a> {
+<a href="#l157" class="line" id="l157">    157</a>   &quot;Pops&quot;: [
+<a href="#l158" class="line" id="l158">    158</a>     {&quot;Agent&quot;: &quot;receiver1&quot;,&quot;Tick&quot;: 110},
+<a href="#l159" class="line" id="l159">    159</a>     {&quot;Agent&quot;: &quot;receiver2&quot;,&quot;Tick&quot;: 160},
+<a href="#l160" class="line" id="l160">    160</a>     {&quot;Agent&quot;: &quot;receiver1&quot;,&quot;Tick&quot;: 210},
+<a href="#l161" class="line" id="l161">    161</a>     {&quot;Agent&quot;: &quot;receiver2&quot;,&quot;Tick&quot;: 260},
+<a href="#l162" class="line" id="l162">    162</a>     {&quot;Agent&quot;: &quot;receiver1&quot;,&quot;Tick&quot;: 310},
+<a href="#l163" class="line" id="l163">    163</a>     {&quot;Agent&quot;: &quot;receiver2&quot;,&quot;Tick&quot;: 360}
+<a href="#l164" class="line" id="l164">    164</a>   ],
+<a href="#l165" class="line" id="l165">    165</a>   &quot;Pushes&quot;: [
+<a href="#l166" class="line" id="l166">    166</a>     {&quot;Agent&quot;: &quot;sender1&quot;,&quot;Tick&quot;: 100,&quot;Value&quot;: &quot;32&#39;d1&quot;},
+<a href="#l167" class="line" id="l167">    167</a>     {&quot;Agent&quot;: &quot;sender2&quot;,&quot;Tick&quot;: 150,&quot;Value&quot;: &quot;32&#39;d2&quot;},
+<a href="#l168" class="line" id="l168">    168</a>     {&quot;Agent&quot;: &quot;sender3&quot;,&quot;Tick&quot;: 200,&quot;Value&quot;: &quot;32&#39;d3&quot;},
+<a href="#l169" class="line" id="l169">    169</a>     {&quot;Agent&quot;: &quot;sender1&quot;,&quot;Tick&quot;: 250,&quot;Value&quot;: &quot;32&#39;d4&quot;},
+<a href="#l170" class="line" id="l170">    170</a>     {&quot;Agent&quot;: &quot;sender2&quot;,&quot;Tick&quot;: 300,&quot;Value&quot;: &quot;32&#39;d5&quot;},
+<a href="#l171" class="line" id="l171">    171</a>     {&quot;Agent&quot;: &quot;sender3&quot;,&quot;Tick&quot;: 350,&quot;Value&quot;: &quot;32&#39;d6&quot;}
+<a href="#l172" class="line" id="l172">    172</a>   ],
+<a href="#l173" class="line" id="l173">    173</a>   &quot;TestSequence&quot;: null
+<a href="#l174" class="line" id="l174">    174</a> }
+<a href="#l175" class="line" id="l175">    175</a> ```
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a> The JSON file contains the same data as the test bench data in the API example above. The user can use the JSON file to provide his own test bench data to the CLI. With -random-stimulus the user can also generate random stimulus data for the test bench.
+<a href="#l178" class="line" id="l178">    178</a> The CLI can be used to produce the HDL code and the test bench for a custom distributed stack/queue to use in other projects.
+<a href="#l179" class="line" id="l179">    179</a> 
+<a href="#l180" class="line" id="l180">    180</a> `Warning`: If the simulation prints a message like
+<a href="#l181" class="line" id="l181">    181</a> ```
+<a href="#l182" class="line" id="l182">    182</a> Warning: impulse while request is active, the impulse will be ignored
+<a href="#l183" class="line" id="l183">    183</a> ```
+<a href="#l184" class="line" id="l184">    184</a> 
+<a href="#l185" class="line" id="l185">    185</a> it is due to the fact that the test bench data is not correct. Some pops/pushes are fired while the stack has already a request active from the same agent. In a real scenario, the agent would wait for the ack signal before sending another request.
+<a href="#l186" class="line" id="l186">    186</a> The test bench provided in the example is correct.
+<a href="#l187" class="line" id="l187">    187</a> 
+<a href="#l188" class="line" id="l188">    188</a> ## Simulation
+<a href="#l189" class="line" id="l189">    189</a> 
+<a href="#l190" class="line" id="l190">    190</a> Whether the HDL code is produced using the API or the CLI, the user can simulate the stack/queue using the provided test bench. The test bench is written in Verilog and can be simulated using any Verilog simulator. Here we provide an example using the Icarus Verilog simulator to run the simulation. The simulation produces a vcd file that can be viewed using gtkwave.
+<a href="#l191" class="line" id="l191">    191</a> 
+<a href="#l192" class="line" id="l192">    192</a> Following the API example above, the user can simulate the stack using the following commands.
+<a href="#l193" class="line" id="l193">    193</a> 
+<a href="#l194" class="line" id="l194">    194</a> ```bash
+<a href="#l195" class="line" id="l195">    195</a> $ iverilog -o bmstack.vvp *.v
+<a href="#l196" class="line" id="l196">    196</a> $ vvp bmstack.vvp
+<a href="#l197" class="line" id="l197">    197</a> VCD info: dumpfile bmstack.vcd opened for output.
+<a href="#l198" class="line" id="l198">    198</a> stack_tb.v:142: $finish called at 1304000 (1ps)
+<a href="#l199" class="line" id="l199">    199</a> $ gtkwave bmstack.vcd
+<a href="#l200" class="line" id="l200">    200</a> ```
+<a href="#l201" class="line" id="l201">    201</a> 
+<a href="#l202" class="line" id="l202">    202</a> ![Sim](sim.png)
+<a href="#l203" class="line" id="l203">    203</a> 
+<a href="#l204" class="line" id="l204">    204</a> The simulation shows the stack in action. The stack is filled with 6 values and then the values are popped by the receivers. The values are distributed among the two receivers as expected. Alongside the values pushed and popped, the simulation also shows some internal signals of the stack.
+<a href="#l205" class="line" id="l205">    205</a> 
+<a href="#l206" class="line" id="l206">    206</a> ## Interface
+<a href="#l207" class="line" id="l207">    207</a> 
+<a href="#l208" class="line" id="l208">    208</a> To use the generated HDL code, the user needs to connect the stack/queue to the agents that send and receive data. The stack/queue has the following interface.
+<a href="#l209" class="line" id="l209">    209</a> 
+<a href="#l210" class="line" id="l210">    210</a> ### Senders
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> The senders need to connect the following signals to the stack/queue.
+<a href="#l213" class="line" id="l213">    213</a> 
+<a href="#l214" class="line" id="l214">    214</a> - `clk`: The clock signal
+<a href="#l215" class="line" id="l215">    215</a> - `reset`: The reset signal
+<a href="#l216" class="line" id="l216">    216</a> - `[sendername]Data`: The data to be pushed to the stack/queue
+<a href="#l217" class="line" id="l217">    217</a> - `[sendername]Write`: The write signal to push the data to the stack/queue
+<a href="#l218" class="line" id="l218">    218</a> - `[sendername]Ack`: The acknowledge signal to confirm the data has been pushed to the stack/queue
+<a href="#l219" class="line" id="l219">    219</a> 
+<a href="#l220" class="line" id="l220">    220</a> So, for example, if the user has a sender agent called sender1, the user needs to write the data to be pushed to the stack/queue in the `sender1Data` signal, then set the `sender1Write` signal to 1 to push the data to the stack/queue. The `sender1Ack` signal will be set to 1 when the data has been pushed to the stack/queue.
+<a href="#l221" class="line" id="l221">    221</a> 
+<a href="#l222" class="line" id="l222">    222</a> Sendername is the name of the sender agent chosen by the user.
+<a href="#l223" class="line" id="l223">    223</a> 
+<a href="#l224" class="line" id="l224">    224</a> ### Receivers
+<a href="#l225" class="line" id="l225">    225</a> 
+<a href="#l226" class="line" id="l226">    226</a> Similarly, the receivers need to connect the following signals to the stack/queue.
+<a href="#l227" class="line" id="l227">    227</a> 
+<a href="#l228" class="line" id="l228">    228</a> - `clk`: The clock signal
+<a href="#l229" class="line" id="l229">    229</a> - `reset`: The reset signal
+<a href="#l230" class="line" id="l230">    230</a> - `[receivername]Data`: The data to be popped from the stack/queue
+<a href="#l231" class="line" id="l231">    231</a> - `[receivername]Read`: The read signal to pop the data from the stack/queue
+<a href="#l232" class="line" id="l232">    232</a> - `[receivername]Ack`: The acknowledge signal to confirm the data has been popped from the stack/queue
+<a href="#l233" class="line" id="l233">    233</a> 
+<a href="#l234" class="line" id="l234">    234</a> So, for example, if the user has a receiver agent called receiver1, the user needs to set the `receiver1Read` signal to 1 to pop the data from the stack/queue. The `receiver1Data` signal will contain the data popped from the stack/queue. The `receiver1Ack` signal will be set to 1 when the data has been popped from the stack/queue and is available in the `receiver1Data` signal.
+</pre>
+</div>
+</body>
+</html>

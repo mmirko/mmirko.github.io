@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dynamical types - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/12f9b059651251a80ac1ff691ecf12990d116e24.html">12f9b059651251a80ac1ff691ecf12990d116e24</a>
+<b>parent</b> <a href="../commit/15b6f3525bc17a87f0f4ab10bd3c5f7768775746.html">15b6f3525bc17a87f0f4ab10bd3c5f7768775746</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  9 Dec 2022 14:06:28 +0100
+
+dynamical types
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">bmnumbers/dynamical_type.go</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">bmnumbers/type_bin.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">bmnumbers/type_float32.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">bmnumbers/type_hex.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">bmnumbers/type_unsigned.go</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>6 files changed, 80 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a> b/<a href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,8 +6,9 @@ type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+</a> 
+ type BMNumberType interface {
+ 	getName() string
+<a href="#h0-0-3" id="h0-0-3" class="i">+	getInfo() string
+</a> 	importMatchers() map[string]ImportFunc
+<a href="#h0-0-5" id="h0-0-5" class="d">-	convert(*BMNumber) error
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	Convert(*BMNumber) error
+</a> }
+ 
+ // BMNumber is a binary representation of a number as a slice of bytes
+<a href="#h0-1" id="h0-1" class="h">@@ -19,6 +20,7 @@ type BMNumber struct {
+</a> 
+ var AllTypes []BMNumberType
+ var AllMatchers map[string]ImportFunc
+<a href="#h0-1-3" id="h0-1-3" class="i">+var AllDynamicalTypes []DynamicalType
+</a> 
+ func init() {
+ 	AllTypes = make([]BMNumberType, 0)
+<b>diff --git a/<a id="h1" href="../file/bmnumbers/dynamical_type.go.html">bmnumbers/dynamical_type.go</a> b/<a href="../file/bmnumbers/dynamical_type.go.html">bmnumbers/dynamical_type.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,30 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmnumbers
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+// TODO finish this
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+type DynamicalType interface {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	MatchName(string) bool
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	CreateType(string, interface{}) (BMNumberType, error)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	// Save the type to a file
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	// Load the type from a file
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+func EventuallyCreateType(name string, param interface{}) (bool, error) {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	for _, dyn := range AllDynamicalTypes {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		if dyn.MatchName(name) {
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+			for _, op := range AllTypes {
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+				if op.getName() == name {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+					return false, nil
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+				}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+			}
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			if newType, err := dyn.CreateType(name, param); err != nil {
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+				return false, err
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+			} else {
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+				AllTypes = append(AllTypes, newType)
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+				return true, nil
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+			}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		}
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	return false, nil
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a> b/<a href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -9,7 +9,11 @@ import (
+</a> type Bin struct{}
+ 
+ func (d Bin) getName() string {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	return &quot;unsigned&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	return &quot;bin&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+}
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+func (d Bin) getInfo() string {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	return &quot;&quot;
+</a> }
+ 
+ func (d Bin) importMatchers() map[string]ImportFunc {
+<a href="#h2-1" id="h2-1" class="h">@@ -21,7 +25,13 @@ func (d Bin) importMatchers() map[string]ImportFunc {
+</a> 	return result
+ }
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-func (d Bin) convert(n *BMNumber) error {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+func (d Bin) Convert(n *BMNumber) error {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	convertFrom := n.nType.getName()
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	switch convertFrom {
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	default:
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.getName())
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+	}
+</a> 	return nil
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a> b/<a href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -10,7 +10,11 @@ import (
+</a> type Float32 struct{}
+ 
+ func (d Float32) getName() string {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	return &quot;unsigned&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	return &quot;float32&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+}
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+func (d Float32) getInfo() string {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	return &quot;&quot;
+</a> }
+ 
+ func (d Float32) importMatchers() map[string]ImportFunc {
+<a href="#h3-1" id="h3-1" class="h">@@ -21,7 +25,13 @@ func (d Float32) importMatchers() map[string]ImportFunc {
+</a> 	return result
+ }
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-func (d Float32) convert(n *BMNumber) error {
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+func (d Float32) Convert(n *BMNumber) error {
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	convertFrom := n.nType.getName()
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	switch convertFrom {
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	default:
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.getName())
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+	}
+</a> 	return nil
+ }
+ 
+<b>diff --git a/<a id="h4" href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a> b/<a href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -9,7 +9,11 @@ import (
+</a> type Hex struct{}
+ 
+ func (d Hex) getName() string {
+<a href="#h4-0-3" id="h4-0-3" class="d">-	return &quot;unsigned&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	return &quot;hex&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+}
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+func (d Hex) getInfo() string {
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+	return &quot;&quot;
+</a> }
+ 
+ func (d Hex) importMatchers() map[string]ImportFunc {
+<a href="#h4-1" id="h4-1" class="h">@@ -21,7 +25,13 @@ func (d Hex) importMatchers() map[string]ImportFunc {
+</a> 	return result
+ }
+ 
+<a href="#h4-1-3" id="h4-1-3" class="d">-func (d Hex) convert(n *BMNumber) error {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+func (d Hex) Convert(n *BMNumber) error {
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+	convertFrom := n.nType.getName()
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	switch convertFrom {
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+	default:
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.getName())
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+	}
+</a> 	return nil
+ }
+ 
+<b>diff --git a/<a id="h5" href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a> b/<a href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -12,6 +12,10 @@ func (d Unsigned) getName() string {
+</a> 	return &quot;unsigned&quot;
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="i">+func (d Unsigned) getInfo() string {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+}
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+
+</a> func (d Unsigned) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -22,7 +26,13 @@ func (d Unsigned) importMatchers() map[string]ImportFunc {
+</a> 	return result
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-func (d Unsigned) convert(n *BMNumber) error {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+func (d Unsigned) Convert(n *BMNumber) error {
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	convertFrom := n.nType.getName()
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+	switch convertFrom {
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+	default:
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.getName())
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+	}
+</a> 	return nil
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

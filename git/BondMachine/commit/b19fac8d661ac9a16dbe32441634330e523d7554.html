@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emit json - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b19fac8d661ac9a16dbe32441634330e523d7554.html">b19fac8d661ac9a16dbe32441634330e523d7554</a>
+<b>parent</b> <a href="../commit/6216b15718c9eb65daf3867b72651a6372bfc769.html">6216b15718c9eb65daf3867b72651a6372bfc769</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 26 Feb 2024 08:49:25 +0000
+
+Emit json
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmqsim/files_pythonpynq_real.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 38 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -55,6 +55,9 @@ var hardwareFlavorList = flag.Bool(&quot;hw-flavor-list&quot;, false, &quot;List of available h
+</a> var showMatrices = flag.Bool(&quot;show-matrices&quot;, false, &quot;Show the matrices&quot;)
+ var showCircuitMatrix = flag.Bool(&quot;show-circuit-matrix&quot;, false, &quot;Show the circuit matrix&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+var emitBMAPIMaps = flag.Bool(&quot;emit-bmapi-maps&quot;, false, &quot;Emit the BMAPIMaps&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var bmAPIMapsFile = flag.String(&quot;bmapi-maps-file&quot;, &quot;bmapi.json&quot;, &quot;BMAPIMaps file to be used as output&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> func init() {
+ 	flag.Parse()
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -223,6 +226,16 @@ func main() {
+</a> 			fmt.Println(green(&quot;Whole circuit matrix:&quot;))
+ 			fmt.Println(mm.StringColor(green))
+ 		}
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		if *emitBMAPIMaps {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			if fileData, err := sim.EmitBMAPIMaps(); err != nil {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				bld.Alert(err)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				return
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			} else {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				os.WriteFile(*bmAPIMapsFile, []byte(fileData), 0644)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			}
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		}
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a> 	}
+ 
+ 	if *buildMatrixSeqHardcoded {
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,13 +1,18 @@
+</a> package bmqsim
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;encoding/json&quot;
+</a> 	&quot;fmt&quot;
+<a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;math&quot;
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmatrix&quot;
+ )
+ 
+<a href="#h1-0-12" id="h1-0-12" class="i">+type IOmap struct {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	Assoc map[string]string
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+}
+</a> type BmQSimulator struct {
+ 	verbose  bool
+ 	debug    bool
+<a href="#h1-1" id="h1-1" class="h">@@ -356,3 +361,21 @@ func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrix
+</a> 	}
+ 	return nil, nil
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+func (sim *BmQSimulator) EmitBMAPIMaps() (string, error) {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	if sim != nil &amp;&amp; sim.qbits != nil {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		ioNum := int(math.Pow(float64(2), float64(len(sim.qbits))))
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+		newMap := new(IOmap)
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+		newMap.Assoc = make(map[string]string)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		for i := 0; i &lt; ioNum; i++ {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			newMap.Assoc[fmt.Sprintf(&quot;i%d&quot;, i)] = fmt.Sprintf(&quot;%d&quot;, i)
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+			newMap.Assoc[fmt.Sprintf(&quot;o%d&quot;, i)] = fmt.Sprintf(&quot;%d&quot;, i)
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		}
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		if jData, err := json.Marshal(newMap); err != nil {
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+			return &quot;&quot;, fmt.Errorf(&quot;error marshalling the map: %v&quot;, err)
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+		} else {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+			return string(jData), nil
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	return &quot;&quot;, fmt.Errorf(&quot;no qbits defined&quot;)
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/files_pythonpynq_real.go.html">pkg/bmqsim/files_pythonpynq_real.go</a> b/<a href="../file/pkg/bmqsim/files_pythonpynq_real.go.html">pkg/bmqsim/files_pythonpynq_real.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -89,7 +89,7 @@ const (
+</a>    &quot;metadata&quot;: {},
+    &quot;outputs&quot;: [],
+    &quot;source&quot;: [
+<a href="#h2-0-3" id="h2-0-3" class="d">-    &quot;input_buffer[:] = random_array&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+    &quot;input_buffer[:] = input_array&quot;
+</a>    ]
+   },
+   {
+<a href="#h2-1" id="h2-1" class="h">@@ -98,7 +98,7 @@ const (
+</a>    &quot;metadata&quot;: {},
+    &quot;outputs&quot;: [],
+    &quot;source&quot;: [
+<a href="#h2-1-3" id="h2-1-3" class="d">-    &quot;input_buffer&quot;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+    &quot;input_buffer[0]&quot;
+</a>    ]
+   },
+   {
+</pre>
+</div>
+</body>
+</html>

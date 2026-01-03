@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fixes on stacks - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d6b5ca440ade5974a538a4e7ec9c44fdb0862d60.html">d6b5ca440ade5974a538a4e7ec9c44fdb0862d60</a>
+<b>parent</b> <a href="../commit/5985dd237b457f7f40e6748351eef438f6999d2c.html">5985dd237b457f7f40e6748351eef438f6999d2c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 25 Jan 2023 12:38:03 +0100
+
+Fixes on stacks
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/arch.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_t2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/shr_barrier.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/shr_channel.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/shr_lfsr8.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/shr_queue.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/shr_sharedmem.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/shr_stack.go</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/shr_vtextmem.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>12 files changed, 42 insertions(+), 33 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a> b/<a href="../file/pkg/procbuilder/arch.go.html">pkg/procbuilder/arch.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -120,7 +120,7 @@ func (arch *Arch) Write_verilog(arch_module_name string, modules_names map[strin
+</a> 
+ 			for _, so := range Allshared {
+ 				if so.Shr_get_name() == soname {
+<a href="#h0-0-3" id="h0-0-3" class="d">-					header += so.Get_header(arch, constraint, seq[soname])
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+					header += so.GetArchHeader(arch, constraint, seq[soname])
+</a> 				}
+ 			}
+ 		}
+<a href="#h0-1" id="h0-1" class="h">@@ -164,7 +164,7 @@ func (arch *Arch) Write_verilog(arch_module_name string, modules_names map[strin
+</a> 
+ 			for _, so := range Allshared {
+ 				if so.Shr_get_name() == soname {
+<a href="#h0-1-3" id="h0-1-3" class="d">-					params += so.Get_params(arch, constraint, seq[soname])
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+					params += so.GetArchParams(arch, constraint, seq[soname])
+</a> 					params += &quot;\n&quot;
+ 				}
+ 			}
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -176,7 +176,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 
+ 			for _, so := range Allshared {
+ 				if so.Shr_get_name() == soname {
+<a href="#h1-0-3" id="h1-0-3" class="d">-					header += so.Get_header(arch, constraint, seq[soname])
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+					header += so.GetArchHeader(arch, constraint, seq[soname])
+</a> 				}
+ 			}
+ 		}
+<a href="#h1-1" id="h1-1" class="h">@@ -230,7 +230,7 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 
+ 			for _, so := range Allshared {
+ 				if so.Shr_get_name() == soname {
+<a href="#h1-1-3" id="h1-1-3" class="d">-					params += so.Get_internal_params(arch, constraint, seq[soname])
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+					params += so.GetCPParams(arch, constraint, seq[soname])
+</a> 					params += &quot;\n&quot;
+ 				}
+ 			}
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -97,9 +97,11 @@ func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 				result += &quot;							&quot; + strings.ToUpper(op.getStackName(j)) + &quot; : begin\n&quot;
+ 				result += &quot;								case (stackqueueSM)\n&quot;
+ 				result += &quot;								   1&#39;b0: begin\n&quot;
+<a href="#h2-0-3" id="h2-0-3" class="i">+				result += &quot;								     if (!&quot; + strings.ToLower(op.getStackName((j))) + &quot;senderAck) begin\n&quot;
+</a> 				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+ 				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;senderWrite &lt;= #1 1&#39;b1;\n&quot;
+ 				result += &quot;								     stackqueueSM &lt;= 1&#39;b1;\n&quot;
+<a href="#h2-0-7" id="h2-0-7" class="i">+				result += &quot;								     end\n&quot;
+</a> 				result += &quot;								   end\n&quot;
+ 				result += &quot;								   1&#39;b1: begin\n&quot;
+ 				result += &quot;								     if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;senderAck) begin\n&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -119,8 +121,8 @@ func (op R2t) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h2-1-3" id="h2-1-3" class="i">+		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a> 	}
+<a href="#h2-1-5" id="h2-1-5" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ 
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a> b/<a href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -95,7 +95,7 @@ func (op T2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 
+ 			for j := 0; j &lt; stackNum; j++ {
+ 				result += &quot;							&quot; + strings.ToUpper(op.getStackName(j)) + &quot; : begin\n&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-				result += &quot;								if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;receiverAck) begin\n&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+				result += &quot;								if (&quot; + strings.ToLower(op.getStackName((j))) + &quot;receiverAck &amp;&amp; &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverRead) begin\n&quot;
+</a> 				result += &quot;								     &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+ 				result += &quot;								     _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &lt;= #1 &quot; + strings.ToLower(op.getStackName(j)) + &quot;receiverData[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0];\n&quot;
+ 				result += &quot;								       _pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+<a href="#h3-1" id="h3-1" class="h">@@ -113,8 +113,8 @@ func (op T2r) Op_instruction_verilog_state_machine(arch *Arch, flavor string) st
+</a> 		result += &quot;						endcase\n&quot;
+ 	} else {
+ 		result += &quot;						$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#h3-1-3" id="h3-1-3" class="i">+		result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a> 	}
+<a href="#h3-1-5" id="h3-1-5" class="d">-	result += &quot;						_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a> 	result += &quot;					end\n&quot;
+ 	return result
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a> b/<a href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -34,9 +34,9 @@ type Opcode interface {
+</a> type Sharedel interface {
+ 	Shr_get_name() string
+ 	Shortname() string
+<a href="#h4-0-3" id="h4-0-3" class="d">-	Get_header(*Arch, string, int) string
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	Get_params(*Arch, string, int) string
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-	Get_internal_params(*Arch, string, int) string
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	GetArchHeader(*Arch, string, int) string // returns the architecture header for the shared element
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	GetArchParams(*Arch, string, int) string // returns the architecture module parameters for the shared element
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+	GetCPParams(*Arch, string, int) string   // returns the processor (CP) module internal parameters for the shared element
+</a> }
+ 
+ type Prerror struct {
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/shr_barrier.go.html">pkg/procbuilder/shr_barrier.go</a> b/<a href="../file/pkg/procbuilder/shr_barrier.go.html">pkg/procbuilder/shr_barrier.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -15,12 +15,12 @@ func (op Barrier) Shortname() string {
+</a> 	return &quot;br&quot;
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="d">-func (op Barrier) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+func (op Barrier) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	brname := &quot;br&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + brname + &quot;hit, &quot; + brname + &quot;ishitted, &quot; + brname + &quot;tout&quot;
+ }
+ 
+<a href="#h5-0-9" id="h5-0-9" class="d">-func (op Barrier) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+func (op Barrier) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	brname := &quot;br&quot; + strconv.Itoa(seq)
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -32,7 +32,7 @@ func (op Barrier) Get_params(arch *Arch, shared_constraint string, seq int) stri
+</a> 	return result
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-func (op Barrier) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-	result := op.Get_params(arch, shared_constraint, seq)
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+func (op Barrier) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	result := op.GetArchParams(arch, shared_constraint, seq)
+</a> 	return result
+ }
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/shr_channel.go.html">pkg/procbuilder/shr_channel.go</a> b/<a href="../file/pkg/procbuilder/shr_channel.go.html">pkg/procbuilder/shr_channel.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -15,12 +15,12 @@ func (op Channel) Shortname() string {
+</a> 	return &quot;ch&quot;
+ }
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-func (op Channel) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+func (op Channel) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	chname := &quot;ch&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + chname + &quot;in, &quot; + chname + &quot;wwr, &quot; + chname + &quot;wrd, &quot; + chname + &quot;ack_ch_ready, &quot; + chname + &quot;op_check_ready, &quot; + chname + &quot;finish_channel, &quot; + chname + &quot;out, &quot; + chname + &quot;ack_wwr, &quot; + chname + &quot;ack_wrd, &quot; + chname + &quot;ch_ready, &quot; + chname + &quot;ch_w_r_ready&quot;
+ }
+ 
+<a href="#h6-0-9" id="h6-0-9" class="d">-func (op Channel) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+func (op Channel) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	chname := &quot;ch&quot; + strconv.Itoa(seq)
+ 
+<a href="#h6-1" id="h6-1" class="h">@@ -40,7 +40,7 @@ func (op Channel) Get_params(arch *Arch, shared_constraint string, seq int) stri
+</a> 	return result
+ }
+ 
+<a href="#h6-1-3" id="h6-1-3" class="d">-func (op Channel) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+func (op Channel) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 	channel_num := 0
+ 	if arch.Shared_constraints != &quot;&quot; {
+ 		constraints := strings.Split(arch.Shared_constraints, &quot;,&quot;)
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/shr_lfsr8.go.html">pkg/procbuilder/shr_lfsr8.go</a> b/<a href="../file/pkg/procbuilder/shr_lfsr8.go.html">pkg/procbuilder/shr_lfsr8.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -15,12 +15,12 @@ func (op Lfsr8) Shortname() string {
+</a> 	return &quot;lfsr8&quot;
+ }
+ 
+<a href="#h7-0-3" id="h7-0-3" class="d">-func (op Lfsr8) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+func (op Lfsr8) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	brname := &quot;lfsr8&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + brname + &quot;out&quot;
+ }
+ 
+<a href="#h7-0-9" id="h7-0-9" class="d">-func (op Lfsr8) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+func (op Lfsr8) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	brname := &quot;lfsr8&quot; + strconv.Itoa(seq)
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -30,7 +30,7 @@ func (op Lfsr8) Get_params(arch *Arch, shared_constraint string, seq int) string
+</a> 	return result
+ }
+ 
+<a href="#h7-1-3" id="h7-1-3" class="d">-func (op Lfsr8) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-	result := op.Get_params(arch, shared_constraint, seq)
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+func (op Lfsr8) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+	result := op.GetArchParams(arch, shared_constraint, seq)
+</a> 	return result
+ }
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a> b/<a href="../file/pkg/procbuilder/shr_queue.go.html">pkg/procbuilder/shr_queue.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -15,12 +15,12 @@ func (op Queue) Shortname() string {
+</a> 	return &quot;q&quot;
+ }
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-func (op Queue) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+func (op Queue) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	qName := &quot;q&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + qName + &quot;din, &quot; + qName + &quot;dout, &quot; + qName + &quot;addr, &quot; + qName + &quot;wren, &quot; + qName + &quot;en&quot;
+ }
+ 
+<a href="#h8-0-9" id="h8-0-9" class="d">-func (op Queue) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+func (op Queue) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 	qName := &quot;q&quot; + strconv.Itoa(seq)
+ 	result := &quot;&quot;
+ 	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + qName + &quot;din;\n&quot;
+<a href="#h8-1" id="h8-1" class="h">@@ -31,7 +31,7 @@ func (op Queue) Get_params(arch *Arch, shared_constraint string, seq int) string
+</a> 	return result
+ }
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-func (op Queue) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+func (op Queue) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	result := &quot;&quot;
+ 
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/shr_sharedmem.go.html">pkg/procbuilder/shr_sharedmem.go</a> b/<a href="../file/pkg/procbuilder/shr_sharedmem.go.html">pkg/procbuilder/shr_sharedmem.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -15,12 +15,12 @@ func (op Sharedmem) Shortname() string {
+</a> 	return &quot;sh&quot;
+ }
+ 
+<a href="#h9-0-3" id="h9-0-3" class="d">-func (op Sharedmem) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+func (op Sharedmem) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	shname := &quot;sh&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + shname + &quot;din, &quot; + shname + &quot;dout, &quot; + shname + &quot;addr, &quot; + shname + &quot;wren, &quot; + shname + &quot;en&quot;
+ }
+ 
+<a href="#h9-0-9" id="h9-0-9" class="d">-func (op Sharedmem) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h9-0-10" id="h9-0-10" class="i">+func (op Sharedmem) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 	shname := &quot;sh&quot; + strconv.Itoa(seq)
+ 	result := &quot;&quot;
+ 	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + shname + &quot;din;\n&quot;
+<a href="#h9-1" id="h9-1" class="h">@@ -31,7 +31,7 @@ func (op Sharedmem) Get_params(arch *Arch, shared_constraint string, seq int) st
+</a> 	return result
+ }
+ 
+<a href="#h9-1-3" id="h9-1-3" class="d">-func (op Sharedmem) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+func (op Sharedmem) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	result := &quot;&quot;
+ 
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a> b/<a href="../file/pkg/procbuilder/shr_stack.go.html">pkg/procbuilder/shr_stack.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -15,7 +15,7 @@ func (op Stack) Shortname() string {
+</a> 	return &quot;st&quot;
+ }
+ 
+<a href="#h10-0-3" id="h10-0-3" class="d">-func (op Stack) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+func (op Stack) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	result := &quot;&quot;
+ 	stackName := &quot;st&quot; + strconv.Itoa(seq)
+ 	for _, op := range arch.Op {
+<a href="#h10-1" id="h10-1" class="h">@@ -30,10 +30,11 @@ func (op Stack) Get_header(arch *Arch, shared_constraint string, seq int) string
+</a> 			break
+ 		}
+ 	}
+<a href="#h10-1-3" id="h10-1-3" class="i">+	result += &quot;, &quot; + stackName + &quot;empty, &quot; + stackName + &quot;full&quot;
+</a> 	return result
+ }
+ 
+<a href="#h10-1-7" id="h10-1-7" class="d">-func (op Stack) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h10-1-8" id="h10-1-8" class="i">+func (op Stack) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 	stackName := &quot;st&quot; + strconv.Itoa(seq)
+ 	result := &quot;&quot;
+ 
+<a href="#h10-2" id="h10-2" class="h">@@ -54,10 +55,13 @@ func (op Stack) Get_params(arch *Arch, shared_constraint string, seq int) string
+</a> 		}
+ 	}
+ 
+<a href="#h10-2-3" id="h10-2-3" class="i">+	result += &quot;	input &quot; + stackName + &quot;empty;\n&quot;
+</a><a href="#h10-2-4" id="h10-2-4" class="i">+	result += &quot;	input &quot; + stackName + &quot;full;\n&quot;
+</a><a href="#h10-2-5" id="h10-2-5" class="i">+
+</a> 	return result
+ }
+ 
+<a href="#h10-2-9" id="h10-2-9" class="d">-func (op Stack) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h10-2-10" id="h10-2-10" class="i">+func (op Stack) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	result := &quot;&quot;
+ 
+<a href="#h10-3" id="h10-3" class="h">@@ -92,5 +96,8 @@ func (op Stack) Get_internal_params(arch *Arch, shared_constraint string, seq in
+</a> 		}
+ 	}
+ 
+<a href="#h10-3-3" id="h10-3-3" class="i">+	result += &quot;	input &quot; + stackName + &quot;empty;\n&quot;
+</a><a href="#h10-3-4" id="h10-3-4" class="i">+	result += &quot;	input &quot; + stackName + &quot;full;\n&quot;
+</a><a href="#h10-3-5" id="h10-3-5" class="i">+
+</a> 	return result
+ }
+<b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/shr_vtextmem.go.html">pkg/procbuilder/shr_vtextmem.go</a> b/<a href="../file/pkg/procbuilder/shr_vtextmem.go.html">pkg/procbuilder/shr_vtextmem.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -15,12 +15,12 @@ func (op Vtextmem) Shortname() string {
+</a> 	return &quot;vtm&quot;
+ }
+ 
+<a href="#h11-0-3" id="h11-0-3" class="d">-func (op Vtextmem) Get_header(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+func (op Vtextmem) GetArchHeader(arch *Arch, shared_constraint string, seq int) string {
+</a> 	shname := &quot;vtm&quot; + strconv.Itoa(seq)
+ 	return &quot;, &quot; + shname + &quot;din, &quot; + shname + &quot;addr, &quot; + shname + &quot;wren, &quot; + shname + &quot;en&quot;
+ }
+ 
+<a href="#h11-0-9" id="h11-0-9" class="d">-func (op Vtextmem) Get_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h11-0-10" id="h11-0-10" class="i">+func (op Vtextmem) GetArchParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 	shname := &quot;vtm&quot; + strconv.Itoa(seq)
+ 	result := &quot;&quot;
+ 	result += &quot;	output [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + shname + &quot;din;\n&quot;
+<a href="#h11-1" id="h11-1" class="h">@@ -31,7 +31,7 @@ func (op Vtextmem) Get_params(arch *Arch, shared_constraint string, seq int) str
+</a> 	return result
+ }
+ 
+<a href="#h11-1-3" id="h11-1-3" class="d">-func (op Vtextmem) Get_internal_params(arch *Arch, shared_constraint string, seq int) string {
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+func (op Vtextmem) GetCPParams(arch *Arch, shared_constraint string, seq int) string {
+</a> 
+ 	result := &quot;&quot;
+ 
+</pre>
+</div>
+</body>
+</html>

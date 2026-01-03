@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>updated aximm notebook - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ba636610624392e70fd5499edcb5a7822c0d2efc.html">ba636610624392e70fd5499edcb5a7822c0d2efc</a>
+<b>parent</b> <a href="../commit/28fa08a9ef91f98e9afdcef4953b50846f13c60b.html">28fa08a9ef91f98e9afdcef4953b50846f13c60b</a>
+<b>Author:</b> giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Wed, 26 Apr 2023 09:31:15 +0200
+
+updated aximm notebook
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_aximm_pynq_example.go</a></td><td> | </td><td class="num">659</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 337 insertions(+), 322 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,332 +4,347 @@ const (
+</a> 	aximmPynqExample = `
+ 	{
+ 		&quot;cells&quot;: [
+<a href="#h0-0-3" id="h0-0-3" class="d">-		 {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-		   &quot;from pynq import Overlay\n&quot;,
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-		   &quot;from pynq import MMIO\n&quot;,
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		   &quot;import os\n&quot;,
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-		   &quot;import numpy as np\n&quot;,
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		   &quot;import struct\n&quot;,
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-		   &quot;import time\n&quot;,
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		   &quot;import requests\n&quot;,
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-		   &quot;import json&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-		  ]
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		 },
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-		 {
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		   &quot;# SETTINGS\n&quot;,
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-		   &quot;project_name  = \&quot;firmware\&quot;\n&quot;,
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-		   &quot;firmware_name = project_name+\&quot;.bit\&quot;\n&quot;,
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-		   &quot;n_input       = 4\n&quot;,
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-		   &quot;n_output      = 2\n&quot;,
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-		   &quot;benchcore     = True\n&quot;,
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-		   &quot;precision_info = {\n&quot;,
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-		   &quot;    \&quot;type\&quot;: \&quot;{{ .DataType }}\&quot;,\n&quot;,
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-		   &quot;    \&quot;e\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-		   &quot;    \&quot;f\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-		   &quot;    \&quot;s\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-		   &quot;    \&quot;t\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-		   &quot;    \&quot;host\&quot;: \&quot;10.2.129.49\&quot;,\n&quot;,
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-		   &quot;    \&quot;port\&quot;: \&quot;8080\&quot;\n&quot;,
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-		   &quot;}\n&quot;,
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-		   &quot;padding = False\n&quot;,
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-		   &quot;\n&quot;,
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-		   &quot;if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-		   &quot;    exp = precision_info[\&quot;type\&quot;][4:precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)]\n&quot;,
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-		   &quot;    mant = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)+1:len(precision_info[\&quot;type\&quot;])]\n&quot;,
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-		   &quot;    precision_info[\&quot;e\&quot;] = int(exp)\n&quot;,
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-		   &quot;    precision_info[\&quot;f\&quot;] = int(mant)\n&quot;,
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-		   &quot;elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-		   &quot;    s = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;s\&quot;)+1:precision_info[\&quot;type\&quot;].rindex(\&quot;t\&quot;)]\n&quot;,
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-		   &quot;    t = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;t\&quot;)+1:len(precision_info[\&quot;type\&quot;])]\n&quot;,
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-		   &quot;    precision_info[\&quot;s\&quot;] = s\n&quot;,
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-		   &quot;    precision_info[\&quot;t\&quot;] = t\n&quot;,
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-		   &quot;print(precision_info)\n&quot;,
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-		   &quot;conversion_url =&#39;http://&#39;+precision_info[\&quot;host\&quot;]+&#39;:&#39;+str(precision_info[\&quot;port\&quot;])+&#39;/bmnumbers&#39;&quot;
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-		  ]
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-		 },
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-		 {
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-		   &quot;def convert_flopoco_float_to_binary(num):\n&quot;,
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-		   &quot;    print(\&quot;float number to convert is: \&quot;, num)\n&quot;,
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-		   &quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-		   &quot;        strNum = \&quot;0flp&lt;\&quot;+str(precision_info[\&quot;e\&quot;])+\&quot;.\&quot;+str(precision_info[\&quot;f\&quot;])+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-		   &quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-		   &quot;        strNum = \&quot;0lq&lt;\&quot;+str(precision_info[\&quot;s\&quot;])+\&quot;.\&quot;+str(precision_info[\&quot;t\&quot;])+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-		   &quot;        \n&quot;,
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-		   &quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: &#39;bin&#39;, &#39;viewMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-		   &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-		   &quot;    convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-		   &quot;    print(convertedNumber)\n&quot;,
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-		   &quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-		   &quot;        strNumber = convertedNumber[0]+convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-		   &quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-		   &quot;        strNumber = convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-81" id="h0-0-81" class="d">-		   &quot;        print(\&quot;strNumber \&quot;, strNumber)\n&quot;,
+</a><a href="#h0-0-82" id="h0-0-82" class="d">-		   &quot;        if len(strNumber) &lt; int(precision_info[\&quot;s\&quot;]):\n&quot;,
+</a><a href="#h0-0-83" id="h0-0-83" class="d">-		   &quot;            diff = int(precision_info[\&quot;s\&quot;]) - len(strNumber)\n&quot;,
+</a><a href="#h0-0-84" id="h0-0-84" class="d">-		   &quot;            \n&quot;,
+</a><a href="#h0-0-85" id="h0-0-85" class="d">-		   &quot;            for i in range(0, diff):\n&quot;,
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-		   &quot;                strNumber = \&quot;0\&quot;+strNumber\n&quot;,
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-		   &quot;             \n&quot;,
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-		   &quot;        if padding == True:\n&quot;,
+</a><a href="#h0-0-89" id="h0-0-89" class="d">-		   &quot;            n_zeros = 16 - len(strNumber)\n&quot;,
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-		   &quot;            \n&quot;,
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-		   &quot;            for i in range(0, n_zeros):\n&quot;,
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-		   &quot;                strNumber = \&quot;0\&quot;+strNumber\n&quot;,
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-		   &quot;    # print(\&quot;binary number returned from  bmnumbers is: \&quot;, strNumber)\n&quot;,
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-		   &quot;    # convert again from binary to float\n&quot;,
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-		   &quot;    # converted_again = convert_flopoco_binary_to_float(strNumber)\n&quot;,
+</a><a href="#h0-0-97" id="h0-0-97" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-98" id="h0-0-98" class="d">-		   &quot;    # print(\&quot;float number from bmnumbers is: \&quot;, converted_again)\n&quot;,
+</a><a href="#h0-0-99" id="h0-0-99" class="d">-		   &quot;    # print(\&quot;\\n\&quot;)\n&quot;,
+</a><a href="#h0-0-100" id="h0-0-100" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-101" id="h0-0-101" class="d">-		   &quot;    return strNumber&quot;
+</a><a href="#h0-0-102" id="h0-0-102" class="d">-		  ]
+</a><a href="#h0-0-103" id="h0-0-103" class="d">-		 },
+</a><a href="#h0-0-104" id="h0-0-104" class="d">-		 {
+</a><a href="#h0-0-105" id="h0-0-105" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-106" id="h0-0-106" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-107" id="h0-0-107" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-108" id="h0-0-108" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-109" id="h0-0-109" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-110" id="h0-0-110" class="d">-		   &quot;def convert_flopoco_binary_to_float(num):\n&quot;,
+</a><a href="#h0-0-111" id="h0-0-111" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-112" id="h0-0-112" class="d">-		   &quot;    if padding == True:\n&quot;,
+</a><a href="#h0-0-113" id="h0-0-113" class="d">-		   &quot;        num = num[-8:]\n&quot;,
+</a><a href="#h0-0-114" id="h0-0-114" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-115" id="h0-0-115" class="d">-		   &quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-116" id="h0-0-116" class="d">-		   &quot;        totLen = precision_info[\&quot;e\&quot;] + precision_info[\&quot;f\&quot;] + 3\n&quot;,
+</a><a href="#h0-0-117" id="h0-0-117" class="d">-		   &quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-118" id="h0-0-118" class="d">-		   &quot;        totLen = int(precision_info[\&quot;s\&quot;])\n&quot;,
+</a><a href="#h0-0-119" id="h0-0-119" class="d">-		   &quot;        \n&quot;,
+</a><a href="#h0-0-120" id="h0-0-120" class="d">-		   &quot;    if len(num) &gt; totLen:\n&quot;,
+</a><a href="#h0-0-121" id="h0-0-121" class="d">-		   &quot;        num = num[1:]\n&quot;,
+</a><a href="#h0-0-122" id="h0-0-122" class="d">-		   &quot;    elif len(num) &lt; totLen:\n&quot;,
+</a><a href="#h0-0-123" id="h0-0-123" class="d">-		   &quot;        diff_len = totLen - len(num)\n&quot;,
+</a><a href="#h0-0-124" id="h0-0-124" class="d">-		   &quot;        print(\&quot;diff_len \&quot;, diff_len)\n&quot;,
+</a><a href="#h0-0-125" id="h0-0-125" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-126" id="h0-0-126" class="d">-		   &quot;    strNum = \&quot;0b&lt;\&quot;+str(totLen)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-127" id="h0-0-127" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-128" id="h0-0-128" class="d">-		   &quot;    print(\&quot;string number\&quot;, strNum)\n&quot;,
+</a><a href="#h0-0-129" id="h0-0-129" class="d">-		   &quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-130" id="h0-0-130" class="d">-		   &quot;        newType = \&quot;flpe\&quot;+str(precision_info[\&quot;e\&quot;])+\&quot;f\&quot;+str(precision_info[\&quot;f\&quot;])\n&quot;,
+</a><a href="#h0-0-131" id="h0-0-131" class="d">-		   &quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-132" id="h0-0-132" class="d">-		   &quot;        newType = \&quot;lqs\&quot;+str(precision_info[\&quot;s\&quot;])+\&quot;t\&quot;+str(precision_info[\&quot;t\&quot;])\n&quot;,
+</a><a href="#h0-0-133" id="h0-0-133" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-134" id="h0-0-134" class="d">-		   &quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: newType, &#39;viewMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-0-135" id="h0-0-135" class="d">-		   &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-0-136" id="h0-0-136" class="d">-		   &quot;    try:\n&quot;,
+</a><a href="#h0-0-137" id="h0-0-137" class="d">-		   &quot;        convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-0-138" id="h0-0-138" class="d">-		   &quot;        strNumber = convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-139" id="h0-0-139" class="d">-		   &quot;        return float(strNumber)\n&quot;,
+</a><a href="#h0-0-140" id="h0-0-140" class="d">-		   &quot;    except Exception as e:\n&quot;,
+</a><a href="#h0-0-141" id="h0-0-141" class="d">-		   &quot;        print(e)&quot;
+</a><a href="#h0-0-142" id="h0-0-142" class="d">-		  ]
+</a><a href="#h0-0-143" id="h0-0-143" class="d">-		 },
+</a><a href="#h0-0-144" id="h0-0-144" class="d">-		 {
+</a><a href="#h0-0-145" id="h0-0-145" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-146" id="h0-0-146" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-147" id="h0-0-147" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-148" id="h0-0-148" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-149" id="h0-0-149" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-150" id="h0-0-150" class="d">-		   &quot;def get_binary_from_float(num):\n&quot;,
+</a><a href="#h0-0-151" id="h0-0-151" class="d">-		   &quot;    return bin(struct.unpack(&#39;!i&#39;,struct.pack(&#39;!f&#39;,num))[0])&quot;
+</a><a href="#h0-0-152" id="h0-0-152" class="d">-		  ]
+</a><a href="#h0-0-153" id="h0-0-153" class="d">-		 },
+</a><a href="#h0-0-154" id="h0-0-154" class="d">-		 {
+</a><a href="#h0-0-155" id="h0-0-155" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-156" id="h0-0-156" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-157" id="h0-0-157" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-158" id="h0-0-158" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-159" id="h0-0-159" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-160" id="h0-0-160" class="d">-		   &quot;def bin_to_float(binary):\n&quot;,
+</a><a href="#h0-0-161" id="h0-0-161" class="d">-		   &quot;    return struct.unpack(&#39;!f&#39;,struct.pack(&#39;!I&#39;, int(binary, 2)))[0]&quot;
+</a><a href="#h0-0-162" id="h0-0-162" class="d">-		  ]
+</a><a href="#h0-0-163" id="h0-0-163" class="d">-		 },
+</a><a href="#h0-0-164" id="h0-0-164" class="d">-		 {
+</a><a href="#h0-0-165" id="h0-0-165" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-166" id="h0-0-166" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-167" id="h0-0-167" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-168" id="h0-0-168" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-169" id="h0-0-169" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-170" id="h0-0-170" class="d">-		   &quot;def read_output():\n&quot;,
+</a><a href="#h0-0-171" id="h0-0-171" class="d">-		   &quot;    starting_offset = (n_input*4)+(2*4)\n&quot;,
+</a><a href="#h0-0-172" id="h0-0-172" class="d">-		   &quot;    result_from_bm_ml = []\n&quot;,
+</a><a href="#h0-0-173" id="h0-0-173" class="d">-		   &quot;    offset = starting_offset\n&quot;,
+</a><a href="#h0-0-174" id="h0-0-174" class="d">-		   &quot;    borderRange = n_output + 1 if benchcore == True else n_output\n&quot;,
+</a><a href="#h0-0-175" id="h0-0-175" class="d">-		   &quot;    for i in range(0, borderRange):\n&quot;,
+</a><a href="#h0-0-176" id="h0-0-176" class="d">-		   &quot;        print(spi0.read(offset, 4))\n&quot;,
+</a><a href="#h0-0-177" id="h0-0-177" class="d">-		   &quot;        bin_res = bin(spi0.read(offset, 4))\n&quot;,
+</a><a href="#h0-0-178" id="h0-0-178" class="d">-		   &quot;        print(\&quot;binary received crudo from bm\&quot;, bin_res)\n&quot;,
+</a><a href="#h0-0-179" id="h0-0-179" class="d">-		   &quot;        if benchcore == True:\n&quot;,
+</a><a href="#h0-0-180" id="h0-0-180" class="d">-		   &quot;            if i != borderRange-1:\n&quot;,
+</a><a href="#h0-0-181" id="h0-0-181" class="d">-		   &quot;                if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot; or precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;:\n&quot;,
+</a><a href="#h0-0-182" id="h0-0-182" class="d">-		   &quot;                    output = convert_flopoco_binary_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;))\n&quot;,
+</a><a href="#h0-0-183" id="h0-0-183" class="d">-		   &quot;                else:\n&quot;,
+</a><a href="#h0-0-184" id="h0-0-184" class="d">-		   &quot;                    output = bin_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;))\n&quot;,
+</a><a href="#h0-0-185" id="h0-0-185" class="d">-		   &quot;            else:\n&quot;,
+</a><a href="#h0-0-186" id="h0-0-186" class="d">-		   &quot;                output = int(str(bin_res), 2)\n&quot;,
+</a><a href="#h0-0-187" id="h0-0-187" class="d">-		   &quot;        else:\n&quot;,
+</a><a href="#h0-0-188" id="h0-0-188" class="d">-		   &quot;            output = bin_to_float(str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;))\n&quot;,
+</a><a href="#h0-0-189" id="h0-0-189" class="d">-		   &quot;            \n&quot;,
+</a><a href="#h0-0-190" id="h0-0-190" class="d">-		   &quot;        result_from_bm_ml.append(output) # APPEND THE OUTPUT\n&quot;,
+</a><a href="#h0-0-191" id="h0-0-191" class="d">-		   &quot;        offset = offset + 4\n&quot;,
+</a><a href="#h0-0-192" id="h0-0-192" class="d">-		   &quot;    \n&quot;,
+</a><a href="#h0-0-193" id="h0-0-193" class="d">-		   &quot;    # print(result_from_bm_ml) # VECTOR OF PROBABIBILITES\n&quot;,
+</a><a href="#h0-0-194" id="h0-0-194" class="d">-		   &quot;    return result_from_bm_ml&quot;
+</a><a href="#h0-0-195" id="h0-0-195" class="d">-		  ]
+</a><a href="#h0-0-196" id="h0-0-196" class="d">-		 },
+</a><a href="#h0-0-197" id="h0-0-197" class="d">-		 {
+</a><a href="#h0-0-198" id="h0-0-198" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-199" id="h0-0-199" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-200" id="h0-0-200" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-201" id="h0-0-201" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-202" id="h0-0-202" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-203" id="h0-0-203" class="d">-		   &quot;# LOAD OVERLAY\n&quot;,
+</a><a href="#h0-0-204" id="h0-0-204" class="d">-		   &quot;overlay = Overlay(os.getcwd()+\&quot;/\&quot;+firmware_name)&quot;
+</a><a href="#h0-0-205" id="h0-0-205" class="d">-		  ]
+</a><a href="#h0-0-206" id="h0-0-206" class="d">-		 },
+</a><a href="#h0-0-207" id="h0-0-207" class="d">-		 {
+</a><a href="#h0-0-208" id="h0-0-208" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-209" id="h0-0-209" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-210" id="h0-0-210" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-211" id="h0-0-211" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-212" id="h0-0-212" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-213" id="h0-0-213" class="d">-		   &quot;# GET MEMORY ADDRESS OF IP\n&quot;,
+</a><a href="#h0-0-214" id="h0-0-214" class="d">-		   &quot;bm_starting_address = (overlay.ip_dict[\&quot;bondmachineip_0\&quot;][\&quot;phys_addr\&quot;])\n&quot;,
+</a><a href="#h0-0-215" id="h0-0-215" class="d">-		   &quot;print(\&quot; Starting memory address of Bondmachine IP is (in dec): \&quot;, bm_starting_address)\n&quot;,
+</a><a href="#h0-0-216" id="h0-0-216" class="d">-		   &quot;print(\&quot; Starting memory address of Bondmachine IP is (in hex): \&quot;, hex(bm_starting_address))&quot;
+</a><a href="#h0-0-217" id="h0-0-217" class="d">-		  ]
+</a><a href="#h0-0-218" id="h0-0-218" class="d">-		 },
+</a><a href="#h0-0-219" id="h0-0-219" class="d">-		 {
+</a><a href="#h0-0-220" id="h0-0-220" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-221" id="h0-0-221" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-222" id="h0-0-222" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-223" id="h0-0-223" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-224" id="h0-0-224" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-225" id="h0-0-225" class="d">-		   &quot;# GET THE OBJECT NECESSARY TO INTERACT WITH ML IP\n&quot;,
+</a><a href="#h0-0-226" id="h0-0-226" class="d">-		   &quot;spi0 = MMIO(bm_starting_address, 128)&quot;
+</a><a href="#h0-0-227" id="h0-0-227" class="d">-		  ]
+</a><a href="#h0-0-228" id="h0-0-228" class="d">-		 },
+</a><a href="#h0-0-229" id="h0-0-229" class="d">-		 {
+</a><a href="#h0-0-230" id="h0-0-230" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-231" id="h0-0-231" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-232" id="h0-0-232" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-233" id="h0-0-233" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-234" id="h0-0-234" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-235" id="h0-0-235" class="d">-		   &quot;# LOAD BANKNOTE TESTSET\n&quot;,
+</a><a href="#h0-0-236" id="h0-0-236" class="d">-		   &quot;X_test = np.load(&#39;banknote-authentication_X_test.npy&#39;)[:1]\n&quot;,
+</a><a href="#h0-0-237" id="h0-0-237" class="d">-		   &quot;Y_test = np.load(&#39;banknote-authentication_y_test.npy&#39;)[:1]\n&quot;,
+</a><a href="#h0-0-238" id="h0-0-238" class="d">-		   &quot;print(\&quot; Example of first two input:  \&quot;, X_test[:1])\n&quot;,
+</a><a href="#h0-0-239" id="h0-0-239" class="d">-		   &quot;print(\&quot; Example of first two output: \&quot;, Y_test[:1])&quot;
+</a><a href="#h0-0-240" id="h0-0-240" class="d">-		  ]
+</a><a href="#h0-0-241" id="h0-0-241" class="d">-		 },
+</a><a href="#h0-0-242" id="h0-0-242" class="d">-		 {
+</a><a href="#h0-0-243" id="h0-0-243" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-244" id="h0-0-244" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-245" id="h0-0-245" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-246" id="h0-0-246" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-247" id="h0-0-247" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-248" id="h0-0-248" class="d">-		   &quot;# IN THIS CASE I WANT TO SEND ONLY THE FIRST X INPUT SAMPLE\n&quot;,
+</a><a href="#h0-0-249" id="h0-0-249" class="d">-		   &quot;idx = 0\n&quot;,
+</a><a href="#h0-0-250" id="h0-0-250" class="d">-		   &quot;results_to_dump = []\n&quot;,
+</a><a href="#h0-0-251" id="h0-0-251" class="d">-		   &quot;for xSample in X_test:\n&quot;,
+</a><a href="#h0-0-252" id="h0-0-252" class="d">-		   &quot;    offset = 0\n&quot;,
+</a><a href="#h0-0-253" id="h0-0-253" class="d">-		   &quot;    for feature in list(xSample): #\n&quot;,
+</a><a href="#h0-0-254" id="h0-0-254" class="d">-		   &quot;        if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot; or precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;:\n&quot;,
+</a><a href="#h0-0-255" id="h0-0-255" class="d">-		   &quot;            binToSend = convert_flopoco_float_to_binary(feature)\n&quot;,
+</a><a href="#h0-0-256" id="h0-0-256" class="d">-		   &quot;            print(\&quot;binary to send for prediction: \&quot;, binToSend)\n&quot;,
+</a><a href="#h0-0-257" id="h0-0-257" class="d">-		   &quot;            print(\&quot;binary to send for prediction: \&quot;, len(binToSend))\n&quot;,
+</a><a href="#h0-0-258" id="h0-0-258" class="d">-		   &quot;        else:\n&quot;,
+</a><a href="#h0-0-259" id="h0-0-259" class="d">-		   &quot;            binToSend = get_binary_from_float(feature)\n&quot;,
+</a><a href="#h0-0-260" id="h0-0-260" class="d">-		   &quot;        decToSend = int(binToSend, 2)\n&quot;,
+</a><a href="#h0-0-261" id="h0-0-261" class="d">-		   &quot;        spi0.write_mm(offset, decToSend) # WRITE THE FEATURE TO THE CORRESPONDING INPUT\n&quot;,
+</a><a href="#h0-0-262" id="h0-0-262" class="d">-		   &quot;        offset = offset + 4 # 4 BYTE = 32 BIT\n&quot;,
+</a><a href="#h0-0-263" id="h0-0-263" class="d">-		   &quot;    time.sleep(0.5)\n&quot;,
+</a><a href="#h0-0-264" id="h0-0-264" class="d">-		   &quot;    out = np.asarray(read_output())\n&quot;,
+</a><a href="#h0-0-265" id="h0-0-265" class="d">-		   &quot;    #print(\&quot; #\&quot;,idx,\&quot; -&gt; classification: \&quot;, np.argmax(out[0:2]))\n&quot;,
+</a><a href="#h0-0-266" id="h0-0-266" class="d">-		   &quot;    classification = np.argmax(out[0:2])\n&quot;,
+</a><a href="#h0-0-267" id="h0-0-267" class="d">-		   &quot;    if (benchcore == True):\n&quot;,
+</a><a href="#h0-0-268" id="h0-0-268" class="d">-		   &quot;        results_to_dump.append([out[0], out[1], classification, out[2]])\n&quot;,
+</a><a href="#h0-0-269" id="h0-0-269" class="d">-		   &quot;    else: \n&quot;,
+</a><a href="#h0-0-270" id="h0-0-270" class="d">-		   &quot;        results_to_dump.append([out[0], out[1], classification])\n&quot;,
+</a><a href="#h0-0-271" id="h0-0-271" class="d">-		   &quot;    idx = idx + 1\n&quot;,
+</a><a href="#h0-0-272" id="h0-0-272" class="d">-		   &quot;    #break\n&quot;,
+</a><a href="#h0-0-273" id="h0-0-273" class="d">-		   &quot;\n&quot;,
+</a><a href="#h0-0-274" id="h0-0-274" class="d">-		   &quot;# 01001010100\n&quot;,
+</a><a href="#h0-0-275" id="h0-0-275" class="d">-		   &quot;print(results_to_dump)&quot;
+</a><a href="#h0-0-276" id="h0-0-276" class="d">-		  ]
+</a><a href="#h0-0-277" id="h0-0-277" class="d">-		 },
+</a><a href="#h0-0-278" id="h0-0-278" class="d">-		 {
+</a><a href="#h0-0-279" id="h0-0-279" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-280" id="h0-0-280" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-281" id="h0-0-281" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-282" id="h0-0-282" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-283" id="h0-0-283" class="d">-		  &quot;source&quot;: [
+</a><a href="#h0-0-284" id="h0-0-284" class="d">-		   &quot;import csv\n&quot;,
+</a><a href="#h0-0-285" id="h0-0-285" class="d">-		   &quot;fields = [&#39;probability_0&#39;, &#39;probability_1&#39;, &#39;classification&#39;, &#39;clock_cycles&#39;] \n&quot;,
+</a><a href="#h0-0-286" id="h0-0-286" class="d">-		   &quot;\n&quot;,
+</a><a href="#h0-0-287" id="h0-0-287" class="d">-		   &quot;with open(project_name+\&quot;.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a><a href="#h0-0-288" id="h0-0-288" class="d">-		   &quot;    write = csv.writer(f)\n&quot;,
+</a><a href="#h0-0-289" id="h0-0-289" class="d">-		   &quot;    write.writerow(fields)\n&quot;,
+</a><a href="#h0-0-290" id="h0-0-290" class="d">-		   &quot;    write.writerows(results_to_dump)&quot;
+</a><a href="#h0-0-291" id="h0-0-291" class="d">-		  ]
+</a><a href="#h0-0-292" id="h0-0-292" class="d">-		 },
+</a><a href="#h0-0-293" id="h0-0-293" class="d">-		 {
+</a><a href="#h0-0-294" id="h0-0-294" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-295" id="h0-0-295" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-296" id="h0-0-296" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-297" id="h0-0-297" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-298" id="h0-0-298" class="d">-		  &quot;source&quot;: []
+</a><a href="#h0-0-299" id="h0-0-299" class="d">-		 },
+</a><a href="#h0-0-300" id="h0-0-300" class="d">-		 {
+</a><a href="#h0-0-301" id="h0-0-301" class="d">-		  &quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-302" id="h0-0-302" class="d">-		  &quot;execution_count&quot;: null,
+</a><a href="#h0-0-303" id="h0-0-303" class="d">-		  &quot;metadata&quot;: {},
+</a><a href="#h0-0-304" id="h0-0-304" class="d">-		  &quot;outputs&quot;: [],
+</a><a href="#h0-0-305" id="h0-0-305" class="d">-		  &quot;source&quot;: []
+</a><a href="#h0-0-306" id="h0-0-306" class="d">-		 }
+</a><a href="#h0-0-307" id="h0-0-307" class="i">+		{
+</a><a href="#h0-0-308" id="h0-0-308" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-309" id="h0-0-309" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-310" id="h0-0-310" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-311" id="h0-0-311" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-312" id="h0-0-312" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-313" id="h0-0-313" class="i">+			&quot;from pynq import Overlay\n&quot;,
+</a><a href="#h0-0-314" id="h0-0-314" class="i">+			&quot;from pynq import MMIO\n&quot;,
+</a><a href="#h0-0-315" id="h0-0-315" class="i">+			&quot;import os\n&quot;,
+</a><a href="#h0-0-316" id="h0-0-316" class="i">+			&quot;import numpy as np\n&quot;,
+</a><a href="#h0-0-317" id="h0-0-317" class="i">+			&quot;import struct\n&quot;,
+</a><a href="#h0-0-318" id="h0-0-318" class="i">+			&quot;import time\n&quot;,
+</a><a href="#h0-0-319" id="h0-0-319" class="i">+			&quot;import requests\n&quot;,
+</a><a href="#h0-0-320" id="h0-0-320" class="i">+			&quot;import json&quot;
+</a><a href="#h0-0-321" id="h0-0-321" class="i">+		]
+</a><a href="#h0-0-322" id="h0-0-322" class="i">+		},
+</a><a href="#h0-0-323" id="h0-0-323" class="i">+		{
+</a><a href="#h0-0-324" id="h0-0-324" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-325" id="h0-0-325" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-326" id="h0-0-326" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-327" id="h0-0-327" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-328" id="h0-0-328" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-329" id="h0-0-329" class="i">+			&quot;# SETTINGS\n&quot;,
+</a><a href="#h0-0-330" id="h0-0-330" class="i">+			&quot;project_name  = \&quot;firmware_ok\&quot;\n&quot;,
+</a><a href="#h0-0-331" id="h0-0-331" class="i">+			&quot;firmware_name = project_name+\&quot;.bit\&quot;\n&quot;,
+</a><a href="#h0-0-332" id="h0-0-332" class="i">+			&quot;n_input       = 4 # number of input (features) to send for prediction\n&quot;,
+</a><a href="#h0-0-333" id="h0-0-333" class="i">+			&quot;n_output      = 2 # number of outputs (without benchcore)\n&quot;,
+</a><a href="#h0-0-334" id="h0-0-334" class="i">+			&quot;benchcore     = True # set to True if the BondMachine has the benchcore enabled\n&quot;,
+</a><a href="#h0-0-335" id="h0-0-335" class="i">+			&quot;\n&quot;,
+</a><a href="#h0-0-336" id="h0-0-336" class="i">+			&quot;dataset_info = {\n&quot;,
+</a><a href="#h0-0-337" id="h0-0-337" class="i">+			&quot;    \&quot;preloaded\&quot;: False, # set to True if you want to use a dataset, if set to False the dataset is generated randomly\n&quot;,
+</a><a href="#h0-0-338" id="h0-0-338" class="i">+			&quot;    \&quot;x_test\&quot;: \&quot;banknote-authentication_X_test.npy\&quot;,\n&quot;,
+</a><a href="#h0-0-339" id="h0-0-339" class="i">+			&quot;    \&quot;y_test\&quot;: \&quot;banknote-authentication_y_test.npy\&quot;,\n&quot;,
+</a><a href="#h0-0-340" id="h0-0-340" class="i">+			&quot;    \&quot;features\&quot;: 4\n&quot;,
+</a><a href="#h0-0-341" id="h0-0-341" class="i">+			&quot;}\n&quot;,
+</a><a href="#h0-0-342" id="h0-0-342" class="i">+			&quot;\n&quot;,
+</a><a href="#h0-0-343" id="h0-0-343" class="i">+			&quot;precision_info = {\n&quot;,
+</a><a href="#h0-0-344" id="h0-0-344" class="i">+			&quot;    \&quot;type\&quot;: \&quot;float32\&quot;,\n&quot;,
+</a><a href="#h0-0-345" id="h0-0-345" class="i">+			&quot;    \&quot;e\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-346" id="h0-0-346" class="i">+			&quot;    \&quot;f\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-347" id="h0-0-347" class="i">+			&quot;    \&quot;s\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-348" id="h0-0-348" class="i">+			&quot;    \&quot;t\&quot;: 0,\n&quot;,
+</a><a href="#h0-0-349" id="h0-0-349" class="i">+			&quot;    \&quot;host\&quot;: \&quot;10.2.129.49\&quot;,\n&quot;,
+</a><a href="#h0-0-350" id="h0-0-350" class="i">+			&quot;    \&quot;port\&quot;: \&quot;8080\&quot;\n&quot;,
+</a><a href="#h0-0-351" id="h0-0-351" class="i">+			&quot;}\n&quot;,
+</a><a href="#h0-0-352" id="h0-0-352" class="i">+			&quot;padding_info = {\n&quot;,
+</a><a href="#h0-0-353" id="h0-0-353" class="i">+			&quot;    \&quot;enabled\&quot;: False,\n&quot;,
+</a><a href="#h0-0-354" id="h0-0-354" class="i">+			&quot;    \&quot;size\&quot;: 16\n&quot;,
+</a><a href="#h0-0-355" id="h0-0-355" class="i">+			&quot;}\n&quot;,
+</a><a href="#h0-0-356" id="h0-0-356" class="i">+			&quot;\n&quot;,
+</a><a href="#h0-0-357" id="h0-0-357" class="i">+			&quot;if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-358" id="h0-0-358" class="i">+			&quot;    exp = precision_info[\&quot;type\&quot;][4:precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)]\n&quot;,
+</a><a href="#h0-0-359" id="h0-0-359" class="i">+			&quot;    mant = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;f\&quot;)+1:len(precision_info[\&quot;type\&quot;])]\n&quot;,
+</a><a href="#h0-0-360" id="h0-0-360" class="i">+			&quot;    precision_info[\&quot;e\&quot;] = int(exp)\n&quot;,
+</a><a href="#h0-0-361" id="h0-0-361" class="i">+			&quot;    precision_info[\&quot;f\&quot;] = int(mant)\n&quot;,
+</a><a href="#h0-0-362" id="h0-0-362" class="i">+			&quot;elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-363" id="h0-0-363" class="i">+			&quot;    s = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;s\&quot;)+1:precision_info[\&quot;type\&quot;].rindex(\&quot;t\&quot;)]\n&quot;,
+</a><a href="#h0-0-364" id="h0-0-364" class="i">+			&quot;    t = precision_info[\&quot;type\&quot;][precision_info[\&quot;type\&quot;].rindex(\&quot;t\&quot;)+1:len(precision_info[\&quot;type\&quot;])]\n&quot;,
+</a><a href="#h0-0-365" id="h0-0-365" class="i">+			&quot;    precision_info[\&quot;s\&quot;] = s\n&quot;,
+</a><a href="#h0-0-366" id="h0-0-366" class="i">+			&quot;    precision_info[\&quot;t\&quot;] = t\n&quot;,
+</a><a href="#h0-0-367" id="h0-0-367" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-368" id="h0-0-368" class="i">+			&quot;conversion_url =&#39;http://&#39;+precision_info[\&quot;host\&quot;]+&#39;:&#39;+str(precision_info[\&quot;port\&quot;])+&#39;/bmnumbers&#39;&quot;
+</a><a href="#h0-0-369" id="h0-0-369" class="i">+		]
+</a><a href="#h0-0-370" id="h0-0-370" class="i">+		},
+</a><a href="#h0-0-371" id="h0-0-371" class="i">+		{
+</a><a href="#h0-0-372" id="h0-0-372" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-373" id="h0-0-373" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-374" id="h0-0-374" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-375" id="h0-0-375" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-376" id="h0-0-376" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-377" id="h0-0-377" class="i">+			&quot;def cast_float_to_binary(num):\n&quot;,
+</a><a href="#h0-0-378" id="h0-0-378" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-379" id="h0-0-379" class="i">+			&quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-380" id="h0-0-380" class="i">+			&quot;        strNum = \&quot;0flp&lt;\&quot;+str(precision_info[\&quot;e\&quot;])+\&quot;.\&quot;+str(precision_info[\&quot;f\&quot;])+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-381" id="h0-0-381" class="i">+			&quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-382" id="h0-0-382" class="i">+			&quot;        strNum = \&quot;0lq&lt;\&quot;+str(precision_info[\&quot;s\&quot;])+\&quot;.\&quot;+str(precision_info[\&quot;t\&quot;])+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-383" id="h0-0-383" class="i">+			&quot;        \n&quot;,
+</a><a href="#h0-0-384" id="h0-0-384" class="i">+			&quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: &#39;bin&#39;, &#39;viewMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-0-385" id="h0-0-385" class="i">+			&quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-0-386" id="h0-0-386" class="i">+			&quot;    convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-0-387" id="h0-0-387" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-388" id="h0-0-388" class="i">+			&quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-389" id="h0-0-389" class="i">+			&quot;        strNumber = convertedNumber[0]+convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-390" id="h0-0-390" class="i">+			&quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-391" id="h0-0-391" class="i">+			&quot;        strNumber = convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-392" id="h0-0-392" class="i">+			&quot;        \n&quot;,
+</a><a href="#h0-0-393" id="h0-0-393" class="i">+			&quot;        if len(strNumber) &lt; int(precision_info[\&quot;s\&quot;]):\n&quot;,
+</a><a href="#h0-0-394" id="h0-0-394" class="i">+			&quot;            diff = int(precision_info[\&quot;s\&quot;]) - len(strNumber)\n&quot;,
+</a><a href="#h0-0-395" id="h0-0-395" class="i">+			&quot;            \n&quot;,
+</a><a href="#h0-0-396" id="h0-0-396" class="i">+			&quot;            for i in range(0, diff):\n&quot;,
+</a><a href="#h0-0-397" id="h0-0-397" class="i">+			&quot;                strNumber = \&quot;0\&quot;+strNumber\n&quot;,
+</a><a href="#h0-0-398" id="h0-0-398" class="i">+			&quot;             \n&quot;,
+</a><a href="#h0-0-399" id="h0-0-399" class="i">+			&quot;        if padding_info[\&quot;enabled\&quot;] == True:\n&quot;,
+</a><a href="#h0-0-400" id="h0-0-400" class="i">+			&quot;            n_zeros = padding_info[\&quot;size\&quot;] - len(strNumber)\n&quot;,
+</a><a href="#h0-0-401" id="h0-0-401" class="i">+			&quot;            \n&quot;,
+</a><a href="#h0-0-402" id="h0-0-402" class="i">+			&quot;            for i in range(0, n_zeros):\n&quot;,
+</a><a href="#h0-0-403" id="h0-0-403" class="i">+			&quot;                strNumber = \&quot;0\&quot;+strNumber\n&quot;,
+</a><a href="#h0-0-404" id="h0-0-404" class="i">+			&quot;                \n&quot;,
+</a><a href="#h0-0-405" id="h0-0-405" class="i">+			&quot;            padding_info[\&quot;n_zeros\&quot;] = n_zeros\n&quot;,
+</a><a href="#h0-0-406" id="h0-0-406" class="i">+			&quot;                \n&quot;,
+</a><a href="#h0-0-407" id="h0-0-407" class="i">+			&quot;    return strNumber&quot;
+</a><a href="#h0-0-408" id="h0-0-408" class="i">+		]
+</a><a href="#h0-0-409" id="h0-0-409" class="i">+		},
+</a><a href="#h0-0-410" id="h0-0-410" class="i">+		{
+</a><a href="#h0-0-411" id="h0-0-411" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-412" id="h0-0-412" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-413" id="h0-0-413" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-414" id="h0-0-414" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-415" id="h0-0-415" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-416" id="h0-0-416" class="i">+			&quot;def cast_binary_to_float(num):\n&quot;,
+</a><a href="#h0-0-417" id="h0-0-417" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-418" id="h0-0-418" class="i">+			&quot;    if padding_info[\&quot;enabled\&quot;] == True:\n&quot;,
+</a><a href="#h0-0-419" id="h0-0-419" class="i">+			&quot;        num = num[-padding_info[\&quot;n_zeros\&quot;]:]\n&quot;,
+</a><a href="#h0-0-420" id="h0-0-420" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-421" id="h0-0-421" class="i">+			&quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-422" id="h0-0-422" class="i">+			&quot;        totLen = precision_info[\&quot;e\&quot;] + precision_info[\&quot;f\&quot;] + 3\n&quot;,
+</a><a href="#h0-0-423" id="h0-0-423" class="i">+			&quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-424" id="h0-0-424" class="i">+			&quot;        totLen = int(precision_info[\&quot;s\&quot;])\n&quot;,
+</a><a href="#h0-0-425" id="h0-0-425" class="i">+			&quot;        \n&quot;,
+</a><a href="#h0-0-426" id="h0-0-426" class="i">+			&quot;    if len(num) &gt; totLen:\n&quot;,
+</a><a href="#h0-0-427" id="h0-0-427" class="i">+			&quot;        num = num[1:]\n&quot;,
+</a><a href="#h0-0-428" id="h0-0-428" class="i">+			&quot;    elif len(num) &lt; totLen:\n&quot;,
+</a><a href="#h0-0-429" id="h0-0-429" class="i">+			&quot;        diff_len = totLen - len(num)\n&quot;,
+</a><a href="#h0-0-430" id="h0-0-430" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-431" id="h0-0-431" class="i">+			&quot;    strNum = \&quot;0b&lt;\&quot;+str(totLen)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+</a><a href="#h0-0-432" id="h0-0-432" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-433" id="h0-0-433" class="i">+			&quot;    if (precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot;):\n&quot;,
+</a><a href="#h0-0-434" id="h0-0-434" class="i">+			&quot;        newType = \&quot;flpe\&quot;+str(precision_info[\&quot;e\&quot;])+\&quot;f\&quot;+str(precision_info[\&quot;f\&quot;])\n&quot;,
+</a><a href="#h0-0-435" id="h0-0-435" class="i">+			&quot;    elif (precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;):\n&quot;,
+</a><a href="#h0-0-436" id="h0-0-436" class="i">+			&quot;        newType = \&quot;lqs\&quot;+str(precision_info[\&quot;s\&quot;])+\&quot;t\&quot;+str(precision_info[\&quot;t\&quot;])\n&quot;,
+</a><a href="#h0-0-437" id="h0-0-437" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-438" id="h0-0-438" class="i">+			&quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: newType, &#39;viewMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h0-0-439" id="h0-0-439" class="i">+			&quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+</a><a href="#h0-0-440" id="h0-0-440" class="i">+			&quot;    try:\n&quot;,
+</a><a href="#h0-0-441" id="h0-0-441" class="i">+			&quot;        convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+</a><a href="#h0-0-442" id="h0-0-442" class="i">+			&quot;        strNumber = convertedNumber[convertedNumber.rindex(\&quot;&gt;\&quot;)+1:len(convertedNumber)]\n&quot;,
+</a><a href="#h0-0-443" id="h0-0-443" class="i">+			&quot;        return float(strNumber)\n&quot;,
+</a><a href="#h0-0-444" id="h0-0-444" class="i">+			&quot;    except Exception as e:\n&quot;,
+</a><a href="#h0-0-445" id="h0-0-445" class="i">+			&quot;        print(e)&quot;
+</a><a href="#h0-0-446" id="h0-0-446" class="i">+		]
+</a><a href="#h0-0-447" id="h0-0-447" class="i">+		},
+</a><a href="#h0-0-448" id="h0-0-448" class="i">+		{
+</a><a href="#h0-0-449" id="h0-0-449" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-450" id="h0-0-450" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-451" id="h0-0-451" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-452" id="h0-0-452" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-453" id="h0-0-453" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-454" id="h0-0-454" class="i">+			&quot;def get_binary_from_float(num):\n&quot;,
+</a><a href="#h0-0-455" id="h0-0-455" class="i">+			&quot;    return bin(struct.unpack(&#39;!i&#39;,struct.pack(&#39;!f&#39;,num))[0])&quot;
+</a><a href="#h0-0-456" id="h0-0-456" class="i">+		]
+</a><a href="#h0-0-457" id="h0-0-457" class="i">+		},
+</a><a href="#h0-0-458" id="h0-0-458" class="i">+		{
+</a><a href="#h0-0-459" id="h0-0-459" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-460" id="h0-0-460" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-461" id="h0-0-461" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-462" id="h0-0-462" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-463" id="h0-0-463" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-464" id="h0-0-464" class="i">+			&quot;def bin_to_float(binary):\n&quot;,
+</a><a href="#h0-0-465" id="h0-0-465" class="i">+			&quot;    return struct.unpack(&#39;!f&#39;,struct.pack(&#39;!I&#39;, int(binary, 2)))[0]&quot;
+</a><a href="#h0-0-466" id="h0-0-466" class="i">+		]
+</a><a href="#h0-0-467" id="h0-0-467" class="i">+		},
+</a><a href="#h0-0-468" id="h0-0-468" class="i">+		{
+</a><a href="#h0-0-469" id="h0-0-469" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-470" id="h0-0-470" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-471" id="h0-0-471" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-472" id="h0-0-472" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-473" id="h0-0-473" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-474" id="h0-0-474" class="i">+			&quot;def read_output():\n&quot;,
+</a><a href="#h0-0-475" id="h0-0-475" class="i">+			&quot;    starting_offset = (n_input*4)+(2*4)\n&quot;,
+</a><a href="#h0-0-476" id="h0-0-476" class="i">+			&quot;    result_from_bm_ml = []\n&quot;,
+</a><a href="#h0-0-477" id="h0-0-477" class="i">+			&quot;    offset = starting_offset\n&quot;,
+</a><a href="#h0-0-478" id="h0-0-478" class="i">+			&quot;    borderRange = n_output + 1 if benchcore == True else n_output\n&quot;,
+</a><a href="#h0-0-479" id="h0-0-479" class="i">+			&quot;    for i in range(0, borderRange):\n&quot;,
+</a><a href="#h0-0-480" id="h0-0-480" class="i">+			&quot;        raw_res = spi0.read(offset, 4)\n&quot;,
+</a><a href="#h0-0-481" id="h0-0-481" class="i">+			&quot;        bin_res = bin(raw_res)\n&quot;,
+</a><a href="#h0-0-482" id="h0-0-482" class="i">+			&quot;        bin_res_str = str(bin_res).replace(\&quot;b\&quot;, \&quot;\&quot;)\n&quot;,
+</a><a href="#h0-0-483" id="h0-0-483" class="i">+			&quot;        if benchcore == True:\n&quot;,
+</a><a href="#h0-0-484" id="h0-0-484" class="i">+			&quot;            if i != borderRange-1:\n&quot;,
+</a><a href="#h0-0-485" id="h0-0-485" class="i">+			&quot;                if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot; or precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;:\n&quot;,
+</a><a href="#h0-0-486" id="h0-0-486" class="i">+			&quot;                    print(\&quot;Unsigned received from bm is: \&quot;, raw_res)\n&quot;,
+</a><a href="#h0-0-487" id="h0-0-487" class="i">+			&quot;                    print(\&quot;Binary received from bm is:   \&quot;, bin_res)\n&quot;,
+</a><a href="#h0-0-488" id="h0-0-488" class="i">+			&quot;                    output = cast_binary_to_float(bin_res_str)\n&quot;,
+</a><a href="#h0-0-489" id="h0-0-489" class="i">+			&quot;                    print(\&quot;Output casted with bmnumbers is: \&quot;, output)\n&quot;,
+</a><a href="#h0-0-490" id="h0-0-490" class="i">+			&quot;                else:\n&quot;,
+</a><a href="#h0-0-491" id="h0-0-491" class="i">+			&quot;                    output = bin_to_float(bin_res_str)\n&quot;,
+</a><a href="#h0-0-492" id="h0-0-492" class="i">+			&quot;            else:\n&quot;,
+</a><a href="#h0-0-493" id="h0-0-493" class="i">+			&quot;                output = int(str(bin_res), 2)\n&quot;,
+</a><a href="#h0-0-494" id="h0-0-494" class="i">+			&quot;        else:\n&quot;,
+</a><a href="#h0-0-495" id="h0-0-495" class="i">+			&quot;            if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot; or precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;:\n&quot;,
+</a><a href="#h0-0-496" id="h0-0-496" class="i">+			&quot;                output = cast_binary_to_float(bin_res_str)\n&quot;,
+</a><a href="#h0-0-497" id="h0-0-497" class="i">+			&quot;                print(\&quot;Output casted with bmnumbers is: \&quot;, output)\n&quot;,
+</a><a href="#h0-0-498" id="h0-0-498" class="i">+			&quot;            else:\n&quot;,
+</a><a href="#h0-0-499" id="h0-0-499" class="i">+			&quot;                output = bin_to_float(bin_res_str)\n&quot;,
+</a><a href="#h0-0-500" id="h0-0-500" class="i">+			&quot;            \n&quot;,
+</a><a href="#h0-0-501" id="h0-0-501" class="i">+			&quot;        result_from_bm_ml.append(output) # APPEND THE OUTPUT\n&quot;,
+</a><a href="#h0-0-502" id="h0-0-502" class="i">+			&quot;        offset = offset + 4\n&quot;,
+</a><a href="#h0-0-503" id="h0-0-503" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-504" id="h0-0-504" class="i">+			&quot;    return result_from_bm_ml&quot;
+</a><a href="#h0-0-505" id="h0-0-505" class="i">+		]
+</a><a href="#h0-0-506" id="h0-0-506" class="i">+		},
+</a><a href="#h0-0-507" id="h0-0-507" class="i">+		{
+</a><a href="#h0-0-508" id="h0-0-508" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-509" id="h0-0-509" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-510" id="h0-0-510" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-511" id="h0-0-511" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-512" id="h0-0-512" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-513" id="h0-0-513" class="i">+			&quot;# LOAD OVERLAY\n&quot;,
+</a><a href="#h0-0-514" id="h0-0-514" class="i">+			&quot;overlay = Overlay(os.getcwd()+\&quot;/\&quot;+firmware_name)&quot;
+</a><a href="#h0-0-515" id="h0-0-515" class="i">+		]
+</a><a href="#h0-0-516" id="h0-0-516" class="i">+		},
+</a><a href="#h0-0-517" id="h0-0-517" class="i">+		{
+</a><a href="#h0-0-518" id="h0-0-518" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-519" id="h0-0-519" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-520" id="h0-0-520" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-521" id="h0-0-521" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-522" id="h0-0-522" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-523" id="h0-0-523" class="i">+			&quot;# GET MEMORY ADDRESS OF IP\n&quot;,
+</a><a href="#h0-0-524" id="h0-0-524" class="i">+			&quot;bm_starting_address = (overlay.ip_dict[\&quot;bondmachineip_0\&quot;][\&quot;phys_addr\&quot;])\n&quot;,
+</a><a href="#h0-0-525" id="h0-0-525" class="i">+			&quot;print(\&quot; Starting memory address of Bondmachine IP is (in dec): \&quot;, bm_starting_address)\n&quot;,
+</a><a href="#h0-0-526" id="h0-0-526" class="i">+			&quot;print(\&quot; Starting memory address of Bondmachine IP is (in hex): \&quot;, hex(bm_starting_address))&quot;
+</a><a href="#h0-0-527" id="h0-0-527" class="i">+		]
+</a><a href="#h0-0-528" id="h0-0-528" class="i">+		},
+</a><a href="#h0-0-529" id="h0-0-529" class="i">+		{
+</a><a href="#h0-0-530" id="h0-0-530" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-531" id="h0-0-531" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-532" id="h0-0-532" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-533" id="h0-0-533" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-534" id="h0-0-534" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-535" id="h0-0-535" class="i">+			&quot;# GET THE OBJECT NECESSARY TO INTERACT WITH ML IP\n&quot;,
+</a><a href="#h0-0-536" id="h0-0-536" class="i">+			&quot;spi0 = MMIO(bm_starting_address, 128)&quot;
+</a><a href="#h0-0-537" id="h0-0-537" class="i">+		]
+</a><a href="#h0-0-538" id="h0-0-538" class="i">+		},
+</a><a href="#h0-0-539" id="h0-0-539" class="i">+		{
+</a><a href="#h0-0-540" id="h0-0-540" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-541" id="h0-0-541" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-542" id="h0-0-542" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-543" id="h0-0-543" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-544" id="h0-0-544" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-545" id="h0-0-545" class="i">+			&quot;# LOAD BANKNOTE TESTSET\n&quot;,
+</a><a href="#h0-0-546" id="h0-0-546" class="i">+			&quot;if dataset_info[\&quot;preloaded\&quot;] == True:\n&quot;,
+</a><a href="#h0-0-547" id="h0-0-547" class="i">+			&quot;    X_test = np.load(&#39;banknote-authentication_X_test.npy&#39;)[:3]\n&quot;,
+</a><a href="#h0-0-548" id="h0-0-548" class="i">+			&quot;    Y_test = np.load(&#39;banknote-authentication_y_test.npy&#39;)[:3]\n&quot;,
+</a><a href="#h0-0-549" id="h0-0-549" class="i">+			&quot;    X_test = X_test.reshape(-1)\n&quot;,
+</a><a href="#h0-0-550" id="h0-0-550" class="i">+			&quot;    Y_test = X_test.reshape(-1)\n&quot;,
+</a><a href="#h0-0-551" id="h0-0-551" class="i">+			&quot;else:\n&quot;,
+</a><a href="#h0-0-552" id="h0-0-552" class="i">+			&quot;    X_test = np.random.uniform(-20, 20, size=1).reshape(-1)\n&quot;,
+</a><a href="#h0-0-553" id="h0-0-553" class="i">+			&quot;    Y_test = np.random.rand(2).reshape(-1)&quot;
+</a><a href="#h0-0-554" id="h0-0-554" class="i">+		]
+</a><a href="#h0-0-555" id="h0-0-555" class="i">+		},
+</a><a href="#h0-0-556" id="h0-0-556" class="i">+		{
+</a><a href="#h0-0-557" id="h0-0-557" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-558" id="h0-0-558" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-559" id="h0-0-559" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-560" id="h0-0-560" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-561" id="h0-0-561" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-562" id="h0-0-562" class="i">+			&quot;# IN THIS CASE I WANT TO SEND ONLY THE FIRST X INPUT SAMPLE\n&quot;,
+</a><a href="#h0-0-563" id="h0-0-563" class="i">+			&quot;idx = 0\n&quot;,
+</a><a href="#h0-0-564" id="h0-0-564" class="i">+			&quot;results_to_dump = []\n&quot;,
+</a><a href="#h0-0-565" id="h0-0-565" class="i">+			&quot;cnt = 0\n&quot;,
+</a><a href="#h0-0-566" id="h0-0-566" class="i">+			&quot;offset = 0\n&quot;,
+</a><a href="#h0-0-567" id="h0-0-567" class="i">+			&quot;\n&quot;,
+</a><a href="#h0-0-568" id="h0-0-568" class="i">+			&quot;for f in range(0,len(X_test)):\n&quot;,
+</a><a href="#h0-0-569" id="h0-0-569" class="i">+			&quot;    if precision_info[\&quot;type\&quot;][:3] == \&quot;flp\&quot; or precision_info[\&quot;type\&quot;][:3] == \&quot;lqs\&quot;:\n&quot;,
+</a><a href="#h0-0-570" id="h0-0-570" class="i">+			&quot;        binToSend = cast_float_to_binary(X_test[f])\n&quot;,
+</a><a href="#h0-0-571" id="h0-0-571" class="i">+			&quot;    else:\n&quot;,
+</a><a href="#h0-0-572" id="h0-0-572" class="i">+			&quot;        binToSend = get_binary_from_float(X_test[f])\n&quot;,
+</a><a href="#h0-0-573" id="h0-0-573" class="i">+			&quot;    decToSend = int(binToSend, 2)\n&quot;,
+</a><a href="#h0-0-574" id="h0-0-574" class="i">+			&quot;    spi0.write_mm(offset, decToSend) # WRITE THE FEATURE TO THE CORRESPONDING INPUT\n&quot;,
+</a><a href="#h0-0-575" id="h0-0-575" class="i">+			&quot;    offset = offset + 4 # 4 BYTE = 32 BIT\n&quot;,
+</a><a href="#h0-0-576" id="h0-0-576" class="i">+			&quot;    cnt = cnt + 1\n&quot;,
+</a><a href="#h0-0-577" id="h0-0-577" class="i">+			&quot;    \n&quot;,
+</a><a href="#h0-0-578" id="h0-0-578" class="i">+			&quot;    if dataset_info[\&quot;preloaded\&quot;] == True:\n&quot;,
+</a><a href="#h0-0-579" id="h0-0-579" class="i">+			&quot;        if cnt == dataset_info[\&quot;features\&quot;]:\n&quot;,
+</a><a href="#h0-0-580" id="h0-0-580" class="i">+			&quot;            time.sleep(1)\n&quot;,
+</a><a href="#h0-0-581" id="h0-0-581" class="i">+			&quot;            out = np.asarray(read_output())\n&quot;,
+</a><a href="#h0-0-582" id="h0-0-582" class="i">+			&quot;            classification = np.argmax(out[0:2])\n&quot;,
+</a><a href="#h0-0-583" id="h0-0-583" class="i">+			&quot;            if (benchcore == True):\n&quot;,
+</a><a href="#h0-0-584" id="h0-0-584" class="i">+			&quot;                results_to_dump.append([out[0], out[1], classification, out[2]])\n&quot;,
+</a><a href="#h0-0-585" id="h0-0-585" class="i">+			&quot;            else: \n&quot;,
+</a><a href="#h0-0-586" id="h0-0-586" class="i">+			&quot;                results_to_dump.append([out[0], out[1], classification])\n&quot;,
+</a><a href="#h0-0-587" id="h0-0-587" class="i">+			&quot;            idx = idx + 1\n&quot;,
+</a><a href="#h0-0-588" id="h0-0-588" class="i">+			&quot;            cnt = 0\n&quot;,
+</a><a href="#h0-0-589" id="h0-0-589" class="i">+			&quot;            offset = 0\n&quot;,
+</a><a href="#h0-0-590" id="h0-0-590" class="i">+			&quot;            print(results_to_dump)\n&quot;,
+</a><a href="#h0-0-591" id="h0-0-591" class="i">+			&quot;    else:\n&quot;,
+</a><a href="#h0-0-592" id="h0-0-592" class="i">+			&quot;        offset = 0\n&quot;,
+</a><a href="#h0-0-593" id="h0-0-593" class="i">+			&quot;        out = np.asarray(read_output())\n&quot;,
+</a><a href="#h0-0-594" id="h0-0-594" class="i">+			&quot;        print(out)&quot;
+</a><a href="#h0-0-595" id="h0-0-595" class="i">+		]
+</a><a href="#h0-0-596" id="h0-0-596" class="i">+		},
+</a><a href="#h0-0-597" id="h0-0-597" class="i">+		{
+</a><a href="#h0-0-598" id="h0-0-598" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-599" id="h0-0-599" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-600" id="h0-0-600" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-601" id="h0-0-601" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-602" id="h0-0-602" class="i">+		&quot;source&quot;: [
+</a><a href="#h0-0-603" id="h0-0-603" class="i">+			&quot;import csv\n&quot;,
+</a><a href="#h0-0-604" id="h0-0-604" class="i">+			&quot;fields = [&#39;probability_0&#39;, &#39;probability_1&#39;, &#39;classification&#39;, &#39;clock_cycles&#39;] \n&quot;,
+</a><a href="#h0-0-605" id="h0-0-605" class="i">+			&quot;\n&quot;,
+</a><a href="#h0-0-606" id="h0-0-606" class="i">+			&quot;with open(project_name+\&quot;.csv\&quot;, &#39;w&#39;) as f:\n&quot;,
+</a><a href="#h0-0-607" id="h0-0-607" class="i">+			&quot;    write = csv.writer(f)\n&quot;,
+</a><a href="#h0-0-608" id="h0-0-608" class="i">+			&quot;    write.writerow(fields)\n&quot;,
+</a><a href="#h0-0-609" id="h0-0-609" class="i">+			&quot;    write.writerows(results_to_dump)&quot;
+</a><a href="#h0-0-610" id="h0-0-610" class="i">+		]
+</a><a href="#h0-0-611" id="h0-0-611" class="i">+		},
+</a><a href="#h0-0-612" id="h0-0-612" class="i">+		{
+</a><a href="#h0-0-613" id="h0-0-613" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-614" id="h0-0-614" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-615" id="h0-0-615" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-616" id="h0-0-616" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-617" id="h0-0-617" class="i">+		&quot;source&quot;: []
+</a><a href="#h0-0-618" id="h0-0-618" class="i">+		},
+</a><a href="#h0-0-619" id="h0-0-619" class="i">+		{
+</a><a href="#h0-0-620" id="h0-0-620" class="i">+		&quot;cell_type&quot;: &quot;code&quot;,
+</a><a href="#h0-0-621" id="h0-0-621" class="i">+		&quot;execution_count&quot;: null,
+</a><a href="#h0-0-622" id="h0-0-622" class="i">+		&quot;metadata&quot;: {},
+</a><a href="#h0-0-623" id="h0-0-623" class="i">+		&quot;outputs&quot;: [],
+</a><a href="#h0-0-624" id="h0-0-624" class="i">+		&quot;source&quot;: []
+</a><a href="#h0-0-625" id="h0-0-625" class="i">+		}
+</a> 		],
+ 		&quot;metadata&quot;: {
+<a href="#h0-0-628" id="h0-0-628" class="d">-		 &quot;kernelspec&quot;: {
+</a><a href="#h0-0-629" id="h0-0-629" class="d">-		  &quot;display_name&quot;: &quot;Python 3&quot;,
+</a><a href="#h0-0-630" id="h0-0-630" class="d">-		  &quot;language&quot;: &quot;python&quot;,
+</a><a href="#h0-0-631" id="h0-0-631" class="d">-		  &quot;name&quot;: &quot;python3&quot;
+</a><a href="#h0-0-632" id="h0-0-632" class="d">-		 },
+</a><a href="#h0-0-633" id="h0-0-633" class="d">-		 &quot;language_info&quot;: {
+</a><a href="#h0-0-634" id="h0-0-634" class="d">-		  &quot;codemirror_mode&quot;: {
+</a><a href="#h0-0-635" id="h0-0-635" class="d">-		   &quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h0-0-636" id="h0-0-636" class="d">-		   &quot;version&quot;: 3
+</a><a href="#h0-0-637" id="h0-0-637" class="d">-		  },
+</a><a href="#h0-0-638" id="h0-0-638" class="d">-		  &quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h0-0-639" id="h0-0-639" class="d">-		  &quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h0-0-640" id="h0-0-640" class="d">-		  &quot;name&quot;: &quot;python&quot;,
+</a><a href="#h0-0-641" id="h0-0-641" class="d">-		  &quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h0-0-642" id="h0-0-642" class="d">-		  &quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h0-0-643" id="h0-0-643" class="d">-		  &quot;version&quot;: &quot;3.6.5&quot;
+</a><a href="#h0-0-644" id="h0-0-644" class="d">-		 }
+</a><a href="#h0-0-645" id="h0-0-645" class="i">+		&quot;kernelspec&quot;: {
+</a><a href="#h0-0-646" id="h0-0-646" class="i">+		&quot;display_name&quot;: &quot;Python 3&quot;,
+</a><a href="#h0-0-647" id="h0-0-647" class="i">+		&quot;language&quot;: &quot;python&quot;,
+</a><a href="#h0-0-648" id="h0-0-648" class="i">+		&quot;name&quot;: &quot;python3&quot;
+</a><a href="#h0-0-649" id="h0-0-649" class="i">+		},
+</a><a href="#h0-0-650" id="h0-0-650" class="i">+		&quot;language_info&quot;: {
+</a><a href="#h0-0-651" id="h0-0-651" class="i">+		&quot;codemirror_mode&quot;: {
+</a><a href="#h0-0-652" id="h0-0-652" class="i">+			&quot;name&quot;: &quot;ipython&quot;,
+</a><a href="#h0-0-653" id="h0-0-653" class="i">+			&quot;version&quot;: 3
+</a><a href="#h0-0-654" id="h0-0-654" class="i">+		},
+</a><a href="#h0-0-655" id="h0-0-655" class="i">+		&quot;file_extension&quot;: &quot;.py&quot;,
+</a><a href="#h0-0-656" id="h0-0-656" class="i">+		&quot;mimetype&quot;: &quot;text/x-python&quot;,
+</a><a href="#h0-0-657" id="h0-0-657" class="i">+		&quot;name&quot;: &quot;python&quot;,
+</a><a href="#h0-0-658" id="h0-0-658" class="i">+		&quot;nbconvert_exporter&quot;: &quot;python&quot;,
+</a><a href="#h0-0-659" id="h0-0-659" class="i">+		&quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+</a><a href="#h0-0-660" id="h0-0-660" class="i">+		&quot;version&quot;: &quot;3.6.5&quot;
+</a><a href="#h0-0-661" id="h0-0-661" class="i">+		}
+</a> 		},
+ 		&quot;nbformat&quot;: 4,
+ 		&quot;nbformat_minor&quot;: 2
+<a href="#h0-0-665" id="h0-0-665" class="d">-	   }	   
+</a><a href="#h0-0-666" id="h0-0-666" class="i">+		}	   
+</a> 	`
+ )
+</pre>
+</div>
+</body>
+</html>

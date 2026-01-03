@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fragment analyzer - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d241042178ab38aaf5da83b95a0cf0310125629f.html">d241042178ab38aaf5da83b95a0cf0310125629f</a>
+<b>parent</b> <a href="../commit/8501649a7c509cd9b429ddb03bfa7d31ae60d6fd.html">8501649a7c509cd9b429ddb03bfa7d31ae60d6fd</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat,  1 Jul 2023 16:23:28 +0200
+
+Fragment analyzer
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/fragmentanalyzer.go</a></td><td> | </td><td class="num">110</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 103 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a> b/<a href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,8 +9,15 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ )
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-func (bi *BasmInstance) fragmentResUsage(body *bmline.BasmBody, circolar bool) error {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+func (bi *BasmInstance) fragmentResUsage(body *bmline.BasmBody, circular bool) error {
+</a> 	//TODO finish this
+<a href="#h0-0-6" id="h0-0-6" class="i">+	fmt.Println(&quot;fragmentResUsage&quot;, body, circular)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	if circular {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	} else {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> 	return nil
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -21,6 +28,33 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 		fmt.Println(green(&quot;\tProcessing fragments:&quot;))
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	// Filter the matchers to select only the label based one
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	filteredMatchers := make([]*bmline.BasmLine, 0)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// The nop line
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	nopLine := new(bmline.BasmLine)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	nop := new(bmline.BasmElement)
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	nop.SetValue(&quot;nop&quot;)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	nopLine.Operation = nop
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	nopLine.Elements = make([]*bmline.BasmElement, 0)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if bi.debug {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		fmt.Println(green(&quot;\tFiltering matchers:&quot;))
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	}
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	for _, matcher := range bi.matchers {
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		if bmline.FilterMatcher(matcher, &quot;label&quot;) {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			filteredMatchers = append(filteredMatchers, matcher)
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+			if bi.debug {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				fmt.Println(red(&quot;\t\tActive matcher:&quot;) + matcher.String())
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+			}
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		} else {
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			if bi.debug {
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				fmt.Println(yellow(&quot;\t\tInactive matcher:&quot;) + matcher.String())
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+			}
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		}
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	}
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+
+</a> 	// Loop over the sections
+ 	for fragName, fragment := range bi.fragments {
+ 		if bi.debug {
+<a href="#h0-2" id="h0-2" class="h">@@ -64,7 +98,14 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 		for res := range resUsed {
+ 			resUseds += res + &quot;:&quot;
+ 		}
+<a href="#h0-2-3" id="h0-2-3" class="i">+		resUseds = strings.TrimSuffix(resUseds, &quot;:&quot;)
+</a> 
+<a href="#h0-2-5" id="h0-2-5" class="i">+		if resInS != &quot;&quot; {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			fBody.BasmMeta = fBody.SetMeta(&quot;resin&quot;, resInS)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+		if resOuts != &quot;&quot; {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			fBody.BasmMeta = fBody.SetMeta(&quot;resout&quot;, resOuts)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		}
+</a> 		fBody.BasmMeta = fBody.SetMeta(&quot;resused&quot;, resUseds)
+ 
+ 		// TODO rearrange resources in the order they are used
+<a href="#h0-3" id="h0-3" class="h">@@ -106,21 +147,76 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 			}
+ 		}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+		branchingBlocks := make(map[int]*bmline.BasmBody, 1)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		circularBlocks := make(map[int]bool, 1)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		// Create a copy of the fragment body. The first copy will be the whole fragment body with index 0
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		branchingBlocks[0] = fBody.Copy()
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		circularBlocks[0] = false
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+
+</a> 		// Identify every branching instruction, the identifier will be the line number of the starting point. To identify the end point, we will
+ 		// use the label.
+ 		// This will only work with labels, not with numbers. For this reason, it will execute after labeltagger and before labelresolver.
+ 
+<a href="#h0-3-13" id="h0-3-13" class="d">-		// Create a copy of the fragment body
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		// upper branch
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		// Map all the labels
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		labels := make(map[string]int)
+</a> 
+<a href="#h0-3-18" id="h0-3-18" class="d">-		// lower branch
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+		for i, line := range fBody.Lines {
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+			if label := line.GetMeta(&quot;label&quot;); label != &quot;&quot; {
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+				if _, exists := labels[label]; exists {
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+					return errors.New(&quot;label is specified multiple time: &quot; + label)
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+				} else {
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+					labels[label] = i
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+				}
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+			}
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+		}
+</a> 
+<a href="#h0-3-29" id="h0-3-29" class="d">-		// Fill with nops
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+		// Get where the branching instructions are
+</a> 
+<a href="#h0-3-32" id="h0-3-32" class="d">-		// Compute the usage of reasource for each copy
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+		for i, line := range fBody.Lines {
+</a> 
+<a href="#h0-3-35" id="h0-3-35" class="d">-		// Union of the copies
+</a><a href="#h0-3-36" id="h0-3-36" class="i">+			for _, matcher := range filteredMatchers {
+</a><a href="#h0-3-37" id="h0-3-37" class="i">+				if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h0-3-38" id="h0-3-38" class="i">+					// TODO Handling the operand
+</a><a href="#h0-3-39" id="h0-3-39" class="i">+					for _, arg := range line.Elements {
+</a><a href="#h0-3-40" id="h0-3-40" class="i">+						if j, ok := labels[arg.GetValue()]; ok {
+</a><a href="#h0-3-41" id="h0-3-41" class="i">+							fmt.Println(&quot;the branch is at line&quot;, i, &quot;and the label is at line&quot;, j)
+</a><a href="#h0-3-42" id="h0-3-42" class="i">+
+</a><a href="#h0-3-43" id="h0-3-43" class="i">+							if i &gt; j {
+</a><a href="#h0-3-44" id="h0-3-44" class="i">+								branchingBlocks[i] = fBody.Copy()
+</a><a href="#h0-3-45" id="h0-3-45" class="i">+								circularBlocks[i] = true
+</a><a href="#h0-3-46" id="h0-3-46" class="i">+								// upper branch
+</a><a href="#h0-3-47" id="h0-3-47" class="i">+								for k := 0; k &lt; j; k++ {
+</a><a href="#h0-3-48" id="h0-3-48" class="i">+									branchingBlocks[i].Lines[k] = nopLine.Copy()
+</a><a href="#h0-3-49" id="h0-3-49" class="i">+								}
+</a><a href="#h0-3-50" id="h0-3-50" class="i">+								for k := i + 1; k &lt; len(fBody.Lines); k++ {
+</a><a href="#h0-3-51" id="h0-3-51" class="i">+									branchingBlocks[i].Lines[k] = nopLine.Copy()
+</a><a href="#h0-3-52" id="h0-3-52" class="i">+								}
+</a><a href="#h0-3-53" id="h0-3-53" class="i">+							} else if i &lt; j {
+</a><a href="#h0-3-54" id="h0-3-54" class="i">+								branchingBlocks[i] = fBody.Copy()
+</a><a href="#h0-3-55" id="h0-3-55" class="i">+								circularBlocks[i] = false
+</a><a href="#h0-3-56" id="h0-3-56" class="i">+								// lower branch
+</a><a href="#h0-3-57" id="h0-3-57" class="i">+								for k := i + 1; k &lt; j; k++ {
+</a><a href="#h0-3-58" id="h0-3-58" class="i">+									branchingBlocks[i].Lines[k] = nopLine.Copy()
+</a><a href="#h0-3-59" id="h0-3-59" class="i">+								}
+</a><a href="#h0-3-60" id="h0-3-60" class="i">+							} else {
+</a><a href="#h0-3-61" id="h0-3-61" class="i">+								// Same line. Ignore it
+</a><a href="#h0-3-62" id="h0-3-62" class="i">+							}
+</a><a href="#h0-3-63" id="h0-3-63" class="i">+
+</a><a href="#h0-3-64" id="h0-3-64" class="i">+						}
+</a><a href="#h0-3-65" id="h0-3-65" class="i">+					}
+</a> 
+<a href="#h0-3-67" id="h0-3-67" class="i">+				}
+</a><a href="#h0-3-68" id="h0-3-68" class="i">+			}
+</a><a href="#h0-3-69" id="h0-3-69" class="i">+		}
+</a><a href="#h0-3-70" id="h0-3-70" class="i">+
+</a><a href="#h0-3-71" id="h0-3-71" class="i">+		// Compute the usage of resources for each copy
+</a><a href="#h0-3-72" id="h0-3-72" class="i">+		for i, body := range branchingBlocks {
+</a><a href="#h0-3-73" id="h0-3-73" class="i">+			if err := bi.fragmentResUsage(body, circularBlocks[i]); err != nil {
+</a><a href="#h0-3-74" id="h0-3-74" class="i">+				return err
+</a><a href="#h0-3-75" id="h0-3-75" class="i">+			}
+</a><a href="#h0-3-76" id="h0-3-76" class="i">+		}
+</a><a href="#h0-3-77" id="h0-3-77" class="i">+
+</a><a href="#h0-3-78" id="h0-3-78" class="i">+		// Union of the copies
+</a> 	}
+ 	// panic(&quot;fragmentAnalyzer not finished&quot;)
+ 	return nil
+</pre>
+</div>
+</body>
+</html>

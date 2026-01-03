@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Uarts - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/82b8e339a5857801f1112a4883d5390720c3492c.html">82b8e339a5857801f1112a4883d5390720c3492c</a>
+<b>parent</b> <a href="../commit/9b700069e0bef94c2aabea1dde1241abcf42de14.html">9b700069e0bef94c2aabea1dde1241abcf42de14</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 19 May 2023 13:57:54 +0200
+
+Uarts
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_uart_so.go</a></td><td> | </td><td class="num">71</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/shr_uart.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/shr_uart.go</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>4 files changed, 81 insertions(+), 48 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_uart_so.go.html">pkg/bondmachine/files_uart_so.go</a> b/<a href="../file/pkg/bondmachine/files_uart_so.go.html">pkg/bondmachine/files_uart_so.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,18 +10,23 @@ module {{.ModuleName}}(
+</a>     input {{ $e }}Write,
+     output {{ $e }}Ack,
+     {{ end }}
+<a href="#h0-0-3" id="h0-0-3" class="d">-    input [7:0] p0u0senderData,
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-    input p0u0senderWrite,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-    output p0u0senderAck,
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-    output [7:0] p1u0receiverData,
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-    input p1u0receiverRead,
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-    output p1u0receiverAck,
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-    output wempty,
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-    output wfull,
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+    {{ range $i, $e := .Senders }}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+    output [7:0] {{ $e }}Data,
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+    output {{ $e }}Read,
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+    input {{ $e }}Ack,
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+    {{ end }}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+    //input [7:0] p0u0senderData,
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+    //input p0u0senderWrite,
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+    //output p0u0senderAck,
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+    //output [7:0] p1u0receiverData,
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+    //input p1u0receiverRead,
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+    //output p1u0receiverAck,
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+    input {{.ModuleName}}_rx,
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+    output {{.ModuleName}}_tx,     
+</a>     output rempty,
+     output rfull,
+<a href="#h0-0-26" id="h0-0-26" class="d">-    output TxD,     
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-    input RxD
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+    output wempty,
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+    output wfull
+</a>     );
+ 
+     reg transmit;
+<a href="#h0-1" id="h0-1" class="h">@@ -50,15 +55,20 @@ module {{.ModuleName}}(
+</a>     reg uartreaderWrite;
+     wire uartreaderAck;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-    wire [7:0] p1uart_recvData;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-    reg p1uart_recvRead;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-    wire p1uart_recvAck;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+    // wire [7:0] p1uart_recvData;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+    // reg p1uart_recvRead;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+    // wire p1uart_recvAck;
+</a>     
+<a href="#h0-1-10" id="h0-1-10" class="d">-u0rfifo u0rfifo_inst(.clk(clk),
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+{{.ModuleName}}rfifo {{.ModuleName}}rfifo_inst(.clk(clk),
+</a>     .reset(reset),
+<a href="#h0-1-13" id="h0-1-13" class="d">-    .p1uart_recvData(p1u0receiverData),
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-    .p1uart_recvRead(p1u0receiverRead),
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-    .p1uart_recvAck(p1u0receiverAck),
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+    {{ range $i, $e := .Senders }}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+    .{{ $e }}Data({{ $e }}Data),
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+    .{{ $e }}Read({{ $e }}Read),
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+    .{{ $e }}Ack({{ $e }}Ack),
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+    {{ end }}
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+    // .p1uart_recvData(p1u0receiverData),
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+    // .p1uart_recvRead(p1u0receiverRead),
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+    // .p1uart_recvAck(p1u0receiverAck),
+</a>     .uartreaderData(uartreaderData),
+     .uartreaderWrite(uartreaderWrite),
+     .uartreaderAck(uartreaderAck),
+<a href="#h0-2" id="h0-2" class="h">@@ -67,11 +77,16 @@ u0rfifo u0rfifo_inst(.clk(clk),
+</a> );    
+ 
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-u0wfifo u0wfifo_inst(.clk(clk),
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+{{.ModuleName}}wfifo {{.ModuleName}}wfifo_inst(.clk(clk),
+</a>     .reset(reset),
+<a href="#h0-2-6" id="h0-2-6" class="d">-    .p0uart_sendData(p0u0senderData),
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-    .p0uart_sendWrite(p0u0senderWrite),
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-    .p0uart_sendAck(p0u0senderAck),
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+    {{ range $i, $e := .Receivers }}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+    .{{ $e }}Data({{ $e }}Data),
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+    .{{ $e }}Write({{ $e }}Write),
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+    .{{ $e }}Ack({{ $e }}Ack),
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+    {{ end }}
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+    // .p0uart_sendData(p0u0senderData),
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+    // .p0uart_sendWrite(p0u0senderWrite),
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+    // .p0uart_sendAck(p0u0senderAck),
+</a>     .uartwriterData(uartwriterData),
+     .uartwriterRead(uartwriterRead),
+     .uartwriterAck(uartwriterAck),
+<a href="#h0-3" id="h0-3" class="h">@@ -79,10 +94,10 @@ u0wfifo u0wfifo_inst(.clk(clk),
+</a>     .full(wfull)
+ );
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-u0uart u0uart_inst(.clk(clk),
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+{{.ModuleName}}uart {{.ModuleName}}uart_inst(.clk(clk),
+</a>     .rst(reset),
+<a href="#h0-3-6" id="h0-3-6" class="d">-    .rx(RxD),
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-    .tx(TxD),
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+    .rx({{.ModuleName}}_rx),
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+    .tx({{.ModuleName}}_tx),
+</a>     .transmit(transmit),
+     .tx_byte(tx_byte),
+     .received(received),
+<a href="#h0-4" id="h0-4" class="h">@@ -141,10 +156,10 @@ end
+</a> 
+ reg [1:0] inSM;
+  
+<a href="#h0-4-3" id="h0-4-3" class="d">-    localparam [1:0]     
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-        IN_IDLE             = 2&#39;d0,
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-        IN_WAIT             = 2&#39;d1,
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-        IN_DONE             = 2&#39;d2;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+localparam [1:0]     
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+    IN_IDLE             = 2&#39;d0,
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+    IN_WAIT             = 2&#39;d1,
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+    IN_DONE             = 2&#39;d2;
+</a> 
+ // Reading the UART and pushing to the read FIFO
+ always @(posedge clk) begin
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a> b/<a href="../file/pkg/bondmachine/shr_uart.go.html">pkg/bondmachine/shr_uart.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -226,6 +226,22 @@ func (sm Uart_instance) GetExternalPortsHeader(bmach *Bondmachine, proc_id int, 
+</a> 
+ func (sm Uart_instance) GetExternalPortsWires(bmach *Bondmachine, proc_id int, so_id int, flavor string) string {
+ 	result := &quot;&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	first := true
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	for procID, soList := range bmach.Shared_links {
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		for _, soID := range soList {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			if soID == so_id &amp;&amp; first {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+				first = false
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+				if procID == proc_id {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+					if soname, ok := bmach.Get_so_name(so_id); ok {
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+						result += &quot;\tinput &quot; + soname + &quot;_rx;\n&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+						result += &quot;\toutput &quot; + soname + &quot;_tx;\n&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+					}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+				}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+			}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+		}
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -409,7 +409,7 @@ func (bmach *Bondmachine) Write_verilog_main(conf *Config, module_name string, f
+</a> 					}
+ 				}
+ 			}
+<a href="#h2-0-3" id="h2-0-3" class="d">-			// Inlcude SO ports eventually shared with CORES (not core dependent)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+			// Include SO ports eventually shared with CORES (not core dependent)
+</a> 		sharedLoop:
+ 			for _, soList := range bmach.Shared_links {
+ 				for _, soId := range soList {
+<a href="#h2-1" id="h2-1" class="h">@@ -1811,20 +1811,6 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 		clockString = &quot;divider[&quot; + slow_params[&quot;slow_factor&quot;] + &quot;]&quot;
+ 	}
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-	if uartModule {
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-		for name, value := range uartParams {
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-			fmt.Println(name[len(name)-3:])
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-			if name[len(name)-3:] == &quot;_rx&quot; {
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-				result += &quot;\twire &quot; + name + &quot;;\n&quot;
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-				result += &quot;\tassign &quot; + name + &quot;=&quot; + value + &quot;;\n&quot;
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-			}
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-			if name[len(name)-3:] == &quot;_tx&quot; {
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-				result += &quot;\twire &quot; + name + &quot;;\n&quot;
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-				result += &quot;\tassign &quot; + value + &quot;=&quot; + name + &quot;;\n&quot;
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-			}
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-		}
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-	}
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-
+</a> 	if vgatext800x600Module {
+ 		result += `
+ 	reg [7:0]   hcount;
+<a href="#h2-2" id="h2-2" class="h">@@ -1851,6 +1837,18 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 		}
+ 	}
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+	if uartModule {
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+		for name, value := range uartParams {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+			fmt.Println(name[len(name)-3:])
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+			if name[len(name)-3:] == &quot;_rx&quot; {
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+				result += &quot;\tassign &quot; + name + &quot;=&quot; + value + &quot;;\n&quot;
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+			}
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+			if name[len(name)-3:] == &quot;_tx&quot; {
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+				result += &quot;\tassign &quot; + value + &quot;=&quot; + name + &quot;;\n&quot;
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+			}
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		}
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	}
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+
+</a> 	// Processing BM ports originated from external modules (not IO)
+ 	if conf.CommentedVerilog {
+ 		result += &quot;\t// Processing BM ports originated from external modules (not IO)\n&quot;
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/shr_uart.go.html">pkg/procbuilder/shr_uart.go</a> b/<a href="../file/pkg/procbuilder/shr_uart.go.html">pkg/procbuilder/shr_uart.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -30,7 +30,7 @@ func (op Uart) GetArchHeader(arch *Arch, shared_constraint string, seq int) stri
+</a> 			break
+ 		}
+ 	}
+<a href="#h3-0-3" id="h3-0-3" class="d">-	result += &quot;, &quot; + uartName + &quot;empty, &quot; + uartName + &quot;full&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	result += &quot;, &quot; + uartName + &quot;rempty, &quot; + uartName + &quot;rfull, &quot; + uartName + &quot;wempty, &quot; + uartName + &quot;wfull&quot;
+</a> 	return result
+ }
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -55,8 +55,10 @@ func (op Uart) GetArchParams(arch *Arch, shared_constraint string, seq int) stri
+</a> 		}
+ 	}
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	result += &quot;	input &quot; + uartName + &quot;rempty;\n&quot;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	result += &quot;	input &quot; + uartName + &quot;rfull;\n&quot;
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	result += &quot;	input &quot; + uartName + &quot;wempty;\n&quot;
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	result += &quot;	input &quot; + uartName + &quot;wfull;\n&quot;
+</a> 
+ 	return result
+ }
+<a href="#h3-2" id="h3-2" class="h">@@ -96,8 +98,10 @@ func (op Uart) GetCPParams(arch *Arch, shared_constraint string, seq int) string
+</a> 		}
+ 	}
+ 
+<a href="#h3-2-3" id="h3-2-3" class="d">-	result += &quot;	input &quot; + uartName + &quot;empty;\n&quot;
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-	result += &quot;	input &quot; + uartName + &quot;full;\n&quot;
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+	result += &quot;	input &quot; + uartName + &quot;rempty;\n&quot;
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+	result += &quot;	input &quot; + uartName + &quot;rfull;\n&quot;
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+	result += &quot;	input &quot; + uartName + &quot;wempty;\n&quot;
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+	result += &quot;	input &quot; + uartName + &quot;wfull;\n&quot;
+</a> 
+ 	return result
+ }
+</pre>
+</div>
+</body>
+</html>

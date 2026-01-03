@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>fixed axistream interconnection firmware - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5924dbc1e56a0d0c75bcea786136383d5812b665.html">5924dbc1e56a0d0c75bcea786136383d5812b665</a>
+<b>parent</b> <a href="../commit/3be6dbe5c46addecce6223c5d0b7d3b2b4c2a16a.html">3be6dbe5c46addecce6223c5d0b7d3b2b4c2a16a</a>
+<b>Author:</b> Giulio &lt;<a href="mailto:giulio.bianchini@hotmail.it">giulio.bianchini@hotmail.it</a>&gt;
+<b>Date:</b>   Tue,  7 Nov 2023 15:37:14 +0100
+
+fixed axistream interconnection firmware
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/bmapi.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/files_axist_basic.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++</span><span class="d">------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/files_axist_basic_bram.go</a></td><td> | </td><td class="num">814</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/dynop_fixed_point.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++</span><span class="d">----</span></td></tr>
+</table></pre><pre>4 files changed, 835 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a> b/<a href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -120,6 +120,20 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 		axiStData.ModuleName = &quot;bmaccelerator&quot;
+ 		axiStData.InputNum = bmach.Inputs
+ 		axiStData.OutputNum = bmach.Outputs
+<a href="#h0-0-3" id="h0-0-3" class="i">+		axiStData.funcmap = template.FuncMap{
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			&quot;inc&quot;: func(i int) int {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+				return i + 1
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			},
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			&quot;dec&quot;: func(i int) int {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+				return i - 1
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			},
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			&quot;add&quot;: func(i, j int) int {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				return i + j
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			},
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			&quot;sub&quot;: func(i, j int) int {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+				return i - j
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			},
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		}
+</a> 
+ 		// This fields are temporarely hardcoded, in the future could be get from the command line
+ 		axiStData.Samples = 16
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a> b/<a href="../file/pkg/bondmachine/files_axist_basic.go.html">pkg/bondmachine/files_axist_basic.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -405,12 +405,6 @@ const (
+</a> 				{{- end }}
+ 				{{- end }}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-				outputs_counter_pointer &lt;= outputs_counter_pointer + bmoutputs;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-                outputs_counter_incr &lt;= outputs_counter_incr + 1;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-                outputs_counter &lt;= bminputs*(outputs_counter_incr+1);
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-				
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-				send &lt;= 2&#39;b00;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-
+</a> 			end
+ 			else if(
+ 				{{- if .Outputs }}
+<a href="#h1-1" id="h1-1" class="h">@@ -430,6 +424,11 @@ const (
+</a> 					{{ . }}_received_r &lt;= 1&#39;b0;
+ 				{{- end }}
+ 				{{- end }}
+<a href="#h1-1-3" id="h1-1-3" class="i">+					outputs_counter_pointer &lt;= outputs_counter_pointer + bmoutputs;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+					outputs_counter_incr &lt;= outputs_counter_incr + 1;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+					outputs_counter &lt;= bminputs*(outputs_counter_incr+1);
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+					
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+					send &lt;= 2&#39;b00;
+</a> 			end
+ 			end
+ 			end
+<b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/files_axist_basic_bram.go.html">pkg/bondmachine/files_axist_basic_bram.go</a> b/<a href="../file/pkg/bondmachine/files_axist_basic_bram.go.html">pkg/bondmachine/files_axist_basic_bram.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,813 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	basicAXIStreamBram = `
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	module bram_oneportsync
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	#(
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			parameter RAM_WIDTH 		= 32,
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+			parameter RAM_DEPTH         = 256
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+		)(
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+		input clk, 
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		input [RAM_WIDTH-1:0] addr,
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+		input [RAM_WIDTH-1:0] waddr,
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		input cs_n,
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+		input wr_n, 
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+		input rd_n,
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+		input [RAM_WIDTH-1:0] bram_data_in,
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		output reg [RAM_WIDTH-1:0] bram_data_out
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	);
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+    
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+    (* RAM_STYLE=&quot;BLOCK&quot; *)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+    reg [RAM_WIDTH-1:0] mem [RAM_DEPTH-1:0];
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+    always @(posedge clk)
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+        if (cs_n == 1&#39;b0) begin
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+            begin
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+                if (wr_n == 1&#39;b1) mem[(addr)] &lt;= bram_data_in;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+                if (rd_n == 1&#39;b1) bram_data_out &lt;= mem[waddr];
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+            end
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+        end
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+    endmodule
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	module bram
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	#(
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+		parameter RAM_WIDTH 		= 32,
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+		parameter RAM_ADDR_BITS 	= 9
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+	)
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	(
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	input							clock,
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+	input							ram_enable,
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	input							write_enable,
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+    input 		[31:0]	waddress,
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+    input 		[31:0]	raddress,
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+    input 		[31:0] 	input_data,
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+	output reg 	[31:0] 	output_data
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	);
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+	
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+   
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+   (* RAM_STYLE=&quot;BLOCK&quot; *)
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+   reg [RAM_WIDTH-1:0] ram_name [RAM_ADDR_BITS:0];
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+    
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+   always @(posedge clock) begin
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+      if (ram_enable) begin
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+         if (write_enable) begin
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+            ram_name[waddress] &lt;= input_data;
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+         end
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+            
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+         output_data &lt;= ram_name[raddress];
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+      end
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+    end
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+    
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+    
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+	endmodule
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+	module {{ .ModuleName }}_v1_0 #
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+	(
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+		parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+		parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+		parameter integer C_M00_AXIS_START_COUNT	= 32
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	)
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+	(
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+		input wire  s00_axis_aclk,
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		input wire  s00_axis_aresetn,
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+		output wire  s00_axis_tready,
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+		input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+		input wire  s00_axis_tlast,
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		input wire  s00_axis_tvalid,
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+		input wire  m00_axis_aclk,
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+		input wire  m00_axis_aresetn,
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+		output wire  m00_axis_tvalid,
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+		output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+		output wire  m00_axis_tlast,
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+		input wire  m00_axis_tready
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+	);
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+	reg tx_done;
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+    /*
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+        NOW START THE AXIS SLAVE SECTION
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+    */
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+    localparam samples = {{ .Samples }}; // number of samples that I expect from the client
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+    localparam bminputs = {{ .InputNum }};  // number of bminputs for each sample (or bminputs)
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+    localparam bmoutputs = {{ .OutputNum }}; // number of output for the classification
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+	localparam NUMBER_OF_INPUTS  = samples*bminputs;                                     
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+    localparam NUMBER_OF_OUTPUTS = samples*bmoutputs;
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+	localparam precision = {{ $.Rsize }}; // precision bit
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+	localparam maxfifoloop = (C_S00_AXIS_TDATA_WIDTH / precision) - 1;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+	localparam waitCycle = 2;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+    localparam raddress_size = (precision == 32) ? NUMBER_OF_INPUTS : ((NUMBER_OF_INPUTS % 2 == 0) ? (NUMBER_OF_INPUTS / 2) : (NUMBER_OF_INPUTS / 2 + 1));
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+    localparam waddressn_size = (precision == 32) ? NUMBER_OF_OUTPUTS : ((NUMBER_OF_OUTPUTS % 2 == 0) ? (NUMBER_OF_OUTPUTS / 2) : (NUMBER_OF_OUTPUTS / 2 + 1));
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+    localparam waitStream = 10;
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+	// Machine state for the slave stream part
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+	parameter [1:0] IDLE = 1&#39;b0,
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	                WRITE_FIFO  = 1&#39;b1; 
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+	wire  	   axis_tready;
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+	reg        mst_exec_state;     
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+	wire       fifo_wren;
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+	reg        fifo_full_flag;
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+	reg [{{ .CountersBits }}:0] write_pointer;
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+	reg        writes_done;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+    wire       test;
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+	assign s00_axis_tready	= axis_tready;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+	/*
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+		ADD BLOCK RAM MODULE HERE
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+	*/
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+	
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+    reg							ram_enable = 1;
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+    reg							input_stream_write_enable = 1;
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+    reg							input_stream_ram_enable = 1;
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+    reg 	[C_S00_AXIS_TDATA_WIDTH-1:0]	input_stream_waddress = 0;
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+    reg 	[C_S00_AXIS_TDATA_WIDTH-1:0]	input_stream_raddress = raddress_size; 
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+    reg 	[C_S00_AXIS_TDATA_WIDTH-1:0] 	input_stream_data = 0;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+    wire	[C_S00_AXIS_TDATA_WIDTH-1:0] 	input_output_stream_data;
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+    
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+    reg [31:0] blockram_state_machine = 0;
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+    reg [31:0] half_precision_input_index = 0; 
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+    
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+    
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+	bram
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+    #(
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+        .RAM_WIDTH 		(C_S00_AXIS_TDATA_WIDTH 		),
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+        .RAM_ADDR_BITS 	(NUMBER_OF_INPUTS 	)
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+    )
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+    bram_inst
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+    (
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+        .clock			(s00_axis_aclk	),
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+        .ram_enable		(input_stream_ram_enable		),
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+        .write_enable	(input_stream_write_enable	),
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+        .waddress		(input_stream_waddress ),
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+        .raddress		(input_stream_raddress		),
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+        .input_data		(input_stream_data		),
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+        .output_data    (input_output_stream_data	)
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+    );
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+    
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+    reg [31:0] data_in = 32&#39;d0;
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+    reg [31:0] rwaddress = 0;
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+    reg [31:0] waddressn = waddressn_size;
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+    reg  wr_n = 1&#39;b0;
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+    reg  rd_n = 1&#39;b0;
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+    wire [31:0] data_out;
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+    
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+    
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+    bram_oneportsync
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+    #(
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+        .RAM_WIDTH 		(C_S00_AXIS_TDATA_WIDTH ),
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+        .RAM_DEPTH 	    (NUMBER_OF_OUTPUTS 	)
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+    )
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+    bram_oneportsync_inst
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+    (
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+        .clk(s00_axis_aclk), 
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+        .addr(rwaddress), 
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+        .waddr(waddressn),
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+        .cs_n(0),
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+        .wr_n(wr_n), 
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+        .rd_n(rd_n),
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+        .bram_data_in(data_in),
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+        .bram_data_out(data_out)
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+    );
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+	always @(posedge s00_axis_aclk) 
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+	begin  
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+	  if (!s00_axis_aresetn) 
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+	    begin
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+	      mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+	    end  
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+	  else
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+	    case (mst_exec_state)
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+	      IDLE:
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+	          if (s00_axis_tvalid)
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+	            begin
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+	              mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+	            end
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+	          else
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+	            begin
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+	              mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+	            end
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+	      WRITE_FIFO:
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+	        if (writes_done)
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+	          begin
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+	            mst_exec_state &lt;= IDLE;
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+	          end
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+	        else
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+	          begin
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+	            mst_exec_state &lt;= WRITE_FIFO;
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+	          end
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+	    endcase
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+	end
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1));
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+	always@(posedge s00_axis_aclk)
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+	begin
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+	  if (tx_done) begin
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+	       write_pointer &lt;= 0;
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+	       writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+		   input_stream_waddress &lt;= 0;
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+	  end
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+	  else begin
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+	  if(!s00_axis_aresetn)
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+	    begin
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+	      write_pointer &lt;= 0;
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+	      writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+	    end  
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+	  else
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+	    if (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+	      begin
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+	        if (fifo_wren)
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+	          begin
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+	            write_pointer &lt;= write_pointer + 1;
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+				input_stream_waddress &lt;= input_stream_waddress + 1;
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+	            writes_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+	          end
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+	          if ((write_pointer == (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)|| s00_axis_tlast)
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+	            begin
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+	              writes_done &lt;= 1&#39;b1;
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+	            end
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+	      end
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+	      end
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+	end 
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+	assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+    always @( posedge s00_axis_aclk )
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+    begin
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+      if (fifo_wren)
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+        begin
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+          if (precision == 32) begin
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+			input_stream_data &lt;= s00_axis_tdata;
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+          end
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+          else if (precision == 16) begin
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+			input_stream_data[31:16]  &lt;= s00_axis_tdata[15:0];
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+			input_stream_data[15:0] &lt;= s00_axis_tdata[31:16];
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+          end
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+        end   
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+     end      
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+    /*
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+        NOW START THE MASTER AXIS SECTION
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+    */
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+                             
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+	parameter [1:0] IDLE_M = 2&#39;b00,                                             
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+	                INIT_COUNTER_M  = 2&#39;b01, 
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+	                PROCESS_BM = 2&#39;B10,   
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+	                SEND_STREAM_M   = 2&#39;b11; 
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+	reg [1:0]   mst_exec_state_M;
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+    reg [{{ .CountersBits }}:0] 	count;
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+    wire  	axis_tvalid;
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+    reg  	axis_tvalid_delay;
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+    wire  	axis_tlast;
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+    reg  	axis_tlast_delay;
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+    reg [C_M00_AXIS_TDATA_WIDTH-1 : 0] 	stream_data_out;
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+    wire  	tx_en;
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+    wire     bm_done;
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+    reg  [{{ .CountersBits }}:0] outputs_counter = 0;
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+    reg  [{{ .CountersBits }}:0] outputs_counter_incr = 0;
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+	reg  [{{ .CountersBits }}:0] outputs_counter_pointer = 0;
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+    reg  [{{ .CountersBits }}:0] stream_output_counter = 0;
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+	{{- if .Outputs }}
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+	{{- range .Outputs }}
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+	reg [1:0] write_{{ . }};
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+	{{- end }}
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+	{{- end }}
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+    assign m00_axis_tvalid	= axis_tvalid_delay;
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+	assign m00_axis_tdata	= stream_data_out;
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+	assign m00_axis_tlast	= axis_tlast_delay;
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+	always @(posedge m00_axis_aclk)                                             
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+	begin                                                                     
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+	  if (!m00_axis_aresetn)                                                  
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+	    begin                                                                 
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+	      mst_exec_state_M &lt;= IDLE_M;                                             
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+	      count    &lt;= 0;                                                      
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+	    end                                                                   
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+	  else                                                                    
+</a><a href="#h2-0-299" id="h2-0-299" class="i">+	    case (mst_exec_state_M)                                                 
+</a><a href="#h2-0-300" id="h2-0-300" class="i">+	      IDLE_M:                                                         
+</a><a href="#h2-0-301" id="h2-0-301" class="i">+	            mst_exec_state_M  &lt;= INIT_COUNTER_M; 
+</a><a href="#h2-0-302" id="h2-0-302" class="i">+
+</a><a href="#h2-0-303" id="h2-0-303" class="i">+	      INIT_COUNTER_M:                              
+</a><a href="#h2-0-304" id="h2-0-304" class="i">+	        if ( count == 32 - 1 )                               
+</a><a href="#h2-0-305" id="h2-0-305" class="i">+	          begin                                                           
+</a><a href="#h2-0-306" id="h2-0-306" class="i">+	            mst_exec_state_M  &lt;= PROCESS_BM;                               
+</a><a href="#h2-0-307" id="h2-0-307" class="i">+	          end                                                             
+</a><a href="#h2-0-308" id="h2-0-308" class="i">+	        else                                                              
+</a><a href="#h2-0-309" id="h2-0-309" class="i">+	          begin                                                           
+</a><a href="#h2-0-310" id="h2-0-310" class="i">+	            count &lt;= count + 1;                                           
+</a><a href="#h2-0-311" id="h2-0-311" class="i">+	            mst_exec_state_M  &lt;= INIT_COUNTER_M;                              
+</a><a href="#h2-0-312" id="h2-0-312" class="i">+	          end                                                             
+</a><a href="#h2-0-313" id="h2-0-313" class="i">+
+</a><a href="#h2-0-314" id="h2-0-314" class="i">+	      PROCESS_BM:
+</a><a href="#h2-0-315" id="h2-0-315" class="i">+	           if (!bm_done) 
+</a><a href="#h2-0-316" id="h2-0-316" class="i">+	           begin
+</a><a href="#h2-0-317" id="h2-0-317" class="i">+	               mst_exec_state_M &lt;= PROCESS_BM;
+</a><a href="#h2-0-318" id="h2-0-318" class="i">+	           end
+</a><a href="#h2-0-319" id="h2-0-319" class="i">+	           else
+</a><a href="#h2-0-320" id="h2-0-320" class="i">+	           begin
+</a><a href="#h2-0-321" id="h2-0-321" class="i">+	               mst_exec_state_M &lt;= SEND_STREAM_M;   
+</a><a href="#h2-0-322" id="h2-0-322" class="i">+	           end
+</a><a href="#h2-0-323" id="h2-0-323" class="i">+
+</a><a href="#h2-0-324" id="h2-0-324" class="i">+	      SEND_STREAM_M:                          
+</a><a href="#h2-0-325" id="h2-0-325" class="i">+	        if (tx_done)                                                      
+</a><a href="#h2-0-326" id="h2-0-326" class="i">+	          begin                                                           
+</a><a href="#h2-0-327" id="h2-0-327" class="i">+	            mst_exec_state_M &lt;= IDLE_M;                                       
+</a><a href="#h2-0-328" id="h2-0-328" class="i">+	          end                                                             
+</a><a href="#h2-0-329" id="h2-0-329" class="i">+	        else                                                              
+</a><a href="#h2-0-330" id="h2-0-330" class="i">+	          begin                                                           
+</a><a href="#h2-0-331" id="h2-0-331" class="i">+	            mst_exec_state_M &lt;= SEND_STREAM_M;                                
+</a><a href="#h2-0-332" id="h2-0-332" class="i">+	          end                                                             
+</a><a href="#h2-0-333" id="h2-0-333" class="i">+	    endcase                                                               
+</a><a href="#h2-0-334" id="h2-0-334" class="i">+	end
+</a><a href="#h2-0-335" id="h2-0-335" class="i">+
+</a><a href="#h2-0-336" id="h2-0-336" class="i">+	reg [31:0] endStream = NUMBER_OF_OUTPUTS/(maxfifoloop+1) - 1;
+</a><a href="#h2-0-337" id="h2-0-337" class="i">+    reg [31:0] wait_stream = 0;
+</a><a href="#h2-0-338" id="h2-0-338" class="i">+
+</a><a href="#h2-0-339" id="h2-0-339" class="i">+	assign axis_tvalid = ((mst_exec_state_M == SEND_STREAM_M) &amp;&amp; (writes_done) &amp;&amp; (bm_done) &amp;&amp; (sendData == waitCycle) &amp;&amp; (rd_n) &amp;&amp; (wait_stream &gt;= waitStream));
+</a><a href="#h2-0-340" id="h2-0-340" class="i">+    assign axis_tlast = (waddressn == 1);
+</a><a href="#h2-0-341" id="h2-0-341" class="i">+
+</a><a href="#h2-0-342" id="h2-0-342" class="i">+    always @(posedge m00_axis_aclk)                                                                  
+</a><a href="#h2-0-343" id="h2-0-343" class="i">+	begin        
+</a><a href="#h2-0-344" id="h2-0-344" class="i">+	if (tx_done) begin
+</a><a href="#h2-0-345" id="h2-0-345" class="i">+	       axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h2-0-346" id="h2-0-346" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;         
+</a><a href="#h2-0-347" id="h2-0-347" class="i">+	end     
+</a><a href="#h2-0-348" id="h2-0-348" class="i">+	else begin                                                                             
+</a><a href="#h2-0-349" id="h2-0-349" class="i">+	  if (!m00_axis_aresetn)                                                                         
+</a><a href="#h2-0-350" id="h2-0-350" class="i">+	    begin                                                                                      
+</a><a href="#h2-0-351" id="h2-0-351" class="i">+	      axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+</a><a href="#h2-0-352" id="h2-0-352" class="i">+	      axis_tlast_delay &lt;= 1&#39;b0;                                                                
+</a><a href="#h2-0-353" id="h2-0-353" class="i">+	    end                                                                                        
+</a><a href="#h2-0-354" id="h2-0-354" class="i">+	  else                                                                                         
+</a><a href="#h2-0-355" id="h2-0-355" class="i">+	    begin                                                                                      
+</a><a href="#h2-0-356" id="h2-0-356" class="i">+	      axis_tvalid_delay &lt;= axis_tvalid;                                                        
+</a><a href="#h2-0-357" id="h2-0-357" class="i">+	      axis_tlast_delay &lt;= axis_tlast;                                                          
+</a><a href="#h2-0-358" id="h2-0-358" class="i">+	    end                                                                                        
+</a><a href="#h2-0-359" id="h2-0-359" class="i">+	end 
+</a><a href="#h2-0-360" id="h2-0-360" class="i">+	end
+</a><a href="#h2-0-361" id="h2-0-361" class="i">+
+</a><a href="#h2-0-362" id="h2-0-362" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-363" id="h2-0-363" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-364" id="h2-0-364" class="i">+	reg [{{ dec $.Rsize }}:0] {{ . }}_r = {{ $.Rsize }}&#39;b0;
+</a><a href="#h2-0-365" id="h2-0-365" class="i">+	{{- end }}
+</a><a href="#h2-0-366" id="h2-0-366" class="i">+	{{- end }}
+</a><a href="#h2-0-367" id="h2-0-367" class="i">+
+</a><a href="#h2-0-368" id="h2-0-368" class="i">+	{{- if .Outputs }}
+</a><a href="#h2-0-369" id="h2-0-369" class="i">+	{{- range .Outputs }}
+</a><a href="#h2-0-370" id="h2-0-370" class="i">+	reg [{{ dec $.Rsize }}:0] {{ . }}_received_r;
+</a><a href="#h2-0-371" id="h2-0-371" class="i">+	{{- end }}
+</a><a href="#h2-0-372" id="h2-0-372" class="i">+	{{- end }}
+</a><a href="#h2-0-373" id="h2-0-373" class="i">+
+</a><a href="#h2-0-374" id="h2-0-374" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-375" id="h2-0-375" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-376" id="h2-0-376" class="i">+	wire [{{ dec $.Rsize }}:0] {{ . }};
+</a><a href="#h2-0-377" id="h2-0-377" class="i">+	wire {{ . }}_valid;
+</a><a href="#h2-0-378" id="h2-0-378" class="i">+	wire {{ . }}_received;
+</a><a href="#h2-0-379" id="h2-0-379" class="i">+	{{- end }}
+</a><a href="#h2-0-380" id="h2-0-380" class="i">+	{{- end }}
+</a><a href="#h2-0-381" id="h2-0-381" class="i">+
+</a><a href="#h2-0-382" id="h2-0-382" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-383" id="h2-0-383" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-384" id="h2-0-384" class="i">+	reg {{ . }}_valid_r = 1&#39;b0;
+</a><a href="#h2-0-385" id="h2-0-385" class="i">+	{{- end }}
+</a><a href="#h2-0-386" id="h2-0-386" class="i">+	{{- end }}
+</a><a href="#h2-0-387" id="h2-0-387" class="i">+
+</a><a href="#h2-0-388" id="h2-0-388" class="i">+	{{- if .Outputs }}
+</a><a href="#h2-0-389" id="h2-0-389" class="i">+	{{- range .Outputs }}
+</a><a href="#h2-0-390" id="h2-0-390" class="i">+	wire [{{ dec $.Rsize }}:0] {{ . }};
+</a><a href="#h2-0-391" id="h2-0-391" class="i">+	wire {{ . }}_valid;
+</a><a href="#h2-0-392" id="h2-0-392" class="i">+	wire {{ . }}_received;
+</a><a href="#h2-0-393" id="h2-0-393" class="i">+	reg  {{ . }}_valid_r = 1&#39;b0;
+</a><a href="#h2-0-394" id="h2-0-394" class="i">+	{{- end }}
+</a><a href="#h2-0-395" id="h2-0-395" class="i">+	{{- end }}
+</a><a href="#h2-0-396" id="h2-0-396" class="i">+
+</a><a href="#h2-0-397" id="h2-0-397" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-398" id="h2-0-398" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-399" id="h2-0-399" class="i">+	assign {{ . }} = {{ . }}_r;
+</a><a href="#h2-0-400" id="h2-0-400" class="i">+	{{- end }}
+</a><a href="#h2-0-401" id="h2-0-401" class="i">+	{{- end }}
+</a><a href="#h2-0-402" id="h2-0-402" class="i">+
+</a><a href="#h2-0-403" id="h2-0-403" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-404" id="h2-0-404" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-405" id="h2-0-405" class="i">+	assign {{ . }}_valid = {{ . }}_valid_r;
+</a><a href="#h2-0-406" id="h2-0-406" class="i">+	{{- end }}
+</a><a href="#h2-0-407" id="h2-0-407" class="i">+	{{- end }}
+</a><a href="#h2-0-408" id="h2-0-408" class="i">+
+</a><a href="#h2-0-409" id="h2-0-409" class="i">+	{{- if .Outputs }}
+</a><a href="#h2-0-410" id="h2-0-410" class="i">+	{{- range .Outputs }}
+</a><a href="#h2-0-411" id="h2-0-411" class="i">+	assign {{ . }}_received = {{ . }}_received_r;
+</a><a href="#h2-0-412" id="h2-0-412" class="i">+	{{- end }}
+</a><a href="#h2-0-413" id="h2-0-413" class="i">+	{{- end }}
+</a><a href="#h2-0-414" id="h2-0-414" class="i">+
+</a><a href="#h2-0-415" id="h2-0-415" class="i">+    assign bm_done = (outputs_counter_incr == samples);
+</a><a href="#h2-0-416" id="h2-0-416" class="i">+	reg[1:0] send = 2&#39;b00;
+</a><a href="#h2-0-417" id="h2-0-417" class="i">+
+</a><a href="#h2-0-418" id="h2-0-418" class="i">+	bondmachine bm(.clk(m00_axis_aclk),
+</a><a href="#h2-0-419" id="h2-0-419" class="i">+	.reset(!m00_axis_aresetn),
+</a><a href="#h2-0-420" id="h2-0-420" class="i">+	{{- if .Inputs }}
+</a><a href="#h2-0-421" id="h2-0-421" class="i">+	{{- range .Inputs }}
+</a><a href="#h2-0-422" id="h2-0-422" class="i">+	.{{ . }}({{ . }}),
+</a><a href="#h2-0-423" id="h2-0-423" class="i">+	.{{ . }}_valid({{ . }}_valid),
+</a><a href="#h2-0-424" id="h2-0-424" class="i">+	.{{ . }}_received({{ . }}_received),
+</a><a href="#h2-0-425" id="h2-0-425" class="i">+	{{- end }}
+</a><a href="#h2-0-426" id="h2-0-426" class="i">+	{{- end }}
+</a><a href="#h2-0-427" id="h2-0-427" class="i">+	{{- if .Outputs }}
+</a><a href="#h2-0-428" id="h2-0-428" class="i">+	{{- $outputsLen := len .Outputs }}
+</a><a href="#h2-0-429" id="h2-0-429" class="i">+	{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-430" id="h2-0-430" class="i">+	.{{ $output }}({{ $output }}),
+</a><a href="#h2-0-431" id="h2-0-431" class="i">+	.{{ $output }}_valid({{ $output }}_valid),
+</a><a href="#h2-0-432" id="h2-0-432" class="i">+	{{- if eq (inc $i) $outputsLen }}
+</a><a href="#h2-0-433" id="h2-0-433" class="i">+	.{{ $output }}_received({{ $output }}_received)
+</a><a href="#h2-0-434" id="h2-0-434" class="i">+	{{- else }}
+</a><a href="#h2-0-435" id="h2-0-435" class="i">+	.{{ $output }}_received({{ $output }}_received),
+</a><a href="#h2-0-436" id="h2-0-436" class="i">+	{{- end }}
+</a><a href="#h2-0-437" id="h2-0-437" class="i">+	{{- end }}
+</a><a href="#h2-0-438" id="h2-0-438" class="i">+	{{- end }}
+</a><a href="#h2-0-439" id="h2-0-439" class="i">+	);
+</a><a href="#h2-0-440" id="h2-0-440" class="i">+
+</a><a href="#h2-0-441" id="h2-0-441" class="i">+	assign tx_en = m00_axis_tready &amp;&amp; ((mst_exec_state_M == SEND_STREAM_M) &amp;&amp; (writes_done) &amp;&amp; (bm_done) &amp;&amp; (rd_n) &amp;&amp; (wait_stream &gt;= waitStream));  
+</a><a href="#h2-0-442" id="h2-0-442" class="i">+
+</a><a href="#h2-0-443" id="h2-0-443" class="i">+	reg [31:0] outputIndex = 0;
+</a><a href="#h2-0-444" id="h2-0-444" class="i">+	always @( posedge m00_axis_aclk )                  
+</a><a href="#h2-0-445" id="h2-0-445" class="i">+	begin
+</a><a href="#h2-0-446" id="h2-0-446" class="i">+	   if (tx_done) begin
+</a><a href="#h2-0-447" id="h2-0-447" class="i">+	       rwaddress &lt;= 0;
+</a><a href="#h2-0-448" id="h2-0-448" class="i">+	       outputIndex &lt;= 0;
+</a><a href="#h2-0-449" id="h2-0-449" class="i">+	   end
+</a><a href="#h2-0-450" id="h2-0-450" class="i">+	   
+</a><a href="#h2-0-451" id="h2-0-451" class="i">+	   if (mst_exec_state_M == PROCESS_BM) begin
+</a><a href="#h2-0-452" id="h2-0-452" class="i">+	       if (precision == 32) begin
+</a><a href="#h2-0-453" id="h2-0-453" class="i">+				{{- if .Outputs }}
+</a><a href="#h2-0-454" id="h2-0-454" class="i">+				{{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-455" id="h2-0-455" class="i">+				{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-456" id="h2-0-456" class="i">+				{{- if eq ($i) 0 }}
+</a><a href="#h2-0-457" id="h2-0-457" class="i">+				if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+</a><a href="#h2-0-458" id="h2-0-458" class="i">+					rwaddress &lt;= rwaddress +1;
+</a><a href="#h2-0-459" id="h2-0-459" class="i">+				end
+</a><a href="#h2-0-460" id="h2-0-460" class="i">+				{{- else }}
+</a><a href="#h2-0-461" id="h2-0-461" class="i">+				else if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+</a><a href="#h2-0-462" id="h2-0-462" class="i">+					rwaddress &lt;= rwaddress +1;
+</a><a href="#h2-0-463" id="h2-0-463" class="i">+				end
+</a><a href="#h2-0-464" id="h2-0-464" class="i">+				{{- end }}
+</a><a href="#h2-0-465" id="h2-0-465" class="i">+				{{- end }}
+</a><a href="#h2-0-466" id="h2-0-466" class="i">+				{{- end }}
+</a><a href="#h2-0-467" id="h2-0-467" class="i">+
+</a><a href="#h2-0-468" id="h2-0-468" class="i">+           end 
+</a><a href="#h2-0-469" id="h2-0-469" class="i">+           else if (precision == 16) begin
+</a><a href="#h2-0-470" id="h2-0-470" class="i">+		   
+</a><a href="#h2-0-471" id="h2-0-471" class="i">+		   {{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-472" id="h2-0-472" class="i">+		   {{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-473" id="h2-0-473" class="i">+		   {{- if eq ($OutputsLen) 1 }}
+</a><a href="#h2-0-474" id="h2-0-474" class="i">+		   if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+</a><a href="#h2-0-475" id="h2-0-475" class="i">+		   {{- else }}
+</a><a href="#h2-0-476" id="h2-0-476" class="i">+		   {{- if eq ($i) 0 }}
+</a><a href="#h2-0-477" id="h2-0-477" class="i">+		   if (({{ . }}_valid &amp;&amp; !{{ . }}_received_r) {{- else }} {{- if eq $i (sub $OutputsLen 1) }} || ({{ . }}_valid &amp;&amp; !{{ . }}_received_r)) begin {{- else }} || ({{ . }}_valid &amp;&amp; !{{ . }}_received_r)
+</a><a href="#h2-0-478" id="h2-0-478" class="i">+		   {{- end }}  
+</a><a href="#h2-0-479" id="h2-0-479" class="i">+		   {{- end }}
+</a><a href="#h2-0-480" id="h2-0-480" class="i">+		   {{- end }}
+</a><a href="#h2-0-481" id="h2-0-481" class="i">+		   {{- end }}
+</a><a href="#h2-0-482" id="h2-0-482" class="i">+
+</a><a href="#h2-0-483" id="h2-0-483" class="i">+		   			if (outputIndex == 1) begin
+</a><a href="#h2-0-484" id="h2-0-484" class="i">+                        outputIndex &lt;= 0;
+</a><a href="#h2-0-485" id="h2-0-485" class="i">+                    end 
+</a><a href="#h2-0-486" id="h2-0-486" class="i">+                    else begin
+</a><a href="#h2-0-487" id="h2-0-487" class="i">+                        outputIndex &lt;= outputIndex + 1;
+</a><a href="#h2-0-488" id="h2-0-488" class="i">+                        rwaddress &lt;= rwaddress + 1;
+</a><a href="#h2-0-489" id="h2-0-489" class="i">+                    end
+</a><a href="#h2-0-490" id="h2-0-490" class="i">+			end
+</a><a href="#h2-0-491" id="h2-0-491" class="i">+           end
+</a><a href="#h2-0-492" id="h2-0-492" class="i">+	   end
+</a><a href="#h2-0-493" id="h2-0-493" class="i">+	end
+</a><a href="#h2-0-494" id="h2-0-494" class="i">+
+</a><a href="#h2-0-495" id="h2-0-495" class="i">+	reg [1:0] f = 2&#39;d1;
+</a><a href="#h2-0-496" id="h2-0-496" class="i">+    reg [31:0] precision_index = 0;
+</a><a href="#h2-0-497" id="h2-0-497" class="i">+    reg [31:0] prev_value = 0;
+</a><a href="#h2-0-498" id="h2-0-498" class="i">+
+</a><a href="#h2-0-499" id="h2-0-499" class="i">+
+</a><a href="#h2-0-500" id="h2-0-500" class="i">+
+</a><a href="#h2-0-501" id="h2-0-501" class="i">+	always @( posedge m00_axis_aclk )                  
+</a><a href="#h2-0-502" id="h2-0-502" class="i">+	begin        
+</a><a href="#h2-0-503" id="h2-0-503" class="i">+    
+</a><a href="#h2-0-504" id="h2-0-504" class="i">+        if (tx_done) begin
+</a><a href="#h2-0-505" id="h2-0-505" class="i">+            outputs_counter &lt;= 0;
+</a><a href="#h2-0-506" id="h2-0-506" class="i">+            outputs_counter_incr &lt;= 0;
+</a><a href="#h2-0-507" id="h2-0-507" class="i">+			outputs_counter_pointer &lt;= 0;
+</a><a href="#h2-0-508" id="h2-0-508" class="i">+			{{- if .Outputs }}
+</a><a href="#h2-0-509" id="h2-0-509" class="i">+			{{- range .Outputs }}
+</a><a href="#h2-0-510" id="h2-0-510" class="i">+			{{ . }}_received_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-511" id="h2-0-511" class="i">+			{{ . }}_valid_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-512" id="h2-0-512" class="i">+			{{- end }}
+</a><a href="#h2-0-513" id="h2-0-513" class="i">+			{{- end }}
+</a><a href="#h2-0-514" id="h2-0-514" class="i">+			blockram_state_machine &lt;= 0;
+</a><a href="#h2-0-515" id="h2-0-515" class="i">+			rd_n &lt;= 1&#39;b0;
+</a><a href="#h2-0-516" id="h2-0-516" class="i">+			{{- if .Outputs }}
+</a><a href="#h2-0-517" id="h2-0-517" class="i">+			{{- range .Outputs }}
+</a><a href="#h2-0-518" id="h2-0-518" class="i">+			write_{{ . }} &lt;= 0;
+</a><a href="#h2-0-519" id="h2-0-519" class="i">+			{{- end }}
+</a><a href="#h2-0-520" id="h2-0-520" class="i">+			input_stream_raddress &lt;= raddress_size;
+</a><a href="#h2-0-521" id="h2-0-521" class="i">+			send &lt;= 2&#39;b00;
+</a><a href="#h2-0-522" id="h2-0-522" class="i">+			input_stream_write_enable &lt;= 1;
+</a><a href="#h2-0-523" id="h2-0-523" class="i">+        end
+</a><a href="#h2-0-524" id="h2-0-524" class="i">+        else begin
+</a><a href="#h2-0-525" id="h2-0-525" class="i">+		if (writes_done &amp;&amp; !bm_done) begin     
+</a><a href="#h2-0-526" id="h2-0-526" class="i">+		if (send == 2&#39;b00) begin
+</a><a href="#h2-0-527" id="h2-0-527" class="i">+			if (precision == 32) begin
+</a><a href="#h2-0-528" id="h2-0-528" class="i">+					if (blockram_state_machine == 32&#39;d0) begin
+</a><a href="#h2-0-529" id="h2-0-529" class="i">+						 input_stream_write_enable &lt;= 0;
+</a><a href="#h2-0-530" id="h2-0-530" class="i">+						 blockram_state_machine &lt;= 32&#39;d1;
+</a><a href="#h2-0-531" id="h2-0-531" class="i">+					end else if (blockram_state_machine == 32&#39;d1) begin
+</a><a href="#h2-0-532" id="h2-0-532" class="i">+						 blockram_state_machine &lt;= 32&#39;d2;
+</a><a href="#h2-0-533" id="h2-0-533" class="i">+						 input_stream_raddress &lt;= input_stream_raddress - 1;
+</a><a href="#h2-0-534" id="h2-0-534" class="i">+					end {{- if .Inputs }} {{- $inputsLen := len .Inputs }} {{- range $i, $input := .Inputs }} {{- if ne (inc $i) $inputsLen }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+</a><a href="#h2-0-535" id="h2-0-535" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+</a><a href="#h2-0-536" id="h2-0-536" class="i">+						{{ $input }}_r &lt;= input_output_stream_data;
+</a><a href="#h2-0-537" id="h2-0-537" class="i">+						input_stream_raddress &lt;= input_stream_raddress - 1;
+</a><a href="#h2-0-538" id="h2-0-538" class="i">+					end {{- else }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+</a><a href="#h2-0-539" id="h2-0-539" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+</a><a href="#h2-0-540" id="h2-0-540" class="i">+						{{ $input }}_r &lt;= input_output_stream_data;
+</a><a href="#h2-0-541" id="h2-0-541" class="i">+					{{- end }}
+</a><a href="#h2-0-542" id="h2-0-542" class="i">+					{{- end }}
+</a><a href="#h2-0-543" id="h2-0-543" class="i">+					{{- end }}
+</a><a href="#h2-0-544" id="h2-0-544" class="i">+					{{- end }}
+</a><a href="#h2-0-545" id="h2-0-545" class="i">+					end{{ $inputsLength := len .Inputs }} else if (blockram_state_machine == 32&#39;d{{ add $inputsLength 2 }}) begin
+</a><a href="#h2-0-546" id="h2-0-546" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $inputsLength 3 }};
+</a><a href="#h2-0-547" id="h2-0-547" class="i">+						{{- if .Inputs }}
+</a><a href="#h2-0-548" id="h2-0-548" class="i">+						{{- range .Inputs }}
+</a><a href="#h2-0-549" id="h2-0-549" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-550" id="h2-0-550" class="i">+						{{- end }}
+</a><a href="#h2-0-551" id="h2-0-551" class="i">+						{{- end }}
+</a><a href="#h2-0-552" id="h2-0-552" class="i">+					end
+</a><a href="#h2-0-553" id="h2-0-553" class="i">+					else begin
+</a><a href="#h2-0-554" id="h2-0-554" class="i">+						 blockram_state_machine &lt;= 32&#39;d0;
+</a><a href="#h2-0-555" id="h2-0-555" class="i">+						 send &lt;= 2&#39;b01;
+</a><a href="#h2-0-556" id="h2-0-556" class="i">+					 end
+</a><a href="#h2-0-557" id="h2-0-557" class="i">+				end
+</a><a href="#h2-0-558" id="h2-0-558" class="i">+			else if (precision == 16) begin
+</a><a href="#h2-0-559" id="h2-0-559" class="i">+					if (blockram_state_machine == 32&#39;d0) begin
+</a><a href="#h2-0-560" id="h2-0-560" class="i">+						input_stream_write_enable &lt;= 0;
+</a><a href="#h2-0-561" id="h2-0-561" class="i">+						blockram_state_machine &lt;= 32&#39;d1;
+</a><a href="#h2-0-562" id="h2-0-562" class="i">+					end else if (blockram_state_machine == 32&#39;d1) begin
+</a><a href="#h2-0-563" id="h2-0-563" class="i">+						blockram_state_machine &lt;= 32&#39;d2;
+</a><a href="#h2-0-564" id="h2-0-564" class="i">+						if (f == 1) begin
+</a><a href="#h2-0-565" id="h2-0-565" class="i">+							f &lt;= 0;
+</a><a href="#h2-0-566" id="h2-0-566" class="i">+							input_stream_raddress &lt;= input_stream_raddress - 1;
+</a><a href="#h2-0-567" id="h2-0-567" class="i">+						end
+</a><a href="#h2-0-568" id="h2-0-568" class="i">+					end {{- if .Inputs }} {{- $inputsLen := len .Inputs }} {{- range $i, $input := .Inputs }} {{- if ne (inc $i) $inputsLen }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+</a><a href="#h2-0-569" id="h2-0-569" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+</a><a href="#h2-0-570" id="h2-0-570" class="i">+						if (half_precision_input_index == 0) begin
+</a><a href="#h2-0-571" id="h2-0-571" class="i">+							{{ $input }}_r &lt;= input_output_stream_data[15:0];
+</a><a href="#h2-0-572" id="h2-0-572" class="i">+							half_precision_input_index &lt;= half_precision_input_index + 1;
+</a><a href="#h2-0-573" id="h2-0-573" class="i">+                            prev_value &lt;= input_output_stream_data;
+</a><a href="#h2-0-574" id="h2-0-574" class="i">+						end else begin
+</a><a href="#h2-0-575" id="h2-0-575" class="i">+							{{ $input }}_r &lt;= prev_value[31:16];
+</a><a href="#h2-0-576" id="h2-0-576" class="i">+							half_precision_input_index &lt;= 0;
+</a><a href="#h2-0-577" id="h2-0-577" class="i">+							input_stream_raddress &lt;= input_stream_raddress - 1;
+</a><a href="#h2-0-578" id="h2-0-578" class="i">+						end
+</a><a href="#h2-0-579" id="h2-0-579" class="i">+					end {{- else }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+</a><a href="#h2-0-580" id="h2-0-580" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+</a><a href="#h2-0-581" id="h2-0-581" class="i">+						if (half_precision_input_index == 0) begin
+</a><a href="#h2-0-582" id="h2-0-582" class="i">+							{{ $input }}_r &lt;= input_output_stream_data[15:0];
+</a><a href="#h2-0-583" id="h2-0-583" class="i">+							half_precision_input_index &lt;= half_precision_input_index + 1;
+</a><a href="#h2-0-584" id="h2-0-584" class="i">+							prev_value &lt;= input_output_stream_data;
+</a><a href="#h2-0-585" id="h2-0-585" class="i">+						end else begin
+</a><a href="#h2-0-586" id="h2-0-586" class="i">+							{{ $input }}_r &lt;= prev_value[31:16];
+</a><a href="#h2-0-587" id="h2-0-587" class="i">+							half_precision_input_index &lt;= 0;
+</a><a href="#h2-0-588" id="h2-0-588" class="i">+							f &lt;= 1;
+</a><a href="#h2-0-589" id="h2-0-589" class="i">+						end
+</a><a href="#h2-0-590" id="h2-0-590" class="i">+					end{{- end }} {{- end}} {{- end}} {{ $inputsLength := len .Inputs }} else if (blockram_state_machine == 32&#39;d{{ add $inputsLength 2 }}) begin
+</a><a href="#h2-0-591" id="h2-0-591" class="i">+						blockram_state_machine &lt;= 32&#39;d{{ add $inputsLength 3 }};
+</a><a href="#h2-0-592" id="h2-0-592" class="i">+						{{- if .Inputs }}
+</a><a href="#h2-0-593" id="h2-0-593" class="i">+						{{- range .Inputs }}
+</a><a href="#h2-0-594" id="h2-0-594" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-595" id="h2-0-595" class="i">+						{{- end }}
+</a><a href="#h2-0-596" id="h2-0-596" class="i">+						{{- end }}
+</a><a href="#h2-0-597" id="h2-0-597" class="i">+					end
+</a><a href="#h2-0-598" id="h2-0-598" class="i">+					else begin
+</a><a href="#h2-0-599" id="h2-0-599" class="i">+						 blockram_state_machine &lt;= 32&#39;d0;
+</a><a href="#h2-0-600" id="h2-0-600" class="i">+						 send &lt;= 2&#39;b01;
+</a><a href="#h2-0-601" id="h2-0-601" class="i">+					end
+</a><a href="#h2-0-602" id="h2-0-602" class="i">+				end
+</a><a href="#h2-0-603" id="h2-0-603" class="i">+			end
+</a><a href="#h2-0-604" id="h2-0-604" class="i">+		else if (send == 2&#39;b01) begin
+</a><a href="#h2-0-605" id="h2-0-605" class="i">+			if (
+</a><a href="#h2-0-606" id="h2-0-606" class="i">+				{{- if .Inputs }}
+</a><a href="#h2-0-607" id="h2-0-607" class="i">+				{{- $InputsLen := len .Inputs }}
+</a><a href="#h2-0-608" id="h2-0-608" class="i">+				{{- range $i, $input := .Inputs }}
+</a><a href="#h2-0-609" id="h2-0-609" class="i">+				{{- if eq (inc $i) $InputsLen }}
+</a><a href="#h2-0-610" id="h2-0-610" class="i">+				{{ $input }}_received
+</a><a href="#h2-0-611" id="h2-0-611" class="i">+				{{- else }}
+</a><a href="#h2-0-612" id="h2-0-612" class="i">+				{{ $input }}_received &amp;&amp;
+</a><a href="#h2-0-613" id="h2-0-613" class="i">+				{{- end }}
+</a><a href="#h2-0-614" id="h2-0-614" class="i">+				{{- end }}
+</a><a href="#h2-0-615" id="h2-0-615" class="i">+				{{- end }}
+</a><a href="#h2-0-616" id="h2-0-616" class="i">+			) begin
+</a><a href="#h2-0-617" id="h2-0-617" class="i">+				{{- if .Inputs }}
+</a><a href="#h2-0-618" id="h2-0-618" class="i">+				{{- range .Inputs }}
+</a><a href="#h2-0-619" id="h2-0-619" class="i">+				{{ . }}_valid_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-620" id="h2-0-620" class="i">+				{{- end }}
+</a><a href="#h2-0-621" id="h2-0-621" class="i">+				{{- end }}
+</a><a href="#h2-0-622" id="h2-0-622" class="i">+				send &lt;= 2&#39;b10;
+</a><a href="#h2-0-623" id="h2-0-623" class="i">+				wr_n &lt;= 1;
+</a><a href="#h2-0-624" id="h2-0-624" class="i">+			end
+</a><a href="#h2-0-625" id="h2-0-625" class="i">+		end
+</a><a href="#h2-0-626" id="h2-0-626" class="i">+		else if (send == 2&#39;b10) begin
+</a><a href="#h2-0-627" id="h2-0-627" class="i">+				{{- if .Outputs }}
+</a><a href="#h2-0-628" id="h2-0-628" class="i">+				{{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-629" id="h2-0-629" class="i">+				{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-630" id="h2-0-630" class="i">+				{{- if eq ($i) 0 }}
+</a><a href="#h2-0-631" id="h2-0-631" class="i">+				if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+</a><a href="#h2-0-632" id="h2-0-632" class="i">+					{{ . }}_received_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-633" id="h2-0-633" class="i">+					write_{{ . }} &lt;= 1;
+</a><a href="#h2-0-634" id="h2-0-634" class="i">+				end
+</a><a href="#h2-0-635" id="h2-0-635" class="i">+				{{- else }}
+</a><a href="#h2-0-636" id="h2-0-636" class="i">+				else if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+</a><a href="#h2-0-637" id="h2-0-637" class="i">+					{{ . }}_received_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-638" id="h2-0-638" class="i">+					write_{{ . }} &lt;= 1;
+</a><a href="#h2-0-639" id="h2-0-639" class="i">+				end
+</a><a href="#h2-0-640" id="h2-0-640" class="i">+				{{- end }}
+</a><a href="#h2-0-641" id="h2-0-641" class="i">+				{{- end }}
+</a><a href="#h2-0-642" id="h2-0-642" class="i">+				{{- end }}
+</a><a href="#h2-0-643" id="h2-0-643" class="i">+		
+</a><a href="#h2-0-644" id="h2-0-644" class="i">+				if (precision == 32) begin
+</a><a href="#h2-0-645" id="h2-0-645" class="i">+				{{- if .Outputs }}
+</a><a href="#h2-0-646" id="h2-0-646" class="i">+				{{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-647" id="h2-0-647" class="i">+				{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-648" id="h2-0-648" class="i">+				{{- if eq ($i) 0 }}
+</a><a href="#h2-0-649" id="h2-0-649" class="i">+				if (write_{{ . }}) begin
+</a><a href="#h2-0-650" id="h2-0-650" class="i">+						write_{{ . }} &lt;= 0;
+</a><a href="#h2-0-651" id="h2-0-651" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-652" id="h2-0-652" class="i">+						data_in &lt;= {{ . }};
+</a><a href="#h2-0-653" id="h2-0-653" class="i">+				end
+</a><a href="#h2-0-654" id="h2-0-654" class="i">+				{{- else }}
+</a><a href="#h2-0-655" id="h2-0-655" class="i">+				else if (write_{{ . }}) begin
+</a><a href="#h2-0-656" id="h2-0-656" class="i">+						write_{{ . }} &lt;= 0;
+</a><a href="#h2-0-657" id="h2-0-657" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-658" id="h2-0-658" class="i">+						data_in &lt;= {{ . }};
+</a><a href="#h2-0-659" id="h2-0-659" class="i">+				end
+</a><a href="#h2-0-660" id="h2-0-660" class="i">+				{{- end }}
+</a><a href="#h2-0-661" id="h2-0-661" class="i">+				{{- end }}
+</a><a href="#h2-0-662" id="h2-0-662" class="i">+				{{- end }}
+</a><a href="#h2-0-663" id="h2-0-663" class="i">+				end 
+</a><a href="#h2-0-664" id="h2-0-664" class="i">+				else if (precision == 16) begin
+</a><a href="#h2-0-665" id="h2-0-665" class="i">+
+</a><a href="#h2-0-666" id="h2-0-666" class="i">+				{{- if .Outputs }}
+</a><a href="#h2-0-667" id="h2-0-667" class="i">+				{{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-668" id="h2-0-668" class="i">+				{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-669" id="h2-0-669" class="i">+				{{- if eq ($i) 0 }}
+</a><a href="#h2-0-670" id="h2-0-670" class="i">+				if (write_{{ . }}) begin
+</a><a href="#h2-0-671" id="h2-0-671" class="i">+						write_{{ . }} &lt;= 0;
+</a><a href="#h2-0-672" id="h2-0-672" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-673" id="h2-0-673" class="i">+						if (outputIndex == 0) begin
+</a><a href="#h2-0-674" id="h2-0-674" class="i">+							data_in[15:0] &lt;= {{ . }};
+</a><a href="#h2-0-675" id="h2-0-675" class="i">+						end
+</a><a href="#h2-0-676" id="h2-0-676" class="i">+						else if(outputIndex == 1) begin
+</a><a href="#h2-0-677" id="h2-0-677" class="i">+							data_in[31:16] &lt;= {{ . }};
+</a><a href="#h2-0-678" id="h2-0-678" class="i">+						end
+</a><a href="#h2-0-679" id="h2-0-679" class="i">+				end
+</a><a href="#h2-0-680" id="h2-0-680" class="i">+				{{- else }}
+</a><a href="#h2-0-681" id="h2-0-681" class="i">+				else if (write_{{ . }}) begin
+</a><a href="#h2-0-682" id="h2-0-682" class="i">+						write_{{ . }} &lt;= 0;
+</a><a href="#h2-0-683" id="h2-0-683" class="i">+						{{ . }}_valid_r &lt;= 1&#39;b1;
+</a><a href="#h2-0-684" id="h2-0-684" class="i">+						if (outputIndex == 0) begin
+</a><a href="#h2-0-685" id="h2-0-685" class="i">+							data_in[15:0] &lt;= {{ . }};
+</a><a href="#h2-0-686" id="h2-0-686" class="i">+						end
+</a><a href="#h2-0-687" id="h2-0-687" class="i">+						else if(outputIndex == 1) begin
+</a><a href="#h2-0-688" id="h2-0-688" class="i">+							data_in[31:16] &lt;= {{ . }};
+</a><a href="#h2-0-689" id="h2-0-689" class="i">+						end
+</a><a href="#h2-0-690" id="h2-0-690" class="i">+				end
+</a><a href="#h2-0-691" id="h2-0-691" class="i">+				{{- end }}
+</a><a href="#h2-0-692" id="h2-0-692" class="i">+				{{- end}}
+</a><a href="#h2-0-693" id="h2-0-693" class="i">+				{{- end}}
+</a><a href="#h2-0-694" id="h2-0-694" class="i">+				end 
+</a><a href="#h2-0-695" id="h2-0-695" class="i">+				if (
+</a><a href="#h2-0-696" id="h2-0-696" class="i">+					{{- if .Outputs }}
+</a><a href="#h2-0-697" id="h2-0-697" class="i">+					{{- $OutputsLen := len .Outputs }}
+</a><a href="#h2-0-698" id="h2-0-698" class="i">+					{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-699" id="h2-0-699" class="i">+					{{- if eq (inc $i) $OutputsLen }}
+</a><a href="#h2-0-700" id="h2-0-700" class="i">+					{{ $output }}_valid_r
+</a><a href="#h2-0-701" id="h2-0-701" class="i">+					{{- else }}
+</a><a href="#h2-0-702" id="h2-0-702" class="i">+					{{ $output }}_valid_r &amp;&amp;
+</a><a href="#h2-0-703" id="h2-0-703" class="i">+					{{- end }}
+</a><a href="#h2-0-704" id="h2-0-704" class="i">+					{{- end }}
+</a><a href="#h2-0-705" id="h2-0-705" class="i">+					{{- end }}
+</a><a href="#h2-0-706" id="h2-0-706" class="i">+					 ) begin
+</a><a href="#h2-0-707" id="h2-0-707" class="i">+				{{- if .Outputs }}
+</a><a href="#h2-0-708" id="h2-0-708" class="i">+						{{- range .Outputs }}
+</a><a href="#h2-0-709" id="h2-0-709" class="i">+							{{ . }}_valid_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-710" id="h2-0-710" class="i">+						{{- end }}
+</a><a href="#h2-0-711" id="h2-0-711" class="i">+						{{- end }}
+</a><a href="#h2-0-712" id="h2-0-712" class="i">+
+</a><a href="#h2-0-713" id="h2-0-713" class="i">+				outputs_counter_pointer &lt;= outputs_counter_pointer + bmoutputs;
+</a><a href="#h2-0-714" id="h2-0-714" class="i">+				outputs_counter_incr &lt;= outputs_counter_incr + 1;
+</a><a href="#h2-0-715" id="h2-0-715" class="i">+				outputs_counter &lt;= bminputs*(outputs_counter_incr+1);
+</a><a href="#h2-0-716" id="h2-0-716" class="i">+			
+</a><a href="#h2-0-717" id="h2-0-717" class="i">+				 end
+</a><a href="#h2-0-718" id="h2-0-718" class="i">+				else if(
+</a><a href="#h2-0-719" id="h2-0-719" class="i">+					{{- if .Outputs }}
+</a><a href="#h2-0-720" id="h2-0-720" class="i">+					{{- $outputsLen := len .Outputs }}
+</a><a href="#h2-0-721" id="h2-0-721" class="i">+					{{- range $i, $output := .Outputs }}
+</a><a href="#h2-0-722" id="h2-0-722" class="i">+					{{- if eq (inc $i) $outputsLen }}
+</a><a href="#h2-0-723" id="h2-0-723" class="i">+					!{{ $output }}_valid &amp;&amp; {{ $output }}_received_r
+</a><a href="#h2-0-724" id="h2-0-724" class="i">+					{{- else }}
+</a><a href="#h2-0-725" id="h2-0-725" class="i">+					!{{ $output }}_valid &amp;&amp; {{ $output }}_received_r &amp;&amp;
+</a><a href="#h2-0-726" id="h2-0-726" class="i">+					{{- end }}
+</a><a href="#h2-0-727" id="h2-0-727" class="i">+					{{- end }}
+</a><a href="#h2-0-728" id="h2-0-728" class="i">+					{{- end }}
+</a><a href="#h2-0-729" id="h2-0-729" class="i">+				) 
+</a><a href="#h2-0-730" id="h2-0-730" class="i">+					begin
+</a><a href="#h2-0-731" id="h2-0-731" class="i">+						{{- if .Outputs }}
+</a><a href="#h2-0-732" id="h2-0-732" class="i">+						{{- range .Outputs }}
+</a><a href="#h2-0-733" id="h2-0-733" class="i">+							{{ . }}_received_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-734" id="h2-0-734" class="i">+						{{- end }}
+</a><a href="#h2-0-735" id="h2-0-735" class="i">+						{{- end }}
+</a><a href="#h2-0-736" id="h2-0-736" class="i">+							
+</a><a href="#h2-0-737" id="h2-0-737" class="i">+							send &lt;= 2&#39;b00;
+</a><a href="#h2-0-738" id="h2-0-738" class="i">+					end
+</a><a href="#h2-0-739" id="h2-0-739" class="i">+			end
+</a><a href="#h2-0-740" id="h2-0-740" class="i">+		end
+</a><a href="#h2-0-741" id="h2-0-741" class="i">+		//end 
+</a><a href="#h2-0-742" id="h2-0-742" class="i">+		else
+</a><a href="#h2-0-743" id="h2-0-743" class="i">+		begin
+</a><a href="#h2-0-744" id="h2-0-744" class="i">+		 if (bm_done) begin
+</a><a href="#h2-0-745" id="h2-0-745" class="i">+			 wr_n &lt;= 1&#39;b0;
+</a><a href="#h2-0-746" id="h2-0-746" class="i">+			 rd_n &lt;= 1&#39;b1;
+</a><a href="#h2-0-747" id="h2-0-747" class="i">+		 end
+</a><a href="#h2-0-748" id="h2-0-748" class="i">+		end
+</a><a href="#h2-0-749" id="h2-0-749" class="i">+	    end
+</a><a href="#h2-0-750" id="h2-0-750" class="i">+	end
+</a><a href="#h2-0-751" id="h2-0-751" class="i">+	
+</a><a href="#h2-0-752" id="h2-0-752" class="i">+	reg [31:0] sendData = waitCycle;
+</a><a href="#h2-0-753" id="h2-0-753" class="i">+    
+</a><a href="#h2-0-754" id="h2-0-754" class="i">+	always @( posedge m00_axis_aclk )                  
+</a><a href="#h2-0-755" id="h2-0-755" class="i">+    begin        
+</a><a href="#h2-0-756" id="h2-0-756" class="i">+       if (tx_done) begin
+</a><a href="#h2-0-757" id="h2-0-757" class="i">+        stream_output_counter &lt;= 0;
+</a><a href="#h2-0-758" id="h2-0-758" class="i">+        tx_done &lt;= 1&#39;b0;
+</a><a href="#h2-0-759" id="h2-0-759" class="i">+        waddressn &lt;= waddressn_size;
+</a><a href="#h2-0-760" id="h2-0-760" class="i">+        sendData &lt;= waitCycle;
+</a><a href="#h2-0-761" id="h2-0-761" class="i">+        wait_stream &lt;= 0;
+</a><a href="#h2-0-762" id="h2-0-762" class="i">+       end
+</a><a href="#h2-0-763" id="h2-0-763" class="i">+      
+</a><a href="#h2-0-764" id="h2-0-764" class="i">+      if (rd_n == 1) begin
+</a><a href="#h2-0-765" id="h2-0-765" class="i">+            if (wait_stream &lt; waitStream) begin
+</a><a href="#h2-0-766" id="h2-0-766" class="i">+                wait_stream &lt;= wait_stream + 1;
+</a><a href="#h2-0-767" id="h2-0-767" class="i">+            end
+</a><a href="#h2-0-768" id="h2-0-768" class="i">+      end
+</a><a href="#h2-0-769" id="h2-0-769" class="i">+                                     
+</a><a href="#h2-0-770" id="h2-0-770" class="i">+      if(!m00_axis_aresetn)                            
+</a><a href="#h2-0-771" id="h2-0-771" class="i">+        begin   
+</a><a href="#h2-0-772" id="h2-0-772" class="i">+          stream_data_out &lt;= 1;                      
+</a><a href="#h2-0-773" id="h2-0-773" class="i">+        end                                          
+</a><a href="#h2-0-774" id="h2-0-774" class="i">+      else if (tx_en)
+</a><a href="#h2-0-775" id="h2-0-775" class="i">+        begin
+</a><a href="#h2-0-776" id="h2-0-776" class="i">+              if (waddressn &gt;= 0) begin
+</a><a href="#h2-0-777" id="h2-0-777" class="i">+                  if (precision == 32) begin
+</a><a href="#h2-0-778" id="h2-0-778" class="i">+                        if (sendData &lt; waitCycle) begin
+</a><a href="#h2-0-779" id="h2-0-779" class="i">+                               if(sendData == 0) begin
+</a><a href="#h2-0-780" id="h2-0-780" class="i">+                                    waddressn &lt;= waddressn - 1;
+</a><a href="#h2-0-781" id="h2-0-781" class="i">+                                end
+</a><a href="#h2-0-782" id="h2-0-782" class="i">+                                sendData &lt;= sendData + 1;
+</a><a href="#h2-0-783" id="h2-0-783" class="i">+                        end
+</a><a href="#h2-0-784" id="h2-0-784" class="i">+                       else if (sendData == waitCycle) begin
+</a><a href="#h2-0-785" id="h2-0-785" class="i">+                            sendData &lt;= 0;
+</a><a href="#h2-0-786" id="h2-0-786" class="i">+                            stream_data_out &lt;= data_out;
+</a><a href="#h2-0-787" id="h2-0-787" class="i">+                        end
+</a><a href="#h2-0-788" id="h2-0-788" class="i">+                  end
+</a><a href="#h2-0-789" id="h2-0-789" class="i">+                  else if (precision == 16) begin
+</a><a href="#h2-0-790" id="h2-0-790" class="i">+                        if (sendData &lt; waitCycle) begin
+</a><a href="#h2-0-791" id="h2-0-791" class="i">+                               if(sendData == 0) begin
+</a><a href="#h2-0-792" id="h2-0-792" class="i">+                                    waddressn &lt;= waddressn - 1;
+</a><a href="#h2-0-793" id="h2-0-793" class="i">+                                end
+</a><a href="#h2-0-794" id="h2-0-794" class="i">+                                sendData &lt;= sendData + 1;
+</a><a href="#h2-0-795" id="h2-0-795" class="i">+                         end
+</a><a href="#h2-0-796" id="h2-0-796" class="i">+                       else if (sendData == waitCycle) begin
+</a><a href="#h2-0-797" id="h2-0-797" class="i">+                            sendData &lt;= 0;
+</a><a href="#h2-0-798" id="h2-0-798" class="i">+                            stream_data_out[15:0] &lt;= data_out[15:0];
+</a><a href="#h2-0-799" id="h2-0-799" class="i">+                            stream_data_out[31:16] &lt;= data_out[31:16];
+</a><a href="#h2-0-800" id="h2-0-800" class="i">+                       end
+</a><a href="#h2-0-801" id="h2-0-801" class="i">+                  end
+</a><a href="#h2-0-802" id="h2-0-802" class="i">+                  if (waddressn == 0) begin
+</a><a href="#h2-0-803" id="h2-0-803" class="i">+                        tx_done &lt;= 1&#39;b1;
+</a><a href="#h2-0-804" id="h2-0-804" class="i">+                  end
+</a><a href="#h2-0-805" id="h2-0-805" class="i">+            end
+</a><a href="#h2-0-806" id="h2-0-806" class="i">+        end                                          
+</a><a href="#h2-0-807" id="h2-0-807" class="i">+    end
+</a><a href="#h2-0-808" id="h2-0-808" class="i">+
+</a><a href="#h2-0-809" id="h2-0-809" class="i">+endmodule
+</a><a href="#h2-0-810" id="h2-0-810" class="i">+
+</a><a href="#h2-0-811" id="h2-0-811" class="i">+`
+</a><a href="#h2-0-812" id="h2-0-812" class="i">+)
+</a><a href="#h2-0-813" id="h2-0-813" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/dynop_fixed_point.go.html">pkg/procbuilder/dynop_fixed_point.go</a> b/<a href="../file/pkg/procbuilder/dynop_fixed_point.go.html">pkg/procbuilder/dynop_fixed_point.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -314,7 +314,7 @@ func (op FixedPoint) Op_instruction_verilog_extra_modules(arch *Arch, flavor str
+</a> 	result += &quot;output_z);\n&quot;
+ 	result += &quot;	input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+ 	result += &quot;	input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	result += &quot;	output signed   [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	result += &quot;	output signed   [&quot; + strconv.Itoa(int(arch.Rsize)*2-1) + &quot;:0] output_z;\n&quot;
+</a> 	result += &quot;\n&quot;
+ 
+ 	switch op.opType {
+<a href="#h3-1" id="h3-1" class="h">@@ -322,9 +322,7 @@ func (op FixedPoint) Op_instruction_verilog_extra_modules(arch *Arch, flavor str
+</a> 		result += &quot;	assign output_z = input_a + input_b;\n&quot;
+ 		moduleName = &quot;adder&quot;
+ 	case LQMULT:
+<a href="#h3-1-3" id="h3-1-3" class="d">-		result += &quot;	wire signed [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] mult_result;\n&quot;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-		result += &quot;	assign mult_result = input_a * input_b;\n&quot;
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-		result += &quot;	assign output_z = (mult_result[&quot; + s + &quot;]) ? (mult_result &gt;&gt;&gt; &quot; + f + &quot;) : (mult_result &gt;&gt; &quot; + f + &quot;);\n&quot;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+		result += &quot; assign output_z = (input_a[&quot; + s + &quot;] || input_b[&quot; + s + &quot;]) ? ((input_a * input_b) &gt;&gt;&gt; &quot; + f + &quot;) : ((input_a * input_b) &gt;&gt; &quot; + f + &quot;);\n&quot;
+</a> 		moduleName = &quot;multiplier&quot;
+ 	case LQDIV:
+ 		result += &quot;	assign output_z = (input_a[&quot; + s + &quot;] ^ input_b[&quot; + s + &quot;]) ? -((((input_a[&quot; + s + &quot;] ? -input_a : input_a) &lt;&lt;&lt; &quot; + f + &quot;) / (input_b[&quot; + s + &quot;] ? -input_b : input_b))) : ((input_a &lt;&lt;&lt; &quot; + f + &quot;) / input_b);\n&quot;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Matrix inclusion - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/30e3796a10991e81e3b46966e8117ca524daf0b1.html">30e3796a10991e81e3b46966e8117ca524daf0b1</a>
+<b>parent</b> <a href="../commit/5d2d416fbbbee8bc8f8af4388e11f48dc45451ed.html">5d2d416fbbbee8bc8f8af4388e11f48dc45451ed</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2024 15:31:08 +0100
+
+Matrix inclusion
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/program.bmq</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bmmatrix/identity.go</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmmatrix/static4x4.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">186</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>4 files changed, 179 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a> b/<a href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,8 @@
+</a> %block code1 .sequential
+<a href="#h0-0-1" id="h0-0-1" class="d">-        qbits   q0, q1, q2
+</a><a href="#h0-0-2" id="h0-0-2" class="d">-        zero    q0, q1, q2
+</a><a href="#h0-0-3" id="h0-0-3" class="d">-        h       q1
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+        qbits   q0, q1
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+;        zero    q0, q1, q2
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+;        h       q1
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+        cx      q1, q0
+</a>         cx      q0, q1
+ %endblock
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a> b/<a href="../file/pkg/bmmatrix/identity.go.html">pkg/bmmatrix/identity.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmmatrix
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+func IdentityComplex(n int) *BmMatrixSquareComplex {
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	m := NewBmMatrixSquareComplex(n)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	for i := 0; i &lt; n; i++ {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		m.Data[i][i] = Complex32{1.0, 0.0}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	}
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	return m
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmmatrix/static4x4.go.html">pkg/bmmatrix/static4x4.go</a> b/<a href="../file/pkg/bmmatrix/static4x4.go.html">pkg/bmmatrix/static4x4.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,6 +1,6 @@
+</a> package bmmatrix
+ 
+<a href="#h2-0-2" id="h2-0-2" class="d">-func Cnot() *BmMatrixSquareComplex {
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+func CNot() *BmMatrixSquareComplex {
+</a> 	m := NewBmMatrixSquareComplex(4)
+ 	m.Data[0][0] = Complex32{1.0, 0.0}
+ 	m.Data[0][1] = Complex32{0.0, 0.0}
+<b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -38,6 +38,8 @@ func (sim *BmQSimulator) SetDebug() {
+</a> // QasmToBmMatrices converts a QASM file to a list of BmMatrixSquareComplex, the input is a BasmBody with all the metadata and the list of quantum instructions
+ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.BmMatrixSquareComplex, error) {
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	result := make([]*bmmatrix.BmMatrixSquareComplex, 0)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a> 	// Get the qbits and their names
+ 	qbits := qasm.GetMeta(&quot;qbits&quot;)
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -54,8 +56,8 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 		}
+ 	}
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	currOp := make([]*bmline.BasmLine, 0)
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	currQbits := make(map[int]struct{})
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	curOp := make([]*bmline.BasmLine, 0)
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	curQBits := make(map[int]struct{})
+</a> 
+ 	for i, line := range qasm.Lines {
+ 		op := line.Operation.GetValue()
+<a href="#h3-2" id="h3-2" class="h">@@ -72,11 +74,11 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 			argName := arg.GetValue()
+ 			// Check if the argument is a qbit, otherwise ignore it
+ 			if qbitN, ok := sim.qbitsNum[argName]; ok {
+<a href="#h3-2-3" id="h3-2-3" class="d">-				if _, ok := currQbits[qbitN]; ok {
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+				if _, ok := curQBits[qbitN]; ok {
+</a> 					nextOp = true
+ 					break
+ 				} else {
+<a href="#h3-2-8" id="h3-2-8" class="d">-					currQbits[sim.qbitsNum[argName]] = struct{}{}
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+					curQBits[sim.qbitsNum[argName]] = struct{}{}
+</a> 				}
+ 			}
+ 
+<a href="#h3-3" id="h3-3" class="h">@@ -92,7 +94,7 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 			// If the last line is not already a nextOp lets put it in current operation, otherwise we will set singleLast to true
+ 			// and process it alone later on
+ 			if !nextOp {
+<a href="#h3-3-3" id="h3-3-3" class="d">-				currOp = append(currOp, line)
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+				curOp = append(curOp, line)
+</a> 			} else {
+ 				singleLast = true
+ 			}
+<a href="#h3-4" id="h3-4" class="h">@@ -102,55 +104,197 @@ func (sim *BmQSimulator) QasmToBmMatrices(qasm *bmline.BasmBody) ([]*bmmatrix.Bm
+</a> 		// If the operation is ready to form a matrix, create the matrix
+ 		if nextOp {
+ 			// Create the matrix
+<a href="#h3-4-3" id="h3-4-3" class="d">-			if len(currOp) &gt; 0 {
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+			if len(curOp) &gt; 0 {
+</a> 				// Create the matrix
+<a href="#h3-4-6" id="h3-4-6" class="d">-				_, err := sim.BmMatrixFromOperation(currOp)
+</a><a href="#h3-4-7" id="h3-4-7" class="d">-				if err != nil {
+</a><a href="#h3-4-8" id="h3-4-8" class="i">+				if m, err := sim.BmMatrixFromOperation(curOp); err != nil {
+</a> 					return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+<a href="#h3-4-10" id="h3-4-10" class="i">+				} else {
+</a><a href="#h3-4-11" id="h3-4-11" class="i">+					if m != nil {
+</a><a href="#h3-4-12" id="h3-4-12" class="i">+						result = append(result, m)
+</a><a href="#h3-4-13" id="h3-4-13" class="i">+					}
+</a> 				}
+ 			}
+ 
+ 			// Reset the operation and the qbits
+<a href="#h3-4-18" id="h3-4-18" class="d">-			currOp = make([]*bmline.BasmLine, 0)
+</a><a href="#h3-4-19" id="h3-4-19" class="d">-			currQbits = make(map[int]struct{})
+</a><a href="#h3-4-20" id="h3-4-20" class="i">+			curOp = make([]*bmline.BasmLine, 0)
+</a><a href="#h3-4-21" id="h3-4-21" class="i">+			curQBits = make(map[int]struct{})
+</a> 		}
+ 
+ 		// If the last line is not already been added to the last matrix, lets put it alone in a new matrix
+ 		// Otherwise (not the last or already done) we will put it in the current operations list and set the involved qbits into the currQbits map
+ 		if singleLast {
+<a href="#h3-4-27" id="h3-4-27" class="d">-			currOp = append(currOp, line)
+</a><a href="#h3-4-28" id="h3-4-28" class="i">+			curOp = append(curOp, line)
+</a> 			// Create the matrix
+<a href="#h3-4-30" id="h3-4-30" class="d">-			_, err := sim.BmMatrixFromOperation(currOp)
+</a><a href="#h3-4-31" id="h3-4-31" class="d">-			if err != nil {
+</a><a href="#h3-4-32" id="h3-4-32" class="i">+			if m, err := sim.BmMatrixFromOperation(curOp); err != nil {
+</a> 				return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+<a href="#h3-4-34" id="h3-4-34" class="i">+			} else {
+</a><a href="#h3-4-35" id="h3-4-35" class="i">+				if m != nil {
+</a><a href="#h3-4-36" id="h3-4-36" class="i">+					result = append(result, m)
+</a><a href="#h3-4-37" id="h3-4-37" class="i">+				}
+</a> 			}
+<a href="#h3-4-39" id="h3-4-39" class="i">+
+</a> 		} else {
+<a href="#h3-4-41" id="h3-4-41" class="d">-			currOp = append(currOp, line)
+</a><a href="#h3-4-42" id="h3-4-42" class="i">+			curOp = append(curOp, line)
+</a> 
+ 			// Include the qbits in the operation to the currQbits map
+ 			for _, arg := range line.Elements {
+ 				argName := arg.GetValue()
+ 				// Check if the argument is a qbit, otherwise ignore it
+ 				if qbitN, ok := sim.qbitsNum[argName]; ok {
+<a href="#h3-4-49" id="h3-4-49" class="d">-					currQbits[qbitN] = struct{}{}
+</a><a href="#h3-4-50" id="h3-4-50" class="i">+					curQBits[qbitN] = struct{}{}
+</a> 				}
+ 
+ 			}
+ 
+ 		}
+ 	}
+<a href="#h3-4-57" id="h3-4-57" class="d">-	return nil, nil
+</a><a href="#h3-4-58" id="h3-4-58" class="i">+	return result, nil
+</a><a href="#h3-4-59" id="h3-4-59" class="i">+}
+</a><a href="#h3-4-60" id="h3-4-60" class="i">+
+</a><a href="#h3-4-61" id="h3-4-61" class="i">+type swap struct {
+</a><a href="#h3-4-62" id="h3-4-62" class="i">+	s1 int
+</a><a href="#h3-4-63" id="h3-4-63" class="i">+	s2 int
+</a> }
+ 
+ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix.BmMatrixSquareComplex, error) {
+<a href="#h3-4-67" id="h3-4-67" class="d">-	// Let prepare the matrix sequence that will be tensor-producted to form the final matrix
+</a><a href="#h3-4-68" id="h3-4-68" class="d">-	// mSeq := make([]bmmatrix.BmMatrixSquareComplex, 0)
+</a><a href="#h3-4-69" id="h3-4-69" class="i">+	// Let prepare the matrix that will be tensor-producted to form the final matrix
+</a><a href="#h3-4-70" id="h3-4-70" class="i">+	var result *bmmatrix.BmMatrixSquareComplex
+</a> 
+<a href="#h3-4-72" id="h3-4-72" class="i">+	swaps := make([]swap, 0)
+</a> 	// loop over the qbits each qbit will have only one (or zero) operation within the op list
+ 	// Every line where the qbits in not in sequence will be reordered swapping the qbits
+ 	// and swapped back after the matrix is created
+<a href="#h3-4-76" id="h3-4-76" class="d">-	// for _, qbit := range sim.qbits {
+</a><a href="#h3-4-77" id="h3-4-77" class="d">-	// }
+</a><a href="#h3-4-78" id="h3-4-78" class="d">-	// TODO: continue here
+</a><a href="#h3-4-79" id="h3-4-79" class="i">+
+</a><a href="#h3-4-80" id="h3-4-80" class="i">+	localQBits := make([]string, len(sim.qbits))
+</a><a href="#h3-4-81" id="h3-4-81" class="i">+	copy(localQBits, sim.qbits)
+</a><a href="#h3-4-82" id="h3-4-82" class="i">+
+</a><a href="#h3-4-83" id="h3-4-83" class="i">+	for q := 0; q &lt; len(localQBits); q++ {
+</a><a href="#h3-4-84" id="h3-4-84" class="i">+		qbit := localQBits[q]
+</a><a href="#h3-4-85" id="h3-4-85" class="i">+		// Find the operation for the qbit
+</a><a href="#h3-4-86" id="h3-4-86" class="i">+		found := false
+</a><a href="#h3-4-87" id="h3-4-87" class="i">+		fundLine := -1
+</a><a href="#h3-4-88" id="h3-4-88" class="i">+		for i, line := range op {
+</a><a href="#h3-4-89" id="h3-4-89" class="i">+			for _, arg := range line.Elements {
+</a><a href="#h3-4-90" id="h3-4-90" class="i">+				argName := arg.GetValue()
+</a><a href="#h3-4-91" id="h3-4-91" class="i">+				if argName == qbit {
+</a><a href="#h3-4-92" id="h3-4-92" class="i">+					found = true
+</a><a href="#h3-4-93" id="h3-4-93" class="i">+					fundLine = i
+</a><a href="#h3-4-94" id="h3-4-94" class="i">+					break
+</a><a href="#h3-4-95" id="h3-4-95" class="i">+				}
+</a><a href="#h3-4-96" id="h3-4-96" class="i">+			}
+</a><a href="#h3-4-97" id="h3-4-97" class="i">+			if found {
+</a><a href="#h3-4-98" id="h3-4-98" class="i">+				break
+</a><a href="#h3-4-99" id="h3-4-99" class="i">+			}
+</a><a href="#h3-4-100" id="h3-4-100" class="i">+		}
+</a><a href="#h3-4-101" id="h3-4-101" class="i">+
+</a><a href="#h3-4-102" id="h3-4-102" class="i">+		if !found {
+</a><a href="#h3-4-103" id="h3-4-103" class="i">+			// No operation for the qbit, lets add an identity matrix
+</a><a href="#h3-4-104" id="h3-4-104" class="i">+			// Create the identity matrix
+</a><a href="#h3-4-105" id="h3-4-105" class="i">+			ident := bmmatrix.IdentityComplex(2)
+</a><a href="#h3-4-106" id="h3-4-106" class="i">+			if result == nil {
+</a><a href="#h3-4-107" id="h3-4-107" class="i">+				result = ident
+</a><a href="#h3-4-108" id="h3-4-108" class="i">+			} else {
+</a><a href="#h3-4-109" id="h3-4-109" class="i">+				result = bmmatrix.TensorProductComplex(result, ident)
+</a><a href="#h3-4-110" id="h3-4-110" class="i">+			}
+</a><a href="#h3-4-111" id="h3-4-111" class="i">+		} else {
+</a><a href="#h3-4-112" id="h3-4-112" class="i">+			argNumQBits := len(op[fundLine].Elements)
+</a><a href="#h3-4-113" id="h3-4-113" class="i">+			if argNumQBits == 1 {
+</a><a href="#h3-4-114" id="h3-4-114" class="i">+				// Single qbit operation
+</a><a href="#h3-4-115" id="h3-4-115" class="i">+				// Create the matrix
+</a><a href="#h3-4-116" id="h3-4-116" class="i">+				if matrix, err := sim.MatrixFromOp(op[fundLine].Operation.GetValue()); err != nil {
+</a><a href="#h3-4-117" id="h3-4-117" class="i">+					return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+</a><a href="#h3-4-118" id="h3-4-118" class="i">+				} else {
+</a><a href="#h3-4-119" id="h3-4-119" class="i">+					if result == nil {
+</a><a href="#h3-4-120" id="h3-4-120" class="i">+						result = matrix
+</a><a href="#h3-4-121" id="h3-4-121" class="i">+					} else {
+</a><a href="#h3-4-122" id="h3-4-122" class="i">+						result = bmmatrix.TensorProductComplex(result, matrix)
+</a><a href="#h3-4-123" id="h3-4-123" class="i">+					}
+</a><a href="#h3-4-124" id="h3-4-124" class="i">+				}
+</a><a href="#h3-4-125" id="h3-4-125" class="i">+			} else {
+</a><a href="#h3-4-126" id="h3-4-126" class="i">+				// Multi qbit operation
+</a><a href="#h3-4-127" id="h3-4-127" class="i">+				// The order of the qbits in the operation is important, we need to reorder the qbits in the operation
+</a><a href="#h3-4-128" id="h3-4-128" class="i">+				// if they are not in sequence by swapping the qbits and then swapping them back after the matrix is created
+</a><a href="#h3-4-129" id="h3-4-129" class="i">+
+</a><a href="#h3-4-130" id="h3-4-130" class="i">+				localOrder := make([]int, argNumQBits)
+</a><a href="#h3-4-131" id="h3-4-131" class="i">+				for i, arg := range op[fundLine].Elements {
+</a><a href="#h3-4-132" id="h3-4-132" class="i">+					argName := arg.GetValue()
+</a><a href="#h3-4-133" id="h3-4-133" class="i">+					localOrder[i] = sim.qbitsNum[argName]
+</a><a href="#h3-4-134" id="h3-4-134" class="i">+				}
+</a><a href="#h3-4-135" id="h3-4-135" class="i">+
+</a><a href="#h3-4-136" id="h3-4-136" class="i">+				fmt.Println(localOrder, q)
+</a><a href="#h3-4-137" id="h3-4-137" class="i">+
+</a><a href="#h3-4-138" id="h3-4-138" class="i">+				for i, lq := range localOrder {
+</a><a href="#h3-4-139" id="h3-4-139" class="i">+					if lq != q {
+</a><a href="#h3-4-140" id="h3-4-140" class="i">+						// Swap the qbits
+</a><a href="#h3-4-141" id="h3-4-141" class="i">+						localQBits[q], localQBits[lq] = localQBits[lq], localQBits[q]
+</a><a href="#h3-4-142" id="h3-4-142" class="i">+						// Add the swap to the list
+</a><a href="#h3-4-143" id="h3-4-143" class="i">+						swaps = append(swaps, swap{q, lq})
+</a><a href="#h3-4-144" id="h3-4-144" class="i">+						if sim.debug {
+</a><a href="#h3-4-145" id="h3-4-145" class="i">+							fmt.Printf(&quot;Swapping qbits %d and %d\n&quot;, q, lq)
+</a><a href="#h3-4-146" id="h3-4-146" class="i">+						}
+</a><a href="#h3-4-147" id="h3-4-147" class="i">+						// Swap the localOrder if needed
+</a><a href="#h3-4-148" id="h3-4-148" class="i">+						for j, lq2 := range localOrder {
+</a><a href="#h3-4-149" id="h3-4-149" class="i">+							if lq2 == q {
+</a><a href="#h3-4-150" id="h3-4-150" class="i">+								localOrder[j] = lq
+</a><a href="#h3-4-151" id="h3-4-151" class="i">+							} else if lq2 == lq {
+</a><a href="#h3-4-152" id="h3-4-152" class="i">+								localOrder[j] = q
+</a><a href="#h3-4-153" id="h3-4-153" class="i">+							}
+</a><a href="#h3-4-154" id="h3-4-154" class="i">+						}
+</a><a href="#h3-4-155" id="h3-4-155" class="i">+						if sim.debug {
+</a><a href="#h3-4-156" id="h3-4-156" class="i">+							fmt.Println(&quot;newLocalOrder:&quot;, localOrder)
+</a><a href="#h3-4-157" id="h3-4-157" class="i">+						}
+</a><a href="#h3-4-158" id="h3-4-158" class="i">+
+</a><a href="#h3-4-159" id="h3-4-159" class="i">+					}
+</a><a href="#h3-4-160" id="h3-4-160" class="i">+					if i != len(localOrder)-1 {
+</a><a href="#h3-4-161" id="h3-4-161" class="i">+						q++
+</a><a href="#h3-4-162" id="h3-4-162" class="i">+					}
+</a><a href="#h3-4-163" id="h3-4-163" class="i">+				}
+</a><a href="#h3-4-164" id="h3-4-164" class="i">+
+</a><a href="#h3-4-165" id="h3-4-165" class="i">+				// Create the matrix
+</a><a href="#h3-4-166" id="h3-4-166" class="i">+				if matrix, err := sim.MatrixFromOp(op[fundLine].Operation.GetValue()); err != nil {
+</a><a href="#h3-4-167" id="h3-4-167" class="i">+					return nil, fmt.Errorf(&quot;error creating matrix from operation: %v&quot;, err)
+</a><a href="#h3-4-168" id="h3-4-168" class="i">+				} else {
+</a><a href="#h3-4-169" id="h3-4-169" class="i">+					if result == nil {
+</a><a href="#h3-4-170" id="h3-4-170" class="i">+						result = matrix
+</a><a href="#h3-4-171" id="h3-4-171" class="i">+					} else {
+</a><a href="#h3-4-172" id="h3-4-172" class="i">+						result = bmmatrix.TensorProductComplex(result, matrix)
+</a><a href="#h3-4-173" id="h3-4-173" class="i">+					}
+</a><a href="#h3-4-174" id="h3-4-174" class="i">+				}
+</a><a href="#h3-4-175" id="h3-4-175" class="i">+			}
+</a><a href="#h3-4-176" id="h3-4-176" class="i">+		}
+</a><a href="#h3-4-177" id="h3-4-177" class="i">+	}
+</a><a href="#h3-4-178" id="h3-4-178" class="i">+
+</a><a href="#h3-4-179" id="h3-4-179" class="i">+	if sim.debug {
+</a><a href="#h3-4-180" id="h3-4-180" class="i">+		fmt.Println(&quot;swaps:&quot;, swaps)
+</a><a href="#h3-4-181" id="h3-4-181" class="i">+		swaps2baseSwaps(swap{0, 0}, len(sim.qbits))
+</a><a href="#h3-4-182" id="h3-4-182" class="i">+	}
+</a><a href="#h3-4-183" id="h3-4-183" class="i">+
+</a><a href="#h3-4-184" id="h3-4-184" class="i">+	return result, nil
+</a><a href="#h3-4-185" id="h3-4-185" class="i">+}
+</a><a href="#h3-4-186" id="h3-4-186" class="i">+
+</a><a href="#h3-4-187" id="h3-4-187" class="i">+func swaps2baseSwaps(s swap, n int) []swap {
+</a><a href="#h3-4-188" id="h3-4-188" class="i">+	baseNum := uint64(1 &lt;&lt; n)
+</a><a href="#h3-4-189" id="h3-4-189" class="i">+	fmt.Println(&quot;baseNum:&quot;, baseNum)
+</a><a href="#h3-4-190" id="h3-4-190" class="i">+	// TODO: implement
+</a><a href="#h3-4-191" id="h3-4-191" class="i">+	return nil
+</a><a href="#h3-4-192" id="h3-4-192" class="i">+}
+</a><a href="#h3-4-193" id="h3-4-193" class="i">+
+</a><a href="#h3-4-194" id="h3-4-194" class="i">+func (sim *BmQSimulator) MatrixFromOp(op string) (*bmmatrix.BmMatrixSquareComplex, error) {
+</a><a href="#h3-4-195" id="h3-4-195" class="i">+	switch op {
+</a><a href="#h3-4-196" id="h3-4-196" class="i">+	case &quot;h&quot;, &quot;H&quot;:
+</a><a href="#h3-4-197" id="h3-4-197" class="i">+		return bmmatrix.Hadamard(), nil
+</a><a href="#h3-4-198" id="h3-4-198" class="i">+	case &quot;x&quot;, &quot;X&quot;:
+</a><a href="#h3-4-199" id="h3-4-199" class="i">+		return bmmatrix.PauliX(), nil
+</a><a href="#h3-4-200" id="h3-4-200" class="i">+	case &quot;y&quot;, &quot;Y&quot;:
+</a><a href="#h3-4-201" id="h3-4-201" class="i">+		return bmmatrix.PauliY(), nil
+</a><a href="#h3-4-202" id="h3-4-202" class="i">+	case &quot;z&quot;, &quot;Z&quot;:
+</a><a href="#h3-4-203" id="h3-4-203" class="i">+		return bmmatrix.PauliZ(), nil
+</a><a href="#h3-4-204" id="h3-4-204" class="i">+	case &quot;cx&quot;, &quot;CX&quot;:
+</a><a href="#h3-4-205" id="h3-4-205" class="i">+		return bmmatrix.CNot(), nil
+</a><a href="#h3-4-206" id="h3-4-206" class="i">+	case &quot;zero&quot;, &quot;ZERO&quot;:
+</a><a href="#h3-4-207" id="h3-4-207" class="i">+	// Ignore the zero operation
+</a><a href="#h3-4-208" id="h3-4-208" class="i">+	default:
+</a><a href="#h3-4-209" id="h3-4-209" class="i">+		return nil, fmt.Errorf(&quot;unknown operation %s&quot;, op)
+</a><a href="#h3-4-210" id="h3-4-210" class="i">+	}
+</a> 	return nil, nil
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROMsize and RAMsize - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7715b77c8fa93a486e93dd2e36b0df2cf9b49476.html">7715b77c8fa93a486e93dd2e36b0df2cf9b49476</a>
+<b>parent</b> <a href="../commit/6247da63d55a917df7c5db2b8d33eeb56cfaae12.html">6247da63d55a917df7c5db2b8d33eeb56cfaae12</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 17 Aug 2023 19:53:38 +0200
+
+ROMsize and RAMsize
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbcof.go</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">104</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/meta.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 106 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbcof.go.html">pkg/basm/creatorbcof.go</a> b/<a href="../file/pkg/basm/creatorbcof.go.html">pkg/basm/creatorbcof.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,9 @@
+</a> package basm
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-import &quot;fmt&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+import (
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+)
+</a> 
+ // Assembler2BCOF transform an assembled instance into a BCOF file
+ func (bi *BasmInstance) Assembler2BCOF() error {
+<a href="#h0-1" id="h0-1" class="h">@@ -29,6 +32,16 @@ func (bi *BasmInstance) Assembler2BCOF() error {
+</a> 		}
+ 		// if the name of the CP (cp.GetValue()) is in the form of &quot;cpN&quot; (where N is a number) then we have to compile against the N-th CP of the result BM
+ 		// otherwise we have to compile against the CP with the same name that can be found into the bminfo file
+<a href="#h0-1-3" id="h0-1-3" class="i">+		re := regexp.MustCompile(&quot;^cp(?P&lt;cpId&gt;[0-9]+)$&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		if re.MatchString(cp.GetValue()) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			cpId := re.ReplaceAllString(cp.GetValue(), &quot;${cpId}&quot;)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			if bi.debug {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;cpId: &quot;) + yellow(cpId))
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			//TODO
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		} else {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			//TODO
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		}
+</a> 	}
+ 	//TODO
+ 	return nil
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -124,7 +125,7 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 		bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps&quot;, T: bmreqs.ObjectSet, Name: &quot;id&quot;, Value: strconv.Itoa(i), Op: bmreqs.OpAdd})
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-		if cpm, err := bi.CreateConnectingProcessor(rSize, i, romCode, romData, ramCode, ramData, execMode); err == nil {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		if cpm, err := bi.CreateConnectingProcessor(rSize, cp, i, romCode, romData, ramCode, ramData, execMode); err == nil {
+</a> 			cps[i] = cpm
+ 			cpIndexes[cp.GetValue()] = strconv.Itoa(i)
+ 			if bi.BMinfo != nil {
+<a href="#h1-2" id="h1-2" class="h">@@ -541,7 +542,7 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 	return nil
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, procid int, romCode string, romData string, ramCode string, ramData string, execMode string) (*procbuilder.Machine, error) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+func (bi *BasmInstance) CreateConnectingProcessor(rSize uint8, cp *bmline.BasmElement, procid int, romCode string, romData string, ramCode string, ramData string, execMode string) (*procbuilder.Machine, error) {
+</a> 	myMachine := new(procbuilder.Machine)
+ 
+ 	myArch := &amp;myMachine.Arch
+<a href="#h1-3" id="h1-3" class="h">@@ -738,14 +739,57 @@ outer:
+</a> 	}
+ 
+ 	// Here start the mess with the RAM/ROM size, word size, etc.
+<a href="#h1-3-3" id="h1-3-3" class="i">+	// Compute the word size and the RAM/ROM size, check the eventual cp options
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	// This is the sequence of check in order of priority (valid both for ROM and RAM):
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	// - Check if there is a cp option for the word size and use it overriding the other options. In the case of missing resources, the assembler will fail
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	// - TODO: Check requirements
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+	//   - TODO From the direct opcodes
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	//   - TODO From the indirect opcodes
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+	// - Check the ROM code size and use it (eventually adding the data section size).
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	if cp.GetMeta(&quot;romsize&quot;) != &quot;&quot; {
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+		if val, err := strconv.Atoi(cp.GetMeta(&quot;romsize&quot;)); err == nil {
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+			myArch.O = uint8(val)
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+			if bi.debug {
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;romsize&quot;)))
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+			}
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+		} else {
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+			return nil, err
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+		}
+</a><a href="#h1-3-21" id="h1-3-21" class="i">+	} else if romCode != &quot;&quot; {
+</a><a href="#h1-3-22" id="h1-3-22" class="i">+		myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))
+</a><a href="#h1-3-23" id="h1-3-23" class="i">+		if bi.debug {
+</a><a href="#h1-3-24" id="h1-3-24" class="i">+			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))))
+</a><a href="#h1-3-25" id="h1-3-25" class="i">+		}
+</a><a href="#h1-3-26" id="h1-3-26" class="i">+	} else {
+</a><a href="#h1-3-27" id="h1-3-27" class="i">+		myArch.O = uint8(0)
+</a><a href="#h1-3-28" id="h1-3-28" class="i">+		if bi.debug {
+</a><a href="#h1-3-29" id="h1-3-29" class="i">+			fmt.Println(&quot;\t\t - &quot; + green(&quot;romsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+</a><a href="#h1-3-30" id="h1-3-30" class="i">+		}
+</a><a href="#h1-3-31" id="h1-3-31" class="i">+	}
+</a> 
+<a href="#h1-3-33" id="h1-3-33" class="d">-	myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines)))
+</a><a href="#h1-3-34" id="h1-3-34" class="d">-
+</a><a href="#h1-3-35" id="h1-3-35" class="d">-	// TODO RAM
+</a><a href="#h1-3-36" id="h1-3-36" class="d">-	// myarch.L = uint8(Needed_bits(preq.Ramsize))
+</a><a href="#h1-3-37" id="h1-3-37" class="d">-	myArch.L = uint8(8)
+</a><a href="#h1-3-38" id="h1-3-38" class="i">+	if cp.GetMeta(&quot;ramsize&quot;) != &quot;&quot; {
+</a><a href="#h1-3-39" id="h1-3-39" class="i">+		if val, err := strconv.Atoi(cp.GetMeta(&quot;ramsize&quot;)); err == nil {
+</a><a href="#h1-3-40" id="h1-3-40" class="i">+			myArch.L = uint8(val)
+</a><a href="#h1-3-41" id="h1-3-41" class="i">+			if bi.debug {
+</a><a href="#h1-3-42" id="h1-3-42" class="i">+				fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (cp config): &quot;) + yellow(cp.GetMeta(&quot;ramsize&quot;)))
+</a><a href="#h1-3-43" id="h1-3-43" class="i">+			}
+</a><a href="#h1-3-44" id="h1-3-44" class="i">+		} else {
+</a><a href="#h1-3-45" id="h1-3-45" class="i">+			return nil, err
+</a><a href="#h1-3-46" id="h1-3-46" class="i">+		}
+</a> 
+<a href="#h1-3-48" id="h1-3-48" class="d">-	// TODO remove it, just for testing purposes	myArch.WordSize = uint8(8)
+</a><a href="#h1-3-49" id="h1-3-49" class="i">+	} else if ramCode != &quot;&quot; {
+</a><a href="#h1-3-50" id="h1-3-50" class="i">+		myArch.L = uint8(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines)))
+</a><a href="#h1-3-51" id="h1-3-51" class="i">+		if bi.debug {
+</a><a href="#h1-3-52" id="h1-3-52" class="i">+			fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(strconv.Itoa(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines)))))
+</a><a href="#h1-3-53" id="h1-3-53" class="i">+		}
+</a><a href="#h1-3-54" id="h1-3-54" class="i">+	} else {
+</a><a href="#h1-3-55" id="h1-3-55" class="i">+		myArch.L = uint8(0)
+</a><a href="#h1-3-56" id="h1-3-56" class="i">+		if bi.debug {
+</a><a href="#h1-3-57" id="h1-3-57" class="i">+			fmt.Println(&quot;\t\t - &quot; + green(&quot;ramsize (pre-data): &quot;) + yellow(&quot;0&quot;))
+</a><a href="#h1-3-58" id="h1-3-58" class="i">+		}
+</a><a href="#h1-3-59" id="h1-3-59" class="i">+	}
+</a> 
+ 	// The shared constrains will be populated later from the basm metadata
+ 	myArch.Shared_constraints = &quot;&quot;
+<a href="#h1-4" id="h1-4" class="h">@@ -767,8 +811,6 @@ outer:
+</a> 	// 	return nil, err
+ 	// }
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-	// myArch.WordSize = uint8(16)
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-
+</a> 	// If there is a data section, we need to add it to the machine and update the myArch.O field prior to assembling
+ 	if romData != &quot;&quot; {
+ 		wordSize := myMachine.Max_word()
+<a href="#h1-5" id="h1-5" class="h">@@ -796,13 +838,47 @@ outer:
+</a> 				}
+ 			}
+ 		}
+<a href="#h1-5-3" id="h1-5-3" class="i">+		// TODO finire post-data
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		if romCode != &quot;&quot; {
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+			myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+		} else {
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+			myArch.O = uint8(Needed_bits(len(data)))
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+		}
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+	}
+</a> 
+<a href="#h1-5-11" id="h1-5-11" class="d">-		myArch.O = uint8(Needed_bits(len(bi.sections[romCode].sectionBody.Lines) + len(data)))
+</a><a href="#h1-5-12" id="h1-5-12" class="d">-		// myMachine.Data.Vars = data
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	if ramData != &quot;&quot; {
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+		rSize := myArch.Rsize
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+		ramPad := &quot;&quot;
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+		for i := 0; i &lt; int(rSize); i++ {
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+			ramPad += &quot;0&quot;
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+		}
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+		if rSize &lt; 8 {
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+			return nil, errors.New(&quot;register size is too small&quot;)
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+		}
+</a> 
+<a href="#h1-5-23" id="h1-5-23" class="d">-	}
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+		data := make([]string, 0)
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+		for _, line := range bi.sections[ramData].sectionBody.Lines {
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+			for _, arg := range line.Elements {
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+				hexVal := arg.GetValue()
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+					nS, _ := n.ExportBinary(false)
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+					nS = nS + ramPad
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+					nS = nS[len(nS)-int(rSize):]
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+					data = append(data, nS)
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+				} else {
+</a><a href="#h1-5-35" id="h1-5-35" class="i">+					return nil, err
+</a><a href="#h1-5-36" id="h1-5-36" class="i">+				}
+</a><a href="#h1-5-37" id="h1-5-37" class="i">+			}
+</a><a href="#h1-5-38" id="h1-5-38" class="i">+		}
+</a> 
+<a href="#h1-5-40" id="h1-5-40" class="d">-	// TODO ADD ramData
+</a><a href="#h1-5-41" id="h1-5-41" class="i">+		// TODO finire post-data
+</a><a href="#h1-5-42" id="h1-5-42" class="i">+		if ramCode != &quot;&quot; {
+</a><a href="#h1-5-43" id="h1-5-43" class="i">+			myArch.L = uint8(Needed_bits(len(bi.sections[ramCode].sectionBody.Lines) + len(data)))
+</a><a href="#h1-5-44" id="h1-5-44" class="i">+		} else {
+</a><a href="#h1-5-45" id="h1-5-45" class="i">+			myArch.L = uint8(Needed_bits(len(data)))
+</a><a href="#h1-5-46" id="h1-5-46" class="i">+		}
+</a><a href="#h1-5-47" id="h1-5-47" class="i">+	}
+</a> 
+ 	return myMachine, nil
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/meta.go.html">pkg/basm/meta.go</a> b/<a href="../file/pkg/basm/meta.go.html">pkg/basm/meta.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -216,6 +216,8 @@ func (bi *BasmInstance) filteredMetaAdd(el *bmline.BasmElement, key string, valu
+</a> 		case &quot;romdata&quot;:
+ 		case &quot;ramcode&quot;:
+ 		case &quot;ramdata&quot;:
+<a href="#h2-0-3" id="h2-0-3" class="i">+		case &quot;romsize&quot;:
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		case &quot;ramsize&quot;:
+</a> 		case &quot;execmode&quot;:
+ 		case &quot;fragcollapse&quot;:
+ 		default:
+</pre>
+</div>
+</body>
+</html>

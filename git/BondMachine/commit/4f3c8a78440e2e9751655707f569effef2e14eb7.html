@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>float16 numbers and instructions - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4f3c8a78440e2e9751655707f569effef2e14eb7.html">4f3c8a78440e2e9751655707f569effef2e14eb7</a>
+<b>parent</b> <a href="../commit/ba636610624392e70fd5499edcb5a7822c0d2efc.html">ba636610624392e70fd5499edcb5a7822c0d2efc</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 27 Apr 2023 23:23:51 +0200
+
+float16 numbers and instructions
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">go.mod</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">go.sum</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmnumbers/type_float16.go</a></td><td> | </td><td class="num">89</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmnumbers/type_float32.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/procbuilder/op_addf16.go</a></td><td> | </td><td class="num">580</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_divf.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">pkg/procbuilder/op_divf16.go</a></td><td> | </td><td class="num">614</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h9">pkg/procbuilder/op_multf16.go</a></td><td> | </td><td class="num">567</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>10 files changed, 1860 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/go.mod.html">go.mod</a> b/<a href="../file/go.mod.html">go.mod</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,6 +18,7 @@ require (
+</a> 	github.com/mdlayher/packet v1.1.1 // indirect
+ 	github.com/mdlayher/socket v0.4.0 // indirect
+ 	github.com/veandco/go-sdl2 v0.4.33 // indirect
+<a href="#h0-0-3" id="h0-0-3" class="i">+	github.com/x448/float16 v0.8.4 // indirect
+</a> 	golang.org/x/image v0.6.0 // indirect
+ 	golang.org/x/net v0.8.0 // indirect
+ 	golang.org/x/sync v0.1.0 // indirect
+<b>diff --git a/<a id="h1" href="../file/go.sum.html">go.sum</a> b/<a href="../file/go.sum.html">go.sum</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -28,6 +28,8 @@ github.com/tfriedel6/canvas v0.12.1/go.mod h1:WIe1YgsQiKA1awmU6tSs8e5DkceDHC5MHg
+</a> github.com/veandco/go-sdl2 v0.4.0/go.mod h1:FB+kTpX9YTE+urhYiClnRzpOXbiWgaU3+5F2AB78DPg=
+ github.com/veandco/go-sdl2 v0.4.33 h1:cxQ0OdUBEByHxvCyrGxy9F8WpL38Ya6hzV4n27QL84M=
+ github.com/veandco/go-sdl2 v0.4.33/go.mod h1:OROqMhHD43nT4/i9crJukyVecjPNYYuCofep6SNiAjY=
+<a href="#h1-0-3" id="h1-0-3" class="i">+github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
+</a> github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
+ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+ golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
+<b>diff --git a/<a id="h2" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -34,6 +34,7 @@ func init() {
+</a> 	AllTypes = make([]BMNumberType, 0)
+ 	AllTypes = append(AllTypes, Unsigned{})
+ 	AllTypes = append(AllTypes, Signed{})
+<a href="#h2-0-3" id="h2-0-3" class="i">+	AllTypes = append(AllTypes, Float16{})
+</a> 	AllTypes = append(AllTypes, Float32{})
+ 	AllTypes = append(AllTypes, Hex{})
+ 	AllTypes = append(AllTypes, Bin{})
+<b>diff --git a/<a id="h3" href="../file/pkg/bmnumbers/type_float16.go.html">pkg/bmnumbers/type_float16.go</a> b/<a href="../file/pkg/bmnumbers/type_float16.go.html">pkg/bmnumbers/type_float16.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,89 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmnumbers
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;regexp&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	&quot;github.com/x448/float16&quot;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+type Float16 struct{}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+func (d Float16) GetName() string {
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	return &quot;float16&quot;
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+}
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+func (d Float16) getInfo() string {
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	return &quot;&quot;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+}
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+func (d Float16) getSize() int {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	return 16
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+}
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+func (d Float16) importMatchers() map[string]ImportFunc {
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	result[&quot;^0f&lt;16&gt;(?P&lt;number&gt;[^lL].*)$&quot;] = float16Import
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	return result
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+}
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+func (d Float16) Convert(n *BMNumber) error {
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	convertFrom := n.nType.GetName()
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	switch convertFrom {
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	default:
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.GetName())
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	}
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	return nil
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+}
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+func float16Import(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	number := re.ReplaceAllString(input, &quot;${number}&quot;)
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	if s, err := strconv.ParseFloat(number, 32); err == nil {
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+		newNumber := BMNumber{}
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+		newNumber.number = make([]byte, 2)
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+		s := uint64(float16.Fromfloat32(float32(s)).Bits())
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+		mask := uint64(255)
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+		for i := 0; i &lt; 2; i++ {
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+			newNumber.number[i] = byte(s &amp; mask)
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+			s = s &gt;&gt; 8
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+		}
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+		newNumber.bits = 16
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+		newNumber.nType = Float16{}
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+		return &amp;newNumber, nil
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+	} else {
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+		return nil, errors.New(&quot;unknown float16 number &quot; + input)
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+	}
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+}
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+func (d Float16) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+	if n.bits != 16 {
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+		return &quot;&quot;, errors.New(&quot;cannot export float16 number with &quot; + strconv.Itoa(n.bits) + &quot; bits&quot;)
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+	}
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+	var s uint16
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+	for i := 0; i &lt; 2; i++ {
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+		s = s | (uint16(n.number[i]) &lt;&lt; uint16(8*i))
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+	}
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+	return &quot;0f&lt;16&gt;&quot; + strconv.FormatFloat(float64(float16.Frombits(s).Float32()), &#39;f&#39;, -1, 32), nil
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+}
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+func (d Float16) ShowInstructions() map[string]string {
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+	result := make(map[string]string)
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+	result[&quot;multop&quot;] = &quot;multf16&quot;
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+	result[&quot;divop&quot;] = &quot;divf16&quot;
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+	result[&quot;addop&quot;] = &quot;addf16&quot;
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+	return result
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+}
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+func (d Float16) ShowPrefix() string {
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+	return &quot;0f&lt;16&gt;&quot;
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a> b/<a href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -24,7 +24,8 @@ func (d Float32) getSize() int {
+</a> func (d Float32) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-	result[&quot;^0f(?P&lt;number&gt;[^lL].*)$&quot;] = float32Import
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	result[&quot;^0f&lt;32&gt;(?P&lt;number&gt;[^lL].*)$&quot;] = float32Import
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	result[&quot;^0f(?P&lt;number&gt;[^lL&lt;].*)$&quot;] = float32Import
+</a> 
+ 	return result
+ }
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -39,6 +39,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Adc{})
+ 	Allopcodes = append(Allopcodes, Add{})
+ 	Allopcodes = append(Allopcodes, Addf{})
+<a href="#h5-0-3" id="h5-0-3" class="i">+	Allopcodes = append(Allopcodes, Addf16{})
+</a> 	Allopcodes = append(Allopcodes, Addi{})
+ 	Allopcodes = append(Allopcodes, Addp{pipeline: new(bool)})
+ 	Allopcodes = append(Allopcodes, And{})
+<a href="#h5-1" id="h5-1" class="h">@@ -55,6 +56,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Dec{})
+ 	Allopcodes = append(Allopcodes, Div{})
+ 	Allopcodes = append(Allopcodes, Divf{})
+<a href="#h5-1-3" id="h5-1-3" class="i">+	Allopcodes = append(Allopcodes, Divf16{})
+</a> 	Allopcodes = append(Allopcodes, Divp{pipeline: new(bool)})
+ 	Allopcodes = append(Allopcodes, Dpc{})
+ 	Allopcodes = append(Allopcodes, Expf{})
+<a href="#h5-2" id="h5-2" class="h">@@ -79,6 +81,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Mulc{})
+ 	Allopcodes = append(Allopcodes, Mult{})
+ 	Allopcodes = append(Allopcodes, Multf{})
+<a href="#h5-2-3" id="h5-2-3" class="i">+	Allopcodes = append(Allopcodes, Multf16{})
+</a> 	Allopcodes = append(Allopcodes, Multp{pipeline: new(bool)})
+ 	Allopcodes = append(Allopcodes, Nand{})
+ 	Allopcodes = append(Allopcodes, Nop{})
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a> b/<a href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,580 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package procbuilder
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+import (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+	&quot;github.com/x448/float16&quot;
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+)
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+// The Addf16 opcode is both a basic instruction and a template for other instructions.
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+type Addf16 struct{}
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+func (op Addf16) Op_get_name() string {
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+	return &quot;addf16&quot;
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+}
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+func (op Addf16) Op_get_desc() string {
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+	return &quot;Register addf16&quot;
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+}
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+func (op Addf16) Op_show_assembler(arch *Arch) string {
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+	result := &quot;addf16 [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the sum of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+	return result
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+}
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+func (op Addf16) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+}
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+func (op Addf16) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+	result += &quot;\treg [15:0] adder_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+	result += &quot;\treg [15:0] adder_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+	result += &quot;\treg adder_&quot; + arch.Tag + &quot;_input_a_stb;\n&quot;
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+	result += &quot;\treg adder_&quot; + arch.Tag + &quot;_input_b_stb;\n&quot;
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+	result += &quot;\treg adder_&quot; + arch.Tag + &quot;_output_z_ack;\n\n&quot;
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+	result += &quot;\twire [15:0] adder_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+	result += &quot;\twire adder_&quot; + arch.Tag + &quot;_output_z_stb;\n&quot;
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+	result += &quot;\twire adder_&quot; + arch.Tag + &quot;_input_a_ack;\n&quot;
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+	result += &quot;\twire adder_&quot; + arch.Tag + &quot;_input_b_ack;\n\n&quot;
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+	result += &quot;\treg	[1:0] adder_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+	result += &quot;parameter adder_&quot; + arch.Tag + &quot;_put_a         = 2&#39;d0,\n&quot;
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+	result += &quot;          adder_&quot; + arch.Tag + &quot;_put_b         = 2&#39;d1,\n&quot;
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+	result += &quot;          adder_&quot; + arch.Tag + &quot;_get_z         = 2&#39;d2;\n&quot;
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+	result += &quot;\tadder_&quot; + arch.Tag + &quot; adder_&quot; + arch.Tag + &quot;_inst (adder_&quot; + arch.Tag + &quot;_input_a, adder_&quot; + arch.Tag + &quot;_input_b, adder_&quot; + arch.Tag + &quot;_input_a_stb, adder_&quot; + arch.Tag + &quot;_input_b_stb, adder_&quot; + arch.Tag + &quot;_output_z_ack, clock_signal, reset_signal, adder_&quot; + arch.Tag + &quot;_output_z, adder_&quot; + arch.Tag + &quot;_output_z_stb, adder_&quot; + arch.Tag + &quot;_input_a_ack, adder_&quot; + arch.Tag + &quot;_input_b_ack);\n\n&quot;
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+	return result
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+}
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+func (op Addf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+	result += &quot;					ADDF16: begin\n&quot;
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+	if arch.R == 1 {
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+	} else {
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+	}
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h6-0-72" id="h6-0-72" class="i">+
+</a><a href="#h6-0-73" id="h6-0-73" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h6-0-74" id="h6-0-74" class="i">+			cp := arch.Tag
+</a><a href="#h6-0-75" id="h6-0-75" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h6-0-76" id="h6-0-76" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h6-0-77" id="h6-0-77" class="i">+				continue
+</a><a href="#h6-0-78" id="h6-0-78" class="i">+			}
+</a><a href="#h6-0-79" id="h6-0-79" class="i">+		}
+</a><a href="#h6-0-80" id="h6-0-80" class="i">+
+</a><a href="#h6-0-81" id="h6-0-81" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h6-0-82" id="h6-0-82" class="i">+
+</a><a href="#h6-0-83" id="h6-0-83" class="i">+		if arch.R == 1 {
+</a><a href="#h6-0-84" id="h6-0-84" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h6-0-85" id="h6-0-85" class="i">+		} else {
+</a><a href="#h6-0-86" id="h6-0-86" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h6-0-87" id="h6-0-87" class="i">+		}
+</a><a href="#h6-0-88" id="h6-0-88" class="i">+
+</a><a href="#h6-0-89" id="h6-0-89" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h6-0-90" id="h6-0-90" class="i">+
+</a><a href="#h6-0-91" id="h6-0-91" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h6-0-92" id="h6-0-92" class="i">+				cp := arch.Tag
+</a><a href="#h6-0-93" id="h6-0-93" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:addf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h6-0-94" id="h6-0-94" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h6-0-95" id="h6-0-95" class="i">+					continue
+</a><a href="#h6-0-96" id="h6-0-96" class="i">+				}
+</a><a href="#h6-0-97" id="h6-0-97" class="i">+			}
+</a><a href="#h6-0-98" id="h6-0-98" class="i">+
+</a><a href="#h6-0-99" id="h6-0-99" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h6-0-100" id="h6-0-100" class="i">+			result += &quot;							case (adder_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h6-0-101" id="h6-0-101" class="i">+			result += &quot;							adder_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+</a><a href="#h6-0-102" id="h6-0-102" class="i">+			result += &quot;								if (adder_&quot; + arch.Tag + &quot;_input_a_ack) begin\n&quot;
+</a><a href="#h6-0-103" id="h6-0-103" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h6-0-104" id="h6-0-104" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 1;\n&quot;
+</a><a href="#h6-0-105" id="h6-0-105" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h6-0-106" id="h6-0-106" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_state &lt;= #1 adder_&quot; + arch.Tag + &quot;_put_b;\n&quot;
+</a><a href="#h6-0-107" id="h6-0-107" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h6-0-108" id="h6-0-108" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h6-0-109" id="h6-0-109" class="i">+			result += &quot;							adder_&quot; + arch.Tag + &quot;_put_b : begin\n&quot;
+</a><a href="#h6-0-110" id="h6-0-110" class="i">+			result += &quot;								if (adder_&quot; + arch.Tag + &quot;_input_b_ack) begin\n&quot;
+</a><a href="#h6-0-111" id="h6-0-111" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h6-0-112" id="h6-0-112" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 1;\n&quot;
+</a><a href="#h6-0-113" id="h6-0-113" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h6-0-114" id="h6-0-114" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_state &lt;= #1 adder_&quot; + arch.Tag + &quot;_get_z;\n&quot;
+</a><a href="#h6-0-115" id="h6-0-115" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 0;\n&quot;
+</a><a href="#h6-0-116" id="h6-0-116" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h6-0-117" id="h6-0-117" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h6-0-118" id="h6-0-118" class="i">+			result += &quot;							adder_&quot; + arch.Tag + &quot;_get_z : begin\n&quot;
+</a><a href="#h6-0-119" id="h6-0-119" class="i">+			result += &quot;								if (adder_&quot; + arch.Tag + &quot;_output_z_stb) begin\n&quot;
+</a><a href="#h6-0-120" id="h6-0-120" class="i">+			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 adder_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h6-0-121" id="h6-0-121" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+</a><a href="#h6-0-122" id="h6-0-122" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_state &lt;= #1 adder_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+</a><a href="#h6-0-123" id="h6-0-123" class="i">+			result += &quot;									adder_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+</a><a href="#h6-0-124" id="h6-0-124" class="i">+			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h6-0-125" id="h6-0-125" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h6-0-126" id="h6-0-126" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h6-0-127" id="h6-0-127" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h6-0-128" id="h6-0-128" class="i">+			result += &quot;								$display(\&quot;ADDF16 &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h6-0-129" id="h6-0-129" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h6-0-130" id="h6-0-130" class="i">+		}
+</a><a href="#h6-0-131" id="h6-0-131" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h6-0-132" id="h6-0-132" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h6-0-133" id="h6-0-133" class="i">+	}
+</a><a href="#h6-0-134" id="h6-0-134" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h6-0-135" id="h6-0-135" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h6-0-136" id="h6-0-136" class="i">+	return result
+</a><a href="#h6-0-137" id="h6-0-137" class="i">+}
+</a><a href="#h6-0-138" id="h6-0-138" class="i">+
+</a><a href="#h6-0-139" id="h6-0-139" class="i">+func (op Addf16) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h6-0-140" id="h6-0-140" class="i">+	// TODO
+</a><a href="#h6-0-141" id="h6-0-141" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-142" id="h6-0-142" class="i">+}
+</a><a href="#h6-0-143" id="h6-0-143" class="i">+
+</a><a href="#h6-0-144" id="h6-0-144" class="i">+func (op Addf16) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h6-0-145" id="h6-0-145" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h6-0-146" id="h6-0-146" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h6-0-147" id="h6-0-147" class="i">+
+</a><a href="#h6-0-148" id="h6-0-148" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h6-0-149" id="h6-0-149" class="i">+
+</a><a href="#h6-0-150" id="h6-0-150" class="i">+	if len(words) != 2 {
+</a><a href="#h6-0-151" id="h6-0-151" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h6-0-152" id="h6-0-152" class="i">+	}
+</a><a href="#h6-0-153" id="h6-0-153" class="i">+
+</a><a href="#h6-0-154" id="h6-0-154" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-155" id="h6-0-155" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h6-0-156" id="h6-0-156" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h6-0-157" id="h6-0-157" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h6-0-158" id="h6-0-158" class="i">+			break
+</a><a href="#h6-0-159" id="h6-0-159" class="i">+		}
+</a><a href="#h6-0-160" id="h6-0-160" class="i">+	}
+</a><a href="#h6-0-161" id="h6-0-161" class="i">+
+</a><a href="#h6-0-162" id="h6-0-162" class="i">+	if result == &quot;&quot; {
+</a><a href="#h6-0-163" id="h6-0-163" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h6-0-164" id="h6-0-164" class="i">+	}
+</a><a href="#h6-0-165" id="h6-0-165" class="i">+
+</a><a href="#h6-0-166" id="h6-0-166" class="i">+	partial := &quot;&quot;
+</a><a href="#h6-0-167" id="h6-0-167" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h6-0-168" id="h6-0-168" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h6-0-169" id="h6-0-169" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h6-0-170" id="h6-0-170" class="i">+			break
+</a><a href="#h6-0-171" id="h6-0-171" class="i">+		}
+</a><a href="#h6-0-172" id="h6-0-172" class="i">+	}
+</a><a href="#h6-0-173" id="h6-0-173" class="i">+
+</a><a href="#h6-0-174" id="h6-0-174" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h6-0-175" id="h6-0-175" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h6-0-176" id="h6-0-176" class="i">+	}
+</a><a href="#h6-0-177" id="h6-0-177" class="i">+
+</a><a href="#h6-0-178" id="h6-0-178" class="i">+	result += partial
+</a><a href="#h6-0-179" id="h6-0-179" class="i">+
+</a><a href="#h6-0-180" id="h6-0-180" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h6-0-181" id="h6-0-181" class="i">+		result += &quot;0&quot;
+</a><a href="#h6-0-182" id="h6-0-182" class="i">+	}
+</a><a href="#h6-0-183" id="h6-0-183" class="i">+
+</a><a href="#h6-0-184" id="h6-0-184" class="i">+	return result, nil
+</a><a href="#h6-0-185" id="h6-0-185" class="i">+}
+</a><a href="#h6-0-186" id="h6-0-186" class="i">+
+</a><a href="#h6-0-187" id="h6-0-187" class="i">+func (op Addf16) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h6-0-188" id="h6-0-188" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h6-0-189" id="h6-0-189" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h6-0-190" id="h6-0-190" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h6-0-191" id="h6-0-191" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h6-0-192" id="h6-0-192" class="i">+	return result, nil
+</a><a href="#h6-0-193" id="h6-0-193" class="i">+}
+</a><a href="#h6-0-194" id="h6-0-194" class="i">+
+</a><a href="#h6-0-195" id="h6-0-195" class="i">+func (op Addf16) Simulate(vm *VM, instr string) error {
+</a><a href="#h6-0-196" id="h6-0-196" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h6-0-197" id="h6-0-197" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h6-0-198" id="h6-0-198" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h6-0-199" id="h6-0-199" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h6-0-200" id="h6-0-200" class="i">+	case 16:
+</a><a href="#h6-0-201" id="h6-0-201" class="i">+		var floatDest float16.Float16
+</a><a href="#h6-0-202" id="h6-0-202" class="i">+		var floatSrc float16.Float16
+</a><a href="#h6-0-203" id="h6-0-203" class="i">+		if v, ok := vm.Registers[regDest].(uint16); ok {
+</a><a href="#h6-0-204" id="h6-0-204" class="i">+			floatDest = float16.Frombits(v)
+</a><a href="#h6-0-205" id="h6-0-205" class="i">+		} else {
+</a><a href="#h6-0-206" id="h6-0-206" class="i">+			floatDest = float16.Float16(0)
+</a><a href="#h6-0-207" id="h6-0-207" class="i">+		}
+</a><a href="#h6-0-208" id="h6-0-208" class="i">+		if v, ok := vm.Registers[regSrc].(uint16); ok {
+</a><a href="#h6-0-209" id="h6-0-209" class="i">+			floatSrc = float16.Frombits(v)
+</a><a href="#h6-0-210" id="h6-0-210" class="i">+		} else {
+</a><a href="#h6-0-211" id="h6-0-211" class="i">+			floatSrc = float16.Float16(0)
+</a><a href="#h6-0-212" id="h6-0-212" class="i">+		}
+</a><a href="#h6-0-213" id="h6-0-213" class="i">+		operation := floatDest.Float32() + floatSrc.Float32()
+</a><a href="#h6-0-214" id="h6-0-214" class="i">+		vm.Registers[regDest] = float16.Fromfloat32(operation).Bits()
+</a><a href="#h6-0-215" id="h6-0-215" class="i">+	default:
+</a><a href="#h6-0-216" id="h6-0-216" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 16 bits&quot;)
+</a><a href="#h6-0-217" id="h6-0-217" class="i">+	}
+</a><a href="#h6-0-218" id="h6-0-218" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h6-0-219" id="h6-0-219" class="i">+	return nil
+</a><a href="#h6-0-220" id="h6-0-220" class="i">+}
+</a><a href="#h6-0-221" id="h6-0-221" class="i">+
+</a><a href="#h6-0-222" id="h6-0-222" class="i">+// The random genaration does nothing
+</a><a href="#h6-0-223" id="h6-0-223" class="i">+func (op Addf16) Generate(arch *Arch) string {
+</a><a href="#h6-0-224" id="h6-0-224" class="i">+	// TODO
+</a><a href="#h6-0-225" id="h6-0-225" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-226" id="h6-0-226" class="i">+}
+</a><a href="#h6-0-227" id="h6-0-227" class="i">+
+</a><a href="#h6-0-228" id="h6-0-228" class="i">+func (op Addf16) Required_shared() (bool, []string) {
+</a><a href="#h6-0-229" id="h6-0-229" class="i">+	// TODO
+</a><a href="#h6-0-230" id="h6-0-230" class="i">+	return false, []string{}
+</a><a href="#h6-0-231" id="h6-0-231" class="i">+}
+</a><a href="#h6-0-232" id="h6-0-232" class="i">+
+</a><a href="#h6-0-233" id="h6-0-233" class="i">+func (op Addf16) Required_modes() (bool, []string) {
+</a><a href="#h6-0-234" id="h6-0-234" class="i">+	return false, []string{}
+</a><a href="#h6-0-235" id="h6-0-235" class="i">+}
+</a><a href="#h6-0-236" id="h6-0-236" class="i">+
+</a><a href="#h6-0-237" id="h6-0-237" class="i">+func (op Addf16) Forbidden_modes() (bool, []string) {
+</a><a href="#h6-0-238" id="h6-0-238" class="i">+	return false, []string{}
+</a><a href="#h6-0-239" id="h6-0-239" class="i">+}
+</a><a href="#h6-0-240" id="h6-0-240" class="i">+
+</a><a href="#h6-0-241" id="h6-0-241" class="i">+func (op Addf16) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h6-0-242" id="h6-0-242" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-243" id="h6-0-243" class="i">+}
+</a><a href="#h6-0-244" id="h6-0-244" class="i">+
+</a><a href="#h6-0-245" id="h6-0-245" class="i">+func (Op Addf16) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h6-0-246" id="h6-0-246" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-247" id="h6-0-247" class="i">+}
+</a><a href="#h6-0-248" id="h6-0-248" class="i">+
+</a><a href="#h6-0-249" id="h6-0-249" class="i">+func (Op Addf16) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h6-0-250" id="h6-0-250" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-251" id="h6-0-251" class="i">+}
+</a><a href="#h6-0-252" id="h6-0-252" class="i">+
+</a><a href="#h6-0-253" id="h6-0-253" class="i">+func (Op Addf16) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h6-0-254" id="h6-0-254" class="i">+	return &quot;&quot;
+</a><a href="#h6-0-255" id="h6-0-255" class="i">+}
+</a><a href="#h6-0-256" id="h6-0-256" class="i">+
+</a><a href="#h6-0-257" id="h6-0-257" class="i">+func (Op Addf16) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h6-0-258" id="h6-0-258" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h6-0-259" id="h6-0-259" class="i">+
+</a><a href="#h6-0-260" id="h6-0-260" class="i">+	result += &quot;//IEEE Floating Point Adder (Single Precision)\n&quot;
+</a><a href="#h6-0-261" id="h6-0-261" class="i">+	result += &quot;//Copyright (C) Jonathan P Dawson 2013\n&quot;
+</a><a href="#h6-0-262" id="h6-0-262" class="i">+	result += &quot;//2013-12-12\n&quot;
+</a><a href="#h6-0-263" id="h6-0-263" class="i">+	result += &quot;\n\n&quot;
+</a><a href="#h6-0-264" id="h6-0-264" class="i">+	result += &quot;module adder_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h6-0-265" id="h6-0-265" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h6-0-266" id="h6-0-266" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h6-0-267" id="h6-0-267" class="i">+	result += &quot;        input_a_stb,\n&quot;
+</a><a href="#h6-0-268" id="h6-0-268" class="i">+	result += &quot;        input_b_stb,\n&quot;
+</a><a href="#h6-0-269" id="h6-0-269" class="i">+	result += &quot;        output_z_ack,\n&quot;
+</a><a href="#h6-0-270" id="h6-0-270" class="i">+	result += &quot;        clk,\n&quot;
+</a><a href="#h6-0-271" id="h6-0-271" class="i">+	result += &quot;        rst,\n&quot;
+</a><a href="#h6-0-272" id="h6-0-272" class="i">+	result += &quot;        output_z,\n&quot;
+</a><a href="#h6-0-273" id="h6-0-273" class="i">+	result += &quot;        output_z_stb,\n&quot;
+</a><a href="#h6-0-274" id="h6-0-274" class="i">+	result += &quot;        input_a_ack,\n&quot;
+</a><a href="#h6-0-275" id="h6-0-275" class="i">+	result += &quot;        input_b_ack);\n&quot;
+</a><a href="#h6-0-276" id="h6-0-276" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-277" id="h6-0-277" class="i">+	result += &quot;  input     clk;\n&quot;
+</a><a href="#h6-0-278" id="h6-0-278" class="i">+	result += &quot;  input     rst;\n&quot;
+</a><a href="#h6-0-279" id="h6-0-279" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-280" id="h6-0-280" class="i">+	result += &quot;  input     [31:0] input_a;\n&quot;
+</a><a href="#h6-0-281" id="h6-0-281" class="i">+	result += &quot;  input     input_a_stb;\n&quot;
+</a><a href="#h6-0-282" id="h6-0-282" class="i">+	result += &quot;  output    input_a_ack;\n&quot;
+</a><a href="#h6-0-283" id="h6-0-283" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-284" id="h6-0-284" class="i">+	result += &quot;  input     [31:0] input_b;\n&quot;
+</a><a href="#h6-0-285" id="h6-0-285" class="i">+	result += &quot;  input     input_b_stb;\n&quot;
+</a><a href="#h6-0-286" id="h6-0-286" class="i">+	result += &quot;  output    input_b_ack;\n&quot;
+</a><a href="#h6-0-287" id="h6-0-287" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-288" id="h6-0-288" class="i">+	result += &quot;  output    [31:0] output_z;\n&quot;
+</a><a href="#h6-0-289" id="h6-0-289" class="i">+	result += &quot;  output    output_z_stb;\n&quot;
+</a><a href="#h6-0-290" id="h6-0-290" class="i">+	result += &quot;  input     output_z_ack;\n&quot;
+</a><a href="#h6-0-291" id="h6-0-291" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-292" id="h6-0-292" class="i">+	result += &quot;  reg       s_output_z_stb;\n&quot;
+</a><a href="#h6-0-293" id="h6-0-293" class="i">+	result += &quot;  reg       [31:0] s_output_z;\n&quot;
+</a><a href="#h6-0-294" id="h6-0-294" class="i">+	result += &quot;  reg       s_input_a_ack;\n&quot;
+</a><a href="#h6-0-295" id="h6-0-295" class="i">+	result += &quot;  reg       s_input_b_ack;\n&quot;
+</a><a href="#h6-0-296" id="h6-0-296" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-297" id="h6-0-297" class="i">+	result += &quot;  reg       [3:0] state;\n&quot;
+</a><a href="#h6-0-298" id="h6-0-298" class="i">+	result += &quot;  parameter get_a         = 4&#39;d0,\n&quot;
+</a><a href="#h6-0-299" id="h6-0-299" class="i">+	result += &quot;            get_b         = 4&#39;d1,\n&quot;
+</a><a href="#h6-0-300" id="h6-0-300" class="i">+	result += &quot;            unpack        = 4&#39;d2,\n&quot;
+</a><a href="#h6-0-301" id="h6-0-301" class="i">+	result += &quot;            special_cases = 4&#39;d3,\n&quot;
+</a><a href="#h6-0-302" id="h6-0-302" class="i">+	result += &quot;            align         = 4&#39;d4,\n&quot;
+</a><a href="#h6-0-303" id="h6-0-303" class="i">+	result += &quot;            add_0         = 4&#39;d5,\n&quot;
+</a><a href="#h6-0-304" id="h6-0-304" class="i">+	result += &quot;            add_1         = 4&#39;d6,\n&quot;
+</a><a href="#h6-0-305" id="h6-0-305" class="i">+	result += &quot;            normalise_1   = 4&#39;d7,\n&quot;
+</a><a href="#h6-0-306" id="h6-0-306" class="i">+	result += &quot;            normalise_2   = 4&#39;d8,\n&quot;
+</a><a href="#h6-0-307" id="h6-0-307" class="i">+	result += &quot;            round         = 4&#39;d9,\n&quot;
+</a><a href="#h6-0-308" id="h6-0-308" class="i">+	result += &quot;            pack          = 4&#39;d10,\n&quot;
+</a><a href="#h6-0-309" id="h6-0-309" class="i">+	result += &quot;            put_z         = 4&#39;d11;\n&quot;
+</a><a href="#h6-0-310" id="h6-0-310" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-311" id="h6-0-311" class="i">+	result += &quot;  reg       [31:0] a, b, z;\n&quot;
+</a><a href="#h6-0-312" id="h6-0-312" class="i">+	result += &quot;  reg       [26:0] a_m, b_m;\n&quot;
+</a><a href="#h6-0-313" id="h6-0-313" class="i">+	result += &quot;  reg       [23:0] z_m;\n&quot;
+</a><a href="#h6-0-314" id="h6-0-314" class="i">+	result += &quot;  reg       [9:0] a_e, b_e, z_e;\n&quot;
+</a><a href="#h6-0-315" id="h6-0-315" class="i">+	result += &quot;  reg       a_s, b_s, z_s;\n&quot;
+</a><a href="#h6-0-316" id="h6-0-316" class="i">+	result += &quot;  reg       guard, round_bit, sticky;\n&quot;
+</a><a href="#h6-0-317" id="h6-0-317" class="i">+	result += &quot;  reg       [27:0] sum;\n&quot;
+</a><a href="#h6-0-318" id="h6-0-318" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-319" id="h6-0-319" class="i">+	result += &quot;  always @(posedge clk)\n&quot;
+</a><a href="#h6-0-320" id="h6-0-320" class="i">+	result += &quot;  begin\n&quot;
+</a><a href="#h6-0-321" id="h6-0-321" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-322" id="h6-0-322" class="i">+	result += &quot;    case(state)\n&quot;
+</a><a href="#h6-0-323" id="h6-0-323" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-324" id="h6-0-324" class="i">+	result += &quot;      get_a:\n&quot;
+</a><a href="#h6-0-325" id="h6-0-325" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-326" id="h6-0-326" class="i">+	result += &quot;        s_input_a_ack &lt;= 1;\n&quot;
+</a><a href="#h6-0-327" id="h6-0-327" class="i">+	result += &quot;        if (s_input_a_ack &amp;&amp; input_a_stb) begin\n&quot;
+</a><a href="#h6-0-328" id="h6-0-328" class="i">+	result += &quot;          a &lt;= input_a;\n&quot;
+</a><a href="#h6-0-329" id="h6-0-329" class="i">+	result += &quot;          s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h6-0-330" id="h6-0-330" class="i">+	result += &quot;          state &lt;= get_b;\n&quot;
+</a><a href="#h6-0-331" id="h6-0-331" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-332" id="h6-0-332" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-333" id="h6-0-333" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-334" id="h6-0-334" class="i">+	result += &quot;      get_b:\n&quot;
+</a><a href="#h6-0-335" id="h6-0-335" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-336" id="h6-0-336" class="i">+	result += &quot;        s_input_b_ack &lt;= 1;\n&quot;
+</a><a href="#h6-0-337" id="h6-0-337" class="i">+	result += &quot;        if (s_input_b_ack &amp;&amp; input_b_stb) begin\n&quot;
+</a><a href="#h6-0-338" id="h6-0-338" class="i">+	result += &quot;          b &lt;= input_b;\n&quot;
+</a><a href="#h6-0-339" id="h6-0-339" class="i">+	result += &quot;          s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h6-0-340" id="h6-0-340" class="i">+	result += &quot;          state &lt;= unpack;\n&quot;
+</a><a href="#h6-0-341" id="h6-0-341" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-342" id="h6-0-342" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-343" id="h6-0-343" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-344" id="h6-0-344" class="i">+	result += &quot;      unpack:\n&quot;
+</a><a href="#h6-0-345" id="h6-0-345" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-346" id="h6-0-346" class="i">+	result += &quot;        a_m &lt;= {a[22 : 0], 3&#39;d0};\n&quot;
+</a><a href="#h6-0-347" id="h6-0-347" class="i">+	result += &quot;        b_m &lt;= {b[22 : 0], 3&#39;d0};\n&quot;
+</a><a href="#h6-0-348" id="h6-0-348" class="i">+	result += &quot;        a_e &lt;= a[30 : 23] - 127;\n&quot;
+</a><a href="#h6-0-349" id="h6-0-349" class="i">+	result += &quot;        b_e &lt;= b[30 : 23] - 127;\n&quot;
+</a><a href="#h6-0-350" id="h6-0-350" class="i">+	result += &quot;        a_s &lt;= a[31];\n&quot;
+</a><a href="#h6-0-351" id="h6-0-351" class="i">+	result += &quot;        b_s &lt;= b[31];\n&quot;
+</a><a href="#h6-0-352" id="h6-0-352" class="i">+	result += &quot;        state &lt;= special_cases;\n&quot;
+</a><a href="#h6-0-353" id="h6-0-353" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-354" id="h6-0-354" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-355" id="h6-0-355" class="i">+	result += &quot;      special_cases:\n&quot;
+</a><a href="#h6-0-356" id="h6-0-356" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-357" id="h6-0-357" class="i">+	result += &quot;        //if a is NaN or b is NaN return NaN \n&quot;
+</a><a href="#h6-0-358" id="h6-0-358" class="i">+	result += &quot;        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin\n&quot;
+</a><a href="#h6-0-359" id="h6-0-359" class="i">+	result += &quot;          z[31] &lt;= 1;\n&quot;
+</a><a href="#h6-0-360" id="h6-0-360" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h6-0-361" id="h6-0-361" class="i">+	result += &quot;          z[22] &lt;= 1;\n&quot;
+</a><a href="#h6-0-362" id="h6-0-362" class="i">+	result += &quot;          z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h6-0-363" id="h6-0-363" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-364" id="h6-0-364" class="i">+	result += &quot;        //if a is inf return inf\n&quot;
+</a><a href="#h6-0-365" id="h6-0-365" class="i">+	result += &quot;        end else if (a_e == 128) begin\n&quot;
+</a><a href="#h6-0-366" id="h6-0-366" class="i">+	result += &quot;          z[31] &lt;= a_s;\n&quot;
+</a><a href="#h6-0-367" id="h6-0-367" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h6-0-368" id="h6-0-368" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h6-0-369" id="h6-0-369" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-370" id="h6-0-370" class="i">+	result += &quot;        //if b is inf return inf\n&quot;
+</a><a href="#h6-0-371" id="h6-0-371" class="i">+	result += &quot;        end else if (b_e == 128) begin\n&quot;
+</a><a href="#h6-0-372" id="h6-0-372" class="i">+	result += &quot;          z[31] &lt;= b_s;\n&quot;
+</a><a href="#h6-0-373" id="h6-0-373" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h6-0-374" id="h6-0-374" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h6-0-375" id="h6-0-375" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-376" id="h6-0-376" class="i">+	result += &quot;        //if a is zero return b\n&quot;
+</a><a href="#h6-0-377" id="h6-0-377" class="i">+	result += &quot;        end else if ((($signed(a_e) == -127) &amp;&amp; (a_m == 0)) &amp;&amp; (($signed(b_e) == -127) &amp;&amp; (b_m == 0))) begin\n&quot;
+</a><a href="#h6-0-378" id="h6-0-378" class="i">+	result += &quot;          z[31] &lt;= a_s &amp; b_s;\n&quot;
+</a><a href="#h6-0-379" id="h6-0-379" class="i">+	result += &quot;          z[30:23] &lt;= b_e[7:0] + 127;\n&quot;
+</a><a href="#h6-0-380" id="h6-0-380" class="i">+	result += &quot;          z[22:0] &lt;= b_m[26:3];\n&quot;
+</a><a href="#h6-0-381" id="h6-0-381" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-382" id="h6-0-382" class="i">+	result += &quot;        //if a is zero return b\n&quot;
+</a><a href="#h6-0-383" id="h6-0-383" class="i">+	result += &quot;        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin\n&quot;
+</a><a href="#h6-0-384" id="h6-0-384" class="i">+	result += &quot;          z[31] &lt;= b_s;\n&quot;
+</a><a href="#h6-0-385" id="h6-0-385" class="i">+	result += &quot;          z[30:23] &lt;= b_e[7:0] + 127;\n&quot;
+</a><a href="#h6-0-386" id="h6-0-386" class="i">+	result += &quot;          z[22:0] &lt;= b_m[26:3];\n&quot;
+</a><a href="#h6-0-387" id="h6-0-387" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-388" id="h6-0-388" class="i">+	result += &quot;        //if b is zero return a\n&quot;
+</a><a href="#h6-0-389" id="h6-0-389" class="i">+	result += &quot;        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h6-0-390" id="h6-0-390" class="i">+	result += &quot;          z[31] &lt;= a_s;\n&quot;
+</a><a href="#h6-0-391" id="h6-0-391" class="i">+	result += &quot;          z[30:23] &lt;= a_e[7:0] + 127;\n&quot;
+</a><a href="#h6-0-392" id="h6-0-392" class="i">+	result += &quot;          z[22:0] &lt;= a_m[26:3];\n&quot;
+</a><a href="#h6-0-393" id="h6-0-393" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-394" id="h6-0-394" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-395" id="h6-0-395" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h6-0-396" id="h6-0-396" class="i">+	result += &quot;          if ($signed(a_e) == -127) begin\n&quot;
+</a><a href="#h6-0-397" id="h6-0-397" class="i">+	result += &quot;            a_e &lt;= -126;\n&quot;
+</a><a href="#h6-0-398" id="h6-0-398" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h6-0-399" id="h6-0-399" class="i">+	result += &quot;            a_m[26] &lt;= 1;\n&quot;
+</a><a href="#h6-0-400" id="h6-0-400" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h6-0-401" id="h6-0-401" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h6-0-402" id="h6-0-402" class="i">+	result += &quot;          if ($signed(b_e) == -127) begin\n&quot;
+</a><a href="#h6-0-403" id="h6-0-403" class="i">+	result += &quot;            b_e &lt;= -126;\n&quot;
+</a><a href="#h6-0-404" id="h6-0-404" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h6-0-405" id="h6-0-405" class="i">+	result += &quot;            b_m[26] &lt;= 1;\n&quot;
+</a><a href="#h6-0-406" id="h6-0-406" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h6-0-407" id="h6-0-407" class="i">+	result += &quot;          state &lt;= align;\n&quot;
+</a><a href="#h6-0-408" id="h6-0-408" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-409" id="h6-0-409" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-410" id="h6-0-410" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-411" id="h6-0-411" class="i">+	result += &quot;      align:\n&quot;
+</a><a href="#h6-0-412" id="h6-0-412" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-413" id="h6-0-413" class="i">+	result += &quot;        if ($signed(a_e) &gt; $signed(b_e)) begin\n&quot;
+</a><a href="#h6-0-414" id="h6-0-414" class="i">+	result += &quot;          b_e &lt;= b_e + 1;\n&quot;
+</a><a href="#h6-0-415" id="h6-0-415" class="i">+	result += &quot;          b_m &lt;= b_m &gt;&gt; 1;\n&quot;
+</a><a href="#h6-0-416" id="h6-0-416" class="i">+	result += &quot;          b_m[0] &lt;= b_m[0] | b_m[1];\n&quot;
+</a><a href="#h6-0-417" id="h6-0-417" class="i">+	result += &quot;        end else if ($signed(a_e) &lt; $signed(b_e)) begin\n&quot;
+</a><a href="#h6-0-418" id="h6-0-418" class="i">+	result += &quot;          a_e &lt;= a_e + 1;\n&quot;
+</a><a href="#h6-0-419" id="h6-0-419" class="i">+	result += &quot;          a_m &lt;= a_m &gt;&gt; 1;\n&quot;
+</a><a href="#h6-0-420" id="h6-0-420" class="i">+	result += &quot;          a_m[0] &lt;= a_m[0] | a_m[1];\n&quot;
+</a><a href="#h6-0-421" id="h6-0-421" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-422" id="h6-0-422" class="i">+	result += &quot;          state &lt;= add_0;\n&quot;
+</a><a href="#h6-0-423" id="h6-0-423" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-424" id="h6-0-424" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-425" id="h6-0-425" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-426" id="h6-0-426" class="i">+	result += &quot;      add_0:\n&quot;
+</a><a href="#h6-0-427" id="h6-0-427" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-428" id="h6-0-428" class="i">+	result += &quot;        z_e &lt;= a_e;\n&quot;
+</a><a href="#h6-0-429" id="h6-0-429" class="i">+	result += &quot;        if (a_s == b_s) begin\n&quot;
+</a><a href="#h6-0-430" id="h6-0-430" class="i">+	result += &quot;          sum &lt;= a_m + b_m;\n&quot;
+</a><a href="#h6-0-431" id="h6-0-431" class="i">+	result += &quot;          z_s &lt;= a_s;\n&quot;
+</a><a href="#h6-0-432" id="h6-0-432" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-433" id="h6-0-433" class="i">+	result += &quot;          if (a_m &gt;= b_m) begin\n&quot;
+</a><a href="#h6-0-434" id="h6-0-434" class="i">+	result += &quot;            sum &lt;= a_m - b_m;\n&quot;
+</a><a href="#h6-0-435" id="h6-0-435" class="i">+	result += &quot;            z_s &lt;= a_s;\n&quot;
+</a><a href="#h6-0-436" id="h6-0-436" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h6-0-437" id="h6-0-437" class="i">+	result += &quot;            sum &lt;= b_m - a_m;\n&quot;
+</a><a href="#h6-0-438" id="h6-0-438" class="i">+	result += &quot;            z_s &lt;= b_s;\n&quot;
+</a><a href="#h6-0-439" id="h6-0-439" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h6-0-440" id="h6-0-440" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-441" id="h6-0-441" class="i">+	result += &quot;        state &lt;= add_1;\n&quot;
+</a><a href="#h6-0-442" id="h6-0-442" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-443" id="h6-0-443" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-444" id="h6-0-444" class="i">+	result += &quot;      add_1:\n&quot;
+</a><a href="#h6-0-445" id="h6-0-445" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-446" id="h6-0-446" class="i">+	result += &quot;        if (sum[27]) begin\n&quot;
+</a><a href="#h6-0-447" id="h6-0-447" class="i">+	result += &quot;          z_m &lt;= sum[27:4];\n&quot;
+</a><a href="#h6-0-448" id="h6-0-448" class="i">+	result += &quot;          guard &lt;= sum[3];\n&quot;
+</a><a href="#h6-0-449" id="h6-0-449" class="i">+	result += &quot;          round_bit &lt;= sum[2];\n&quot;
+</a><a href="#h6-0-450" id="h6-0-450" class="i">+	result += &quot;          sticky &lt;= sum[1] | sum[0];\n&quot;
+</a><a href="#h6-0-451" id="h6-0-451" class="i">+	result += &quot;          z_e &lt;= z_e + 1;\n&quot;
+</a><a href="#h6-0-452" id="h6-0-452" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-453" id="h6-0-453" class="i">+	result += &quot;          z_m &lt;= sum[26:3];\n&quot;
+</a><a href="#h6-0-454" id="h6-0-454" class="i">+	result += &quot;          guard &lt;= sum[2];\n&quot;
+</a><a href="#h6-0-455" id="h6-0-455" class="i">+	result += &quot;          round_bit &lt;= sum[1];\n&quot;
+</a><a href="#h6-0-456" id="h6-0-456" class="i">+	result += &quot;          sticky &lt;= sum[0];\n&quot;
+</a><a href="#h6-0-457" id="h6-0-457" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-458" id="h6-0-458" class="i">+	result += &quot;        state &lt;= normalise_1;\n&quot;
+</a><a href="#h6-0-459" id="h6-0-459" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-460" id="h6-0-460" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-461" id="h6-0-461" class="i">+	result += &quot;      normalise_1:\n&quot;
+</a><a href="#h6-0-462" id="h6-0-462" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-463" id="h6-0-463" class="i">+	result += &quot;        if (z_m[23] == 0 &amp;&amp; $signed(z_e) &gt; -126) begin\n&quot;
+</a><a href="#h6-0-464" id="h6-0-464" class="i">+	result += &quot;          z_e &lt;= z_e - 1;\n&quot;
+</a><a href="#h6-0-465" id="h6-0-465" class="i">+	result += &quot;          z_m &lt;= z_m &lt;&lt; 1;\n&quot;
+</a><a href="#h6-0-466" id="h6-0-466" class="i">+	result += &quot;          z_m[0] &lt;= guard;\n&quot;
+</a><a href="#h6-0-467" id="h6-0-467" class="i">+	result += &quot;          guard &lt;= round_bit;\n&quot;
+</a><a href="#h6-0-468" id="h6-0-468" class="i">+	result += &quot;          round_bit &lt;= 0;\n&quot;
+</a><a href="#h6-0-469" id="h6-0-469" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-470" id="h6-0-470" class="i">+	result += &quot;          state &lt;= normalise_2;\n&quot;
+</a><a href="#h6-0-471" id="h6-0-471" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-472" id="h6-0-472" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-473" id="h6-0-473" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-474" id="h6-0-474" class="i">+	result += &quot;      normalise_2:\n&quot;
+</a><a href="#h6-0-475" id="h6-0-475" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-476" id="h6-0-476" class="i">+	result += &quot;        if ($signed(z_e) &lt; -126) begin\n&quot;
+</a><a href="#h6-0-477" id="h6-0-477" class="i">+	result += &quot;          z_e &lt;= z_e + 1;\n&quot;
+</a><a href="#h6-0-478" id="h6-0-478" class="i">+	result += &quot;          z_m &lt;= z_m &gt;&gt; 1;\n&quot;
+</a><a href="#h6-0-479" id="h6-0-479" class="i">+	result += &quot;          guard &lt;= z_m[0];\n&quot;
+</a><a href="#h6-0-480" id="h6-0-480" class="i">+	result += &quot;          round_bit &lt;= guard;\n&quot;
+</a><a href="#h6-0-481" id="h6-0-481" class="i">+	result += &quot;          sticky &lt;= sticky | round_bit;\n&quot;
+</a><a href="#h6-0-482" id="h6-0-482" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h6-0-483" id="h6-0-483" class="i">+	result += &quot;          state &lt;= round;\n&quot;
+</a><a href="#h6-0-484" id="h6-0-484" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-485" id="h6-0-485" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-486" id="h6-0-486" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-487" id="h6-0-487" class="i">+	result += &quot;      round:\n&quot;
+</a><a href="#h6-0-488" id="h6-0-488" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-489" id="h6-0-489" class="i">+	result += &quot;        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin\n&quot;
+</a><a href="#h6-0-490" id="h6-0-490" class="i">+	result += &quot;          z_m &lt;= z_m + 1;\n&quot;
+</a><a href="#h6-0-491" id="h6-0-491" class="i">+	result += &quot;          if (z_m == 24&#39;hffffff) begin\n&quot;
+</a><a href="#h6-0-492" id="h6-0-492" class="i">+	result += &quot;            z_e &lt;=z_e + 1;\n&quot;
+</a><a href="#h6-0-493" id="h6-0-493" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h6-0-494" id="h6-0-494" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-495" id="h6-0-495" class="i">+	result += &quot;        state &lt;= pack;\n&quot;
+</a><a href="#h6-0-496" id="h6-0-496" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-497" id="h6-0-497" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-498" id="h6-0-498" class="i">+	result += &quot;      pack:\n&quot;
+</a><a href="#h6-0-499" id="h6-0-499" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-500" id="h6-0-500" class="i">+	result += &quot;        z[22 : 0] &lt;= z_m[22:0];\n&quot;
+</a><a href="#h6-0-501" id="h6-0-501" class="i">+	result += &quot;        z[30 : 23] &lt;= z_e[7:0] + 127;\n&quot;
+</a><a href="#h6-0-502" id="h6-0-502" class="i">+	result += &quot;        z[31] &lt;= z_s;\n&quot;
+</a><a href="#h6-0-503" id="h6-0-503" class="i">+	result += &quot;        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin\n&quot;
+</a><a href="#h6-0-504" id="h6-0-504" class="i">+	result += &quot;          z[30 : 23] &lt;= 0;\n&quot;
+</a><a href="#h6-0-505" id="h6-0-505" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-506" id="h6-0-506" class="i">+	result += &quot;        //if overflow occurs, return inf\n&quot;
+</a><a href="#h6-0-507" id="h6-0-507" class="i">+	result += &quot;        if ($signed(z_e) &gt; 127) begin\n&quot;
+</a><a href="#h6-0-508" id="h6-0-508" class="i">+	result += &quot;          z[22 : 0] &lt;= 0;\n&quot;
+</a><a href="#h6-0-509" id="h6-0-509" class="i">+	result += &quot;          z[30 : 23] &lt;= 255;\n&quot;
+</a><a href="#h6-0-510" id="h6-0-510" class="i">+	result += &quot;          z[31] &lt;= z_s;\n&quot;
+</a><a href="#h6-0-511" id="h6-0-511" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-512" id="h6-0-512" class="i">+	result += &quot;        state &lt;= put_z;\n&quot;
+</a><a href="#h6-0-513" id="h6-0-513" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-514" id="h6-0-514" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-515" id="h6-0-515" class="i">+	result += &quot;      put_z:\n&quot;
+</a><a href="#h6-0-516" id="h6-0-516" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h6-0-517" id="h6-0-517" class="i">+	result += &quot;        s_output_z_stb &lt;= 1;\n&quot;
+</a><a href="#h6-0-518" id="h6-0-518" class="i">+	result += &quot;        s_output_z &lt;= z;\n&quot;
+</a><a href="#h6-0-519" id="h6-0-519" class="i">+	result += &quot;        if (s_output_z_stb &amp;&amp; output_z_ack) begin\n&quot;
+</a><a href="#h6-0-520" id="h6-0-520" class="i">+	result += &quot;          s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h6-0-521" id="h6-0-521" class="i">+	result += &quot;          state &lt;= get_a;\n&quot;
+</a><a href="#h6-0-522" id="h6-0-522" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h6-0-523" id="h6-0-523" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h6-0-524" id="h6-0-524" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-525" id="h6-0-525" class="i">+	result += &quot;    endcase\n&quot;
+</a><a href="#h6-0-526" id="h6-0-526" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-527" id="h6-0-527" class="i">+	result += &quot;    if (rst == 1) begin\n&quot;
+</a><a href="#h6-0-528" id="h6-0-528" class="i">+	result += &quot;      state &lt;= get_a;\n&quot;
+</a><a href="#h6-0-529" id="h6-0-529" class="i">+	result += &quot;      s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h6-0-530" id="h6-0-530" class="i">+	result += &quot;      s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h6-0-531" id="h6-0-531" class="i">+	result += &quot;      s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h6-0-532" id="h6-0-532" class="i">+	result += &quot;    end\n&quot;
+</a><a href="#h6-0-533" id="h6-0-533" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-534" id="h6-0-534" class="i">+	result += &quot;  end\n&quot;
+</a><a href="#h6-0-535" id="h6-0-535" class="i">+	result += &quot;  assign input_a_ack = s_input_a_ack;\n&quot;
+</a><a href="#h6-0-536" id="h6-0-536" class="i">+	result += &quot;  assign input_b_ack = s_input_b_ack;\n&quot;
+</a><a href="#h6-0-537" id="h6-0-537" class="i">+	result += &quot;  assign output_z_stb = s_output_z_stb;\n&quot;
+</a><a href="#h6-0-538" id="h6-0-538" class="i">+	result += &quot;  assign output_z = s_output_z;\n&quot;
+</a><a href="#h6-0-539" id="h6-0-539" class="i">+	result += &quot;\n&quot;
+</a><a href="#h6-0-540" id="h6-0-540" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h6-0-541" id="h6-0-541" class="i">+
+</a><a href="#h6-0-542" id="h6-0-542" class="i">+	return []string{&quot;adder&quot;}, []string{result}
+</a><a href="#h6-0-543" id="h6-0-543" class="i">+}
+</a><a href="#h6-0-544" id="h6-0-544" class="i">+
+</a><a href="#h6-0-545" id="h6-0-545" class="i">+func (Op Addf16) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h6-0-546" id="h6-0-546" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h6-0-547" id="h6-0-547" class="i">+	return result, nil
+</a><a href="#h6-0-548" id="h6-0-548" class="i">+}
+</a><a href="#h6-0-549" id="h6-0-549" class="i">+
+</a><a href="#h6-0-550" id="h6-0-550" class="i">+func (Op Addf16) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h6-0-551" id="h6-0-551" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-552" id="h6-0-552" class="i">+	switch blockname {
+</a><a href="#h6-0-553" id="h6-0-553" class="i">+	default:
+</a><a href="#h6-0-554" id="h6-0-554" class="i">+		result = &quot;&quot;
+</a><a href="#h6-0-555" id="h6-0-555" class="i">+	}
+</a><a href="#h6-0-556" id="h6-0-556" class="i">+	return result
+</a><a href="#h6-0-557" id="h6-0-557" class="i">+}
+</a><a href="#h6-0-558" id="h6-0-558" class="i">+func (Op Addf16) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h6-0-559" id="h6-0-559" class="i">+	result := make([]string, 0)
+</a><a href="#h6-0-560" id="h6-0-560" class="i">+	result = append(result, &quot;addf16::*--type=reg::*--type=reg&quot;)
+</a><a href="#h6-0-561" id="h6-0-561" class="i">+	return result
+</a><a href="#h6-0-562" id="h6-0-562" class="i">+}
+</a><a href="#h6-0-563" id="h6-0-563" class="i">+func (Op Addf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h6-0-564" id="h6-0-564" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h6-0-565" id="h6-0-565" class="i">+	case &quot;addf16&quot;:
+</a><a href="#h6-0-566" id="h6-0-566" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h6-0-567" id="h6-0-567" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h6-0-568" id="h6-0-568" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h6-0-569" id="h6-0-569" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h6-0-570" id="h6-0-570" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;addf16&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h6-0-571" id="h6-0-571" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h6-0-572" id="h6-0-572" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:addf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h6-0-573" id="h6-0-573" class="i">+		return line, nil
+</a><a href="#h6-0-574" id="h6-0-574" class="i">+	}
+</a><a href="#h6-0-575" id="h6-0-575" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h6-0-576" id="h6-0-576" class="i">+}
+</a><a href="#h6-0-577" id="h6-0-577" class="i">+func (Op Addf16) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h6-0-578" id="h6-0-578" class="i">+	return []string{}, []string{}
+</a><a href="#h6-0-579" id="h6-0-579" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a> b/<a href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -125,7 +125,7 @@ func (op Divf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg
+</a> 			result += &quot;								end\n&quot;
+ 			result += &quot;							end\n&quot;
+ 			result += &quot;							endcase\n&quot;
+<a href="#h7-0-3" id="h7-0-3" class="d">-			result += &quot;								$display(\&quot;ADDF &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+			result += &quot;								$display(\&quot;DIVF &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a> 			result += &quot;							end\n&quot;
+ 		}
+ 		result += &quot;							endcase\n&quot;
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a> b/<a href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,614 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+package procbuilder
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+import (
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+	&quot;github.com/x448/float16&quot;
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+)
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+// The Divf16 opcode is both a basic instruction and a template for other instructions.
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+type Divf16 struct{}
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+func (op Divf16) Op_get_name() string {
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+	return &quot;divf16&quot;
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+}
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+func (op Divf16) Op_get_desc() string {
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+	return &quot;Register divf16&quot;
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+}
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+func (op Divf16) Op_show_assembler(arch *Arch) string {
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+	result := &quot;divf16 [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the division of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+	return result
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+}
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+func (op Divf16) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+}
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+func (op Divf16) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+	result := &quot;&quot;
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+	result += &quot;\treg [15:0] divider_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+	result += &quot;\treg [15:0] divider_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h8-0-39" id="h8-0-39" class="i">+	result += &quot;\treg divider_&quot; + arch.Tag + &quot;_input_a_stb;\n&quot;
+</a><a href="#h8-0-40" id="h8-0-40" class="i">+	result += &quot;\treg divider_&quot; + arch.Tag + &quot;_input_b_stb;\n&quot;
+</a><a href="#h8-0-41" id="h8-0-41" class="i">+	result += &quot;\treg divider_&quot; + arch.Tag + &quot;_output_z_ack;\n\n&quot;
+</a><a href="#h8-0-42" id="h8-0-42" class="i">+
+</a><a href="#h8-0-43" id="h8-0-43" class="i">+	result += &quot;\twire [15:0] divider_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h8-0-44" id="h8-0-44" class="i">+	result += &quot;\twire divider_&quot; + arch.Tag + &quot;_output_z_stb;\n&quot;
+</a><a href="#h8-0-45" id="h8-0-45" class="i">+	result += &quot;\twire divider_&quot; + arch.Tag + &quot;_input_a_ack;\n&quot;
+</a><a href="#h8-0-46" id="h8-0-46" class="i">+	result += &quot;\twire divider_&quot; + arch.Tag + &quot;_input_b_ack;\n\n&quot;
+</a><a href="#h8-0-47" id="h8-0-47" class="i">+
+</a><a href="#h8-0-48" id="h8-0-48" class="i">+	result += &quot;\treg	[1:0] divider_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h8-0-49" id="h8-0-49" class="i">+	result += &quot;parameter divider_&quot; + arch.Tag + &quot;_put_a         = 2&#39;d0,\n&quot;
+</a><a href="#h8-0-50" id="h8-0-50" class="i">+	result += &quot;          divider_&quot; + arch.Tag + &quot;_put_b         = 2&#39;d1,\n&quot;
+</a><a href="#h8-0-51" id="h8-0-51" class="i">+	result += &quot;          divider_&quot; + arch.Tag + &quot;_get_z         = 2&#39;d2;\n&quot;
+</a><a href="#h8-0-52" id="h8-0-52" class="i">+
+</a><a href="#h8-0-53" id="h8-0-53" class="i">+	result += &quot;\tdivider_&quot; + arch.Tag + &quot; divider_&quot; + arch.Tag + &quot;_inst (divider_&quot; + arch.Tag + &quot;_input_a, divider_&quot; + arch.Tag + &quot;_input_b, divider_&quot; + arch.Tag + &quot;_input_a_stb, divider_&quot; + arch.Tag + &quot;_input_b_stb, divider_&quot; + arch.Tag + &quot;_output_z_ack, clock_signal, reset_signal, divider_&quot; + arch.Tag + &quot;_output_z, divider_&quot; + arch.Tag + &quot;_output_z_stb, divider_&quot; + arch.Tag + &quot;_input_a_ack, divider_&quot; + arch.Tag + &quot;_input_b_ack);\n\n&quot;
+</a><a href="#h8-0-54" id="h8-0-54" class="i">+
+</a><a href="#h8-0-55" id="h8-0-55" class="i">+	return result
+</a><a href="#h8-0-56" id="h8-0-56" class="i">+}
+</a><a href="#h8-0-57" id="h8-0-57" class="i">+
+</a><a href="#h8-0-58" id="h8-0-58" class="i">+func (op Divf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h8-0-59" id="h8-0-59" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h8-0-60" id="h8-0-60" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h8-0-61" id="h8-0-61" class="i">+
+</a><a href="#h8-0-62" id="h8-0-62" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h8-0-63" id="h8-0-63" class="i">+
+</a><a href="#h8-0-64" id="h8-0-64" class="i">+	result := &quot;&quot;
+</a><a href="#h8-0-65" id="h8-0-65" class="i">+	result += &quot;					DIVF16: begin\n&quot;
+</a><a href="#h8-0-66" id="h8-0-66" class="i">+	if arch.R == 1 {
+</a><a href="#h8-0-67" id="h8-0-67" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h8-0-68" id="h8-0-68" class="i">+	} else {
+</a><a href="#h8-0-69" id="h8-0-69" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h8-0-70" id="h8-0-70" class="i">+	}
+</a><a href="#h8-0-71" id="h8-0-71" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h8-0-72" id="h8-0-72" class="i">+
+</a><a href="#h8-0-73" id="h8-0-73" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h8-0-74" id="h8-0-74" class="i">+			cp := arch.Tag
+</a><a href="#h8-0-75" id="h8-0-75" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h8-0-76" id="h8-0-76" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h8-0-77" id="h8-0-77" class="i">+				continue
+</a><a href="#h8-0-78" id="h8-0-78" class="i">+			}
+</a><a href="#h8-0-79" id="h8-0-79" class="i">+		}
+</a><a href="#h8-0-80" id="h8-0-80" class="i">+
+</a><a href="#h8-0-81" id="h8-0-81" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h8-0-82" id="h8-0-82" class="i">+
+</a><a href="#h8-0-83" id="h8-0-83" class="i">+		if arch.R == 1 {
+</a><a href="#h8-0-84" id="h8-0-84" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h8-0-85" id="h8-0-85" class="i">+		} else {
+</a><a href="#h8-0-86" id="h8-0-86" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h8-0-87" id="h8-0-87" class="i">+		}
+</a><a href="#h8-0-88" id="h8-0-88" class="i">+
+</a><a href="#h8-0-89" id="h8-0-89" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h8-0-90" id="h8-0-90" class="i">+
+</a><a href="#h8-0-91" id="h8-0-91" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h8-0-92" id="h8-0-92" class="i">+				cp := arch.Tag
+</a><a href="#h8-0-93" id="h8-0-93" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:divf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h8-0-94" id="h8-0-94" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h8-0-95" id="h8-0-95" class="i">+					continue
+</a><a href="#h8-0-96" id="h8-0-96" class="i">+				}
+</a><a href="#h8-0-97" id="h8-0-97" class="i">+			}
+</a><a href="#h8-0-98" id="h8-0-98" class="i">+
+</a><a href="#h8-0-99" id="h8-0-99" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h8-0-100" id="h8-0-100" class="i">+			result += &quot;							case (divider_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h8-0-101" id="h8-0-101" class="i">+			result += &quot;							divider_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+</a><a href="#h8-0-102" id="h8-0-102" class="i">+			result += &quot;								if (divider_&quot; + arch.Tag + &quot;_input_a_ack) begin\n&quot;
+</a><a href="#h8-0-103" id="h8-0-103" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h8-0-104" id="h8-0-104" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 1;\n&quot;
+</a><a href="#h8-0-105" id="h8-0-105" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h8-0-106" id="h8-0-106" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_state &lt;= #1 divider_&quot; + arch.Tag + &quot;_put_b;\n&quot;
+</a><a href="#h8-0-107" id="h8-0-107" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h8-0-108" id="h8-0-108" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h8-0-109" id="h8-0-109" class="i">+			result += &quot;							divider_&quot; + arch.Tag + &quot;_put_b : begin\n&quot;
+</a><a href="#h8-0-110" id="h8-0-110" class="i">+			result += &quot;								if (divider_&quot; + arch.Tag + &quot;_input_b_ack) begin\n&quot;
+</a><a href="#h8-0-111" id="h8-0-111" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h8-0-112" id="h8-0-112" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 1;\n&quot;
+</a><a href="#h8-0-113" id="h8-0-113" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h8-0-114" id="h8-0-114" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_state &lt;= #1 divider_&quot; + arch.Tag + &quot;_get_z;\n&quot;
+</a><a href="#h8-0-115" id="h8-0-115" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 0;\n&quot;
+</a><a href="#h8-0-116" id="h8-0-116" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h8-0-117" id="h8-0-117" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h8-0-118" id="h8-0-118" class="i">+			result += &quot;							divider_&quot; + arch.Tag + &quot;_get_z : begin\n&quot;
+</a><a href="#h8-0-119" id="h8-0-119" class="i">+			result += &quot;								if (divider_&quot; + arch.Tag + &quot;_output_z_stb) begin\n&quot;
+</a><a href="#h8-0-120" id="h8-0-120" class="i">+			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 divider_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h8-0-121" id="h8-0-121" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+</a><a href="#h8-0-122" id="h8-0-122" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_state &lt;= #1 divider_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+</a><a href="#h8-0-123" id="h8-0-123" class="i">+			result += &quot;									divider_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+</a><a href="#h8-0-124" id="h8-0-124" class="i">+			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h8-0-125" id="h8-0-125" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h8-0-126" id="h8-0-126" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h8-0-127" id="h8-0-127" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h8-0-128" id="h8-0-128" class="i">+			result += &quot;								$display(\&quot;DIVF16 &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h8-0-129" id="h8-0-129" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h8-0-130" id="h8-0-130" class="i">+		}
+</a><a href="#h8-0-131" id="h8-0-131" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h8-0-132" id="h8-0-132" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h8-0-133" id="h8-0-133" class="i">+	}
+</a><a href="#h8-0-134" id="h8-0-134" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h8-0-135" id="h8-0-135" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h8-0-136" id="h8-0-136" class="i">+	return result
+</a><a href="#h8-0-137" id="h8-0-137" class="i">+}
+</a><a href="#h8-0-138" id="h8-0-138" class="i">+
+</a><a href="#h8-0-139" id="h8-0-139" class="i">+func (op Divf16) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h8-0-140" id="h8-0-140" class="i">+	// TODO
+</a><a href="#h8-0-141" id="h8-0-141" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-142" id="h8-0-142" class="i">+}
+</a><a href="#h8-0-143" id="h8-0-143" class="i">+
+</a><a href="#h8-0-144" id="h8-0-144" class="i">+func (op Divf16) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h8-0-145" id="h8-0-145" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h8-0-146" id="h8-0-146" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h8-0-147" id="h8-0-147" class="i">+
+</a><a href="#h8-0-148" id="h8-0-148" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h8-0-149" id="h8-0-149" class="i">+
+</a><a href="#h8-0-150" id="h8-0-150" class="i">+	if len(words) != 2 {
+</a><a href="#h8-0-151" id="h8-0-151" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h8-0-152" id="h8-0-152" class="i">+	}
+</a><a href="#h8-0-153" id="h8-0-153" class="i">+
+</a><a href="#h8-0-154" id="h8-0-154" class="i">+	result := &quot;&quot;
+</a><a href="#h8-0-155" id="h8-0-155" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h8-0-156" id="h8-0-156" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h8-0-157" id="h8-0-157" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h8-0-158" id="h8-0-158" class="i">+			break
+</a><a href="#h8-0-159" id="h8-0-159" class="i">+		}
+</a><a href="#h8-0-160" id="h8-0-160" class="i">+	}
+</a><a href="#h8-0-161" id="h8-0-161" class="i">+
+</a><a href="#h8-0-162" id="h8-0-162" class="i">+	if result == &quot;&quot; {
+</a><a href="#h8-0-163" id="h8-0-163" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h8-0-164" id="h8-0-164" class="i">+	}
+</a><a href="#h8-0-165" id="h8-0-165" class="i">+
+</a><a href="#h8-0-166" id="h8-0-166" class="i">+	partial := &quot;&quot;
+</a><a href="#h8-0-167" id="h8-0-167" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h8-0-168" id="h8-0-168" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h8-0-169" id="h8-0-169" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h8-0-170" id="h8-0-170" class="i">+			break
+</a><a href="#h8-0-171" id="h8-0-171" class="i">+		}
+</a><a href="#h8-0-172" id="h8-0-172" class="i">+	}
+</a><a href="#h8-0-173" id="h8-0-173" class="i">+
+</a><a href="#h8-0-174" id="h8-0-174" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h8-0-175" id="h8-0-175" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h8-0-176" id="h8-0-176" class="i">+	}
+</a><a href="#h8-0-177" id="h8-0-177" class="i">+
+</a><a href="#h8-0-178" id="h8-0-178" class="i">+	result += partial
+</a><a href="#h8-0-179" id="h8-0-179" class="i">+
+</a><a href="#h8-0-180" id="h8-0-180" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h8-0-181" id="h8-0-181" class="i">+		result += &quot;0&quot;
+</a><a href="#h8-0-182" id="h8-0-182" class="i">+	}
+</a><a href="#h8-0-183" id="h8-0-183" class="i">+
+</a><a href="#h8-0-184" id="h8-0-184" class="i">+	return result, nil
+</a><a href="#h8-0-185" id="h8-0-185" class="i">+}
+</a><a href="#h8-0-186" id="h8-0-186" class="i">+
+</a><a href="#h8-0-187" id="h8-0-187" class="i">+func (op Divf16) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h8-0-188" id="h8-0-188" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h8-0-189" id="h8-0-189" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h8-0-190" id="h8-0-190" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h8-0-191" id="h8-0-191" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h8-0-192" id="h8-0-192" class="i">+	return result, nil
+</a><a href="#h8-0-193" id="h8-0-193" class="i">+}
+</a><a href="#h8-0-194" id="h8-0-194" class="i">+
+</a><a href="#h8-0-195" id="h8-0-195" class="i">+func (op Divf16) Simulate(vm *VM, instr string) error {
+</a><a href="#h8-0-196" id="h8-0-196" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h8-0-197" id="h8-0-197" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h8-0-198" id="h8-0-198" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h8-0-199" id="h8-0-199" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h8-0-200" id="h8-0-200" class="i">+	case 16:
+</a><a href="#h8-0-201" id="h8-0-201" class="i">+		var floatDest float16.Float16
+</a><a href="#h8-0-202" id="h8-0-202" class="i">+		var floatSrc float16.Float16
+</a><a href="#h8-0-203" id="h8-0-203" class="i">+		if v, ok := vm.Registers[regDest].(uint16); ok {
+</a><a href="#h8-0-204" id="h8-0-204" class="i">+			floatDest = float16.Frombits(v)
+</a><a href="#h8-0-205" id="h8-0-205" class="i">+		} else {
+</a><a href="#h8-0-206" id="h8-0-206" class="i">+			floatDest = float16.Float16(0)
+</a><a href="#h8-0-207" id="h8-0-207" class="i">+		}
+</a><a href="#h8-0-208" id="h8-0-208" class="i">+		if v, ok := vm.Registers[regSrc].(uint16); ok {
+</a><a href="#h8-0-209" id="h8-0-209" class="i">+			floatSrc = float16.Frombits(v)
+</a><a href="#h8-0-210" id="h8-0-210" class="i">+		} else {
+</a><a href="#h8-0-211" id="h8-0-211" class="i">+			floatSrc = float16.Float16(0)
+</a><a href="#h8-0-212" id="h8-0-212" class="i">+		}
+</a><a href="#h8-0-213" id="h8-0-213" class="i">+		operation := floatDest.Float32() / floatSrc.Float32()
+</a><a href="#h8-0-214" id="h8-0-214" class="i">+		vm.Registers[regDest] = float16.Fromfloat32(operation).Bits()
+</a><a href="#h8-0-215" id="h8-0-215" class="i">+	default:
+</a><a href="#h8-0-216" id="h8-0-216" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 16 bits&quot;)
+</a><a href="#h8-0-217" id="h8-0-217" class="i">+	}
+</a><a href="#h8-0-218" id="h8-0-218" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h8-0-219" id="h8-0-219" class="i">+	return nil
+</a><a href="#h8-0-220" id="h8-0-220" class="i">+}
+</a><a href="#h8-0-221" id="h8-0-221" class="i">+
+</a><a href="#h8-0-222" id="h8-0-222" class="i">+// The random genaration does nothing
+</a><a href="#h8-0-223" id="h8-0-223" class="i">+func (op Divf16) Generate(arch *Arch) string {
+</a><a href="#h8-0-224" id="h8-0-224" class="i">+	// TODO
+</a><a href="#h8-0-225" id="h8-0-225" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-226" id="h8-0-226" class="i">+}
+</a><a href="#h8-0-227" id="h8-0-227" class="i">+
+</a><a href="#h8-0-228" id="h8-0-228" class="i">+func (op Divf16) Required_shared() (bool, []string) {
+</a><a href="#h8-0-229" id="h8-0-229" class="i">+	// TODO
+</a><a href="#h8-0-230" id="h8-0-230" class="i">+	return false, []string{}
+</a><a href="#h8-0-231" id="h8-0-231" class="i">+}
+</a><a href="#h8-0-232" id="h8-0-232" class="i">+
+</a><a href="#h8-0-233" id="h8-0-233" class="i">+func (op Divf16) Required_modes() (bool, []string) {
+</a><a href="#h8-0-234" id="h8-0-234" class="i">+	return false, []string{}
+</a><a href="#h8-0-235" id="h8-0-235" class="i">+}
+</a><a href="#h8-0-236" id="h8-0-236" class="i">+
+</a><a href="#h8-0-237" id="h8-0-237" class="i">+func (op Divf16) Forbidden_modes() (bool, []string) {
+</a><a href="#h8-0-238" id="h8-0-238" class="i">+	return false, []string{}
+</a><a href="#h8-0-239" id="h8-0-239" class="i">+}
+</a><a href="#h8-0-240" id="h8-0-240" class="i">+
+</a><a href="#h8-0-241" id="h8-0-241" class="i">+func (op Divf16) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h8-0-242" id="h8-0-242" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-243" id="h8-0-243" class="i">+}
+</a><a href="#h8-0-244" id="h8-0-244" class="i">+
+</a><a href="#h8-0-245" id="h8-0-245" class="i">+func (Op Divf16) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h8-0-246" id="h8-0-246" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-247" id="h8-0-247" class="i">+}
+</a><a href="#h8-0-248" id="h8-0-248" class="i">+
+</a><a href="#h8-0-249" id="h8-0-249" class="i">+func (Op Divf16) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h8-0-250" id="h8-0-250" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-251" id="h8-0-251" class="i">+}
+</a><a href="#h8-0-252" id="h8-0-252" class="i">+
+</a><a href="#h8-0-253" id="h8-0-253" class="i">+func (Op Divf16) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h8-0-254" id="h8-0-254" class="i">+	return &quot;&quot;
+</a><a href="#h8-0-255" id="h8-0-255" class="i">+}
+</a><a href="#h8-0-256" id="h8-0-256" class="i">+
+</a><a href="#h8-0-257" id="h8-0-257" class="i">+func (Op Divf16) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h8-0-258" id="h8-0-258" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h8-0-259" id="h8-0-259" class="i">+
+</a><a href="#h8-0-260" id="h8-0-260" class="i">+	result += &quot;//IEEE Floating Point Divider (Single Precision)\n&quot;
+</a><a href="#h8-0-261" id="h8-0-261" class="i">+	result += &quot;//Copyright (C) Jonathan P Dawson 2013\n&quot;
+</a><a href="#h8-0-262" id="h8-0-262" class="i">+	result += &quot;//2013-12-12\n&quot;
+</a><a href="#h8-0-263" id="h8-0-263" class="i">+	result += &quot;//\n&quot;
+</a><a href="#h8-0-264" id="h8-0-264" class="i">+	result += &quot;module divider_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h8-0-265" id="h8-0-265" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h8-0-266" id="h8-0-266" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h8-0-267" id="h8-0-267" class="i">+	result += &quot;        input_a_stb,\n&quot;
+</a><a href="#h8-0-268" id="h8-0-268" class="i">+	result += &quot;        input_b_stb,\n&quot;
+</a><a href="#h8-0-269" id="h8-0-269" class="i">+	result += &quot;        output_z_ack,\n&quot;
+</a><a href="#h8-0-270" id="h8-0-270" class="i">+	result += &quot;        clk,\n&quot;
+</a><a href="#h8-0-271" id="h8-0-271" class="i">+	result += &quot;        rst,\n&quot;
+</a><a href="#h8-0-272" id="h8-0-272" class="i">+	result += &quot;        output_z,\n&quot;
+</a><a href="#h8-0-273" id="h8-0-273" class="i">+	result += &quot;        output_z_stb,\n&quot;
+</a><a href="#h8-0-274" id="h8-0-274" class="i">+	result += &quot;        input_a_ack,\n&quot;
+</a><a href="#h8-0-275" id="h8-0-275" class="i">+	result += &quot;        input_b_ack);\n&quot;
+</a><a href="#h8-0-276" id="h8-0-276" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-277" id="h8-0-277" class="i">+	result += &quot;  input     clk;\n&quot;
+</a><a href="#h8-0-278" id="h8-0-278" class="i">+	result += &quot;  input     rst;\n&quot;
+</a><a href="#h8-0-279" id="h8-0-279" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-280" id="h8-0-280" class="i">+	result += &quot;  input     [31:0] input_a;\n&quot;
+</a><a href="#h8-0-281" id="h8-0-281" class="i">+	result += &quot;  input     input_a_stb;\n&quot;
+</a><a href="#h8-0-282" id="h8-0-282" class="i">+	result += &quot;  output    input_a_ack;\n&quot;
+</a><a href="#h8-0-283" id="h8-0-283" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-284" id="h8-0-284" class="i">+	result += &quot;  input     [31:0] input_b;\n&quot;
+</a><a href="#h8-0-285" id="h8-0-285" class="i">+	result += &quot;  input     input_b_stb;\n&quot;
+</a><a href="#h8-0-286" id="h8-0-286" class="i">+	result += &quot;  output    input_b_ack;\n&quot;
+</a><a href="#h8-0-287" id="h8-0-287" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-288" id="h8-0-288" class="i">+	result += &quot;  output    [31:0] output_z;\n&quot;
+</a><a href="#h8-0-289" id="h8-0-289" class="i">+	result += &quot;  output    output_z_stb;\n&quot;
+</a><a href="#h8-0-290" id="h8-0-290" class="i">+	result += &quot;  input     output_z_ack;\n&quot;
+</a><a href="#h8-0-291" id="h8-0-291" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-292" id="h8-0-292" class="i">+	result += &quot;  reg       s_output_z_stb;\n&quot;
+</a><a href="#h8-0-293" id="h8-0-293" class="i">+	result += &quot;  reg       [31:0] s_output_z;\n&quot;
+</a><a href="#h8-0-294" id="h8-0-294" class="i">+	result += &quot;  reg       s_input_a_ack;\n&quot;
+</a><a href="#h8-0-295" id="h8-0-295" class="i">+	result += &quot;  reg       s_input_b_ack;\n&quot;
+</a><a href="#h8-0-296" id="h8-0-296" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-297" id="h8-0-297" class="i">+	result += &quot;  reg       [3:0] state;\n&quot;
+</a><a href="#h8-0-298" id="h8-0-298" class="i">+	result += &quot;  parameter get_a         = 4&#39;d0,\n&quot;
+</a><a href="#h8-0-299" id="h8-0-299" class="i">+	result += &quot;            get_b         = 4&#39;d1,\n&quot;
+</a><a href="#h8-0-300" id="h8-0-300" class="i">+	result += &quot;            unpack        = 4&#39;d2,\n&quot;
+</a><a href="#h8-0-301" id="h8-0-301" class="i">+	result += &quot;            special_cases = 4&#39;d3,\n&quot;
+</a><a href="#h8-0-302" id="h8-0-302" class="i">+	result += &quot;            normalise_a   = 4&#39;d4,\n&quot;
+</a><a href="#h8-0-303" id="h8-0-303" class="i">+	result += &quot;            normalise_b   = 4&#39;d5,\n&quot;
+</a><a href="#h8-0-304" id="h8-0-304" class="i">+	result += &quot;            divide_0      = 4&#39;d6,\n&quot;
+</a><a href="#h8-0-305" id="h8-0-305" class="i">+	result += &quot;            divide_1      = 4&#39;d7,\n&quot;
+</a><a href="#h8-0-306" id="h8-0-306" class="i">+	result += &quot;            divide_2      = 4&#39;d8,\n&quot;
+</a><a href="#h8-0-307" id="h8-0-307" class="i">+	result += &quot;            divide_3      = 4&#39;d9,\n&quot;
+</a><a href="#h8-0-308" id="h8-0-308" class="i">+	result += &quot;            normalise_1   = 4&#39;d10,\n&quot;
+</a><a href="#h8-0-309" id="h8-0-309" class="i">+	result += &quot;            normalise_2   = 4&#39;d11,\n&quot;
+</a><a href="#h8-0-310" id="h8-0-310" class="i">+	result += &quot;            round         = 4&#39;d12,\n&quot;
+</a><a href="#h8-0-311" id="h8-0-311" class="i">+	result += &quot;            pack          = 4&#39;d13,\n&quot;
+</a><a href="#h8-0-312" id="h8-0-312" class="i">+	result += &quot;            put_z         = 4&#39;d14;\n&quot;
+</a><a href="#h8-0-313" id="h8-0-313" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-314" id="h8-0-314" class="i">+	result += &quot;  reg       [31:0] a, b, z;\n&quot;
+</a><a href="#h8-0-315" id="h8-0-315" class="i">+	result += &quot;  reg       [23:0] a_m, b_m, z_m;\n&quot;
+</a><a href="#h8-0-316" id="h8-0-316" class="i">+	result += &quot;  reg       [9:0] a_e, b_e, z_e;\n&quot;
+</a><a href="#h8-0-317" id="h8-0-317" class="i">+	result += &quot;  reg       a_s, b_s, z_s;\n&quot;
+</a><a href="#h8-0-318" id="h8-0-318" class="i">+	result += &quot;  reg       guard, round_bit, sticky;\n&quot;
+</a><a href="#h8-0-319" id="h8-0-319" class="i">+	result += &quot;  reg       [50:0] quotient, divisor, dividend, remainder;\n&quot;
+</a><a href="#h8-0-320" id="h8-0-320" class="i">+	result += &quot;  reg       [5:0] count;\n&quot;
+</a><a href="#h8-0-321" id="h8-0-321" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-322" id="h8-0-322" class="i">+	result += &quot;  always @(posedge clk)\n&quot;
+</a><a href="#h8-0-323" id="h8-0-323" class="i">+	result += &quot;  begin\n&quot;
+</a><a href="#h8-0-324" id="h8-0-324" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-325" id="h8-0-325" class="i">+	result += &quot;    case(state)\n&quot;
+</a><a href="#h8-0-326" id="h8-0-326" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-327" id="h8-0-327" class="i">+	result += &quot;      get_a:\n&quot;
+</a><a href="#h8-0-328" id="h8-0-328" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-329" id="h8-0-329" class="i">+	result += &quot;        s_input_a_ack &lt;= 1;\n&quot;
+</a><a href="#h8-0-330" id="h8-0-330" class="i">+	result += &quot;        if (s_input_a_ack &amp;&amp; input_a_stb) begin\n&quot;
+</a><a href="#h8-0-331" id="h8-0-331" class="i">+	result += &quot;          a &lt;= input_a;\n&quot;
+</a><a href="#h8-0-332" id="h8-0-332" class="i">+	result += &quot;          s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h8-0-333" id="h8-0-333" class="i">+	result += &quot;          state &lt;= get_b;\n&quot;
+</a><a href="#h8-0-334" id="h8-0-334" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-335" id="h8-0-335" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-336" id="h8-0-336" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-337" id="h8-0-337" class="i">+	result += &quot;      get_b:\n&quot;
+</a><a href="#h8-0-338" id="h8-0-338" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-339" id="h8-0-339" class="i">+	result += &quot;        s_input_b_ack &lt;= 1;\n&quot;
+</a><a href="#h8-0-340" id="h8-0-340" class="i">+	result += &quot;        if (s_input_b_ack &amp;&amp; input_b_stb) begin\n&quot;
+</a><a href="#h8-0-341" id="h8-0-341" class="i">+	result += &quot;          b &lt;= input_b;\n&quot;
+</a><a href="#h8-0-342" id="h8-0-342" class="i">+	result += &quot;          s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h8-0-343" id="h8-0-343" class="i">+	result += &quot;          state &lt;= unpack;\n&quot;
+</a><a href="#h8-0-344" id="h8-0-344" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-345" id="h8-0-345" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-346" id="h8-0-346" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-347" id="h8-0-347" class="i">+	result += &quot;      unpack:\n&quot;
+</a><a href="#h8-0-348" id="h8-0-348" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-349" id="h8-0-349" class="i">+	result += &quot;        a_m &lt;= a[22 : 0];\n&quot;
+</a><a href="#h8-0-350" id="h8-0-350" class="i">+	result += &quot;        b_m &lt;= b[22 : 0];\n&quot;
+</a><a href="#h8-0-351" id="h8-0-351" class="i">+	result += &quot;        a_e &lt;= a[30 : 23] - 127;\n&quot;
+</a><a href="#h8-0-352" id="h8-0-352" class="i">+	result += &quot;        b_e &lt;= b[30 : 23] - 127;\n&quot;
+</a><a href="#h8-0-353" id="h8-0-353" class="i">+	result += &quot;        a_s &lt;= a[31];\n&quot;
+</a><a href="#h8-0-354" id="h8-0-354" class="i">+	result += &quot;        b_s &lt;= b[31];\n&quot;
+</a><a href="#h8-0-355" id="h8-0-355" class="i">+	result += &quot;        state &lt;= special_cases;\n&quot;
+</a><a href="#h8-0-356" id="h8-0-356" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-357" id="h8-0-357" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-358" id="h8-0-358" class="i">+	result += &quot;      special_cases:\n&quot;
+</a><a href="#h8-0-359" id="h8-0-359" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-360" id="h8-0-360" class="i">+	result += &quot;        //if a is NaN or b is NaN return NaN \n&quot;
+</a><a href="#h8-0-361" id="h8-0-361" class="i">+	result += &quot;        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin\n&quot;
+</a><a href="#h8-0-362" id="h8-0-362" class="i">+	result += &quot;          z[31] &lt;= 1;\n&quot;
+</a><a href="#h8-0-363" id="h8-0-363" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-364" id="h8-0-364" class="i">+	result += &quot;          z[22] &lt;= 1;\n&quot;
+</a><a href="#h8-0-365" id="h8-0-365" class="i">+	result += &quot;          z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-366" id="h8-0-366" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-367" id="h8-0-367" class="i">+	result += &quot;          //if a is inf and b is inf return NaN \n&quot;
+</a><a href="#h8-0-368" id="h8-0-368" class="i">+	result += &quot;        end else if ((a_e == 128) &amp;&amp; (b_e == 128)) begin\n&quot;
+</a><a href="#h8-0-369" id="h8-0-369" class="i">+	result += &quot;          z[31] &lt;= 1;\n&quot;
+</a><a href="#h8-0-370" id="h8-0-370" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-371" id="h8-0-371" class="i">+	result += &quot;          z[22] &lt;= 1;\n&quot;
+</a><a href="#h8-0-372" id="h8-0-372" class="i">+	result += &quot;          z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-373" id="h8-0-373" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-374" id="h8-0-374" class="i">+	result += &quot;        //if a is inf return inf\n&quot;
+</a><a href="#h8-0-375" id="h8-0-375" class="i">+	result += &quot;        end else if (a_e == 128) begin\n&quot;
+</a><a href="#h8-0-376" id="h8-0-376" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h8-0-377" id="h8-0-377" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-378" id="h8-0-378" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-379" id="h8-0-379" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-380" id="h8-0-380" class="i">+	result += &quot;           //if b is zero return NaN\n&quot;
+</a><a href="#h8-0-381" id="h8-0-381" class="i">+	result += &quot;          if ($signed(b_e == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h8-0-382" id="h8-0-382" class="i">+	result += &quot;            z[31] &lt;= 1;\n&quot;
+</a><a href="#h8-0-383" id="h8-0-383" class="i">+	result += &quot;            z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-384" id="h8-0-384" class="i">+	result += &quot;            z[22] &lt;= 1;\n&quot;
+</a><a href="#h8-0-385" id="h8-0-385" class="i">+	result += &quot;            z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-386" id="h8-0-386" class="i">+	result += &quot;            state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-387" id="h8-0-387" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h8-0-388" id="h8-0-388" class="i">+	result += &quot;        //if b is inf return zero\n&quot;
+</a><a href="#h8-0-389" id="h8-0-389" class="i">+	result += &quot;        end else if (b_e == 128) begin\n&quot;
+</a><a href="#h8-0-390" id="h8-0-390" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h8-0-391" id="h8-0-391" class="i">+	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h8-0-392" id="h8-0-392" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-393" id="h8-0-393" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-394" id="h8-0-394" class="i">+	result += &quot;        //if a is zero return zero\n&quot;
+</a><a href="#h8-0-395" id="h8-0-395" class="i">+	result += &quot;        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin\n&quot;
+</a><a href="#h8-0-396" id="h8-0-396" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h8-0-397" id="h8-0-397" class="i">+	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h8-0-398" id="h8-0-398" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-399" id="h8-0-399" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-400" id="h8-0-400" class="i">+	result += &quot;           //if b is zero return NaN\n&quot;
+</a><a href="#h8-0-401" id="h8-0-401" class="i">+	result += &quot;          if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h8-0-402" id="h8-0-402" class="i">+	result += &quot;            z[31] &lt;= 1;\n&quot;
+</a><a href="#h8-0-403" id="h8-0-403" class="i">+	result += &quot;            z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-404" id="h8-0-404" class="i">+	result += &quot;            z[22] &lt;= 1;\n&quot;
+</a><a href="#h8-0-405" id="h8-0-405" class="i">+	result += &quot;            z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-406" id="h8-0-406" class="i">+	result += &quot;            state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-407" id="h8-0-407" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h8-0-408" id="h8-0-408" class="i">+	result += &quot;        //if b is zero return inf\n&quot;
+</a><a href="#h8-0-409" id="h8-0-409" class="i">+	result += &quot;        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h8-0-410" id="h8-0-410" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h8-0-411" id="h8-0-411" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-412" id="h8-0-412" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-413" id="h8-0-413" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-414" id="h8-0-414" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-415" id="h8-0-415" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h8-0-416" id="h8-0-416" class="i">+	result += &quot;          if ($signed(a_e) == -127) begin\n&quot;
+</a><a href="#h8-0-417" id="h8-0-417" class="i">+	result += &quot;            a_e &lt;= -126;\n&quot;
+</a><a href="#h8-0-418" id="h8-0-418" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h8-0-419" id="h8-0-419" class="i">+	result += &quot;            a_m[23] &lt;= 1;\n&quot;
+</a><a href="#h8-0-420" id="h8-0-420" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h8-0-421" id="h8-0-421" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h8-0-422" id="h8-0-422" class="i">+	result += &quot;          if ($signed(b_e) == -127) begin\n&quot;
+</a><a href="#h8-0-423" id="h8-0-423" class="i">+	result += &quot;            b_e &lt;= -126;\n&quot;
+</a><a href="#h8-0-424" id="h8-0-424" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h8-0-425" id="h8-0-425" class="i">+	result += &quot;            b_m[23] &lt;= 1;\n&quot;
+</a><a href="#h8-0-426" id="h8-0-426" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h8-0-427" id="h8-0-427" class="i">+	result += &quot;          state &lt;= normalise_a;\n&quot;
+</a><a href="#h8-0-428" id="h8-0-428" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-429" id="h8-0-429" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-430" id="h8-0-430" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-431" id="h8-0-431" class="i">+	result += &quot;      normalise_a:\n&quot;
+</a><a href="#h8-0-432" id="h8-0-432" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-433" id="h8-0-433" class="i">+	result += &quot;        if (a_m[23]) begin\n&quot;
+</a><a href="#h8-0-434" id="h8-0-434" class="i">+	result += &quot;          state &lt;= normalise_b;\n&quot;
+</a><a href="#h8-0-435" id="h8-0-435" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-436" id="h8-0-436" class="i">+	result += &quot;          a_m &lt;= a_m &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-437" id="h8-0-437" class="i">+	result += &quot;          a_e &lt;= a_e - 1;\n&quot;
+</a><a href="#h8-0-438" id="h8-0-438" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-439" id="h8-0-439" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-440" id="h8-0-440" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-441" id="h8-0-441" class="i">+	result += &quot;      normalise_b:\n&quot;
+</a><a href="#h8-0-442" id="h8-0-442" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-443" id="h8-0-443" class="i">+	result += &quot;        if (b_m[23]) begin\n&quot;
+</a><a href="#h8-0-444" id="h8-0-444" class="i">+	result += &quot;          state &lt;= divide_0;\n&quot;
+</a><a href="#h8-0-445" id="h8-0-445" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-446" id="h8-0-446" class="i">+	result += &quot;          b_m &lt;= b_m &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-447" id="h8-0-447" class="i">+	result += &quot;          b_e &lt;= b_e - 1;\n&quot;
+</a><a href="#h8-0-448" id="h8-0-448" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-449" id="h8-0-449" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-450" id="h8-0-450" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-451" id="h8-0-451" class="i">+	result += &quot;      divide_0:\n&quot;
+</a><a href="#h8-0-452" id="h8-0-452" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-453" id="h8-0-453" class="i">+	result += &quot;        z_s &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h8-0-454" id="h8-0-454" class="i">+	result += &quot;        z_e &lt;= a_e - b_e;\n&quot;
+</a><a href="#h8-0-455" id="h8-0-455" class="i">+	result += &quot;        quotient &lt;= 0;\n&quot;
+</a><a href="#h8-0-456" id="h8-0-456" class="i">+	result += &quot;        remainder &lt;= 0;\n&quot;
+</a><a href="#h8-0-457" id="h8-0-457" class="i">+	result += &quot;        count &lt;= 0;\n&quot;
+</a><a href="#h8-0-458" id="h8-0-458" class="i">+	result += &quot;        dividend &lt;= a_m &lt;&lt; 27;\n&quot;
+</a><a href="#h8-0-459" id="h8-0-459" class="i">+	result += &quot;        divisor &lt;= b_m;\n&quot;
+</a><a href="#h8-0-460" id="h8-0-460" class="i">+	result += &quot;        state &lt;= divide_1;\n&quot;
+</a><a href="#h8-0-461" id="h8-0-461" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-462" id="h8-0-462" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-463" id="h8-0-463" class="i">+	result += &quot;      divide_1:\n&quot;
+</a><a href="#h8-0-464" id="h8-0-464" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-465" id="h8-0-465" class="i">+	result += &quot;        quotient &lt;= quotient &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-466" id="h8-0-466" class="i">+	result += &quot;        remainder &lt;= remainder &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-467" id="h8-0-467" class="i">+	result += &quot;        remainder[0] &lt;= dividend[50];\n&quot;
+</a><a href="#h8-0-468" id="h8-0-468" class="i">+	result += &quot;        dividend &lt;= dividend &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-469" id="h8-0-469" class="i">+	result += &quot;        state &lt;= divide_2;\n&quot;
+</a><a href="#h8-0-470" id="h8-0-470" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-471" id="h8-0-471" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-472" id="h8-0-472" class="i">+	result += &quot;      divide_2:\n&quot;
+</a><a href="#h8-0-473" id="h8-0-473" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-474" id="h8-0-474" class="i">+	result += &quot;        if (remainder &gt;= divisor) begin\n&quot;
+</a><a href="#h8-0-475" id="h8-0-475" class="i">+	result += &quot;          quotient[0] &lt;= 1;\n&quot;
+</a><a href="#h8-0-476" id="h8-0-476" class="i">+	result += &quot;          remainder &lt;= remainder - divisor;\n&quot;
+</a><a href="#h8-0-477" id="h8-0-477" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-478" id="h8-0-478" class="i">+	result += &quot;        if (count == 49) begin\n&quot;
+</a><a href="#h8-0-479" id="h8-0-479" class="i">+	result += &quot;          state &lt;= divide_3;\n&quot;
+</a><a href="#h8-0-480" id="h8-0-480" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-481" id="h8-0-481" class="i">+	result += &quot;          count &lt;= count + 1;\n&quot;
+</a><a href="#h8-0-482" id="h8-0-482" class="i">+	result += &quot;          state &lt;= divide_1;\n&quot;
+</a><a href="#h8-0-483" id="h8-0-483" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-484" id="h8-0-484" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-485" id="h8-0-485" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-486" id="h8-0-486" class="i">+	result += &quot;      divide_3:\n&quot;
+</a><a href="#h8-0-487" id="h8-0-487" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-488" id="h8-0-488" class="i">+	result += &quot;        z_m &lt;= quotient[26:3];\n&quot;
+</a><a href="#h8-0-489" id="h8-0-489" class="i">+	result += &quot;        guard &lt;= quotient[2];\n&quot;
+</a><a href="#h8-0-490" id="h8-0-490" class="i">+	result += &quot;        round_bit &lt;= quotient[1];\n&quot;
+</a><a href="#h8-0-491" id="h8-0-491" class="i">+	result += &quot;        sticky &lt;= quotient[0] | (remainder != 0);\n&quot;
+</a><a href="#h8-0-492" id="h8-0-492" class="i">+	result += &quot;        state &lt;= normalise_1;\n&quot;
+</a><a href="#h8-0-493" id="h8-0-493" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-494" id="h8-0-494" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-495" id="h8-0-495" class="i">+	result += &quot;      normalise_1:\n&quot;
+</a><a href="#h8-0-496" id="h8-0-496" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-497" id="h8-0-497" class="i">+	result += &quot;        if (z_m[23] == 0 &amp;&amp; $signed(z_e) &gt; -126) begin\n&quot;
+</a><a href="#h8-0-498" id="h8-0-498" class="i">+	result += &quot;          z_e &lt;= z_e - 1;\n&quot;
+</a><a href="#h8-0-499" id="h8-0-499" class="i">+	result += &quot;          z_m &lt;= z_m &lt;&lt; 1;\n&quot;
+</a><a href="#h8-0-500" id="h8-0-500" class="i">+	result += &quot;          z_m[0] &lt;= guard;\n&quot;
+</a><a href="#h8-0-501" id="h8-0-501" class="i">+	result += &quot;          guard &lt;= round_bit;\n&quot;
+</a><a href="#h8-0-502" id="h8-0-502" class="i">+	result += &quot;          round_bit &lt;= 0;\n&quot;
+</a><a href="#h8-0-503" id="h8-0-503" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-504" id="h8-0-504" class="i">+	result += &quot;          state &lt;= normalise_2;\n&quot;
+</a><a href="#h8-0-505" id="h8-0-505" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-506" id="h8-0-506" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-507" id="h8-0-507" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-508" id="h8-0-508" class="i">+	result += &quot;      normalise_2:\n&quot;
+</a><a href="#h8-0-509" id="h8-0-509" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-510" id="h8-0-510" class="i">+	result += &quot;        if ($signed(z_e) &lt; -126) begin\n&quot;
+</a><a href="#h8-0-511" id="h8-0-511" class="i">+	result += &quot;          z_e &lt;= z_e + 1;\n&quot;
+</a><a href="#h8-0-512" id="h8-0-512" class="i">+	result += &quot;          z_m &lt;= z_m &gt;&gt; 1;\n&quot;
+</a><a href="#h8-0-513" id="h8-0-513" class="i">+	result += &quot;          guard &lt;= z_m[0];\n&quot;
+</a><a href="#h8-0-514" id="h8-0-514" class="i">+	result += &quot;          round_bit &lt;= guard;\n&quot;
+</a><a href="#h8-0-515" id="h8-0-515" class="i">+	result += &quot;          sticky &lt;= sticky | round_bit;\n&quot;
+</a><a href="#h8-0-516" id="h8-0-516" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h8-0-517" id="h8-0-517" class="i">+	result += &quot;          state &lt;= round;\n&quot;
+</a><a href="#h8-0-518" id="h8-0-518" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-519" id="h8-0-519" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-520" id="h8-0-520" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-521" id="h8-0-521" class="i">+	result += &quot;      round:\n&quot;
+</a><a href="#h8-0-522" id="h8-0-522" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-523" id="h8-0-523" class="i">+	result += &quot;        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin\n&quot;
+</a><a href="#h8-0-524" id="h8-0-524" class="i">+	result += &quot;          z_m &lt;= z_m + 1;\n&quot;
+</a><a href="#h8-0-525" id="h8-0-525" class="i">+	result += &quot;          if (z_m == 24&#39;hffffff) begin\n&quot;
+</a><a href="#h8-0-526" id="h8-0-526" class="i">+	result += &quot;            z_e &lt;=z_e + 1;\n&quot;
+</a><a href="#h8-0-527" id="h8-0-527" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h8-0-528" id="h8-0-528" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-529" id="h8-0-529" class="i">+	result += &quot;        state &lt;= pack;\n&quot;
+</a><a href="#h8-0-530" id="h8-0-530" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-531" id="h8-0-531" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-532" id="h8-0-532" class="i">+	result += &quot;      pack:\n&quot;
+</a><a href="#h8-0-533" id="h8-0-533" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-534" id="h8-0-534" class="i">+	result += &quot;        z[22 : 0] &lt;= z_m[22:0];\n&quot;
+</a><a href="#h8-0-535" id="h8-0-535" class="i">+	result += &quot;        z[30 : 23] &lt;= z_e[7:0] + 127;\n&quot;
+</a><a href="#h8-0-536" id="h8-0-536" class="i">+	result += &quot;        z[31] &lt;= z_s;\n&quot;
+</a><a href="#h8-0-537" id="h8-0-537" class="i">+	result += &quot;        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin\n&quot;
+</a><a href="#h8-0-538" id="h8-0-538" class="i">+	result += &quot;          z[30 : 23] &lt;= 0;\n&quot;
+</a><a href="#h8-0-539" id="h8-0-539" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-540" id="h8-0-540" class="i">+	result += &quot;        //if overflow occurs, return inf\n&quot;
+</a><a href="#h8-0-541" id="h8-0-541" class="i">+	result += &quot;        if ($signed(z_e) &gt; 127) begin\n&quot;
+</a><a href="#h8-0-542" id="h8-0-542" class="i">+	result += &quot;          z[22 : 0] &lt;= 0;\n&quot;
+</a><a href="#h8-0-543" id="h8-0-543" class="i">+	result += &quot;          z[30 : 23] &lt;= 255;\n&quot;
+</a><a href="#h8-0-544" id="h8-0-544" class="i">+	result += &quot;          z[31] &lt;= z_s;\n&quot;
+</a><a href="#h8-0-545" id="h8-0-545" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-546" id="h8-0-546" class="i">+	result += &quot;        state &lt;= put_z;\n&quot;
+</a><a href="#h8-0-547" id="h8-0-547" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-548" id="h8-0-548" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-549" id="h8-0-549" class="i">+	result += &quot;      put_z:\n&quot;
+</a><a href="#h8-0-550" id="h8-0-550" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h8-0-551" id="h8-0-551" class="i">+	result += &quot;        s_output_z_stb &lt;= 1;\n&quot;
+</a><a href="#h8-0-552" id="h8-0-552" class="i">+	result += &quot;        s_output_z &lt;= z;\n&quot;
+</a><a href="#h8-0-553" id="h8-0-553" class="i">+	result += &quot;        if (s_output_z_stb &amp;&amp; output_z_ack) begin\n&quot;
+</a><a href="#h8-0-554" id="h8-0-554" class="i">+	result += &quot;          s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h8-0-555" id="h8-0-555" class="i">+	result += &quot;          state &lt;= get_a;\n&quot;
+</a><a href="#h8-0-556" id="h8-0-556" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h8-0-557" id="h8-0-557" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h8-0-558" id="h8-0-558" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-559" id="h8-0-559" class="i">+	result += &quot;    endcase\n&quot;
+</a><a href="#h8-0-560" id="h8-0-560" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-561" id="h8-0-561" class="i">+	result += &quot;    if (rst == 1) begin\n&quot;
+</a><a href="#h8-0-562" id="h8-0-562" class="i">+	result += &quot;      state &lt;= get_a;\n&quot;
+</a><a href="#h8-0-563" id="h8-0-563" class="i">+	result += &quot;      s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h8-0-564" id="h8-0-564" class="i">+	result += &quot;      s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h8-0-565" id="h8-0-565" class="i">+	result += &quot;      s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h8-0-566" id="h8-0-566" class="i">+	result += &quot;    end\n&quot;
+</a><a href="#h8-0-567" id="h8-0-567" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-568" id="h8-0-568" class="i">+	result += &quot;  end\n&quot;
+</a><a href="#h8-0-569" id="h8-0-569" class="i">+	result += &quot;  assign input_a_ack = s_input_a_ack;\n&quot;
+</a><a href="#h8-0-570" id="h8-0-570" class="i">+	result += &quot;  assign input_b_ack = s_input_b_ack;\n&quot;
+</a><a href="#h8-0-571" id="h8-0-571" class="i">+	result += &quot;  assign output_z_stb = s_output_z_stb;\n&quot;
+</a><a href="#h8-0-572" id="h8-0-572" class="i">+	result += &quot;  assign output_z = s_output_z;\n&quot;
+</a><a href="#h8-0-573" id="h8-0-573" class="i">+	result += &quot;\n&quot;
+</a><a href="#h8-0-574" id="h8-0-574" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h8-0-575" id="h8-0-575" class="i">+
+</a><a href="#h8-0-576" id="h8-0-576" class="i">+	return []string{&quot;divider&quot;}, []string{result}
+</a><a href="#h8-0-577" id="h8-0-577" class="i">+}
+</a><a href="#h8-0-578" id="h8-0-578" class="i">+
+</a><a href="#h8-0-579" id="h8-0-579" class="i">+func (Op Divf16) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h8-0-580" id="h8-0-580" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h8-0-581" id="h8-0-581" class="i">+	return result, nil
+</a><a href="#h8-0-582" id="h8-0-582" class="i">+}
+</a><a href="#h8-0-583" id="h8-0-583" class="i">+
+</a><a href="#h8-0-584" id="h8-0-584" class="i">+func (Op Divf16) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h8-0-585" id="h8-0-585" class="i">+	result := &quot;&quot;
+</a><a href="#h8-0-586" id="h8-0-586" class="i">+	switch blockname {
+</a><a href="#h8-0-587" id="h8-0-587" class="i">+	default:
+</a><a href="#h8-0-588" id="h8-0-588" class="i">+		result = &quot;&quot;
+</a><a href="#h8-0-589" id="h8-0-589" class="i">+	}
+</a><a href="#h8-0-590" id="h8-0-590" class="i">+	return result
+</a><a href="#h8-0-591" id="h8-0-591" class="i">+}
+</a><a href="#h8-0-592" id="h8-0-592" class="i">+func (Op Divf16) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h8-0-593" id="h8-0-593" class="i">+	result := make([]string, 0)
+</a><a href="#h8-0-594" id="h8-0-594" class="i">+	result = append(result, &quot;divf16::*--type=reg::*--type=reg&quot;)
+</a><a href="#h8-0-595" id="h8-0-595" class="i">+	return result
+</a><a href="#h8-0-596" id="h8-0-596" class="i">+}
+</a><a href="#h8-0-597" id="h8-0-597" class="i">+func (Op Divf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h8-0-598" id="h8-0-598" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h8-0-599" id="h8-0-599" class="i">+	case &quot;divf16&quot;:
+</a><a href="#h8-0-600" id="h8-0-600" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h8-0-601" id="h8-0-601" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h8-0-602" id="h8-0-602" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-603" id="h8-0-603" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-604" id="h8-0-604" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;divf16&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-605" id="h8-0-605" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-606" id="h8-0-606" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:divf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h8-0-607" id="h8-0-607" class="i">+		return line, nil
+</a><a href="#h8-0-608" id="h8-0-608" class="i">+	}
+</a><a href="#h8-0-609" id="h8-0-609" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h8-0-610" id="h8-0-610" class="i">+}
+</a><a href="#h8-0-611" id="h8-0-611" class="i">+func (Op Divf16) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h8-0-612" id="h8-0-612" class="i">+	return []string{}, []string{}
+</a><a href="#h8-0-613" id="h8-0-613" class="i">+}
+</a><b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a> b/<a href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -0,0 +1,567 @@
+</a><a href="#h9-0-0" id="h9-0-0" class="i">+package procbuilder
+</a><a href="#h9-0-1" id="h9-0-1" class="i">+
+</a><a href="#h9-0-2" id="h9-0-2" class="i">+import (
+</a><a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h9-0-5" id="h9-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h9-0-6" id="h9-0-6" class="i">+
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h9-0-8" id="h9-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h9-0-9" id="h9-0-9" class="i">+
+</a><a href="#h9-0-10" id="h9-0-10" class="i">+	&quot;github.com/x448/float16&quot;
+</a><a href="#h9-0-11" id="h9-0-11" class="i">+)
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+
+</a><a href="#h9-0-13" id="h9-0-13" class="i">+type Multf16 struct{}
+</a><a href="#h9-0-14" id="h9-0-14" class="i">+
+</a><a href="#h9-0-15" id="h9-0-15" class="i">+func (op Multf16) Op_get_name() string {
+</a><a href="#h9-0-16" id="h9-0-16" class="i">+	return &quot;multf16&quot;
+</a><a href="#h9-0-17" id="h9-0-17" class="i">+}
+</a><a href="#h9-0-18" id="h9-0-18" class="i">+
+</a><a href="#h9-0-19" id="h9-0-19" class="i">+func (op Multf16) Op_get_desc() string {
+</a><a href="#h9-0-20" id="h9-0-20" class="i">+	return &quot;Register float16 multiplcation&quot;
+</a><a href="#h9-0-21" id="h9-0-21" class="i">+}
+</a><a href="#h9-0-22" id="h9-0-22" class="i">+
+</a><a href="#h9-0-23" id="h9-0-23" class="i">+func (op Multf16) Op_show_assembler(arch *Arch) string {
+</a><a href="#h9-0-24" id="h9-0-24" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h9-0-25" id="h9-0-25" class="i">+	result := &quot;multf16 [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the product of its value with another register [&quot; + strconv.Itoa(opbits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h9-0-26" id="h9-0-26" class="i">+	return result
+</a><a href="#h9-0-27" id="h9-0-27" class="i">+}
+</a><a href="#h9-0-28" id="h9-0-28" class="i">+
+</a><a href="#h9-0-29" id="h9-0-29" class="i">+func (op Multf16) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h9-0-30" id="h9-0-30" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h9-0-31" id="h9-0-31" class="i">+	return opbits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h9-0-32" id="h9-0-32" class="i">+}
+</a><a href="#h9-0-33" id="h9-0-33" class="i">+
+</a><a href="#h9-0-34" id="h9-0-34" class="i">+func (op Multf16) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h9-0-35" id="h9-0-35" class="i">+	result := &quot;&quot;
+</a><a href="#h9-0-36" id="h9-0-36" class="i">+	result += &quot;\treg [15:0] multiplier_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h9-0-37" id="h9-0-37" class="i">+	result += &quot;\treg [15:0] multiplier_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h9-0-38" id="h9-0-38" class="i">+	result += &quot;\treg multiplier_&quot; + arch.Tag + &quot;_input_a_stb;\n&quot;
+</a><a href="#h9-0-39" id="h9-0-39" class="i">+	result += &quot;\treg multiplier_&quot; + arch.Tag + &quot;_input_b_stb;\n&quot;
+</a><a href="#h9-0-40" id="h9-0-40" class="i">+	result += &quot;\treg multiplier_&quot; + arch.Tag + &quot;_output_z_ack;\n\n&quot;
+</a><a href="#h9-0-41" id="h9-0-41" class="i">+
+</a><a href="#h9-0-42" id="h9-0-42" class="i">+	result += &quot;\twire [15:0] multiplier_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h9-0-43" id="h9-0-43" class="i">+	result += &quot;\twire multiplier_&quot; + arch.Tag + &quot;_output_z_stb;\n&quot;
+</a><a href="#h9-0-44" id="h9-0-44" class="i">+	result += &quot;\twire multiplier_&quot; + arch.Tag + &quot;_input_a_ack;\n&quot;
+</a><a href="#h9-0-45" id="h9-0-45" class="i">+	result += &quot;\twire multiplier_&quot; + arch.Tag + &quot;_input_b_ack;\n\n&quot;
+</a><a href="#h9-0-46" id="h9-0-46" class="i">+
+</a><a href="#h9-0-47" id="h9-0-47" class="i">+	result += &quot;\treg	[1:0] multiplier_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h9-0-48" id="h9-0-48" class="i">+	result += &quot;parameter multiplier_&quot; + arch.Tag + &quot;_put_a         = 2&#39;d0,\n&quot;
+</a><a href="#h9-0-49" id="h9-0-49" class="i">+	result += &quot;          multiplier_&quot; + arch.Tag + &quot;_put_b         = 2&#39;d1,\n&quot;
+</a><a href="#h9-0-50" id="h9-0-50" class="i">+	result += &quot;          multiplier_&quot; + arch.Tag + &quot;_get_z         = 2&#39;d2;\n&quot;
+</a><a href="#h9-0-51" id="h9-0-51" class="i">+
+</a><a href="#h9-0-52" id="h9-0-52" class="i">+	result += &quot;\tmultiplier_&quot; + arch.Tag + &quot; multiplier_&quot; + arch.Tag + &quot;_inst (multiplier_&quot; + arch.Tag + &quot;_input_a, multiplier_&quot; + arch.Tag + &quot;_input_b, multiplier_&quot; + arch.Tag + &quot;_input_a_stb, multiplier_&quot; + arch.Tag + &quot;_input_b_stb, multiplier_&quot; + arch.Tag + &quot;_output_z_ack, clock_signal, reset_signal, multiplier_&quot; + arch.Tag + &quot;_output_z, multiplier_&quot; + arch.Tag + &quot;_output_z_stb, multiplier_&quot; + arch.Tag + &quot;_input_a_ack, multiplier_&quot; + arch.Tag + &quot;_input_b_ack);\n\n&quot;
+</a><a href="#h9-0-53" id="h9-0-53" class="i">+
+</a><a href="#h9-0-54" id="h9-0-54" class="i">+	return result
+</a><a href="#h9-0-55" id="h9-0-55" class="i">+}
+</a><a href="#h9-0-56" id="h9-0-56" class="i">+
+</a><a href="#h9-0-57" id="h9-0-57" class="i">+func (op Multf16) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h9-0-58" id="h9-0-58" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h9-0-59" id="h9-0-59" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h9-0-60" id="h9-0-60" class="i">+
+</a><a href="#h9-0-61" id="h9-0-61" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h9-0-62" id="h9-0-62" class="i">+
+</a><a href="#h9-0-63" id="h9-0-63" class="i">+	result := &quot;&quot;
+</a><a href="#h9-0-64" id="h9-0-64" class="i">+	result += &quot;					MULTF16: begin\n&quot;
+</a><a href="#h9-0-65" id="h9-0-65" class="i">+	if arch.R == 1 {
+</a><a href="#h9-0-66" id="h9-0-66" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h9-0-67" id="h9-0-67" class="i">+	} else {
+</a><a href="#h9-0-68" id="h9-0-68" class="i">+		result += &quot;						case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h9-0-69" id="h9-0-69" class="i">+	}
+</a><a href="#h9-0-70" id="h9-0-70" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h9-0-71" id="h9-0-71" class="i">+
+</a><a href="#h9-0-72" id="h9-0-72" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h9-0-73" id="h9-0-73" class="i">+			cp := arch.Tag
+</a><a href="#h9-0-74" id="h9-0-74" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h9-0-75" id="h9-0-75" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h9-0-76" id="h9-0-76" class="i">+				continue
+</a><a href="#h9-0-77" id="h9-0-77" class="i">+			}
+</a><a href="#h9-0-78" id="h9-0-78" class="i">+		}
+</a><a href="#h9-0-79" id="h9-0-79" class="i">+
+</a><a href="#h9-0-80" id="h9-0-80" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h9-0-81" id="h9-0-81" class="i">+
+</a><a href="#h9-0-82" id="h9-0-82" class="i">+		if arch.R == 1 {
+</a><a href="#h9-0-83" id="h9-0-83" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h9-0-84" id="h9-0-84" class="i">+		} else {
+</a><a href="#h9-0-85" id="h9-0-85" class="i">+			result += &quot;							case (rom_value[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h9-0-86" id="h9-0-86" class="i">+		}
+</a><a href="#h9-0-87" id="h9-0-87" class="i">+
+</a><a href="#h9-0-88" id="h9-0-88" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h9-0-89" id="h9-0-89" class="i">+
+</a><a href="#h9-0-90" id="h9-0-90" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h9-0-91" id="h9-0-91" class="i">+				cp := arch.Tag
+</a><a href="#h9-0-92" id="h9-0-92" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h9-0-93" id="h9-0-93" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h9-0-94" id="h9-0-94" class="i">+					continue
+</a><a href="#h9-0-95" id="h9-0-95" class="i">+				}
+</a><a href="#h9-0-96" id="h9-0-96" class="i">+			}
+</a><a href="#h9-0-97" id="h9-0-97" class="i">+
+</a><a href="#h9-0-98" id="h9-0-98" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h9-0-99" id="h9-0-99" class="i">+			result += &quot;							case (multiplier_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h9-0-100" id="h9-0-100" class="i">+			result += &quot;							multiplier_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+</a><a href="#h9-0-101" id="h9-0-101" class="i">+			result += &quot;								if (multiplier_&quot; + arch.Tag + &quot;_input_a_ack) begin\n&quot;
+</a><a href="#h9-0-102" id="h9-0-102" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h9-0-103" id="h9-0-103" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 1;\n&quot;
+</a><a href="#h9-0-104" id="h9-0-104" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h9-0-105" id="h9-0-105" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_state &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_put_b;\n&quot;
+</a><a href="#h9-0-106" id="h9-0-106" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h9-0-107" id="h9-0-107" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h9-0-108" id="h9-0-108" class="i">+			result += &quot;							multiplier_&quot; + arch.Tag + &quot;_put_b : begin\n&quot;
+</a><a href="#h9-0-109" id="h9-0-109" class="i">+			result += &quot;								if (multiplier_&quot; + arch.Tag + &quot;_input_b_ack) begin\n&quot;
+</a><a href="#h9-0-110" id="h9-0-110" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h9-0-111" id="h9-0-111" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 1;\n&quot;
+</a><a href="#h9-0-112" id="h9-0-112" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 0;\n&quot;
+</a><a href="#h9-0-113" id="h9-0-113" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_state &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_get_z;\n&quot;
+</a><a href="#h9-0-114" id="h9-0-114" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_a_stb &lt;= #1 0;\n&quot;
+</a><a href="#h9-0-115" id="h9-0-115" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h9-0-116" id="h9-0-116" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h9-0-117" id="h9-0-117" class="i">+			result += &quot;							multiplier_&quot; + arch.Tag + &quot;_get_z : begin\n&quot;
+</a><a href="#h9-0-118" id="h9-0-118" class="i">+			result += &quot;								if (multiplier_&quot; + arch.Tag + &quot;_output_z_stb) begin\n&quot;
+</a><a href="#h9-0-119" id="h9-0-119" class="i">+			result += &quot;									_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h9-0-120" id="h9-0-120" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_output_z_ack &lt;= #1 1;\n&quot;
+</a><a href="#h9-0-121" id="h9-0-121" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_state &lt;= #1 multiplier_&quot; + arch.Tag + &quot;_put_a;\n&quot;
+</a><a href="#h9-0-122" id="h9-0-122" class="i">+			result += &quot;									multiplier_&quot; + arch.Tag + &quot;_input_b_stb &lt;= #1 0;\n&quot;
+</a><a href="#h9-0-123" id="h9-0-123" class="i">+			result += &quot;									_pc &lt;= #1 _pc + 1&#39;b1 ;\n&quot;
+</a><a href="#h9-0-124" id="h9-0-124" class="i">+			result += &quot;								end\n&quot;
+</a><a href="#h9-0-125" id="h9-0-125" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h9-0-126" id="h9-0-126" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h9-0-127" id="h9-0-127" class="i">+			result += &quot;								$display(\&quot;ADDF &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h9-0-128" id="h9-0-128" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h9-0-129" id="h9-0-129" class="i">+		}
+</a><a href="#h9-0-130" id="h9-0-130" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h9-0-131" id="h9-0-131" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h9-0-132" id="h9-0-132" class="i">+	}
+</a><a href="#h9-0-133" id="h9-0-133" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h9-0-134" id="h9-0-134" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h9-0-135" id="h9-0-135" class="i">+	return result
+</a><a href="#h9-0-136" id="h9-0-136" class="i">+}
+</a><a href="#h9-0-137" id="h9-0-137" class="i">+
+</a><a href="#h9-0-138" id="h9-0-138" class="i">+func (op Multf16) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h9-0-139" id="h9-0-139" class="i">+	// TODO
+</a><a href="#h9-0-140" id="h9-0-140" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-141" id="h9-0-141" class="i">+}
+</a><a href="#h9-0-142" id="h9-0-142" class="i">+
+</a><a href="#h9-0-143" id="h9-0-143" class="i">+func (op Multf16) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h9-0-144" id="h9-0-144" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h9-0-145" id="h9-0-145" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h9-0-146" id="h9-0-146" class="i">+
+</a><a href="#h9-0-147" id="h9-0-147" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h9-0-148" id="h9-0-148" class="i">+
+</a><a href="#h9-0-149" id="h9-0-149" class="i">+	if len(words) != 2 {
+</a><a href="#h9-0-150" id="h9-0-150" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h9-0-151" id="h9-0-151" class="i">+	}
+</a><a href="#h9-0-152" id="h9-0-152" class="i">+
+</a><a href="#h9-0-153" id="h9-0-153" class="i">+	result := &quot;&quot;
+</a><a href="#h9-0-154" id="h9-0-154" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h9-0-155" id="h9-0-155" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h9-0-156" id="h9-0-156" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h9-0-157" id="h9-0-157" class="i">+			break
+</a><a href="#h9-0-158" id="h9-0-158" class="i">+		}
+</a><a href="#h9-0-159" id="h9-0-159" class="i">+	}
+</a><a href="#h9-0-160" id="h9-0-160" class="i">+
+</a><a href="#h9-0-161" id="h9-0-161" class="i">+	if result == &quot;&quot; {
+</a><a href="#h9-0-162" id="h9-0-162" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h9-0-163" id="h9-0-163" class="i">+	}
+</a><a href="#h9-0-164" id="h9-0-164" class="i">+
+</a><a href="#h9-0-165" id="h9-0-165" class="i">+	partial := &quot;&quot;
+</a><a href="#h9-0-166" id="h9-0-166" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h9-0-167" id="h9-0-167" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h9-0-168" id="h9-0-168" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h9-0-169" id="h9-0-169" class="i">+			break
+</a><a href="#h9-0-170" id="h9-0-170" class="i">+		}
+</a><a href="#h9-0-171" id="h9-0-171" class="i">+	}
+</a><a href="#h9-0-172" id="h9-0-172" class="i">+
+</a><a href="#h9-0-173" id="h9-0-173" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h9-0-174" id="h9-0-174" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h9-0-175" id="h9-0-175" class="i">+	}
+</a><a href="#h9-0-176" id="h9-0-176" class="i">+
+</a><a href="#h9-0-177" id="h9-0-177" class="i">+	result += partial
+</a><a href="#h9-0-178" id="h9-0-178" class="i">+
+</a><a href="#h9-0-179" id="h9-0-179" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h9-0-180" id="h9-0-180" class="i">+		result += &quot;0&quot;
+</a><a href="#h9-0-181" id="h9-0-181" class="i">+	}
+</a><a href="#h9-0-182" id="h9-0-182" class="i">+
+</a><a href="#h9-0-183" id="h9-0-183" class="i">+	return result, nil
+</a><a href="#h9-0-184" id="h9-0-184" class="i">+}
+</a><a href="#h9-0-185" id="h9-0-185" class="i">+
+</a><a href="#h9-0-186" id="h9-0-186" class="i">+func (op Multf16) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h9-0-187" id="h9-0-187" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h9-0-188" id="h9-0-188" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h9-0-189" id="h9-0-189" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h9-0-190" id="h9-0-190" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h9-0-191" id="h9-0-191" class="i">+	return result, nil
+</a><a href="#h9-0-192" id="h9-0-192" class="i">+}
+</a><a href="#h9-0-193" id="h9-0-193" class="i">+
+</a><a href="#h9-0-194" id="h9-0-194" class="i">+func (op Multf16) Simulate(vm *VM, instr string) error {
+</a><a href="#h9-0-195" id="h9-0-195" class="i">+	reg_bits := vm.Mach.R
+</a><a href="#h9-0-196" id="h9-0-196" class="i">+	regDest := get_id(instr[:reg_bits])
+</a><a href="#h9-0-197" id="h9-0-197" class="i">+	regSrc := get_id(instr[reg_bits : reg_bits*2])
+</a><a href="#h9-0-198" id="h9-0-198" class="i">+	switch vm.Mach.Rsize {
+</a><a href="#h9-0-199" id="h9-0-199" class="i">+	case 16:
+</a><a href="#h9-0-200" id="h9-0-200" class="i">+		var floatDest float16.Float16
+</a><a href="#h9-0-201" id="h9-0-201" class="i">+		var floatSrc float16.Float16
+</a><a href="#h9-0-202" id="h9-0-202" class="i">+		if v, ok := vm.Registers[regDest].(uint16); ok {
+</a><a href="#h9-0-203" id="h9-0-203" class="i">+			floatDest = float16.Frombits(v)
+</a><a href="#h9-0-204" id="h9-0-204" class="i">+		} else {
+</a><a href="#h9-0-205" id="h9-0-205" class="i">+			floatDest = float16.Float16(0)
+</a><a href="#h9-0-206" id="h9-0-206" class="i">+		}
+</a><a href="#h9-0-207" id="h9-0-207" class="i">+		if v, ok := vm.Registers[regSrc].(uint16); ok {
+</a><a href="#h9-0-208" id="h9-0-208" class="i">+			floatSrc = float16.Frombits(v)
+</a><a href="#h9-0-209" id="h9-0-209" class="i">+		} else {
+</a><a href="#h9-0-210" id="h9-0-210" class="i">+			floatSrc = float16.Float16(0)
+</a><a href="#h9-0-211" id="h9-0-211" class="i">+		}
+</a><a href="#h9-0-212" id="h9-0-212" class="i">+		operation := floatDest.Float32() * floatSrc.Float32()
+</a><a href="#h9-0-213" id="h9-0-213" class="i">+		vm.Registers[regDest] = float16.Fromfloat32(operation).Bits()
+</a><a href="#h9-0-214" id="h9-0-214" class="i">+	default:
+</a><a href="#h9-0-215" id="h9-0-215" class="i">+		return errors.New(&quot;invalid register size, for float registers has to be 16 bits&quot;)
+</a><a href="#h9-0-216" id="h9-0-216" class="i">+	}
+</a><a href="#h9-0-217" id="h9-0-217" class="i">+	vm.Pc = vm.Pc + 1
+</a><a href="#h9-0-218" id="h9-0-218" class="i">+	return nil
+</a><a href="#h9-0-219" id="h9-0-219" class="i">+}
+</a><a href="#h9-0-220" id="h9-0-220" class="i">+
+</a><a href="#h9-0-221" id="h9-0-221" class="i">+// The random genaration does nothing
+</a><a href="#h9-0-222" id="h9-0-222" class="i">+func (op Multf16) Generate(arch *Arch) string {
+</a><a href="#h9-0-223" id="h9-0-223" class="i">+	// TODO
+</a><a href="#h9-0-224" id="h9-0-224" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-225" id="h9-0-225" class="i">+}
+</a><a href="#h9-0-226" id="h9-0-226" class="i">+
+</a><a href="#h9-0-227" id="h9-0-227" class="i">+func (op Multf16) Required_shared() (bool, []string) {
+</a><a href="#h9-0-228" id="h9-0-228" class="i">+	// TODO
+</a><a href="#h9-0-229" id="h9-0-229" class="i">+	return false, []string{}
+</a><a href="#h9-0-230" id="h9-0-230" class="i">+}
+</a><a href="#h9-0-231" id="h9-0-231" class="i">+
+</a><a href="#h9-0-232" id="h9-0-232" class="i">+func (op Multf16) Required_modes() (bool, []string) {
+</a><a href="#h9-0-233" id="h9-0-233" class="i">+	return false, []string{}
+</a><a href="#h9-0-234" id="h9-0-234" class="i">+}
+</a><a href="#h9-0-235" id="h9-0-235" class="i">+
+</a><a href="#h9-0-236" id="h9-0-236" class="i">+func (op Multf16) Forbidden_modes() (bool, []string) {
+</a><a href="#h9-0-237" id="h9-0-237" class="i">+	return false, []string{}
+</a><a href="#h9-0-238" id="h9-0-238" class="i">+}
+</a><a href="#h9-0-239" id="h9-0-239" class="i">+
+</a><a href="#h9-0-240" id="h9-0-240" class="i">+func (op Multf16) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h9-0-241" id="h9-0-241" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-242" id="h9-0-242" class="i">+}
+</a><a href="#h9-0-243" id="h9-0-243" class="i">+
+</a><a href="#h9-0-244" id="h9-0-244" class="i">+func (Op Multf16) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h9-0-245" id="h9-0-245" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-246" id="h9-0-246" class="i">+}
+</a><a href="#h9-0-247" id="h9-0-247" class="i">+
+</a><a href="#h9-0-248" id="h9-0-248" class="i">+func (Op Multf16) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h9-0-249" id="h9-0-249" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-250" id="h9-0-250" class="i">+}
+</a><a href="#h9-0-251" id="h9-0-251" class="i">+
+</a><a href="#h9-0-252" id="h9-0-252" class="i">+func (Op Multf16) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h9-0-253" id="h9-0-253" class="i">+	return &quot;&quot;
+</a><a href="#h9-0-254" id="h9-0-254" class="i">+}
+</a><a href="#h9-0-255" id="h9-0-255" class="i">+
+</a><a href="#h9-0-256" id="h9-0-256" class="i">+func (Op Multf16) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h9-0-257" id="h9-0-257" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h9-0-258" id="h9-0-258" class="i">+
+</a><a href="#h9-0-259" id="h9-0-259" class="i">+	result += &quot;//IEEE Floating Point Multiplier (Single Precision)\n&quot;
+</a><a href="#h9-0-260" id="h9-0-260" class="i">+	result += &quot;//Copyright (C) Jonathan P Dawson 2013\n&quot;
+</a><a href="#h9-0-261" id="h9-0-261" class="i">+	result += &quot;//2013-12-12\n&quot;
+</a><a href="#h9-0-262" id="h9-0-262" class="i">+	result += &quot;module multiplier_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h9-0-263" id="h9-0-263" class="i">+	result += &quot;        input_a,\n&quot;
+</a><a href="#h9-0-264" id="h9-0-264" class="i">+	result += &quot;        input_b,\n&quot;
+</a><a href="#h9-0-265" id="h9-0-265" class="i">+	result += &quot;        input_a_stb,\n&quot;
+</a><a href="#h9-0-266" id="h9-0-266" class="i">+	result += &quot;        input_b_stb,\n&quot;
+</a><a href="#h9-0-267" id="h9-0-267" class="i">+	result += &quot;        output_z_ack,\n&quot;
+</a><a href="#h9-0-268" id="h9-0-268" class="i">+	result += &quot;        clk,\n&quot;
+</a><a href="#h9-0-269" id="h9-0-269" class="i">+	result += &quot;        rst,\n&quot;
+</a><a href="#h9-0-270" id="h9-0-270" class="i">+	result += &quot;        output_z,\n&quot;
+</a><a href="#h9-0-271" id="h9-0-271" class="i">+	result += &quot;        output_z_stb,\n&quot;
+</a><a href="#h9-0-272" id="h9-0-272" class="i">+	result += &quot;        input_a_ack,\n&quot;
+</a><a href="#h9-0-273" id="h9-0-273" class="i">+	result += &quot;        input_b_ack);\n&quot;
+</a><a href="#h9-0-274" id="h9-0-274" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-275" id="h9-0-275" class="i">+	result += &quot;  input     clk;\n&quot;
+</a><a href="#h9-0-276" id="h9-0-276" class="i">+	result += &quot;  input     rst;\n&quot;
+</a><a href="#h9-0-277" id="h9-0-277" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-278" id="h9-0-278" class="i">+	result += &quot;  input     [31:0] input_a;\n&quot;
+</a><a href="#h9-0-279" id="h9-0-279" class="i">+	result += &quot;  input     input_a_stb;\n&quot;
+</a><a href="#h9-0-280" id="h9-0-280" class="i">+	result += &quot;  output    input_a_ack;\n&quot;
+</a><a href="#h9-0-281" id="h9-0-281" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-282" id="h9-0-282" class="i">+	result += &quot;  input     [31:0] input_b;\n&quot;
+</a><a href="#h9-0-283" id="h9-0-283" class="i">+	result += &quot;  input     input_b_stb;\n&quot;
+</a><a href="#h9-0-284" id="h9-0-284" class="i">+	result += &quot;  output    input_b_ack;\n&quot;
+</a><a href="#h9-0-285" id="h9-0-285" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-286" id="h9-0-286" class="i">+	result += &quot;  output    [31:0] output_z;\n&quot;
+</a><a href="#h9-0-287" id="h9-0-287" class="i">+	result += &quot;  output    output_z_stb;\n&quot;
+</a><a href="#h9-0-288" id="h9-0-288" class="i">+	result += &quot;  input     output_z_ack;\n&quot;
+</a><a href="#h9-0-289" id="h9-0-289" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-290" id="h9-0-290" class="i">+	result += &quot;  reg       s_output_z_stb;\n&quot;
+</a><a href="#h9-0-291" id="h9-0-291" class="i">+	result += &quot;  reg       [31:0] s_output_z;\n&quot;
+</a><a href="#h9-0-292" id="h9-0-292" class="i">+	result += &quot;  reg       s_input_a_ack;\n&quot;
+</a><a href="#h9-0-293" id="h9-0-293" class="i">+	result += &quot;  reg       s_input_b_ack;\n&quot;
+</a><a href="#h9-0-294" id="h9-0-294" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-295" id="h9-0-295" class="i">+	result += &quot;  reg       [3:0] state;\n&quot;
+</a><a href="#h9-0-296" id="h9-0-296" class="i">+	result += &quot;  parameter get_a         = 4&#39;d0,\n&quot;
+</a><a href="#h9-0-297" id="h9-0-297" class="i">+	result += &quot;            get_b         = 4&#39;d1,\n&quot;
+</a><a href="#h9-0-298" id="h9-0-298" class="i">+	result += &quot;            unpack        = 4&#39;d2,\n&quot;
+</a><a href="#h9-0-299" id="h9-0-299" class="i">+	result += &quot;            special_cases = 4&#39;d3,\n&quot;
+</a><a href="#h9-0-300" id="h9-0-300" class="i">+	result += &quot;            normalise_a   = 4&#39;d4,\n&quot;
+</a><a href="#h9-0-301" id="h9-0-301" class="i">+	result += &quot;            normalise_b   = 4&#39;d5,\n&quot;
+</a><a href="#h9-0-302" id="h9-0-302" class="i">+	result += &quot;            multiply_0    = 4&#39;d6,\n&quot;
+</a><a href="#h9-0-303" id="h9-0-303" class="i">+	result += &quot;            multiply_1    = 4&#39;d7,\n&quot;
+</a><a href="#h9-0-304" id="h9-0-304" class="i">+	result += &quot;            normalise_1   = 4&#39;d8,\n&quot;
+</a><a href="#h9-0-305" id="h9-0-305" class="i">+	result += &quot;            normalise_2   = 4&#39;d9,\n&quot;
+</a><a href="#h9-0-306" id="h9-0-306" class="i">+	result += &quot;            round         = 4&#39;d10,\n&quot;
+</a><a href="#h9-0-307" id="h9-0-307" class="i">+	result += &quot;            pack          = 4&#39;d11,\n&quot;
+</a><a href="#h9-0-308" id="h9-0-308" class="i">+	result += &quot;            put_z         = 4&#39;d12;\n&quot;
+</a><a href="#h9-0-309" id="h9-0-309" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-310" id="h9-0-310" class="i">+	result += &quot;  reg       [31:0] a, b, z;\n&quot;
+</a><a href="#h9-0-311" id="h9-0-311" class="i">+	result += &quot;  reg       [23:0] a_m, b_m, z_m;\n&quot;
+</a><a href="#h9-0-312" id="h9-0-312" class="i">+	result += &quot;  reg       [9:0] a_e, b_e, z_e;\n&quot;
+</a><a href="#h9-0-313" id="h9-0-313" class="i">+	result += &quot;  reg       a_s, b_s, z_s;\n&quot;
+</a><a href="#h9-0-314" id="h9-0-314" class="i">+	result += &quot;  reg       guard, round_bit, sticky;\n&quot;
+</a><a href="#h9-0-315" id="h9-0-315" class="i">+	result += &quot;  reg       [49:0] product;\n&quot;
+</a><a href="#h9-0-316" id="h9-0-316" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-317" id="h9-0-317" class="i">+	result += &quot;  always @(posedge clk)\n&quot;
+</a><a href="#h9-0-318" id="h9-0-318" class="i">+	result += &quot;  begin\n&quot;
+</a><a href="#h9-0-319" id="h9-0-319" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-320" id="h9-0-320" class="i">+	result += &quot;    case(state)\n&quot;
+</a><a href="#h9-0-321" id="h9-0-321" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-322" id="h9-0-322" class="i">+	result += &quot;      get_a:\n&quot;
+</a><a href="#h9-0-323" id="h9-0-323" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-324" id="h9-0-324" class="i">+	result += &quot;        s_input_a_ack &lt;= 1;\n&quot;
+</a><a href="#h9-0-325" id="h9-0-325" class="i">+	result += &quot;        if (s_input_a_ack &amp;&amp; input_a_stb) begin\n&quot;
+</a><a href="#h9-0-326" id="h9-0-326" class="i">+	result += &quot;          a &lt;= input_a;\n&quot;
+</a><a href="#h9-0-327" id="h9-0-327" class="i">+	result += &quot;          s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h9-0-328" id="h9-0-328" class="i">+	result += &quot;          state &lt;= get_b;\n&quot;
+</a><a href="#h9-0-329" id="h9-0-329" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-330" id="h9-0-330" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-331" id="h9-0-331" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-332" id="h9-0-332" class="i">+	result += &quot;      get_b:\n&quot;
+</a><a href="#h9-0-333" id="h9-0-333" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-334" id="h9-0-334" class="i">+	result += &quot;        s_input_b_ack &lt;= 1;\n&quot;
+</a><a href="#h9-0-335" id="h9-0-335" class="i">+	result += &quot;        if (s_input_b_ack &amp;&amp; input_b_stb) begin\n&quot;
+</a><a href="#h9-0-336" id="h9-0-336" class="i">+	result += &quot;          b &lt;= input_b;\n&quot;
+</a><a href="#h9-0-337" id="h9-0-337" class="i">+	result += &quot;          s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h9-0-338" id="h9-0-338" class="i">+	result += &quot;          state &lt;= unpack;\n&quot;
+</a><a href="#h9-0-339" id="h9-0-339" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-340" id="h9-0-340" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-341" id="h9-0-341" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-342" id="h9-0-342" class="i">+	result += &quot;      unpack:\n&quot;
+</a><a href="#h9-0-343" id="h9-0-343" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-344" id="h9-0-344" class="i">+	result += &quot;        a_m &lt;= a[22 : 0];\n&quot;
+</a><a href="#h9-0-345" id="h9-0-345" class="i">+	result += &quot;        b_m &lt;= b[22 : 0];\n&quot;
+</a><a href="#h9-0-346" id="h9-0-346" class="i">+	result += &quot;        a_e &lt;= a[30 : 23] - 127;\n&quot;
+</a><a href="#h9-0-347" id="h9-0-347" class="i">+	result += &quot;        b_e &lt;= b[30 : 23] - 127;\n&quot;
+</a><a href="#h9-0-348" id="h9-0-348" class="i">+	result += &quot;        a_s &lt;= a[31];\n&quot;
+</a><a href="#h9-0-349" id="h9-0-349" class="i">+	result += &quot;        b_s &lt;= b[31];\n&quot;
+</a><a href="#h9-0-350" id="h9-0-350" class="i">+	result += &quot;        state &lt;= special_cases;\n&quot;
+</a><a href="#h9-0-351" id="h9-0-351" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-352" id="h9-0-352" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-353" id="h9-0-353" class="i">+	result += &quot;      special_cases:\n&quot;
+</a><a href="#h9-0-354" id="h9-0-354" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-355" id="h9-0-355" class="i">+	result += &quot;        //if a is NaN or b is NaN return NaN \n&quot;
+</a><a href="#h9-0-356" id="h9-0-356" class="i">+	result += &quot;        if ((a_e == 128 &amp;&amp; a_m != 0) || (b_e == 128 &amp;&amp; b_m != 0)) begin\n&quot;
+</a><a href="#h9-0-357" id="h9-0-357" class="i">+	result += &quot;          z[31] &lt;= 1;\n&quot;
+</a><a href="#h9-0-358" id="h9-0-358" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h9-0-359" id="h9-0-359" class="i">+	result += &quot;          z[22] &lt;= 1;\n&quot;
+</a><a href="#h9-0-360" id="h9-0-360" class="i">+	result += &quot;          z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-361" id="h9-0-361" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-362" id="h9-0-362" class="i">+	result += &quot;        //if a is inf return inf\n&quot;
+</a><a href="#h9-0-363" id="h9-0-363" class="i">+	result += &quot;        end else if (a_e == 128) begin\n&quot;
+</a><a href="#h9-0-364" id="h9-0-364" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h9-0-365" id="h9-0-365" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h9-0-366" id="h9-0-366" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-367" id="h9-0-367" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-368" id="h9-0-368" class="i">+	result += &quot;           //if b is zero return NaN\n&quot;
+</a><a href="#h9-0-369" id="h9-0-369" class="i">+	result += &quot;          if ($signed(b_e == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h9-0-370" id="h9-0-370" class="i">+	result += &quot;            z[31] &lt;= 1;\n&quot;
+</a><a href="#h9-0-371" id="h9-0-371" class="i">+	result += &quot;            z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h9-0-372" id="h9-0-372" class="i">+	result += &quot;            z[22] &lt;= 1;\n&quot;
+</a><a href="#h9-0-373" id="h9-0-373" class="i">+	result += &quot;            z[21:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-374" id="h9-0-374" class="i">+	result += &quot;            state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-375" id="h9-0-375" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h9-0-376" id="h9-0-376" class="i">+	result += &quot;        //if b is inf return inf\n&quot;
+</a><a href="#h9-0-377" id="h9-0-377" class="i">+	result += &quot;        end else if (b_e == 128) begin\n&quot;
+</a><a href="#h9-0-378" id="h9-0-378" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h9-0-379" id="h9-0-379" class="i">+	result += &quot;          z[30:23] &lt;= 255;\n&quot;
+</a><a href="#h9-0-380" id="h9-0-380" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-381" id="h9-0-381" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-382" id="h9-0-382" class="i">+	result += &quot;        //if a is zero return zero\n&quot;
+</a><a href="#h9-0-383" id="h9-0-383" class="i">+	result += &quot;        end else if (($signed(a_e) == -127) &amp;&amp; (a_m == 0)) begin\n&quot;
+</a><a href="#h9-0-384" id="h9-0-384" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h9-0-385" id="h9-0-385" class="i">+	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h9-0-386" id="h9-0-386" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-387" id="h9-0-387" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-388" id="h9-0-388" class="i">+	result += &quot;        //if b is zero return zero\n&quot;
+</a><a href="#h9-0-389" id="h9-0-389" class="i">+	result += &quot;        end else if (($signed(b_e) == -127) &amp;&amp; (b_m == 0)) begin\n&quot;
+</a><a href="#h9-0-390" id="h9-0-390" class="i">+	result += &quot;          z[31] &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h9-0-391" id="h9-0-391" class="i">+	result += &quot;          z[30:23] &lt;= 0;\n&quot;
+</a><a href="#h9-0-392" id="h9-0-392" class="i">+	result += &quot;          z[22:0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-393" id="h9-0-393" class="i">+	result += &quot;          state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-394" id="h9-0-394" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h9-0-395" id="h9-0-395" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h9-0-396" id="h9-0-396" class="i">+	result += &quot;          if ($signed(a_e) == -127) begin\n&quot;
+</a><a href="#h9-0-397" id="h9-0-397" class="i">+	result += &quot;            a_e &lt;= -126;\n&quot;
+</a><a href="#h9-0-398" id="h9-0-398" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h9-0-399" id="h9-0-399" class="i">+	result += &quot;            a_m[23] &lt;= 1;\n&quot;
+</a><a href="#h9-0-400" id="h9-0-400" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h9-0-401" id="h9-0-401" class="i">+	result += &quot;          //Denormalised Number\n&quot;
+</a><a href="#h9-0-402" id="h9-0-402" class="i">+	result += &quot;          if ($signed(b_e) == -127) begin\n&quot;
+</a><a href="#h9-0-403" id="h9-0-403" class="i">+	result += &quot;            b_e &lt;= -126;\n&quot;
+</a><a href="#h9-0-404" id="h9-0-404" class="i">+	result += &quot;          end else begin\n&quot;
+</a><a href="#h9-0-405" id="h9-0-405" class="i">+	result += &quot;            b_m[23] &lt;= 1;\n&quot;
+</a><a href="#h9-0-406" id="h9-0-406" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h9-0-407" id="h9-0-407" class="i">+	result += &quot;          state &lt;= normalise_a;\n&quot;
+</a><a href="#h9-0-408" id="h9-0-408" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-409" id="h9-0-409" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-410" id="h9-0-410" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-411" id="h9-0-411" class="i">+	result += &quot;      normalise_a:\n&quot;
+</a><a href="#h9-0-412" id="h9-0-412" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-413" id="h9-0-413" class="i">+	result += &quot;        if (a_m[23]) begin\n&quot;
+</a><a href="#h9-0-414" id="h9-0-414" class="i">+	result += &quot;          state &lt;= normalise_b;\n&quot;
+</a><a href="#h9-0-415" id="h9-0-415" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h9-0-416" id="h9-0-416" class="i">+	result += &quot;          a_m &lt;= a_m &lt;&lt; 1;\n&quot;
+</a><a href="#h9-0-417" id="h9-0-417" class="i">+	result += &quot;          a_e &lt;= a_e - 1;\n&quot;
+</a><a href="#h9-0-418" id="h9-0-418" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-419" id="h9-0-419" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-420" id="h9-0-420" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-421" id="h9-0-421" class="i">+	result += &quot;      normalise_b:\n&quot;
+</a><a href="#h9-0-422" id="h9-0-422" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-423" id="h9-0-423" class="i">+	result += &quot;        if (b_m[23]) begin\n&quot;
+</a><a href="#h9-0-424" id="h9-0-424" class="i">+	result += &quot;          state &lt;= multiply_0;\n&quot;
+</a><a href="#h9-0-425" id="h9-0-425" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h9-0-426" id="h9-0-426" class="i">+	result += &quot;          b_m &lt;= b_m &lt;&lt; 1;\n&quot;
+</a><a href="#h9-0-427" id="h9-0-427" class="i">+	result += &quot;          b_e &lt;= b_e - 1;\n&quot;
+</a><a href="#h9-0-428" id="h9-0-428" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-429" id="h9-0-429" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-430" id="h9-0-430" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-431" id="h9-0-431" class="i">+	result += &quot;      multiply_0:\n&quot;
+</a><a href="#h9-0-432" id="h9-0-432" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-433" id="h9-0-433" class="i">+	result += &quot;        z_s &lt;= a_s ^ b_s;\n&quot;
+</a><a href="#h9-0-434" id="h9-0-434" class="i">+	result += &quot;        z_e &lt;= a_e + b_e + 1;\n&quot;
+</a><a href="#h9-0-435" id="h9-0-435" class="i">+	result += &quot;        product &lt;= a_m * b_m * 4;\n&quot;
+</a><a href="#h9-0-436" id="h9-0-436" class="i">+	result += &quot;        state &lt;= multiply_1;\n&quot;
+</a><a href="#h9-0-437" id="h9-0-437" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-438" id="h9-0-438" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-439" id="h9-0-439" class="i">+	result += &quot;      multiply_1:\n&quot;
+</a><a href="#h9-0-440" id="h9-0-440" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-441" id="h9-0-441" class="i">+	result += &quot;        z_m &lt;= product[49:26];\n&quot;
+</a><a href="#h9-0-442" id="h9-0-442" class="i">+	result += &quot;        guard &lt;= product[25];\n&quot;
+</a><a href="#h9-0-443" id="h9-0-443" class="i">+	result += &quot;        round_bit &lt;= product[24];\n&quot;
+</a><a href="#h9-0-444" id="h9-0-444" class="i">+	result += &quot;        sticky &lt;= (product[23:0] != 0);\n&quot;
+</a><a href="#h9-0-445" id="h9-0-445" class="i">+	result += &quot;        state &lt;= normalise_1;\n&quot;
+</a><a href="#h9-0-446" id="h9-0-446" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-447" id="h9-0-447" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-448" id="h9-0-448" class="i">+	result += &quot;      normalise_1:\n&quot;
+</a><a href="#h9-0-449" id="h9-0-449" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-450" id="h9-0-450" class="i">+	result += &quot;        if (z_m[23] == 0) begin\n&quot;
+</a><a href="#h9-0-451" id="h9-0-451" class="i">+	result += &quot;          z_e &lt;= z_e - 1;\n&quot;
+</a><a href="#h9-0-452" id="h9-0-452" class="i">+	result += &quot;          z_m &lt;= z_m &lt;&lt; 1;\n&quot;
+</a><a href="#h9-0-453" id="h9-0-453" class="i">+	result += &quot;          z_m[0] &lt;= guard;\n&quot;
+</a><a href="#h9-0-454" id="h9-0-454" class="i">+	result += &quot;          guard &lt;= round_bit;\n&quot;
+</a><a href="#h9-0-455" id="h9-0-455" class="i">+	result += &quot;          round_bit &lt;= 0;\n&quot;
+</a><a href="#h9-0-456" id="h9-0-456" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h9-0-457" id="h9-0-457" class="i">+	result += &quot;          state &lt;= normalise_2;\n&quot;
+</a><a href="#h9-0-458" id="h9-0-458" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-459" id="h9-0-459" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-460" id="h9-0-460" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-461" id="h9-0-461" class="i">+	result += &quot;      normalise_2:\n&quot;
+</a><a href="#h9-0-462" id="h9-0-462" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-463" id="h9-0-463" class="i">+	result += &quot;        if ($signed(z_e) &lt; -126) begin\n&quot;
+</a><a href="#h9-0-464" id="h9-0-464" class="i">+	result += &quot;          z_e &lt;= z_e + 1;\n&quot;
+</a><a href="#h9-0-465" id="h9-0-465" class="i">+	result += &quot;          z_m &lt;= z_m &gt;&gt; 1;\n&quot;
+</a><a href="#h9-0-466" id="h9-0-466" class="i">+	result += &quot;          guard &lt;= z_m[0];\n&quot;
+</a><a href="#h9-0-467" id="h9-0-467" class="i">+	result += &quot;          round_bit &lt;= guard;\n&quot;
+</a><a href="#h9-0-468" id="h9-0-468" class="i">+	result += &quot;          sticky &lt;= sticky | round_bit;\n&quot;
+</a><a href="#h9-0-469" id="h9-0-469" class="i">+	result += &quot;        end else begin\n&quot;
+</a><a href="#h9-0-470" id="h9-0-470" class="i">+	result += &quot;          state &lt;= round;\n&quot;
+</a><a href="#h9-0-471" id="h9-0-471" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-472" id="h9-0-472" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-473" id="h9-0-473" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-474" id="h9-0-474" class="i">+	result += &quot;      round:\n&quot;
+</a><a href="#h9-0-475" id="h9-0-475" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-476" id="h9-0-476" class="i">+	result += &quot;        if (guard &amp;&amp; (round_bit | sticky | z_m[0])) begin\n&quot;
+</a><a href="#h9-0-477" id="h9-0-477" class="i">+	result += &quot;          z_m &lt;= z_m + 1;\n&quot;
+</a><a href="#h9-0-478" id="h9-0-478" class="i">+	result += &quot;          if (z_m == 24&#39;hffffff) begin\n&quot;
+</a><a href="#h9-0-479" id="h9-0-479" class="i">+	result += &quot;            z_e &lt;=z_e + 1;\n&quot;
+</a><a href="#h9-0-480" id="h9-0-480" class="i">+	result += &quot;          end\n&quot;
+</a><a href="#h9-0-481" id="h9-0-481" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-482" id="h9-0-482" class="i">+	result += &quot;        state &lt;= pack;\n&quot;
+</a><a href="#h9-0-483" id="h9-0-483" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-484" id="h9-0-484" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-485" id="h9-0-485" class="i">+	result += &quot;      pack:\n&quot;
+</a><a href="#h9-0-486" id="h9-0-486" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-487" id="h9-0-487" class="i">+	result += &quot;        z[22 : 0] &lt;= z_m[22:0];\n&quot;
+</a><a href="#h9-0-488" id="h9-0-488" class="i">+	result += &quot;        z[30 : 23] &lt;= z_e[7:0] + 127;\n&quot;
+</a><a href="#h9-0-489" id="h9-0-489" class="i">+	result += &quot;        z[31] &lt;= z_s;\n&quot;
+</a><a href="#h9-0-490" id="h9-0-490" class="i">+	result += &quot;        if ($signed(z_e) == -126 &amp;&amp; z_m[23] == 0) begin\n&quot;
+</a><a href="#h9-0-491" id="h9-0-491" class="i">+	result += &quot;          z[30 : 23] &lt;= 0;\n&quot;
+</a><a href="#h9-0-492" id="h9-0-492" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-493" id="h9-0-493" class="i">+	result += &quot;        //if overflow occurs, return inf\n&quot;
+</a><a href="#h9-0-494" id="h9-0-494" class="i">+	result += &quot;        if ($signed(z_e) &gt; 127) begin\n&quot;
+</a><a href="#h9-0-495" id="h9-0-495" class="i">+	result += &quot;          z[22 : 0] &lt;= 0;\n&quot;
+</a><a href="#h9-0-496" id="h9-0-496" class="i">+	result += &quot;          z[30 : 23] &lt;= 255;\n&quot;
+</a><a href="#h9-0-497" id="h9-0-497" class="i">+	result += &quot;          z[31] &lt;= z_s;\n&quot;
+</a><a href="#h9-0-498" id="h9-0-498" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-499" id="h9-0-499" class="i">+	result += &quot;        state &lt;= put_z;\n&quot;
+</a><a href="#h9-0-500" id="h9-0-500" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-501" id="h9-0-501" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-502" id="h9-0-502" class="i">+	result += &quot;      put_z:\n&quot;
+</a><a href="#h9-0-503" id="h9-0-503" class="i">+	result += &quot;      begin\n&quot;
+</a><a href="#h9-0-504" id="h9-0-504" class="i">+	result += &quot;        s_output_z_stb &lt;= 1;\n&quot;
+</a><a href="#h9-0-505" id="h9-0-505" class="i">+	result += &quot;        s_output_z &lt;= z;\n&quot;
+</a><a href="#h9-0-506" id="h9-0-506" class="i">+	result += &quot;        if (s_output_z_stb &amp;&amp; output_z_ack) begin\n&quot;
+</a><a href="#h9-0-507" id="h9-0-507" class="i">+	result += &quot;          s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h9-0-508" id="h9-0-508" class="i">+	result += &quot;          state &lt;= get_a;\n&quot;
+</a><a href="#h9-0-509" id="h9-0-509" class="i">+	result += &quot;        end\n&quot;
+</a><a href="#h9-0-510" id="h9-0-510" class="i">+	result += &quot;      end\n&quot;
+</a><a href="#h9-0-511" id="h9-0-511" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-512" id="h9-0-512" class="i">+	result += &quot;    endcase\n&quot;
+</a><a href="#h9-0-513" id="h9-0-513" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-514" id="h9-0-514" class="i">+	result += &quot;    if (rst == 1) begin\n&quot;
+</a><a href="#h9-0-515" id="h9-0-515" class="i">+	result += &quot;      state &lt;= get_a;\n&quot;
+</a><a href="#h9-0-516" id="h9-0-516" class="i">+	result += &quot;      s_input_a_ack &lt;= 0;\n&quot;
+</a><a href="#h9-0-517" id="h9-0-517" class="i">+	result += &quot;      s_input_b_ack &lt;= 0;\n&quot;
+</a><a href="#h9-0-518" id="h9-0-518" class="i">+	result += &quot;      s_output_z_stb &lt;= 0;\n&quot;
+</a><a href="#h9-0-519" id="h9-0-519" class="i">+	result += &quot;    end\n&quot;
+</a><a href="#h9-0-520" id="h9-0-520" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-521" id="h9-0-521" class="i">+	result += &quot;  end\n&quot;
+</a><a href="#h9-0-522" id="h9-0-522" class="i">+	result += &quot;  assign input_a_ack = s_input_a_ack;\n&quot;
+</a><a href="#h9-0-523" id="h9-0-523" class="i">+	result += &quot;  assign input_b_ack = s_input_b_ack;\n&quot;
+</a><a href="#h9-0-524" id="h9-0-524" class="i">+	result += &quot;  assign output_z_stb = s_output_z_stb;\n&quot;
+</a><a href="#h9-0-525" id="h9-0-525" class="i">+	result += &quot;  assign output_z = s_output_z;\n&quot;
+</a><a href="#h9-0-526" id="h9-0-526" class="i">+	result += &quot;\n&quot;
+</a><a href="#h9-0-527" id="h9-0-527" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h9-0-528" id="h9-0-528" class="i">+
+</a><a href="#h9-0-529" id="h9-0-529" class="i">+	return []string{&quot;multiplier&quot;}, []string{result}
+</a><a href="#h9-0-530" id="h9-0-530" class="i">+}
+</a><a href="#h9-0-531" id="h9-0-531" class="i">+
+</a><a href="#h9-0-532" id="h9-0-532" class="i">+func (Op Multf16) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h9-0-533" id="h9-0-533" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h9-0-534" id="h9-0-534" class="i">+	return result, nil
+</a><a href="#h9-0-535" id="h9-0-535" class="i">+}
+</a><a href="#h9-0-536" id="h9-0-536" class="i">+
+</a><a href="#h9-0-537" id="h9-0-537" class="i">+func (Op Multf16) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h9-0-538" id="h9-0-538" class="i">+	result := &quot;&quot;
+</a><a href="#h9-0-539" id="h9-0-539" class="i">+	switch blockname {
+</a><a href="#h9-0-540" id="h9-0-540" class="i">+	default:
+</a><a href="#h9-0-541" id="h9-0-541" class="i">+		result = &quot;&quot;
+</a><a href="#h9-0-542" id="h9-0-542" class="i">+	}
+</a><a href="#h9-0-543" id="h9-0-543" class="i">+	return result
+</a><a href="#h9-0-544" id="h9-0-544" class="i">+}
+</a><a href="#h9-0-545" id="h9-0-545" class="i">+func (Op Multf16) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h9-0-546" id="h9-0-546" class="i">+	result := make([]string, 0)
+</a><a href="#h9-0-547" id="h9-0-547" class="i">+	result = append(result, &quot;multf16::*--type=reg::*--type=reg&quot;)
+</a><a href="#h9-0-548" id="h9-0-548" class="i">+	return result
+</a><a href="#h9-0-549" id="h9-0-549" class="i">+}
+</a><a href="#h9-0-550" id="h9-0-550" class="i">+func (Op Multf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h9-0-551" id="h9-0-551" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h9-0-552" id="h9-0-552" class="i">+	case &quot;multf16&quot;:
+</a><a href="#h9-0-553" id="h9-0-553" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h9-0-554" id="h9-0-554" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h9-0-555" id="h9-0-555" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h9-0-556" id="h9-0-556" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h9-0-557" id="h9-0-557" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;multf16&quot;, Op: bmreqs.OpAdd})
+</a><a href="#h9-0-558" id="h9-0-558" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:multf16&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h9-0-559" id="h9-0-559" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:multf16&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h9-0-560" id="h9-0-560" class="i">+		return line, nil
+</a><a href="#h9-0-561" id="h9-0-561" class="i">+	}
+</a><a href="#h9-0-562" id="h9-0-562" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h9-0-563" id="h9-0-563" class="i">+}
+</a><a href="#h9-0-564" id="h9-0-564" class="i">+func (Op Multf16) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h9-0-565" id="h9-0-565" class="i">+	return []string{}, []string{}
+</a><a href="#h9-0-566" id="h9-0-566" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bondmachine.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> bondmachine.go (28209B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;fmt&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;sort&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;strconv&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strings&quot;
+<a href="#l8" class="line" id="l8">      8</a> 
+<a href="#l9" class="line" id="l9">      9</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#l13" class="line" id="l13">     13</a> )
+<a href="#l14" class="line" id="l14">     14</a> 
+<a href="#l15" class="line" id="l15">     15</a> //reorg {&quot;name&quot;: &quot;Init&quot;, &quot;descr&quot;: &quot;Initialization functions&quot;}
+<a href="#l16" class="line" id="l16">     16</a> 
+<a href="#l17" class="line" id="l17">     17</a> const (
+<a href="#l18" class="line" id="l18">     18</a> 	BMINPUT  = uint8(0)
+<a href="#l19" class="line" id="l19">     19</a> 	BMOUTPUT = uint8(1)
+<a href="#l20" class="line" id="l20">     20</a> 	CPINPUT  = uint8(2)
+<a href="#l21" class="line" id="l21">     21</a> 	CPOUTPUT = uint8(3)
+<a href="#l22" class="line" id="l22">     22</a> )
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> type Prerror struct {
+<a href="#l25" class="line" id="l25">     25</a> 	string
+<a href="#l26" class="line" id="l26">     26</a> }
+<a href="#l27" class="line" id="l27">     27</a> 
+<a href="#l28" class="line" id="l28">     28</a> var Allshared []Shared_element
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> func init() {
+<a href="#l31" class="line" id="l31">     31</a> 	Allshared = make([]Shared_element, 0)
+<a href="#l32" class="line" id="l32">     32</a> 	Allshared = append(Allshared, Sharedmem{})
+<a href="#l33" class="line" id="l33">     33</a> 	Allshared = append(Allshared, Channel{})
+<a href="#l34" class="line" id="l34">     34</a> 	Allshared = append(Allshared, Barrier{})
+<a href="#l35" class="line" id="l35">     35</a> 	Allshared = append(Allshared, Lfsr8{})
+<a href="#l36" class="line" id="l36">     36</a> 	Allshared = append(Allshared, Vtextmem{})
+<a href="#l37" class="line" id="l37">     37</a> 	Allshared = append(Allshared, Queue{})
+<a href="#l38" class="line" id="l38">     38</a> 	Allshared = append(Allshared, Stack{})
+<a href="#l39" class="line" id="l39">     39</a> 	Allshared = append(Allshared, Uart{})
+<a href="#l40" class="line" id="l40">     40</a> 	Allshared = append(Allshared, Kbd{})
+<a href="#l41" class="line" id="l41">     41</a> }
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a> func (e Prerror) Error() string {
+<a href="#l44" class="line" id="l44">     44</a> 	return e.string
+<a href="#l45" class="line" id="l45">     45</a> }
+<a href="#l46" class="line" id="l46">     46</a> 
+<a href="#l47" class="line" id="l47">     47</a> func check(e error) {
+<a href="#l48" class="line" id="l48">     48</a> 	if e != nil {
+<a href="#l49" class="line" id="l49">     49</a> 		panic(e)
+<a href="#l50" class="line" id="l50">     50</a> 	}
+<a href="#l51" class="line" id="l51">     51</a> }
+<a href="#l52" class="line" id="l52">     52</a> 
+<a href="#l53" class="line" id="l53">     53</a> type Bond struct {
+<a href="#l54" class="line" id="l54">     54</a> 	Map_to uint8 // 0 Means a shell input, 1 a shell output, 2 a processor input, 3 a processor output
+<a href="#l55" class="line" id="l55">     55</a> 	Res_id int   // The resource id of a processor or external IO
+<a href="#l56" class="line" id="l56">     56</a> 	Ext_id int   // The order within the resource if applicable
+<a href="#l57" class="line" id="l57">     57</a> }
+<a href="#l58" class="line" id="l58">     58</a> 
+<a href="#l59" class="line" id="l59">     59</a> //reorg {&quot;name&quot;: &quot;Config typedef&quot;, &quot;descr&quot;: &quot;Definition og the Config structure&quot;}
+<a href="#l60" class="line" id="l60">     60</a> 
+<a href="#l61" class="line" id="l61">     61</a> type Config struct {
+<a href="#l62" class="line" id="l62">     62</a> 	*bminfo.BMinfo
+<a href="#l63" class="line" id="l63">     63</a> 	*bmreqs.ReqRoot
+<a href="#l64" class="line" id="l64">     64</a> 	*bcof.BCOFEntry
+<a href="#l65" class="line" id="l65">     65</a> 	procbuilder.HwOptimizations
+<a href="#l66" class="line" id="l66">     66</a> 	Debug            bool
+<a href="#l67" class="line" id="l67">     67</a> 	Dotdetail        uint8
+<a href="#l68" class="line" id="l68">     68</a> 	CommentedVerilog bool
+<a href="#l69" class="line" id="l69">     69</a> 	FormatSimReports bool
+<a href="#l70" class="line" id="l70">     70</a> }
+<a href="#l71" class="line" id="l71">     71</a> 
+<a href="#l72" class="line" id="l72">     72</a> //reorg {&quot;name&quot;: &quot;BondMachine typedefs&quot;, &quot;descr&quot;: &quot;Definition of BondMachine and BondMachine JSON data structures&quot;}
+<a href="#l73" class="line" id="l73">     73</a> 
+<a href="#l74" class="line" id="l74">     74</a> type Bondmachine struct {
+<a href="#l75" class="line" id="l75">     75</a> 	Rsize uint8
+<a href="#l76" class="line" id="l76">     76</a> 
+<a href="#l77" class="line" id="l77">     77</a> 	Domains []*procbuilder.Machine
+<a href="#l78" class="line" id="l78">     78</a> 
+<a href="#l79" class="line" id="l79">     79</a> 	Processors []int
+<a href="#l80" class="line" id="l80">     80</a> 
+<a href="#l81" class="line" id="l81">     81</a> 	Inputs  int
+<a href="#l82" class="line" id="l82">     82</a> 	Outputs int
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> 	Internal_inputs  []Bond // These are what internally in considered and input, i.e. Processors inputs and Shell outputs, lets say they are N
+<a href="#l85" class="line" id="l85">     85</a> 	Internal_outputs []Bond // These are what internally in considered and output, i.e. Processors outputs and Shell inputs, lets say they are M
+<a href="#l86" class="line" id="l86">     86</a> 
+<a href="#l87" class="line" id="l87">     87</a> 	Links []int // Is the link matrix for Internal_inputs that may be connected only to one Internal_output (they are N!). A value of -1 means the input is unconnected, otherwise it points to the Internal_output id
+<a href="#l88" class="line" id="l88">     88</a> 
+<a href="#l89" class="line" id="l89">     89</a> 	Shared_objects []Shared_instance      // This is the list of shared elements present in a bondmachine
+<a href="#l90" class="line" id="l90">     90</a> 	Shared_links   []Shared_instance_list // For every processor the list of attached shared objects
+<a href="#l91" class="line" id="l91">     91</a> 
+<a href="#l92" class="line" id="l92">     92</a> }
+<a href="#l93" class="line" id="l93">     93</a> 
+<a href="#l94" class="line" id="l94">     94</a> type Bondmachine_json struct {
+<a href="#l95" class="line" id="l95">     95</a> 	Rsize uint8
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> 	Domains []*procbuilder.Machine_json
+<a href="#l98" class="line" id="l98">     98</a> 
+<a href="#l99" class="line" id="l99">     99</a> 	Processors []int
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a> 	Inputs  int
+<a href="#l102" class="line" id="l102">    102</a> 	Outputs int
+<a href="#l103" class="line" id="l103">    103</a> 
+<a href="#l104" class="line" id="l104">    104</a> 	Internal_inputs  []Bond
+<a href="#l105" class="line" id="l105">    105</a> 	Internal_outputs []Bond
+<a href="#l106" class="line" id="l106">    106</a> 	Links            []int
+<a href="#l107" class="line" id="l107">    107</a> 
+<a href="#l108" class="line" id="l108">    108</a> 	Shared_objects []string
+<a href="#l109" class="line" id="l109">    109</a> 	Shared_links   []Shared_instance_list
+<a href="#l110" class="line" id="l110">    110</a> 	// TODO Missing shared elements
+<a href="#l111" class="line" id="l111">    111</a> }
+<a href="#l112" class="line" id="l112">    112</a> 
+<a href="#l113" class="line" id="l113">    113</a> //reorg {&quot;name&quot;: &quot;Multi Abstract Assembly data structure definition&quot;}
+<a href="#l114" class="line" id="l114">    114</a> 
+<a href="#l115" class="line" id="l115">    115</a> type Abs_assembly struct {
+<a href="#l116" class="line" id="l116">    116</a> 	ProcProgs []string
+<a href="#l117" class="line" id="l117">    117</a> 	Bonds     []string
+<a href="#l118" class="line" id="l118">    118</a> }
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> type Residual struct {
+<a href="#l121" class="line" id="l121">    121</a> 	Map IOmap
+<a href="#l122" class="line" id="l122">    122</a> }
+<a href="#l123" class="line" id="l123">    123</a> 
+<a href="#l124" class="line" id="l124">    124</a> // Mapping between boards ports and bondmachine IOs
+<a href="#l125" class="line" id="l125">    125</a> type IOmap struct {
+<a href="#l126" class="line" id="l126">    126</a> 	Assoc map[string]string
+<a href="#l127" class="line" id="l127">    127</a> }
+<a href="#l128" class="line" id="l128">    128</a> 
+<a href="#l129" class="line" id="l129">    129</a> // Parameters for extra modules
+<a href="#l130" class="line" id="l130">    130</a> type ExtraParams struct {
+<a href="#l131" class="line" id="l131">    131</a> 	Params map[string]string
+<a href="#l132" class="line" id="l132">    132</a> }
+<a href="#l133" class="line" id="l133">    133</a> 
+<a href="#l134" class="line" id="l134">    134</a> // Extra modules (etherbond)
+<a href="#l135" class="line" id="l135">    135</a> type ExtraModule interface {
+<a href="#l136" class="line" id="l136">    136</a> 	Get_Name() string
+<a href="#l137" class="line" id="l137">    137</a> 	Get_Params() *ExtraParams
+<a href="#l138" class="line" id="l138">    138</a> 	Import(string) error
+<a href="#l139" class="line" id="l139">    139</a> 	Export() string
+<a href="#l140" class="line" id="l140">    140</a> 	Check(*Bondmachine) error
+<a href="#l141" class="line" id="l141">    141</a> 	Verilog_headers() string
+<a href="#l142" class="line" id="l142">    142</a> 	StaticVerilog() string
+<a href="#l143" class="line" id="l143">    143</a> 	ExtraFiles() ([]string, []string)
+<a href="#l144" class="line" id="l144">    144</a> }
+<a href="#l145" class="line" id="l145">    145</a> 
+<a href="#l146" class="line" id="l146">    146</a> type EmuDriver interface {
+<a href="#l147" class="line" id="l147">    147</a> 	PushCommand([]byte) ([]byte, error)
+<a href="#l148" class="line" id="l148">    148</a> 	Init() error
+<a href="#l149" class="line" id="l149">    149</a> 	Run() error
+<a href="#l150" class="line" id="l150">    150</a> }
+<a href="#l151" class="line" id="l151">    151</a> 
+<a href="#l152" class="line" id="l152">    152</a> //reorg {&quot;name&quot;: &quot;Configuration converter&quot;, &quot;descr&quot;: &quot;Funcion to extract a Config structure for procbuilder from a Config of the bondmachine&quot;}
+<a href="#l153" class="line" id="l153">    153</a> 
+<a href="#l154" class="line" id="l154">    154</a> func (c *Config) ProcbuilderConfig() *procbuilder.Config {
+<a href="#l155" class="line" id="l155">    155</a> 	result := new(procbuilder.Config)
+<a href="#l156" class="line" id="l156">    156</a> 	result.ReqRoot = c.ReqRoot
+<a href="#l157" class="line" id="l157">    157</a> 	result.BCOFEntry = c.BCOFEntry
+<a href="#l158" class="line" id="l158">    158</a> 	result.HwOptimizations = c.HwOptimizations
+<a href="#l159" class="line" id="l159">    159</a> 	result.Commented_verilog = c.CommentedVerilog
+<a href="#l160" class="line" id="l160">    160</a> 	return result
+<a href="#l161" class="line" id="l161">    161</a> }
+<a href="#l162" class="line" id="l162">    162</a> 
+<a href="#l163" class="line" id="l163">    163</a> func (b Bond) String() string {
+<a href="#l164" class="line" id="l164">    164</a> 	result := &quot;&quot;
+<a href="#l165" class="line" id="l165">    165</a> 	if b.Map_to == BMINPUT {
+<a href="#l166" class="line" id="l166">    166</a> 		result += &quot;i&quot; + strconv.Itoa(b.Res_id)
+<a href="#l167" class="line" id="l167">    167</a> 	} else if b.Map_to == BMOUTPUT {
+<a href="#l168" class="line" id="l168">    168</a> 		result += &quot;o&quot; + strconv.Itoa(b.Res_id)
+<a href="#l169" class="line" id="l169">    169</a> 	} else if b.Map_to == CPINPUT {
+<a href="#l170" class="line" id="l170">    170</a> 		result += &quot;p&quot; + strconv.Itoa(b.Res_id) + &quot;i&quot; + strconv.Itoa(b.Ext_id)
+<a href="#l171" class="line" id="l171">    171</a> 	} else if b.Map_to == CPOUTPUT {
+<a href="#l172" class="line" id="l172">    172</a> 		result += &quot;p&quot; + strconv.Itoa(b.Res_id) + &quot;o&quot; + strconv.Itoa(b.Ext_id)
+<a href="#l173" class="line" id="l173">    173</a> 	}
+<a href="#l174" class="line" id="l174">    174</a> 	return result
+<a href="#l175" class="line" id="l175">    175</a> }
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a> //reorg {&quot;name&quot;: &quot;BondMachine Init&quot;, &quot;descr&quot;: &quot;Initialization function for BondMachine istances&quot;}
+<a href="#l178" class="line" id="l178">    178</a> 
+<a href="#l179" class="line" id="l179">    179</a> func (bmach *Bondmachine) Init() {
+<a href="#l180" class="line" id="l180">    180</a> 	// It contains an idempotent set of operation to ensure bondmachine consistency
+<a href="#l181" class="line" id="l181">    181</a> 
+<a href="#l182" class="line" id="l182">    182</a> 	if bmach.Shared_links == nil {
+<a href="#l183" class="line" id="l183">    183</a> 		bmach.Shared_links = make([]Shared_instance_list, len(bmach.Processors))
+<a href="#l184" class="line" id="l184">    184</a> 		for i, _ := range bmach.Shared_links {
+<a href="#l185" class="line" id="l185">    185</a> 			bmach.Shared_links[i] = make([]int, 0)
+<a href="#l186" class="line" id="l186">    186</a> 		}
+<a href="#l187" class="line" id="l187">    187</a> 	}
+<a href="#l188" class="line" id="l188">    188</a> 
+<a href="#l189" class="line" id="l189">    189</a> }
+<a href="#l190" class="line" id="l190">    190</a> 
+<a href="#l191" class="line" id="l191">    191</a> func (bmach *Bondmachine) Jsoner() *Bondmachine_json {
+<a href="#l192" class="line" id="l192">    192</a> 	result := new(Bondmachine_json)
+<a href="#l193" class="line" id="l193">    193</a> 	result.Rsize = bmach.Rsize
+<a href="#l194" class="line" id="l194">    194</a> 	result.Processors = bmach.Processors
+<a href="#l195" class="line" id="l195">    195</a> 	result.Inputs = bmach.Inputs
+<a href="#l196" class="line" id="l196">    196</a> 	result.Outputs = bmach.Outputs
+<a href="#l197" class="line" id="l197">    197</a> 	result.Internal_inputs = bmach.Internal_inputs
+<a href="#l198" class="line" id="l198">    198</a> 	result.Internal_outputs = bmach.Internal_outputs
+<a href="#l199" class="line" id="l199">    199</a> 	result.Links = bmach.Links
+<a href="#l200" class="line" id="l200">    200</a> 	result.Domains = make([]*procbuilder.Machine_json, len(bmach.Domains))
+<a href="#l201" class="line" id="l201">    201</a> 	for i, mach := range bmach.Domains {
+<a href="#l202" class="line" id="l202">    202</a> 		result.Domains[i] = mach.Jsoner()
+<a href="#l203" class="line" id="l203">    203</a> 	}
+<a href="#l204" class="line" id="l204">    204</a> 	result.Shared_objects = make([]string, len(bmach.Shared_objects))
+<a href="#l205" class="line" id="l205">    205</a> 	for i, so := range bmach.Shared_objects {
+<a href="#l206" class="line" id="l206">    206</a> 		result.Shared_objects[i] = so.String()
+<a href="#l207" class="line" id="l207">    207</a> 	}
+<a href="#l208" class="line" id="l208">    208</a> 	result.Shared_links = bmach.Shared_links
+<a href="#l209" class="line" id="l209">    209</a> 	return result
+<a href="#l210" class="line" id="l210">    210</a> }
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> func (bmachj *Bondmachine_json) Dejsoner() *Bondmachine {
+<a href="#l213" class="line" id="l213">    213</a> 	result := new(Bondmachine)
+<a href="#l214" class="line" id="l214">    214</a> 	result.Rsize = bmachj.Rsize
+<a href="#l215" class="line" id="l215">    215</a> 	result.Processors = bmachj.Processors
+<a href="#l216" class="line" id="l216">    216</a> 	result.Inputs = bmachj.Inputs
+<a href="#l217" class="line" id="l217">    217</a> 	result.Outputs = bmachj.Outputs
+<a href="#l218" class="line" id="l218">    218</a> 	result.Internal_inputs = bmachj.Internal_inputs
+<a href="#l219" class="line" id="l219">    219</a> 	result.Internal_outputs = bmachj.Internal_outputs
+<a href="#l220" class="line" id="l220">    220</a> 	result.Links = bmachj.Links
+<a href="#l221" class="line" id="l221">    221</a> 	result.Domains = make([]*procbuilder.Machine, len(bmachj.Domains))
+<a href="#l222" class="line" id="l222">    222</a> 	for i, machj := range bmachj.Domains {
+<a href="#l223" class="line" id="l223">    223</a> 		result.Domains[i] = machj.Dejsoner()
+<a href="#l224" class="line" id="l224">    224</a> 	}
+<a href="#l225" class="line" id="l225">    225</a> 	result.Shared_objects = make([]Shared_instance, len(bmachj.Shared_objects))
+<a href="#l226" class="line" id="l226">    226</a> 	for i, so := range bmachj.Shared_objects {
+<a href="#l227" class="line" id="l227">    227</a> 		// TODO loading checks missing
+<a href="#l228" class="line" id="l228">    228</a> 		for _, shr := range Allshared {
+<a href="#l229" class="line" id="l229">    229</a> 			if inst, ok := shr.Instantiate(so); ok {
+<a href="#l230" class="line" id="l230">    230</a> 				//              loaded = true
+<a href="#l231" class="line" id="l231">    231</a> 				result.Shared_objects[i] = inst
+<a href="#l232" class="line" id="l232">    232</a> 				break
+<a href="#l233" class="line" id="l233">    233</a> 			}
+<a href="#l234" class="line" id="l234">    234</a> 		}
+<a href="#l235" class="line" id="l235">    235</a> 
+<a href="#l236" class="line" id="l236">    236</a> 	}
+<a href="#l237" class="line" id="l237">    237</a> 	result.Shared_links = bmachj.Shared_links
+<a href="#l238" class="line" id="l238">    238</a> 	return result
+<a href="#l239" class="line" id="l239">    239</a> }
+<a href="#l240" class="line" id="l240">    240</a> 
+<a href="#l241" class="line" id="l241">    241</a> func (bmach *Bondmachine) List_domains() string {
+<a href="#l242" class="line" id="l242">    242</a> 	result := &quot;&quot;
+<a href="#l243" class="line" id="l243">    243</a> 	if len(bmach.Domains) != 0 {
+<a href="#l244" class="line" id="l244">    244</a> 		for i, dom := range bmach.Domains {
+<a href="#l245" class="line" id="l245">    245</a> 			result += fmt.Sprintf(&quot;----------\nDomain %03d\n&quot;, i) + dom.Descr() + fmt.Sprintf(&quot;\n&quot;)
+<a href="#l246" class="line" id="l246">    246</a> 			proccheck := false
+<a href="#l247" class="line" id="l247">    247</a> 			proclist := &quot;&quot;
+<a href="#l248" class="line" id="l248">    248</a> 			for proc_id, proc_dom := range bmach.Processors {
+<a href="#l249" class="line" id="l249">    249</a> 				if proc_dom == i {
+<a href="#l250" class="line" id="l250">    250</a> 					proccheck = true
+<a href="#l251" class="line" id="l251">    251</a> 					proclist = proclist + fmt.Sprintf(&quot;%03d &quot;, proc_id)
+<a href="#l252" class="line" id="l252">    252</a> 				}
+<a href="#l253" class="line" id="l253">    253</a> 			}
+<a href="#l254" class="line" id="l254">    254</a> 			if proccheck {
+<a href="#l255" class="line" id="l255">    255</a> 				result += &quot;Processors &quot; + proclist + &quot;\n&quot;
+<a href="#l256" class="line" id="l256">    256</a> 			} else {
+<a href="#l257" class="line" id="l257">    257</a> 				result += &quot;No processor in this domain\n&quot;
+<a href="#l258" class="line" id="l258">    258</a> 			}
+<a href="#l259" class="line" id="l259">    259</a> 		}
+<a href="#l260" class="line" id="l260">    260</a> 	} else {
+<a href="#l261" class="line" id="l261">    261</a> 		result += &quot;No defined domains&quot;
+<a href="#l262" class="line" id="l262">    262</a> 	}
+<a href="#l263" class="line" id="l263">    263</a> 	return result
+<a href="#l264" class="line" id="l264">    264</a> }
+<a href="#l265" class="line" id="l265">    265</a> func (bmach *Bondmachine) GetMultiAssembly() (*Abs_assembly, error) {
+<a href="#l266" class="line" id="l266">    266</a> 
+<a href="#l267" class="line" id="l267">    267</a> 	if len(bmach.Processors) != 0 {
+<a href="#l268" class="line" id="l268">    268</a> 		result := new(Abs_assembly)
+<a href="#l269" class="line" id="l269">    269</a> 		result.ProcProgs = make([]string, 0)
+<a href="#l270" class="line" id="l270">    270</a> 		result.Bonds = make([]string, 0)
+<a href="#l271" class="line" id="l271">    271</a> 
+<a href="#l272" class="line" id="l272">    272</a> 		for _, dom_id := range bmach.Processors {
+<a href="#l273" class="line" id="l273">    273</a> 			mymachine := bmach.Domains[dom_id]
+<a href="#l274" class="line" id="l274">    274</a> 			if disass_text, err := mymachine.Disassembler(); err == nil {
+<a href="#l275" class="line" id="l275">    275</a> 				result.ProcProgs = append(result.ProcProgs, disass_text)
+<a href="#l276" class="line" id="l276">    276</a> 			} else {
+<a href="#l277" class="line" id="l277">    277</a> 				return nil, err
+<a href="#l278" class="line" id="l278">    278</a> 			}
+<a href="#l279" class="line" id="l279">    279</a> 		}
+<a href="#l280" class="line" id="l280">    280</a> 
+<a href="#l281" class="line" id="l281">    281</a> 		for _, bond := range bmach.List_bonds() {
+<a href="#l282" class="line" id="l282">    282</a> 			result.Bonds = append(result.Bonds, fmt.Sprintf(&quot;%s&quot;, bond))
+<a href="#l283" class="line" id="l283">    283</a> 		}
+<a href="#l284" class="line" id="l284">    284</a> 
+<a href="#l285" class="line" id="l285">    285</a> 		return result, nil
+<a href="#l286" class="line" id="l286">    286</a> 	} else {
+<a href="#l287" class="line" id="l287">    287</a> 		return nil, Prerror{&quot;Undefined processors&quot;}
+<a href="#l288" class="line" id="l288">    288</a> 	}
+<a href="#l289" class="line" id="l289">    289</a> 	return nil, nil
+<a href="#l290" class="line" id="l290">    290</a> }
+<a href="#l291" class="line" id="l291">    291</a> 
+<a href="#l292" class="line" id="l292">    292</a> func (bmach *Bondmachine) List_inputs() []string {
+<a href="#l293" class="line" id="l293">    293</a> 	result := []string{}
+<a href="#l294" class="line" id="l294">    294</a> 	if bmach.Inputs != 0 {
+<a href="#l295" class="line" id="l295">    295</a> 		for i := 0; i &lt; bmach.Inputs; i++ {
+<a href="#l296" class="line" id="l296">    296</a> 			result = append(result, Get_input_name(i))
+<a href="#l297" class="line" id="l297">    297</a> 		}
+<a href="#l298" class="line" id="l298">    298</a> 	}
+<a href="#l299" class="line" id="l299">    299</a> 	return result
+<a href="#l300" class="line" id="l300">    300</a> }
+<a href="#l301" class="line" id="l301">    301</a> 
+<a href="#l302" class="line" id="l302">    302</a> func (bmach *Bondmachine) Add_input() (string, error) {
+<a href="#l303" class="line" id="l303">    303</a> 	newbond := Bond{0, bmach.Inputs, 0}
+<a href="#l304" class="line" id="l304">    304</a> 	bmach.Inputs = bmach.Inputs + 1
+<a href="#l305" class="line" id="l305">    305</a> 	bmach.Internal_outputs = append(bmach.Internal_outputs, newbond)
+<a href="#l306" class="line" id="l306">    306</a> 	return &quot;Added input &quot; + strconv.Itoa(bmach.Inputs-1) + &quot; successfully&quot;, nil
+<a href="#l307" class="line" id="l307">    307</a> }
+<a href="#l308" class="line" id="l308">    308</a> 
+<a href="#l309" class="line" id="l309">    309</a> func (bmach *Bondmachine) Del_input(iid int) error {
+<a href="#l310" class="line" id="l310">    310</a> 	if iid &lt; bmach.Inputs {
+<a href="#l311" class="line" id="l311">    311</a> 		bondtoremove := Bond{0, iid, 0}
+<a href="#l312" class="line" id="l312">    312</a> 		// 1 - remove all the bonds using the input (an input is within Internal_outputs)
+<a href="#l313" class="line" id="l313">    313</a> 		for i, linked := range bmach.Links {
+<a href="#l314" class="line" id="l314">    314</a> 			if linked != -1 {
+<a href="#l315" class="line" id="l315">    315</a> 				chkbond := bmach.Internal_outputs[linked]
+<a href="#l316" class="line" id="l316">    316</a> 				if chkbond.Map_to == 0 &amp;&amp; chkbond.Res_id == bondtoremove.Res_id {
+<a href="#l317" class="line" id="l317">    317</a> 					bmach.Links[i] = -1
+<a href="#l318" class="line" id="l318">    318</a> 				}
+<a href="#l319" class="line" id="l319">    319</a> 			}
+<a href="#l320" class="line" id="l320">    320</a> 		}
+<a href="#l321" class="line" id="l321">    321</a> 
+<a href="#l322" class="line" id="l322">    322</a> 		// 2 - Remove the internal output
+<a href="#l323" class="line" id="l323">    323</a> 		// 3 - lower by 1 all ids &gt; iid in bonds
+<a href="#l324" class="line" id="l324">    324</a> 		newinternal := make([]Bond, len(bmach.Internal_outputs)-1)
+<a href="#l325" class="line" id="l325">    325</a> 		j := 0
+<a href="#l326" class="line" id="l326">    326</a> 		keeppos := -1
+<a href="#l327" class="line" id="l327">    327</a> 		for i, bond := range bmach.Internal_outputs {
+<a href="#l328" class="line" id="l328">    328</a> 			if bond.Map_to == 0 {
+<a href="#l329" class="line" id="l329">    329</a> 				if bond.Res_id == bondtoremove.Res_id {
+<a href="#l330" class="line" id="l330">    330</a> 					j--
+<a href="#l331" class="line" id="l331">    331</a> 					// Keep the position of the bond removed from Internal_outputs
+<a href="#l332" class="line" id="l332">    332</a> 					keeppos = i
+<a href="#l333" class="line" id="l333">    333</a> 				} else if bond.Res_id &gt; bondtoremove.Res_id {
+<a href="#l334" class="line" id="l334">    334</a> 					newinternal[j] = Bond{0, bond.Res_id - 1, 0}
+<a href="#l335" class="line" id="l335">    335</a> 				} else {
+<a href="#l336" class="line" id="l336">    336</a> 					newinternal[j] = bond
+<a href="#l337" class="line" id="l337">    337</a> 				}
+<a href="#l338" class="line" id="l338">    338</a> 			} else {
+<a href="#l339" class="line" id="l339">    339</a> 				newinternal[j] = bond
+<a href="#l340" class="line" id="l340">    340</a> 			}
+<a href="#l341" class="line" id="l341">    341</a> 			j++
+<a href="#l342" class="line" id="l342">    342</a> 		}
+<a href="#l343" class="line" id="l343">    343</a> 
+<a href="#l344" class="line" id="l344">    344</a> 		bmach.Internal_outputs = newinternal
+<a href="#l345" class="line" id="l345">    345</a> 
+<a href="#l346" class="line" id="l346">    346</a> 		// 4 - Swift links
+<a href="#l347" class="line" id="l347">    347</a> 		if keeppos &gt; -1 {
+<a href="#l348" class="line" id="l348">    348</a> 			for i, linked := range bmach.Links {
+<a href="#l349" class="line" id="l349">    349</a> 				if linked &gt; keeppos {
+<a href="#l350" class="line" id="l350">    350</a> 					bmach.Links[i] = linked - 1
+<a href="#l351" class="line" id="l351">    351</a> 				}
+<a href="#l352" class="line" id="l352">    352</a> 			}
+<a href="#l353" class="line" id="l353">    353</a> 		}
+<a href="#l354" class="line" id="l354">    354</a> 
+<a href="#l355" class="line" id="l355">    355</a> 		// 5 - Lower Inputs
+<a href="#l356" class="line" id="l356">    356</a> 		bmach.Inputs--
+<a href="#l357" class="line" id="l357">    357</a> 	} else {
+<a href="#l358" class="line" id="l358">    358</a> 		return Prerror{&quot;Input id outside limit&quot;}
+<a href="#l359" class="line" id="l359">    359</a> 	}
+<a href="#l360" class="line" id="l360">    360</a> 	return nil
+<a href="#l361" class="line" id="l361">    361</a> }
+<a href="#l362" class="line" id="l362">    362</a> 
+<a href="#l363" class="line" id="l363">    363</a> func (bmach *Bondmachine) List_outputs() []string {
+<a href="#l364" class="line" id="l364">    364</a> 	result := []string{}
+<a href="#l365" class="line" id="l365">    365</a> 	if bmach.Outputs != 0 {
+<a href="#l366" class="line" id="l366">    366</a> 		for i := 0; i &lt; bmach.Outputs; i++ {
+<a href="#l367" class="line" id="l367">    367</a> 			result = append(result, Get_output_name(i))
+<a href="#l368" class="line" id="l368">    368</a> 		}
+<a href="#l369" class="line" id="l369">    369</a> 	}
+<a href="#l370" class="line" id="l370">    370</a> 	return result
+<a href="#l371" class="line" id="l371">    371</a> }
+<a href="#l372" class="line" id="l372">    372</a> 
+<a href="#l373" class="line" id="l373">    373</a> func (bmach *Bondmachine) Add_output() (string, error) {
+<a href="#l374" class="line" id="l374">    374</a> 	newbond := Bond{1, bmach.Outputs, 0}
+<a href="#l375" class="line" id="l375">    375</a> 	bmach.Outputs = bmach.Outputs + 1
+<a href="#l376" class="line" id="l376">    376</a> 	bmach.Internal_inputs = append(bmach.Internal_inputs, newbond)
+<a href="#l377" class="line" id="l377">    377</a> 	bmach.Links = append(bmach.Links, -1)
+<a href="#l378" class="line" id="l378">    378</a> 	return &quot;Added output &quot; + strconv.Itoa(bmach.Outputs-1) + &quot; successfully&quot;, nil
+<a href="#l379" class="line" id="l379">    379</a> }
+<a href="#l380" class="line" id="l380">    380</a> 
+<a href="#l381" class="line" id="l381">    381</a> func (bmach *Bondmachine) Del_output(oid int) error {
+<a href="#l382" class="line" id="l382">    382</a> 	if oid &lt; bmach.Outputs {
+<a href="#l383" class="line" id="l383">    383</a> 		bondtoremove := Bond{1, oid, 0}
+<a href="#l384" class="line" id="l384">    384</a> 
+<a href="#l385" class="line" id="l385">    385</a> 		// 1 - Remove the internal input
+<a href="#l386" class="line" id="l386">    386</a> 		// 1 - lower by 1 all ids &gt; oid in bonds
+<a href="#l387" class="line" id="l387">    387</a> 		newinternal := make([]Bond, len(bmach.Internal_inputs)-1)
+<a href="#l388" class="line" id="l388">    388</a> 		newlinks := make([]int, len(bmach.Links)-1)
+<a href="#l389" class="line" id="l389">    389</a> 		j := 0
+<a href="#l390" class="line" id="l390">    390</a> 		for i, bond := range bmach.Internal_inputs {
+<a href="#l391" class="line" id="l391">    391</a> 			if bond.Map_to == 1 {
+<a href="#l392" class="line" id="l392">    392</a> 				if bond.Res_id == bondtoremove.Res_id {
+<a href="#l393" class="line" id="l393">    393</a> 					j--
+<a href="#l394" class="line" id="l394">    394</a> 				} else if bond.Res_id &gt; bondtoremove.Res_id {
+<a href="#l395" class="line" id="l395">    395</a> 					newinternal[j] = Bond{1, bond.Res_id - 1, 0}
+<a href="#l396" class="line" id="l396">    396</a> 					newlinks[j] = bmach.Links[i]
+<a href="#l397" class="line" id="l397">    397</a> 				} else {
+<a href="#l398" class="line" id="l398">    398</a> 					newinternal[j] = bond
+<a href="#l399" class="line" id="l399">    399</a> 					newlinks[j] = bmach.Links[i]
+<a href="#l400" class="line" id="l400">    400</a> 				}
+<a href="#l401" class="line" id="l401">    401</a> 			} else {
+<a href="#l402" class="line" id="l402">    402</a> 				newinternal[j] = bond
+<a href="#l403" class="line" id="l403">    403</a> 				newlinks[j] = bmach.Links[i]
+<a href="#l404" class="line" id="l404">    404</a> 			}
+<a href="#l405" class="line" id="l405">    405</a> 			j++
+<a href="#l406" class="line" id="l406">    406</a> 		}
+<a href="#l407" class="line" id="l407">    407</a> 
+<a href="#l408" class="line" id="l408">    408</a> 		bmach.Internal_inputs = newinternal
+<a href="#l409" class="line" id="l409">    409</a> 		bmach.Links = newlinks
+<a href="#l410" class="line" id="l410">    410</a> 
+<a href="#l411" class="line" id="l411">    411</a> 		bmach.Outputs--
+<a href="#l412" class="line" id="l412">    412</a> 	} else {
+<a href="#l413" class="line" id="l413">    413</a> 		return Prerror{&quot;Output id outside limit&quot;}
+<a href="#l414" class="line" id="l414">    414</a> 	}
+<a href="#l415" class="line" id="l415">    415</a> 	return nil
+<a href="#l416" class="line" id="l416">    416</a> }
+<a href="#l417" class="line" id="l417">    417</a> 
+<a href="#l418" class="line" id="l418">    418</a> func (bmach *Bondmachine) List_processors() string {
+<a href="#l419" class="line" id="l419">    419</a> 	result := &quot;&quot;
+<a href="#l420" class="line" id="l420">    420</a> 	if len(bmach.Processors) != 0 {
+<a href="#l421" class="line" id="l421">    421</a> 		for i, _ := range bmach.Processors {
+<a href="#l422" class="line" id="l422">    422</a> 			result += fmt.Sprintf(&quot;----------\nProcessor %03d\nP%d&quot;, i, i) + fmt.Sprintf(&quot;\n&quot;)
+<a href="#l423" class="line" id="l423">    423</a> 		}
+<a href="#l424" class="line" id="l424">    424</a> 	} else {
+<a href="#l425" class="line" id="l425">    425</a> 		result += &quot;No defined processor&quot;
+<a href="#l426" class="line" id="l426">    426</a> 	}
+<a href="#l427" class="line" id="l427">    427</a> 	return result
+<a href="#l428" class="line" id="l428">    428</a> }
+<a href="#l429" class="line" id="l429">    429</a> 
+<a href="#l430" class="line" id="l430">    430</a> func (bmach *Bondmachine) EnumProcessors() int {
+<a href="#l431" class="line" id="l431">    431</a> 	return len(bmach.Processors)
+<a href="#l432" class="line" id="l432">    432</a> }
+<a href="#l433" class="line" id="l433">    433</a> 
+<a href="#l434" class="line" id="l434">    434</a> func (bmach *Bondmachine) EnumBonds() int {
+<a href="#l435" class="line" id="l435">    435</a> 	result := 0
+<a href="#l436" class="line" id="l436">    436</a> 	for _, p := range bmach.Links {
+<a href="#l437" class="line" id="l437">    437</a> 		if p != -1 {
+<a href="#l438" class="line" id="l438">    438</a> 			result++
+<a href="#l439" class="line" id="l439">    439</a> 		}
+<a href="#l440" class="line" id="l440">    440</a> 	}
+<a href="#l441" class="line" id="l441">    441</a> 	return result
+<a href="#l442" class="line" id="l442">    442</a> }
+<a href="#l443" class="line" id="l443">    443</a> 
+<a href="#l444" class="line" id="l444">    444</a> func (bmach *Bondmachine) Add_processor(dom_id int) (string, error) {
+<a href="#l445" class="line" id="l445">    445</a> 	if dom_id &gt;= len(bmach.Domains) {
+<a href="#l446" class="line" id="l446">    446</a> 		return &quot;&quot;, Prerror{&quot;Non existent domain&quot;}
+<a href="#l447" class="line" id="l447">    447</a> 	}
+<a href="#l448" class="line" id="l448">    448</a> 	inps := int(bmach.Domains[dom_id].N)
+<a href="#l449" class="line" id="l449">    449</a> 	outs := int(bmach.Domains[dom_id].M)
+<a href="#l450" class="line" id="l450">    450</a> 	for i := 0; i &lt; inps; i++ {
+<a href="#l451" class="line" id="l451">    451</a> 		newbond := Bond{2, len(bmach.Processors), i}
+<a href="#l452" class="line" id="l452">    452</a> 		bmach.Internal_inputs = append(bmach.Internal_inputs, newbond)
+<a href="#l453" class="line" id="l453">    453</a> 		bmach.Links = append(bmach.Links, -1)
+<a href="#l454" class="line" id="l454">    454</a> 	}
+<a href="#l455" class="line" id="l455">    455</a> 	for i := 0; i &lt; outs; i++ {
+<a href="#l456" class="line" id="l456">    456</a> 		newbond := Bond{3, len(bmach.Processors), i}
+<a href="#l457" class="line" id="l457">    457</a> 		bmach.Internal_outputs = append(bmach.Internal_outputs, newbond)
+<a href="#l458" class="line" id="l458">    458</a> 	}
+<a href="#l459" class="line" id="l459">    459</a> 	bmach.Processors = append(bmach.Processors, dom_id)
+<a href="#l460" class="line" id="l460">    460</a> 
+<a href="#l461" class="line" id="l461">    461</a> 	newsolist := make([]int, 0)
+<a href="#l462" class="line" id="l462">    462</a> 
+<a href="#l463" class="line" id="l463">    463</a> 	bmach.Shared_links = append(bmach.Shared_links, newsolist)
+<a href="#l464" class="line" id="l464">    464</a> 
+<a href="#l465" class="line" id="l465">    465</a> 	return &quot;Processor &quot; + strconv.Itoa(len(bmach.Processors)-1) + &quot; successfully added&quot;, nil
+<a href="#l466" class="line" id="l466">    466</a> }
+<a href="#l467" class="line" id="l467">    467</a> 
+<a href="#l468" class="line" id="l468">    468</a> func (bmach *Bondmachine) List_bonds() map[int]string {
+<a href="#l469" class="line" id="l469">    469</a> 	result := make(map[int]string)
+<a href="#l470" class="line" id="l470">    470</a> 	if len(bmach.Links) != 0 {
+<a href="#l471" class="line" id="l471">    471</a> 		for i, linked := range bmach.Links {
+<a href="#l472" class="line" id="l472">    472</a> 			if linked != -1 {
+<a href="#l473" class="line" id="l473">    473</a> 				result[i] = bmach.Internal_outputs[linked].String() + &quot;,&quot; + bmach.Internal_inputs[i].String()
+<a href="#l474" class="line" id="l474">    474</a> 			}
+<a href="#l475" class="line" id="l475">    475</a> 		}
+<a href="#l476" class="line" id="l476">    476</a> 	}
+<a href="#l477" class="line" id="l477">    477</a> 	return result
+<a href="#l478" class="line" id="l478">    478</a> }
+<a href="#l479" class="line" id="l479">    479</a> 
+<a href="#l480" class="line" id="l480">    480</a> func (bmach *Bondmachine) Add_bond(endpoints []string) {
+<a href="#l481" class="line" id="l481">    481</a> 	for i, inp := range bmach.Internal_inputs {
+<a href="#l482" class="line" id="l482">    482</a> 		if inp.String() == endpoints[0] {
+<a href="#l483" class="line" id="l483">    483</a> 			for j, outp := range bmach.Internal_outputs {
+<a href="#l484" class="line" id="l484">    484</a> 				if outp.String() == endpoints[1] {
+<a href="#l485" class="line" id="l485">    485</a> 					bmach.Links[i] = j
+<a href="#l486" class="line" id="l486">    486</a> 					break
+<a href="#l487" class="line" id="l487">    487</a> 				}
+<a href="#l488" class="line" id="l488">    488</a> 			}
+<a href="#l489" class="line" id="l489">    489</a> 			break
+<a href="#l490" class="line" id="l490">    490</a> 		}
+<a href="#l491" class="line" id="l491">    491</a> 
+<a href="#l492" class="line" id="l492">    492</a> 		if inp.String() == endpoints[1] {
+<a href="#l493" class="line" id="l493">    493</a> 			for j, outp := range bmach.Internal_outputs {
+<a href="#l494" class="line" id="l494">    494</a> 				if outp.String() == endpoints[0] {
+<a href="#l495" class="line" id="l495">    495</a> 					bmach.Links[i] = j
+<a href="#l496" class="line" id="l496">    496</a> 					break
+<a href="#l497" class="line" id="l497">    497</a> 				}
+<a href="#l498" class="line" id="l498">    498</a> 			}
+<a href="#l499" class="line" id="l499">    499</a> 			break
+<a href="#l500" class="line" id="l500">    500</a> 		}
+<a href="#l501" class="line" id="l501">    501</a> 	}
+<a href="#l502" class="line" id="l502">    502</a> }
+<a href="#l503" class="line" id="l503">    503</a> 
+<a href="#l504" class="line" id="l504">    504</a> func (bmach *Bondmachine) Del_bond(bid int) error {
+<a href="#l505" class="line" id="l505">    505</a> 	if bid &lt; len(bmach.Links) {
+<a href="#l506" class="line" id="l506">    506</a> 		bmach.Links[bid] = -1
+<a href="#l507" class="line" id="l507">    507</a> 	} else {
+<a href="#l508" class="line" id="l508">    508</a> 		return Prerror{&quot;Bond id outside limit&quot;}
+<a href="#l509" class="line" id="l509">    509</a> 	}
+<a href="#l510" class="line" id="l510">    510</a> 	return nil
+<a href="#l511" class="line" id="l511">    511</a> }
+<a href="#l512" class="line" id="l512">    512</a> 
+<a href="#l513" class="line" id="l513">    513</a> func (bmach *Bondmachine) List_internal_inputs() []string {
+<a href="#l514" class="line" id="l514">    514</a> 	result := []string{}
+<a href="#l515" class="line" id="l515">    515</a> 	if len(bmach.Internal_inputs) != 0 {
+<a href="#l516" class="line" id="l516">    516</a> 		for i, _ := range bmach.Internal_inputs {
+<a href="#l517" class="line" id="l517">    517</a> 			result = append(result, bmach.Internal_inputs[i].String())
+<a href="#l518" class="line" id="l518">    518</a> 		}
+<a href="#l519" class="line" id="l519">    519</a> 	}
+<a href="#l520" class="line" id="l520">    520</a> 	return result
+<a href="#l521" class="line" id="l521">    521</a> }
+<a href="#l522" class="line" id="l522">    522</a> 
+<a href="#l523" class="line" id="l523">    523</a> func (bmach *Bondmachine) List_internal_outputs() []string {
+<a href="#l524" class="line" id="l524">    524</a> 	result := []string{}
+<a href="#l525" class="line" id="l525">    525</a> 	if len(bmach.Internal_outputs) != 0 {
+<a href="#l526" class="line" id="l526">    526</a> 		for i, _ := range bmach.Internal_outputs {
+<a href="#l527" class="line" id="l527">    527</a> 			result = append(result, bmach.Internal_outputs[i].String())
+<a href="#l528" class="line" id="l528">    528</a> 		}
+<a href="#l529" class="line" id="l529">    529</a> 	}
+<a href="#l530" class="line" id="l530">    530</a> 	return result
+<a href="#l531" class="line" id="l531">    531</a> }
+<a href="#l532" class="line" id="l532">    532</a> 
+<a href="#l533" class="line" id="l533">    533</a> func (bmach *Bondmachine) List_shared_objects() string {
+<a href="#l534" class="line" id="l534">    534</a> 	result := &quot;&quot;
+<a href="#l535" class="line" id="l535">    535</a> 	if len(bmach.Shared_objects) != 0 {
+<a href="#l536" class="line" id="l536">    536</a> 		for i, so := range bmach.Shared_objects {
+<a href="#l537" class="line" id="l537">    537</a> 			result += fmt.Sprintf(&quot;%03d - &quot;, i) + so.String() + &quot;\n&quot;
+<a href="#l538" class="line" id="l538">    538</a> 		}
+<a href="#l539" class="line" id="l539">    539</a> 	} else {
+<a href="#l540" class="line" id="l540">    540</a> 		result += &quot;No defined shared object&quot;
+<a href="#l541" class="line" id="l541">    541</a> 	}
+<a href="#l542" class="line" id="l542">    542</a> 	return result
+<a href="#l543" class="line" id="l543">    543</a> }
+<a href="#l544" class="line" id="l544">    544</a> 
+<a href="#l545" class="line" id="l545">    545</a> func (bmach *Bondmachine) Add_shared_objects(sos []string) {
+<a href="#l546" class="line" id="l546">    546</a> 	for _, so := range sos {
+<a href="#l547" class="line" id="l547">    547</a> 		// TODO Error repotting
+<a href="#l548" class="line" id="l548">    548</a> 		//		loaded := false
+<a href="#l549" class="line" id="l549">    549</a> 		for _, shr := range Allshared {
+<a href="#l550" class="line" id="l550">    550</a> 			if inst, ok := shr.Instantiate(so); ok {
+<a href="#l551" class="line" id="l551">    551</a> 				bmach.Shared_objects = append(bmach.Shared_objects, inst)
+<a href="#l552" class="line" id="l552">    552</a> 				//		loaded = true
+<a href="#l553" class="line" id="l553">    553</a> 				break
+<a href="#l554" class="line" id="l554">    554</a> 			}
+<a href="#l555" class="line" id="l555">    555</a> 		}
+<a href="#l556" class="line" id="l556">    556</a> 		//		if !loaded {
+<a href="#l557" class="line" id="l557">    557</a> 		//			result += &quot;How to make a shared object from \&quot;&quot; + so + &quot;\&quot; is unkwown&quot;
+<a href="#l558" class="line" id="l558">    558</a> 		//		}
+<a href="#l559" class="line" id="l559">    559</a> 	}
+<a href="#l560" class="line" id="l560">    560</a> }
+<a href="#l561" class="line" id="l561">    561</a> 
+<a href="#l562" class="line" id="l562">    562</a> func (bmach *Bondmachine) List_processor_shared_object_links() string {
+<a href="#l563" class="line" id="l563">    563</a> 	result := &quot;&quot;
+<a href="#l564" class="line" id="l564">    564</a> 	for proc_id, curr_links := range bmach.Shared_links {
+<a href="#l565" class="line" id="l565">    565</a> 		result += &quot;Processor &quot; + strconv.Itoa(proc_id) + &quot;\n\t&quot;
+<a href="#l566" class="line" id="l566">    566</a> 		for _, so_id := range curr_links {
+<a href="#l567" class="line" id="l567">    567</a> 			result += strconv.Itoa(so_id) + &quot; &quot;
+<a href="#l568" class="line" id="l568">    568</a> 		}
+<a href="#l569" class="line" id="l569">    569</a> 		result += &quot;\n&quot;
+<a href="#l570" class="line" id="l570">    570</a> 	}
+<a href="#l571" class="line" id="l571">    571</a> 	return result
+<a href="#l572" class="line" id="l572">    572</a> }
+<a href="#l573" class="line" id="l573">    573</a> 
+<a href="#l574" class="line" id="l574">    574</a> func (bmach *Bondmachine) Connect_processor_shared_object(endpoints []string) {
+<a href="#l575" class="line" id="l575">    575</a> 	if proc_id, ok := strconv.Atoi(endpoints[0]); ok == nil {
+<a href="#l576" class="line" id="l576">    576</a> 		if so_id, ok := strconv.Atoi(endpoints[1]); ok == nil {
+<a href="#l577" class="line" id="l577">    577</a> 			if len(bmach.Shared_links) &gt; proc_id {
+<a href="#l578" class="line" id="l578">    578</a> 				curr_links := bmach.Shared_links[proc_id]
+<a href="#l579" class="line" id="l579">    579</a> 				already := false
+<a href="#l580" class="line" id="l580">    580</a> 				for _, link := range curr_links {
+<a href="#l581" class="line" id="l581">    581</a> 					if link == so_id {
+<a href="#l582" class="line" id="l582">    582</a> 						already = true
+<a href="#l583" class="line" id="l583">    583</a> 						break
+<a href="#l584" class="line" id="l584">    584</a> 					}
+<a href="#l585" class="line" id="l585">    585</a> 				}
+<a href="#l586" class="line" id="l586">    586</a> 				if !already {
+<a href="#l587" class="line" id="l587">    587</a> 					curr_links = append(curr_links, so_id)
+<a href="#l588" class="line" id="l588">    588</a> 					bmach.Shared_links[proc_id] = curr_links
+<a href="#l589" class="line" id="l589">    589</a> 				}
+<a href="#l590" class="line" id="l590">    590</a> 			}
+<a href="#l591" class="line" id="l591">    591</a> 		}
+<a href="#l592" class="line" id="l592">    592</a> 	}
+<a href="#l593" class="line" id="l593">    593</a> }
+<a href="#l594" class="line" id="l594">    594</a> 
+<a href="#l595" class="line" id="l595">    595</a> func (bmach *Bondmachine) GetProgramsAlias() ([]string, error) {
+<a href="#l596" class="line" id="l596">    596</a> 
+<a href="#l597" class="line" id="l597">    597</a> 	if len(bmach.Processors) != 0 {
+<a href="#l598" class="line" id="l598">    598</a> 		result := make([]string, 0)
+<a href="#l599" class="line" id="l599">    599</a> 		// TODO Make the code better
+<a href="#l600" class="line" id="l600">    600</a> 		for _, dom_id := range bmach.Processors {
+<a href="#l601" class="line" id="l601">    601</a> 			mymachine := bmach.Domains[dom_id]
+<a href="#l602" class="line" id="l602">    602</a> 			apstr, _ := mymachine.Program_alias()
+<a href="#l603" class="line" id="l603">    603</a> 			result = append(result, apstr)
+<a href="#l604" class="line" id="l604">    604</a> 		}
+<a href="#l605" class="line" id="l605">    605</a> 
+<a href="#l606" class="line" id="l606">    606</a> 		return result, nil
+<a href="#l607" class="line" id="l607">    607</a> 	} else {
+<a href="#l608" class="line" id="l608">    608</a> 		return nil, Prerror{&quot;Undefined processors&quot;}
+<a href="#l609" class="line" id="l609">    609</a> 	}
+<a href="#l610" class="line" id="l610">    610</a> 	return nil, nil
+<a href="#l611" class="line" id="l611">    611</a> }
+<a href="#l612" class="line" id="l612">    612</a> 
+<a href="#l613" class="line" id="l613">    613</a> func (bmach *Bondmachine) Attach_benchmark_core(endpoints []string) error {
+<a href="#l614" class="line" id="l614">    614</a> 	var e0 string
+<a href="#l615" class="line" id="l615">    615</a> 	var e1 string
+<a href="#l616" class="line" id="l616">    616</a> 
+<a href="#l617" class="line" id="l617">    617</a> 	for _, outp := range bmach.Internal_outputs {
+<a href="#l618" class="line" id="l618">    618</a> 		if outp.String() == endpoints[0] {
+<a href="#l619" class="line" id="l619">    619</a> 			e0 = endpoints[0]
+<a href="#l620" class="line" id="l620">    620</a> 		}
+<a href="#l621" class="line" id="l621">    621</a> 		if outp.String() == endpoints[1] {
+<a href="#l622" class="line" id="l622">    622</a> 			e1 = endpoints[1]
+<a href="#l623" class="line" id="l623">    623</a> 		}
+<a href="#l624" class="line" id="l624">    624</a> 	}
+<a href="#l625" class="line" id="l625">    625</a> 
+<a href="#l626" class="line" id="l626">    626</a> 	if e0 != &quot;&quot; &amp;&amp; e1 != &quot;&quot; {
+<a href="#l627" class="line" id="l627">    627</a> 		mybcore := new(procbuilder.Machine)
+<a href="#l628" class="line" id="l628">    628</a> 
+<a href="#l629" class="line" id="l629">    629</a> 		myarch := &amp;mybcore.Arch
+<a href="#l630" class="line" id="l630">    630</a> 
+<a href="#l631" class="line" id="l631">    631</a> 		myarch.Rsize = uint8(bmach.Rsize)
+<a href="#l632" class="line" id="l632">    632</a> 
+<a href="#l633" class="line" id="l633">    633</a> 		myarch.Modes = make([]string, 1)
+<a href="#l634" class="line" id="l634">    634</a> 		myarch.Modes[0] = &quot;ha&quot;
+<a href="#l635" class="line" id="l635">    635</a> 
+<a href="#l636" class="line" id="l636">    636</a> 		opcodes := make([]procbuilder.Opcode, 0)
+<a href="#l637" class="line" id="l637">    637</a> 
+<a href="#l638" class="line" id="l638">    638</a> 		for _, op := range procbuilder.Allopcodes {
+<a href="#l639" class="line" id="l639">    639</a> 			for _, opn := range []string{&quot;sic&quot;, &quot;r2o&quot;, &quot;j&quot;} {
+<a href="#l640" class="line" id="l640">    640</a> 				if opn == op.Op_get_name() {
+<a href="#l641" class="line" id="l641">    641</a> 					opcodes = append(opcodes, op)
+<a href="#l642" class="line" id="l642">    642</a> 					break
+<a href="#l643" class="line" id="l643">    643</a> 				}
+<a href="#l644" class="line" id="l644">    644</a> 			}
+<a href="#l645" class="line" id="l645">    645</a> 		}
+<a href="#l646" class="line" id="l646">    646</a> 
+<a href="#l647" class="line" id="l647">    647</a> 		sort.Sort(procbuilder.ByName(opcodes))
+<a href="#l648" class="line" id="l648">    648</a> 
+<a href="#l649" class="line" id="l649">    649</a> 		myarch.Op = opcodes
+<a href="#l650" class="line" id="l650">    650</a> 
+<a href="#l651" class="line" id="l651">    651</a> 		myarch.R = uint8(1)
+<a href="#l652" class="line" id="l652">    652</a> 		myarch.L = uint8(0)
+<a href="#l653" class="line" id="l653">    653</a> 		myarch.N = uint8(2)
+<a href="#l654" class="line" id="l654">    654</a> 		myarch.M = uint8(1)
+<a href="#l655" class="line" id="l655">    655</a> 		myarch.O = uint8(2)
+<a href="#l656" class="line" id="l656">    656</a> 		myarch.Shared_constraints = &quot;&quot;
+<a href="#l657" class="line" id="l657">    657</a> 
+<a href="#l658" class="line" id="l658">    658</a> 		prog := &quot;sic r0 i0\nsic r0 i1\nr2o r0 o0\nj 0\n&quot;
+<a href="#l659" class="line" id="l659">    659</a> 
+<a href="#l660" class="line" id="l660">    660</a> 		if prog, err := myarch.Assembler([]byte(prog)); err == nil {
+<a href="#l661" class="line" id="l661">    661</a> 			mybcore.Program = prog
+<a href="#l662" class="line" id="l662">    662</a> 		} else {
+<a href="#l663" class="line" id="l663">    663</a> 			fmt.Println(err)
+<a href="#l664" class="line" id="l664">    664</a> 		}
+<a href="#l665" class="line" id="l665">    665</a> 
+<a href="#l666" class="line" id="l666">    666</a> 		bmach.Domains = append(bmach.Domains, mybcore)
+<a href="#l667" class="line" id="l667">    667</a> 		bmach.Add_processor(len(bmach.Domains) - 1)
+<a href="#l668" class="line" id="l668">    668</a> 		newpnum := strconv.Itoa(len(bmach.Processors) - 1)
+<a href="#l669" class="line" id="l669">    669</a> 		bmach.Add_bond([]string{&quot;p&quot; + newpnum + &quot;i0&quot;, e0})
+<a href="#l670" class="line" id="l670">    670</a> 		bmach.Add_bond([]string{&quot;p&quot; + newpnum + &quot;i1&quot;, e1})
+<a href="#l671" class="line" id="l671">    671</a> 		bmach.Add_output()
+<a href="#l672" class="line" id="l672">    672</a> 		newonum := strconv.Itoa(bmach.Outputs - 1)
+<a href="#l673" class="line" id="l673">    673</a> 		bmach.Add_bond([]string{&quot;p&quot; + newpnum + &quot;o0&quot;, &quot;o&quot; + newonum})
+<a href="#l674" class="line" id="l674">    674</a> 	} else {
+<a href="#l675" class="line" id="l675">    675</a> 		return Prerror{&quot;Benchmark core endpoints has to be internal outputs&quot;}
+<a href="#l676" class="line" id="l676">    676</a> 	}
+<a href="#l677" class="line" id="l677">    677</a> 	return nil
+<a href="#l678" class="line" id="l678">    678</a> }
+<a href="#l679" class="line" id="l679">    679</a> 
+<a href="#l680" class="line" id="l680">    680</a> func (bmach *Bondmachine) Dot(conf *Config, prefix string, vm *VM, oldvmstate *VM) string {
+<a href="#l681" class="line" id="l681">    681</a> 	// TODO Finish the layout building
+<a href="#l682" class="line" id="l682">    682</a> 	result := &quot;&quot;
+<a href="#l683" class="line" id="l683">    683</a> 	strutti := 0
+<a href="#l684" class="line" id="l684">    684</a> 	if prefix == &quot;&quot; {
+<a href="#l685" class="line" id="l685">    685</a> 		result += &quot;digraph callgraph {\n&quot;
+<a href="#l686" class="line" id="l686">    686</a> 		result += &quot;\tbgcolor=\&quot;#a2a6a7\&quot;;\n&quot;
+<a href="#l687" class="line" id="l687">    687</a> 		result += &quot;\tcompound=true;\n&quot;
+<a href="#l688" class="line" id="l688">    688</a> 		result += &quot;\tnode [fontname=\&quot;monospace\&quot;];\n&quot;
+<a href="#l689" class="line" id="l689">    689</a> 		result += &quot;\tfontname=\&quot;Monospace\&quot;;\n&quot;
+<a href="#l690" class="line" id="l690">    690</a> 	}
+<a href="#l691" class="line" id="l691">    691</a> 
+<a href="#l692" class="line" id="l692">    692</a> 	for i, dom_id := range bmach.Processors {
+<a href="#l693" class="line" id="l693">    693</a> 		result += &quot;\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot; {\n&quot;
+<a href="#l694" class="line" id="l694">    694</a> 		if GV_config(GVCLUSPROC) != &quot;&quot; {
+<a href="#l695" class="line" id="l695">    695</a> 			result += &quot;\t&quot; + GV_config(GVCLUSPROC) + &quot;;\n&quot;
+<a href="#l696" class="line" id="l696">    696</a> 		}
+<a href="#l697" class="line" id="l697">    697</a> 		if conf.BMinfo != nil {
+<a href="#l698" class="line" id="l698">    698</a> 			if conf.BMinfo.CPNames != nil {
+<a href="#l699" class="line" id="l699">    699</a> 				result += &quot;\tlabel=\&quot;&quot; + conf.BMinfo.CPNames[i] + &quot;\&quot;;\n&quot;
+<a href="#l700" class="line" id="l700">    700</a> 			} else {
+<a href="#l701" class="line" id="l701">    701</a> 				result += &quot;\t\tlabel=\&quot;Processor &quot; + strconv.Itoa(i) + &quot;\&quot;;\n&quot;
+<a href="#l702" class="line" id="l702">    702</a> 			}
+<a href="#l703" class="line" id="l703">    703</a> 		} else {
+<a href="#l704" class="line" id="l704">    704</a> 			result += &quot;\t\tlabel=\&quot;Processor &quot; + strconv.Itoa(i) + &quot;\&quot;;\n&quot;
+<a href="#l705" class="line" id="l705">    705</a> 		}
+<a href="#l706" class="line" id="l706">    706</a> 
+<a href="#l707" class="line" id="l707">    707</a> 		if conf.Dotdetail &gt; 3 {
+<a href="#l708" class="line" id="l708">    708</a> 			result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_specs {\n&quot;
+<a href="#l709" class="line" id="l709">    709</a> 			result += &quot;\t\tlabel=\&quot;Specs\&quot;;\n&quot;
+<a href="#l710" class="line" id="l710">    710</a> 
+<a href="#l711" class="line" id="l711">    711</a> 			// Register information
+<a href="#l712" class="line" id="l712">    712</a> 			reg_num := 1 &lt;&lt; bmach.Domains[dom_id].R
+<a href="#l713" class="line" id="l713">    713</a> 			result += &quot;\t\tnode [label=\&quot;Registers: &quot; + strconv.Itoa(reg_num) + &quot;\&quot;&quot; + GV_config(GVINFOPROCREGS) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;procinforegs;\n&quot;
+<a href="#l714" class="line" id="l714">    714</a> 
+<a href="#l715" class="line" id="l715">    715</a> 			// Opcodes
+<a href="#l716" class="line" id="l716">    716</a> 			if conf.Dotdetail &gt; 3 {
+<a href="#l717" class="line" id="l717">    717</a> 
+<a href="#l718" class="line" id="l718">    718</a> 				oplist := &quot;Opcodes:&quot;
+<a href="#l719" class="line" id="l719">    719</a> 				j := 0
+<a href="#l720" class="line" id="l720">    720</a> 				for _, op := range bmach.Domains[dom_id].Op {
+<a href="#l721" class="line" id="l721">    721</a> 					if j%3 == 0 {
+<a href="#l722" class="line" id="l722">    722</a> 						oplist += &quot;\\n&quot; + op.Op_get_name()
+<a href="#l723" class="line" id="l723">    723</a> 					} else {
+<a href="#l724" class="line" id="l724">    724</a> 						oplist += &quot;, &quot; + op.Op_get_name()
+<a href="#l725" class="line" id="l725">    725</a> 					}
+<a href="#l726" class="line" id="l726">    726</a> 					j++
+<a href="#l727" class="line" id="l727">    727</a> 				}
+<a href="#l728" class="line" id="l728">    728</a> 
+<a href="#l729" class="line" id="l729">    729</a> 				result += &quot;\t\tnode [label=\&quot;&quot; + oplist + &quot;\&quot;&quot; + GV_config(GVINFOPROCOPCODES) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;procinfocodes;\n&quot;
+<a href="#l730" class="line" id="l730">    730</a> 			}
+<a href="#l731" class="line" id="l731">    731</a> 
+<a href="#l732" class="line" id="l732">    732</a> 			// Program
+<a href="#l733" class="line" id="l733">    733</a> 			if conf.Dotdetail &gt; 4 {
+<a href="#l734" class="line" id="l734">    734</a> 
+<a href="#l735" class="line" id="l735">    735</a> 				if disass_text, err := bmach.Domains[dom_id].Disassembler(); err == nil {
+<a href="#l736" class="line" id="l736">    736</a> 					result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_prog {\n&quot;
+<a href="#l737" class="line" id="l737">    737</a> 					result += &quot;\t\tlabel=\&quot;Program:\&quot;;\n&quot;
+<a href="#l738" class="line" id="l738">    738</a> 					result += &quot;\t\tstruct&quot; + prefix + strconv.Itoa(strutti) + &quot; [label=&lt;&lt;TABLE BORDER=\&quot;0\&quot;&gt;\n&quot;
+<a href="#l739" class="line" id="l739">    739</a> 					strutti++
+<a href="#l740" class="line" id="l740">    740</a> 					for j, line := range strings.Split(disass_text, &quot;\n&quot;) {
+<a href="#l741" class="line" id="l741">    741</a> 						if line != &quot;&quot; {
+<a href="#l742" class="line" id="l742">    742</a> 							if vm != nil &amp;&amp; vm.Processors[i].Pc == uint64(j) {
+<a href="#l743" class="line" id="l743">    743</a> 								result += &quot;\t\t&lt;TR&gt;&lt;TD BGCOLOR=\&quot;red\&quot;&gt;&quot; + line + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l744" class="line" id="l744">    744</a> 							} else {
+<a href="#l745" class="line" id="l745">    745</a> 								result += &quot;\t\t&lt;TR&gt;&lt;TD&gt;&quot; + line + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l746" class="line" id="l746">    746</a> 							}
+<a href="#l747" class="line" id="l747">    747</a> 						}
+<a href="#l748" class="line" id="l748">    748</a> 					}
+<a href="#l749" class="line" id="l749">    749</a> 					result += &quot;\t\t&lt;/TABLE&gt;&gt;];\n&quot;
+<a href="#l750" class="line" id="l750">    750</a> 					result += &quot;\t\t}\n&quot;
+<a href="#l751" class="line" id="l751">    751</a> 				}
+<a href="#l752" class="line" id="l752">    752</a> 			}
+<a href="#l753" class="line" id="l753">    753</a> 
+<a href="#l754" class="line" id="l754">    754</a> 			result += &quot;\t\t}\n&quot;
+<a href="#l755" class="line" id="l755">    755</a> 		}
+<a href="#l756" class="line" id="l756">    756</a> 
+<a href="#l757" class="line" id="l757">    757</a> 		if vm != nil {
+<a href="#l758" class="line" id="l758">    758</a> 			result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_vm_pc {\n&quot;
+<a href="#l759" class="line" id="l759">    759</a> 			result += &quot;\t\t\tlabel=\&quot;PC:\&quot;;\n&quot;
+<a href="#l760" class="line" id="l760">    760</a> 			result += &quot;\t\tnode [label=\&quot;&quot; + strconv.Itoa(int(vm.Processors[i].Pc)) + &quot;\&quot;&quot; + GV_config(GVINFOPROCPC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;_pc;\n&quot;
+<a href="#l761" class="line" id="l761">    761</a> 			result += &quot;\t\t}\n&quot;
+<a href="#l762" class="line" id="l762">    762</a> 
+<a href="#l763" class="line" id="l763">    763</a> 			result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_vm_regs {\n&quot;
+<a href="#l764" class="line" id="l764">    764</a> 			result += &quot;\t\t\tlabel=\&quot;Registers:\&quot;;\n&quot;
+<a href="#l765" class="line" id="l765">    765</a> 
+<a href="#l766" class="line" id="l766">    766</a> 			result += &quot;\t\tstruct&quot; + prefix + strconv.Itoa(strutti) + &quot; [label=&lt;&lt;TABLE BORDER=\&quot;0\&quot;&gt;\n&quot;
+<a href="#l767" class="line" id="l767">    767</a> 			strutti++
+<a href="#l768" class="line" id="l768">    768</a> 
+<a href="#l769" class="line" id="l769">    769</a> 			for j, reg := range vm.Processors[i].Registers {
+<a href="#l770" class="line" id="l770">    770</a> 				colorstring := &quot;&quot;
+<a href="#l771" class="line" id="l771">    771</a> 				if oldvmstate != nil &amp;&amp; oldvmstate.Processors[i].Registers[j] != reg {
+<a href="#l772" class="line" id="l772">    772</a> 					colorstring = &quot; BGCOLOR=\&quot;red\&quot;&quot;
+<a href="#l773" class="line" id="l773">    773</a> 				}
+<a href="#l774" class="line" id="l774">    774</a> 				switch vm.Bmach.Rsize {
+<a href="#l775" class="line" id="l775">    775</a> 				case 8:
+<a href="#l776" class="line" id="l776">    776</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + procbuilder.Get_register_name(j) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint8)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l777" class="line" id="l777">    777</a> 				case 16:
+<a href="#l778" class="line" id="l778">    778</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + procbuilder.Get_register_name(j) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint16)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l779" class="line" id="l779">    779</a> 				default:
+<a href="#l780" class="line" id="l780">    780</a> 					// TODO Fix
+<a href="#l781" class="line" id="l781">    781</a> 				}
+<a href="#l782" class="line" id="l782">    782</a> 			}
+<a href="#l783" class="line" id="l783">    783</a> 
+<a href="#l784" class="line" id="l784">    784</a> 			result += &quot;\t\t&lt;/TABLE&gt;&gt; &quot; + GV_config(GVINFOPROCPROG) + &quot;];\n&quot;
+<a href="#l785" class="line" id="l785">    785</a> 			result += &quot;\t\t}\n&quot;
+<a href="#l786" class="line" id="l786">    786</a> 
+<a href="#l787" class="line" id="l787">    787</a> 		}
+<a href="#l788" class="line" id="l788">    788</a> 
+<a href="#l789" class="line" id="l789">    789</a> 		inps := int(bmach.Domains[dom_id].N)
+<a href="#l790" class="line" id="l790">    790</a> 		outs := int(bmach.Domains[dom_id].M)
+<a href="#l791" class="line" id="l791">    791</a> 		result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_inputs {\n&quot;
+<a href="#l792" class="line" id="l792">    792</a> 		if GV_config(GVCLUSININPROC) != &quot;&quot; {
+<a href="#l793" class="line" id="l793">    793</a> 			result += &quot;\t\t&quot; + GV_config(GVCLUSININPROC) + &quot;;\n&quot;
+<a href="#l794" class="line" id="l794">    794</a> 		}
+<a href="#l795" class="line" id="l795">    795</a> 		result += &quot;\t\t\tlabel=\&quot;P&quot; + strconv.Itoa(i) + &quot; inputs\&quot;;\n&quot;
+<a href="#l796" class="line" id="l796">    796</a> 
+<a href="#l797" class="line" id="l797">    797</a> 		for j := 0; j &lt; inps; j++ {
+<a href="#l798" class="line" id="l798">    798</a> 			if vm != nil {
+<a href="#l799" class="line" id="l799">    799</a> 				result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_input_&quot; + strconv.Itoa(j) + &quot; {\n&quot;
+<a href="#l800" class="line" id="l800">    800</a> 				//result += &quot;\t\t\tlabel=\&quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;:\&quot;;\n&quot;
+<a href="#l801" class="line" id="l801">    801</a> 				result += &quot;\t\t\tlabel=\&quot;\&quot;;\n&quot;
+<a href="#l802" class="line" id="l802">    802</a> 				result += &quot;\t\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;\&quot; &quot; + GV_config(GVNODEININPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l803" class="line" id="l803">    803</a> 
+<a href="#l804" class="line" id="l804">    804</a> 				result += &quot;\t\tstruct&quot; + prefix + strconv.Itoa(strutti) + &quot; [label=&lt;&lt;TABLE BORDER=\&quot;0\&quot;&gt;\n&quot;
+<a href="#l805" class="line" id="l805">    805</a> 				strutti++
+<a href="#l806" class="line" id="l806">    806</a> 
+<a href="#l807" class="line" id="l807">    807</a> 				inp := vm.Processors[i].Inputs[j]
+<a href="#l808" class="line" id="l808">    808</a> 
+<a href="#l809" class="line" id="l809">    809</a> 				colorstring := &quot;&quot;
+<a href="#l810" class="line" id="l810">    810</a> 				if oldvmstate != nil &amp;&amp; oldvmstate.Processors[i].Inputs[j] != inp {
+<a href="#l811" class="line" id="l811">    811</a> 					colorstring = &quot; BGCOLOR=\&quot;red\&quot;&quot;
+<a href="#l812" class="line" id="l812">    812</a> 				}
+<a href="#l813" class="line" id="l813">    813</a> 				switch vm.Bmach.Rsize {
+<a href="#l814" class="line" id="l814">    814</a> 				case 8:
+<a href="#l815" class="line" id="l815">    815</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(inp.(uint8)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l816" class="line" id="l816">    816</a> 				case 16:
+<a href="#l817" class="line" id="l817">    817</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(inp.(uint16)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l818" class="line" id="l818">    818</a> 				default:
+<a href="#l819" class="line" id="l819">    819</a> 					// TODO Fix
+<a href="#l820" class="line" id="l820">    820</a> 				}
+<a href="#l821" class="line" id="l821">    821</a> 
+<a href="#l822" class="line" id="l822">    822</a> 				result += &quot;\t\t&lt;/TABLE&gt;&gt; &quot; + GV_config(GVINFOPROCPROG) + &quot;];\n&quot;
+<a href="#l823" class="line" id="l823">    823</a> 				result += &quot;\t\t}\n&quot;
+<a href="#l824" class="line" id="l824">    824</a> 
+<a href="#l825" class="line" id="l825">    825</a> 			} else {
+<a href="#l826" class="line" id="l826">    826</a> 				result += &quot;\t\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;\&quot; &quot; + GV_config(GVNODEININPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l827" class="line" id="l827">    827</a> 			}
+<a href="#l828" class="line" id="l828">    828</a> 		}
+<a href="#l829" class="line" id="l829">    829</a> 
+<a href="#l830" class="line" id="l830">    830</a> 		result += &quot;\t\t}\n&quot;
+<a href="#l831" class="line" id="l831">    831</a> 		result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_outputs {\n&quot;
+<a href="#l832" class="line" id="l832">    832</a> 		if GV_config(GVCLUSOUTINPROC) != &quot;&quot; {
+<a href="#l833" class="line" id="l833">    833</a> 			result += &quot;\t\t&quot; + GV_config(GVCLUSOUTINPROC) + &quot;;\n&quot;
+<a href="#l834" class="line" id="l834">    834</a> 		}
+<a href="#l835" class="line" id="l835">    835</a> 		result += &quot;\t\t\tlabel=\&quot;p&quot; + strconv.Itoa(i) + &quot; outputs\&quot;;\n&quot;
+<a href="#l836" class="line" id="l836">    836</a> 		for j := 0; j &lt; outs; j++ {
+<a href="#l837" class="line" id="l837">    837</a> 			if vm != nil {
+<a href="#l838" class="line" id="l838">    838</a> 				result += &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_output_&quot; + strconv.Itoa(j) + &quot; {\n&quot;
+<a href="#l839" class="line" id="l839">    839</a> 				//result += &quot;\t\t\tlabel=\&quot;p&quot; + strconv.Itoa(i) + &quot;i&quot; + strconv.Itoa(j) + &quot;:\&quot;;\n&quot;
+<a href="#l840" class="line" id="l840">    840</a> 				result += &quot;\t\t\tlabel=\&quot;\&quot;;\n&quot;
+<a href="#l841" class="line" id="l841">    841</a> 				result += &quot;\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + &quot;o&quot; + strconv.Itoa(j) + &quot;\&quot; &quot; + GV_config(GVNODEOUTINPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;o&quot; + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l842" class="line" id="l842">    842</a> 
+<a href="#l843" class="line" id="l843">    843</a> 				result += &quot;\t\tstruct&quot; + prefix + strconv.Itoa(strutti) + &quot; [label=&lt;&lt;TABLE BORDER=\&quot;0\&quot;&gt;\n&quot;
+<a href="#l844" class="line" id="l844">    844</a> 				strutti++
+<a href="#l845" class="line" id="l845">    845</a> 
+<a href="#l846" class="line" id="l846">    846</a> 				outp := vm.Processors[i].Outputs[j]
+<a href="#l847" class="line" id="l847">    847</a> 
+<a href="#l848" class="line" id="l848">    848</a> 				colorstring := &quot;&quot;
+<a href="#l849" class="line" id="l849">    849</a> 				if oldvmstate != nil &amp;&amp; oldvmstate.Processors[i].Outputs[j] != outp {
+<a href="#l850" class="line" id="l850">    850</a> 					colorstring = &quot; BGCOLOR=\&quot;red\&quot;&quot;
+<a href="#l851" class="line" id="l851">    851</a> 				}
+<a href="#l852" class="line" id="l852">    852</a> 				switch vm.Bmach.Rsize {
+<a href="#l853" class="line" id="l853">    853</a> 				case 8:
+<a href="#l854" class="line" id="l854">    854</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(outp.(uint8)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l855" class="line" id="l855">    855</a> 				case 16:
+<a href="#l856" class="line" id="l856">    856</a> 					result += &quot;\t\t&lt;TR&gt;&lt;TD&quot; + colorstring + &quot;&gt;&quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(outp.(uint16)))) + &quot;&lt;/TD&gt;&lt;/TR&gt;\n&quot;
+<a href="#l857" class="line" id="l857">    857</a> 				default:
+<a href="#l858" class="line" id="l858">    858</a> 					// TODO Fix
+<a href="#l859" class="line" id="l859">    859</a> 				}
+<a href="#l860" class="line" id="l860">    860</a> 
+<a href="#l861" class="line" id="l861">    861</a> 				result += &quot;\t\t&lt;/TABLE&gt;&gt; &quot; + GV_config(GVINFOPROCPROG) + &quot;];\n&quot;
+<a href="#l862" class="line" id="l862">    862</a> 				result += &quot;\t\t}\n&quot;
+<a href="#l863" class="line" id="l863">    863</a> 
+<a href="#l864" class="line" id="l864">    864</a> 			} else {
+<a href="#l865" class="line" id="l865">    865</a> 				result += &quot;\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + &quot;o&quot; + strconv.Itoa(j) + &quot;\&quot; &quot; + GV_config(GVNODEOUTINPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + &quot;o&quot; + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l866" class="line" id="l866">    866</a> 			}
+<a href="#l867" class="line" id="l867">    867</a> 		}
+<a href="#l868" class="line" id="l868">    868</a> 		result += &quot;\t\t}\n&quot;
+<a href="#l869" class="line" id="l869">    869</a> 
+<a href="#l870" class="line" id="l870">    870</a> 		if bmach.Shared_links != nil &amp;&amp; len(bmach.Shared_links[i]) &gt; 0 {
+<a href="#l871" class="line" id="l871">    871</a> 
+<a href="#l872" class="line" id="l872">    872</a> 			seq := make(map[string]int)
+<a href="#l873" class="line" id="l873">    873</a> 			subresult := make(map[string]string)
+<a href="#l874" class="line" id="l874">    874</a> 
+<a href="#l875" class="line" id="l875">    875</a> 			for _, so := range bmach.Shared_links[i] {
+<a href="#l876" class="line" id="l876">    876</a> 				sname := bmach.Shared_objects[so].Shortname()
+<a href="#l877" class="line" id="l877">    877</a> 				if j, ok := seq[sname]; ok {
+<a href="#l878" class="line" id="l878">    878</a> 					subresult[sname] += &quot;\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + sname + strconv.Itoa(j) + &quot;\&quot; &quot; + bmach.Shared_objects[so].GV_config(GVNODEINPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + sname + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l879" class="line" id="l879">    879</a> 				} else {
+<a href="#l880" class="line" id="l880">    880</a> 					seq[sname] = 0
+<a href="#l881" class="line" id="l881">    881</a> 					subresult[sname] = &quot;\t\tsubgraph cluster_&quot; + prefix + &quot;_p&quot; + strconv.Itoa(i) + &quot;_&quot; + bmach.Shared_objects[so].Shr_get_name() + &quot; {\n&quot;
+<a href="#l882" class="line" id="l882">    882</a> 					if bmach.Shared_objects[so].GV_config(GVCLUSINPROC) != &quot;&quot; {
+<a href="#l883" class="line" id="l883">    883</a> 						subresult[sname] += &quot;\t\t&quot; + bmach.Shared_objects[so].GV_config(GVCLUSINPROC) + &quot;;\n&quot;
+<a href="#l884" class="line" id="l884">    884</a> 					}
+<a href="#l885" class="line" id="l885">    885</a> 					subresult[sname] += &quot;\t\t\tlabel=\&quot;P&quot; + strconv.Itoa(i) + &quot; &quot; + bmach.Shared_objects[so].Shr_get_name() + &quot;\&quot;;\n&quot;
+<a href="#l886" class="line" id="l886">    886</a> 					subresult[sname] += &quot;\t\t\tnode [label=\&quot;p&quot; + strconv.Itoa(i) + sname + strconv.Itoa(j) + &quot;\&quot; &quot; + bmach.Shared_objects[so].GV_config(GVNODEINPROC) + &quot;] &quot; + prefix + &quot;p&quot; + strconv.Itoa(i) + sname + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l887" class="line" id="l887">    887</a> 				}
+<a href="#l888" class="line" id="l888">    888</a> 				seq[sname]++
+<a href="#l889" class="line" id="l889">    889</a> 			}
+<a href="#l890" class="line" id="l890">    890</a> 
+<a href="#l891" class="line" id="l891">    891</a> 			for _, subres := range subresult {
+<a href="#l892" class="line" id="l892">    892</a> 				result += subres
+<a href="#l893" class="line" id="l893">    893</a> 				result += &quot;\t\t}\n&quot;
+<a href="#l894" class="line" id="l894">    894</a> 			}
+<a href="#l895" class="line" id="l895">    895</a> 
+<a href="#l896" class="line" id="l896">    896</a> 		}
+<a href="#l897" class="line" id="l897">    897</a> 
+<a href="#l898" class="line" id="l898">    898</a> 		result += &quot;\t}\n&quot;
+<a href="#l899" class="line" id="l899">    899</a> 	}
+<a href="#l900" class="line" id="l900">    900</a> 
+<a href="#l901" class="line" id="l901">    901</a> 	result += &quot;\tsubgraph cluster_&quot; + prefix + &quot;_inputs {\n&quot;
+<a href="#l902" class="line" id="l902">    902</a> 	if GV_config(GVCLUSIN) != &quot;&quot; {
+<a href="#l903" class="line" id="l903">    903</a> 		result += &quot;\t&quot; + GV_config(GVCLUSIN) + &quot;;\n&quot;
+<a href="#l904" class="line" id="l904">    904</a> 	}
+<a href="#l905" class="line" id="l905">    905</a> 	result += &quot;\t\tlabel=\&quot;Inputs\&quot;;\n&quot;
+<a href="#l906" class="line" id="l906">    906</a> 	for i := 0; i &lt; bmach.Inputs; i++ {
+<a href="#l907" class="line" id="l907">    907</a> 		result += &quot;\t\tnode [label=\&quot;i&quot; + strconv.Itoa(i) + &quot;\&quot; &quot; + GV_config(GVNODEIN) + &quot;] &quot; + prefix + &quot;i&quot; + strconv.Itoa(i) + &quot;;\n&quot;
+<a href="#l908" class="line" id="l908">    908</a> 	}
+<a href="#l909" class="line" id="l909">    909</a> 	result += &quot;\t}\n&quot;
+<a href="#l910" class="line" id="l910">    910</a> 
+<a href="#l911" class="line" id="l911">    911</a> 	result += &quot;\tsubgraph cluster_&quot; + prefix + &quot;_outputs {\n&quot;
+<a href="#l912" class="line" id="l912">    912</a> 	if GV_config(GVCLUSOUT) != &quot;&quot; {
+<a href="#l913" class="line" id="l913">    913</a> 		result += &quot;\t&quot; + GV_config(GVCLUSOUT) + &quot;;\n&quot;
+<a href="#l914" class="line" id="l914">    914</a> 	}
+<a href="#l915" class="line" id="l915">    915</a> 	result += &quot;\t\tlabel=\&quot;Outputs\&quot;;\n&quot;
+<a href="#l916" class="line" id="l916">    916</a> 	for i := 0; i &lt; bmach.Outputs; i++ {
+<a href="#l917" class="line" id="l917">    917</a> 		result += &quot;\t\tnode [label=\&quot;o&quot; + strconv.Itoa(i) + &quot;\&quot; &quot; + GV_config(GVNODEOUT) + &quot;] &quot; + prefix + &quot;o&quot; + strconv.Itoa(i) + &quot;;\n&quot;
+<a href="#l918" class="line" id="l918">    918</a> 	}
+<a href="#l919" class="line" id="l919">    919</a> 	result += &quot;\t}\n&quot;
+<a href="#l920" class="line" id="l920">    920</a> 
+<a href="#l921" class="line" id="l921">    921</a> 	if len(bmach.Shared_objects) &gt; 0 {
+<a href="#l922" class="line" id="l922">    922</a> 
+<a href="#l923" class="line" id="l923">    923</a> 		seqout := make([]int, len(bmach.Shared_objects))
+<a href="#l924" class="line" id="l924">    924</a> 
+<a href="#l925" class="line" id="l925">    925</a> 		seq := make(map[string]int)
+<a href="#l926" class="line" id="l926">    926</a> 		subresult := make(map[string]string)
+<a href="#l927" class="line" id="l927">    927</a> 
+<a href="#l928" class="line" id="l928">    928</a> 		for i, so := range bmach.Shared_objects {
+<a href="#l929" class="line" id="l929">    929</a> 			sname := so.Shortname()
+<a href="#l930" class="line" id="l930">    930</a> 			if j, ok := seq[sname]; ok {
+<a href="#l931" class="line" id="l931">    931</a> 				subresult[sname] += &quot;\t\tnode [label=\&quot;&quot; + sname + strconv.Itoa(j) + &quot;\&quot; &quot; + so.GV_config(GVNODE) + &quot;] &quot; + prefix + sname + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l932" class="line" id="l932">    932</a> 			} else {
+<a href="#l933" class="line" id="l933">    933</a> 				seq[sname] = 0
+<a href="#l934" class="line" id="l934">    934</a> 				subresult[sname] = &quot;\tsubgraph cluster_&quot; + prefix + &quot;_&quot; + so.Shr_get_name() + &quot; {\n&quot;
+<a href="#l935" class="line" id="l935">    935</a> 				if so.GV_config(GVCLUS) != &quot;&quot; {
+<a href="#l936" class="line" id="l936">    936</a> 					subresult[sname] += &quot;\t\t&quot; + so.GV_config(GVCLUS) + &quot;;\n&quot;
+<a href="#l937" class="line" id="l937">    937</a> 				}
+<a href="#l938" class="line" id="l938">    938</a> 				subresult[sname] += &quot;\t\tlabel=\&quot;&quot; + so.Shr_get_name() + &quot;\&quot;;\n&quot;
+<a href="#l939" class="line" id="l939">    939</a> 				subresult[sname] += &quot;\t\tnode [label=\&quot;&quot; + sname + strconv.Itoa(j) + &quot;\&quot; &quot; + so.GV_config(GVNODE) + &quot;] &quot; + prefix + sname + strconv.Itoa(j) + &quot;;\n&quot;
+<a href="#l940" class="line" id="l940">    940</a> 			}
+<a href="#l941" class="line" id="l941">    941</a> 			seqout[i] = seq[sname]
+<a href="#l942" class="line" id="l942">    942</a> 			seq[sname]++
+<a href="#l943" class="line" id="l943">    943</a> 		}
+<a href="#l944" class="line" id="l944">    944</a> 
+<a href="#l945" class="line" id="l945">    945</a> 		for _, subres := range subresult {
+<a href="#l946" class="line" id="l946">    946</a> 			result += subres
+<a href="#l947" class="line" id="l947">    947</a> 			result += &quot;\t}\n&quot;
+<a href="#l948" class="line" id="l948">    948</a> 		}
+<a href="#l949" class="line" id="l949">    949</a> 
+<a href="#l950" class="line" id="l950">    950</a> 		for i, _ := range bmach.Processors {
+<a href="#l951" class="line" id="l951">    951</a> 
+<a href="#l952" class="line" id="l952">    952</a> 			if len(bmach.Shared_links[i]) &gt; 0 {
+<a href="#l953" class="line" id="l953">    953</a> 
+<a href="#l954" class="line" id="l954">    954</a> 				seq := make(map[string]int)
+<a href="#l955" class="line" id="l955">    955</a> 
+<a href="#l956" class="line" id="l956">    956</a> 				for _, so := range bmach.Shared_links[i] {
+<a href="#l957" class="line" id="l957">    957</a> 					sname := bmach.Shared_objects[so].Shortname()
+<a href="#l958" class="line" id="l958">    958</a> 					if _, ok := seq[sname]; !ok {
+<a href="#l959" class="line" id="l959">    959</a> 						seq[sname] = 0
+<a href="#l960" class="line" id="l960">    960</a> 					}
+<a href="#l961" class="line" id="l961">    961</a> 
+<a href="#l962" class="line" id="l962">    962</a> 					result += prefix + &quot;p&quot; + strconv.Itoa(i) + sname + strconv.Itoa(seq[sname]) + &quot; -&gt; &quot; + prefix + sname + strconv.Itoa(seqout[so]) + &quot;[&quot; + bmach.Shared_objects[so].GV_config(GVEDGE) + &quot;];\n&quot;
+<a href="#l963" class="line" id="l963">    963</a> 					seq[sname]++
+<a href="#l964" class="line" id="l964">    964</a> 				}
+<a href="#l965" class="line" id="l965">    965</a> 			}
+<a href="#l966" class="line" id="l966">    966</a> 		}
+<a href="#l967" class="line" id="l967">    967</a> 
+<a href="#l968" class="line" id="l968">    968</a> 	}
+<a href="#l969" class="line" id="l969">    969</a> 
+<a href="#l970" class="line" id="l970">    970</a> 	for i, linked := range bmach.Links {
+<a href="#l971" class="line" id="l971">    971</a> 		if linked != -1 {
+<a href="#l972" class="line" id="l972">    972</a> 			result += prefix + bmach.Internal_outputs[linked].String() + &quot; -&gt; &quot; + prefix + bmach.Internal_inputs[i].String() + &quot;;\n&quot;
+<a href="#l973" class="line" id="l973">    973</a> 		}
+<a href="#l974" class="line" id="l974">    974</a> 	}
+<a href="#l975" class="line" id="l975">    975</a> 
+<a href="#l976" class="line" id="l976">    976</a> 	if prefix == &quot;&quot; {
+<a href="#l977" class="line" id="l977">    977</a> 		result += &quot;}\n&quot;
+<a href="#l978" class="line" id="l978">    978</a> 	}
+<a href="#l979" class="line" id="l979">    979</a> 
+<a href="#l980" class="line" id="l980">    980</a> 	return result
+<a href="#l981" class="line" id="l981">    981</a> }
+</pre>
+</div>
+</body>
+</html>

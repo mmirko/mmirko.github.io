@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>flopoco - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e942509320742012b6124309e512a4ed6ee6678d.html">e942509320742012b6124309e512a4ed6ee6678d</a>
+<b>parent</b> <a href="../commit/897abc9c072d8f59477837f50783c58f73494217.html">897abc9c072d8f59477837f50783c58f73494217</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 10 Dec 2022 23:33:26 +0100
+
+flopoco
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">bmnumbers/bmnumbers_test.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">bmnumbers/dyntype_flopoco.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>3 files changed, 24 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a> b/<a href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,9 @@
+</a> package bmnumbers
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-import &quot;regexp&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+import (
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+)
+</a> 
+ type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -38,4 +41,13 @@ func init() {
+</a> 			AllMatchers[k] = v
+ 		}
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	EventuallyCreateType(&quot;flpe4f4&quot;, nil)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+func ListTypes() {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	for _, t := range AllTypes {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		fmt.Println(t.getName())
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	}
+</a> }
+<b>diff --git a/<a id="h1" href="../file/bmnumbers/bmnumbers_test.go.html">bmnumbers/bmnumbers_test.go</a> b/<a href="../file/bmnumbers/bmnumbers_test.go.html">bmnumbers/bmnumbers_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,8 +8,6 @@ func TestNumberToUint64(t *testing.T) {
+</a> 
+ 	dataSetUint := testDataSet(&quot;uintData&quot;)
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	EventuallyCreateType(&quot;flpe4f4&quot;, nil)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a> 	// Loop through the inputs and expected outputs
+ 	for input, expected := range dataSetUint.(map[string]uint64) {
+ 		// Get the output
+<a href="#h1-1" id="h1-1" class="h">@@ -29,6 +27,9 @@ func TestNumberToUint64(t *testing.T) {
+</a> 			}
+ 		}
+ 	}
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	// ListTypes()
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a> }
+ 
+ func TestNumberToBinary(t *testing.T) {
+<a href="#h1-2" id="h1-2" class="h">@@ -76,4 +77,7 @@ func TestNumberToBinary(t *testing.T) {
+</a> 			}
+ 		}
+ 	}
+<a href="#h1-2-3" id="h1-2-3" class="i">+
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	// ListTypes()
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+
+</a> }
+<b>diff --git a/<a id="h2" href="../file/bmnumbers/dyntype_flopoco.go.html">bmnumbers/dyntype_flopoco.go</a> b/<a href="../file/bmnumbers/dyntype_flopoco.go.html">bmnumbers/dyntype_flopoco.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -45,6 +45,10 @@ func floPoCoImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 	number := re.ReplaceAllString(input, &quot;${number}&quot;)
+ 	es := re.ReplaceAllString(input, &quot;${e}&quot;)
+ 	fs := re.ReplaceAllString(input, &quot;${f}&quot;)
+<a href="#h2-0-3" id="h2-0-3" class="i">+	e, _ := strconv.Atoi(es)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	f, _ := strconv.Atoi(fs)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	EventuallyCreateType(&quot;flpe&quot;+es+&quot;f&quot;+fs, nil)
+</a> 
+ 	runCommand := []string{&quot;fp2bin&quot;, es, fs, number}
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -71,7 +75,7 @@ func floPoCoImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 				newNumber := BMNumber{}
+ 				newNumber.number = make([]byte, (len(binNum)-1)/8+1)
+ 				newNumber.bits = len(binNum)
+<a href="#h2-1-3" id="h2-1-3" class="d">-				newNumber.nType = Bin{}
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+				newNumber.nType = FloPoCo{floPoCoName: &quot;flpe&quot; + es + &quot;f&quot; + fs, e: e, f: f}
+</a> 
+ 				for i := 0; ; i++ {
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -98,23 +102,4 @@ func floPoCoImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 	}
+ 
+ 	return nil, nil
+<a href="#h2-2-3" id="h2-2-3" class="d">-
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-	// if s, err := strconv.ParseFloat(number, 32); err == nil {
+</a><a href="#h2-2-5" id="h2-2-5" class="d">-	// 	newNumber := BMNumber{}
+</a><a href="#h2-2-6" id="h2-2-6" class="d">-	// 	newNumber.number = make([]byte, 4)
+</a><a href="#h2-2-7" id="h2-2-7" class="d">-
+</a><a href="#h2-2-8" id="h2-2-8" class="d">-	// 	s := uint64(math.Float32bits(float32(s)))
+</a><a href="#h2-2-9" id="h2-2-9" class="d">-	// 	mask := uint64(255)
+</a><a href="#h2-2-10" id="h2-2-10" class="d">-	// 	for i := 0; i &lt; 4; i++ {
+</a><a href="#h2-2-11" id="h2-2-11" class="d">-	// 		newNumber.number[i] = byte(s &amp; mask)
+</a><a href="#h2-2-12" id="h2-2-12" class="d">-	// 		s = s &gt;&gt; 8
+</a><a href="#h2-2-13" id="h2-2-13" class="d">-	// 	}
+</a><a href="#h2-2-14" id="h2-2-14" class="d">-
+</a><a href="#h2-2-15" id="h2-2-15" class="d">-	// 	newNumber.bits = 32
+</a><a href="#h2-2-16" id="h2-2-16" class="d">-	// 	newNumber.nType = FloPoCo{}
+</a><a href="#h2-2-17" id="h2-2-17" class="d">-	// 	return &amp;newNumber, nil
+</a><a href="#h2-2-18" id="h2-2-18" class="d">-
+</a><a href="#h2-2-19" id="h2-2-19" class="d">-	// } else {
+</a><a href="#h2-2-20" id="h2-2-20" class="d">-	// 	return nil, errors.New(&quot;unknown float32 number &quot; + input)
+</a><a href="#h2-2-21" id="h2-2-21" class="d">-	// }
+</a> }
+</pre>
+</div>
+</body>
+</html>

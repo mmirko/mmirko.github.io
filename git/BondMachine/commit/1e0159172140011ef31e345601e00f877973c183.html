@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Matrix swaps - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1e0159172140011ef31e345601e00f877973c183.html">1e0159172140011ef31e345601e00f877973c183</a>
+<b>parent</b> <a href="../commit/30e3796a10991e81e3b46966e8117ca524daf0b1.html">30e3796a10991e81e3b46966e8117ca524daf0b1</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2024 17:08:51 +0100
+
+Matrix swaps
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/program.bmq</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 41 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a> b/<a href="../file/cmd/bmqsim/program.bmq.html">cmd/bmqsim/program.bmq</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> ;        zero    q0, q1, q2
+ ;        h       q1
+         cx      q1, q0
+<a href="#h0-0-3" id="h0-0-3" class="d">-        cx      q0, q1
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+;        cx      q0, q1
+</a> %endblock
+ 
+ %meta bmdef global main:code1
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -266,7 +266,13 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 
+ 	if sim.debug {
+ 		fmt.Println(&quot;swaps:&quot;, swaps)
+<a href="#h1-0-3" id="h1-0-3" class="d">-		swaps2baseSwaps(swap{0, 0}, len(sim.qbits))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	}
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	for _, s := range swaps {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		baseSwaps := swaps2baseSwaps(s, len(sim.qbits))
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		for _, bs := range baseSwaps {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			result = bmmatrix.SwapRowsColsComplex(result, bs.s1, bs.s2)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		}
+</a> 	}
+ 
+ 	return result, nil
+<a href="#h1-1" id="h1-1" class="h">@@ -274,9 +280,39 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 
+ func swaps2baseSwaps(s swap, n int) []swap {
+ 	baseNum := uint64(1 &lt;&lt; n)
+<a href="#h1-1-3" id="h1-1-3" class="d">-	fmt.Println(&quot;baseNum:&quot;, baseNum)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	// TODO: implement
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	return nil
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	// fmt.Println(&quot;baseNum:&quot;, baseNum)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	iDone := make(map[uint64]struct{})
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	result := make([]swap, 0)
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	s1 := s.s1
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	s2 := s.s2
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	pos1 := uint64(1 &lt;&lt; s1)
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	pos2 := uint64(1 &lt;&lt; s2)
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	// fmt.Println(&quot;pos1:&quot;, pos1)
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	// fmt.Println(&quot;pos2:&quot;, pos2)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	for i := uint64(0); i &lt; baseNum; i++ {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		fmt.Println(i, int2bin(int(i), n), i&amp;pos1&gt;&gt;s1, i&amp;pos2&gt;&gt;s2)
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+		if _, ok := iDone[i]; !ok {
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			if i&amp;pos1&gt;&gt;s1 != i&amp;pos2&gt;&gt;s2 {
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+				num1 := i
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+				num2 := i ^ pos1 ^ pos2
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+				iDone[num1] = struct{}{}
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+				iDone[num2] = struct{}{}
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+				result = append(result, swap{int(num1), int(num2)})
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+			}
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+		}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+	}
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+	return result
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+}
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+// Integer to binary string padded with zeros
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+func int2bin(i int, n int) string {
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	return fmt.Sprintf(&quot;%0*b&quot;, n, i)
+</a> }
+ 
+ func (sim *BmQSimulator) MatrixFromOp(op string) (*bmmatrix.BmMatrixSquareComplex, error) {
+</pre>
+</div>
+</body>
+</html>

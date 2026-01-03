@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAM ROM Interaction - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4241c6fa34d86384aff69ca0d48d9bfeb5c11438.html">4241c6fa34d86384aff69ca0d48d9bfeb5c11438</a>
+<b>parent</b> <a href="../commit/d92999e178552f5208c639267b46a568ed804eeb.html">d92999e178552f5208c639267b46a568ed804eeb</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sun, 23 Jul 2023 15:13:02 +0200
+
+RAM ROM Interaction
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 27 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -139,7 +139,6 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> func (op R2mri) Assembler(arch *Arch, words []string) (string, error) {
+ 	opbits := arch.Opcodes_bits()
+ 	rom_word := arch.Max_word()
+<a href="#h0-0-3" id="h0-0-3" class="d">-	ramdepth := int(arch.L)
+</a> 
+ 	reg_num := 1 &lt;&lt; arch.R
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -159,13 +158,21 @@ func (op R2mri) Assembler(arch *Arch, words []string) (string, error) {
+</a> 		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if partial, err := Process_number(words[1]); err == nil {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		result += zeros_prefix(ramdepth, partial)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	} else {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		return &quot;&quot;, Prerror{err.Error()}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	partial := &quot;&quot;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			break
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-1-15" id="h0-1-15" class="d">-	for i := opbits + int(arch.R) + ramdepth; i &lt; rom_word; i++ {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	result += partial
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	for i := opbits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -173,11 +180,10 @@ func (op R2mri) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op R2mri) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	ramdepth := int(arch.L)
+</a> 	reg_id := get_id(instr[:arch.R])
+ 	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+<a href="#h0-2-6" id="h0-2-6" class="d">-	value := get_id(instr[arch.R : int(arch.R)+ramdepth])
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	result += strconv.Itoa(value)
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a> 	return result, nil
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -253,7 +259,7 @@ func (Op R2mri) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> 		return line, nil
+ 	case &quot;mov&quot;:
+ 		regVal := line.Elements[1].GetValue()
+<a href="#h0-3-3" id="h0-3-3" class="d">-		ramVal := line.Elements[0].GetValue()
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		ramVal := line.Elements[0].GetMeta(&quot;ramregister&quot;)
+</a> 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: ramVal, Op: bmreqs.OpAdd})
+ 		if regVal != &quot;&quot; &amp;&amp; ramVal != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -68,8 +68,9 @@ func (op Saj) Assembler(arch *Arch, words []string) (string, error) {
+</a> }
+ 
+ func (op Saj) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	// TODO
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	return &quot;&quot;, nil
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	value := get_id(instr[:arch.O])
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	result := strconv.Itoa(value)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	return result, nil
+</a> }
+ 
+ // The simulation does nothing
+<a href="#h1-1" id="h1-1" class="h">@@ -132,10 +133,17 @@ func (Op Saj) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> 	return result
+ }
+ func (Op Saj) HLAssemblerMatch(arch *Arch) []string {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	result := make([]string, 0)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	result := make([]string, 2)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	result[0] = &quot;saj::*--type=lineno&quot;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	result[0] = &quot;saj::*--type=number--numbertype=unsigned&quot;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	result[1] = &quot;saj::*--type=label&quot;
+</a> 	return result
+ }
+ func (Op Saj) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+<a href="#h1-1-11" id="h1-1-11" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	case &quot;saj&quot;:
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		return line, nil
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	}
+</a> 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+ }
+ func (Op Saj) ExtraFiles(arch *Arch) ([]string, []string) {
+</pre>
+</div>
+</body>
+</html>

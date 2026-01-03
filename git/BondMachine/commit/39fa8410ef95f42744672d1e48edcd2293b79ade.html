@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>cpp opencl apps - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/39fa8410ef95f42744672d1e48edcd2293b79ade.html">39fa8410ef95f42744672d1e48edcd2293b79ade</a>
+<b>parent</b> <a href="../commit/7757a25f4af9bbd659e733e6759521da0293394b.html">7757a25f4af9bbd659e733e6759521da0293394b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 19 Mar 2024 23:02:55 +0100
+
+cpp opencl apps
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bmqsim/files_cppopencl_complex.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bmqsim/files_cppopencl_real.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bmqsim/files_cpynqapi_complex.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/bmqsim/files_cpynqapi_real.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmqsim/templates.go</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>6 files changed, 215 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -250,7 +250,7 @@ func main() {
+</a> 	if *buildMatrixSeqHardcoded {
+ 		// Build a matrix sequence BM with hardcoded quantum circuit
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-		modeTags := []string{&quot;real&quot;}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		modeTags := []string{&quot;real&quot;, &quot;complex&quot;}
+</a> 
+ 		if *hardwareFlavorList {
+ 			// List of available hardware flavors for the selected operating mode
+<a href="#h0-1" id="h0-1" class="h">@@ -350,7 +350,7 @@ func main() {
+</a> 	if *buildApp {
+ 		// Build an hardware connected app
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-		modeTags := []string{&quot;real&quot;}
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		modeTags := []string{&quot;real&quot;, &quot;complex&quot;}
+</a> 
+ 		if *appFlavorList {
+ 			// List of available app flavors for the selected operating mode
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a> b/<a href="../file/pkg/bmqsim/files_cppopencl_complex.go.html">pkg/bmqsim/files_cppopencl_complex.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmqsim
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+const (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	CppOpenCLComplex = `#include &lt;stdio.h&gt;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &lt;pynq_api.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define BATCH_SIZE 16
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#define BM_INPUT {{ mult 2 .MatrixRows }}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#define BM_OUTPUT {{ mult 2 .MatrixRows }}
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#define PRECISION 32
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+#define TOTIN BATCH_SIZE*BM_INPUT
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#define TOTOUT BATCH_SIZE*BM_OUTPUT
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+int main() {
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+  
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+                d2[i]=0;
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+        }
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+  
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+        d1[0]=1.0;
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d1[{{ $i }}]{{ end }});
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+        PYNQ_AXI_DMA dma;
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+  
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+        
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d2[{{ $i }}]{{ end }});
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+        
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+        
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+        return 0;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+}
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+`
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+)
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmqsim/files_cppopencl_real.go.html">pkg/bmqsim/files_cppopencl_real.go</a> b/<a href="../file/pkg/bmqsim/files_cppopencl_real.go.html">pkg/bmqsim/files_cppopencl_real.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmqsim
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	CppOpenCLReal = `#include &lt;stdio.h&gt;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#include &lt;pynq_api.h&gt;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+#define BATCH_SIZE 16
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+#define BM_INPUT {{ .MatrixRows }}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+#define BM_OUTPUT {{ .MatrixRows }}
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+#define PRECISION 32
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+#define TOTIN BATCH_SIZE*BM_INPUT
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+#define TOTOUT BATCH_SIZE*BM_OUTPUT
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+int main() {
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+  
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+                d2[i]=0;
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+        }
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+  
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+        d1[0]=1.0;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d1[{{ $i }}]{{ end }});
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+        PYNQ_AXI_DMA dma;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+  
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+        
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d2[{{ $i }}]{{ end }});
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+        
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+        
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+        return 0;
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+}
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+`
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bmqsim/files_cpynqapi_complex.go.html">pkg/bmqsim/files_cpynqapi_complex.go</a> b/<a href="../file/pkg/bmqsim/files_cpynqapi_complex.go.html">pkg/bmqsim/files_cpynqapi_complex.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bmqsim
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+const (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	CPynqApiComplex = `#include &lt;stdio.h&gt;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+#include &lt;pynq_api.h&gt;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+#define BATCH_SIZE 16
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+#define BM_INPUT {{ mult 2 .MatrixRows }}
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+#define BM_OUTPUT {{ mult 2 .MatrixRows }}
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+#define PRECISION 32
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+#define TOTIN BATCH_SIZE*BM_INPUT
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+#define TOTOUT BATCH_SIZE*BM_OUTPUT
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+int main() {
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+  
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+                d2[i]=0;
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+        }
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+  
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+        d1[0]=1.0;
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d1[{{ $i }}]{{ end }});
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+        PYNQ_AXI_DMA dma;
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+  
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+        
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+        printf(&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }}%f {{ end }}\n&quot;{{- range $i := n 0 (mult 2 .MatrixRows) }},d2[{{ $i }}]{{ end }});
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+        
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+        
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+        return 0;
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+}
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+`
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+)
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bmqsim/files_cpynqapi_real.go.html">pkg/bmqsim/files_cpynqapi_real.go</a> b/<a href="../file/pkg/bmqsim/files_cpynqapi_real.go.html">pkg/bmqsim/files_cpynqapi_real.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package bmqsim
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+const (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	CPynqApiReal = `#include &lt;stdio.h&gt;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+#include &lt;pynq_api.h&gt;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+#define BATCH_SIZE 16
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+#define BM_INPUT {{ .MatrixRows }}
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+#define BM_OUTPUT {{ .MatrixRows }}
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+#define PRECISION 32
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+#define TOTIN BATCH_SIZE*BM_INPUT
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+#define TOTOUT BATCH_SIZE*BM_OUTPUT
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+int main() {
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+        PYNQ_loadBitstream(&quot;firmware.bit&quot;);
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+        PYNQ_SHARED_MEMORY shared_memory_1, shared_memory_2;
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_1, sizeof(float)*TOTIN, 1);
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+        PYNQ_allocatedSharedMemory(&amp;shared_memory_2, sizeof(float)*TOTOUT, 1);
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+  
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+        float * d1=(float*)shared_memory_1.pointer;
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+        float * d2=(float*)shared_memory_2.pointer;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+        for (int i=0;i&lt;TOTIN;i++) {
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+                d2[i]=0;
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+        }
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+  
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+        d1[0]=1.0;
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d1[{{ $i }}]{{ end }});
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+        PYNQ_AXI_DMA dma;
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+        PYNQ_openDMA(&amp;dma, 0x40400000);
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+  
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+        PYNQ_writeDMA(&amp;dma, &amp;shared_memory_1, 0, sizeof(float)*TOTIN);
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+        PYNQ_readDMA(&amp;dma, &amp;shared_memory_2, 0, sizeof(float)*TOTOUT);
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_WRITE);
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+        PYNQ_waitForDMAComplete(&amp;dma, AXI_DMA_READ);
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+        
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+        printf(&quot;{{- range $i := n 0 .MatrixRows }}%f {{ end }}\n&quot;{{- range $i := n 0 .MatrixRows }},d2[{{ $i }}]{{ end }});
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+        
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+        PYNQ_closeDMA(&amp;dma);
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_1);
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+        PYNQ_freeSharedMemory(&amp;shared_memory_2);
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+        
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+        return 0;
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+}
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+`
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+)
+</a><b>diff --git a/<a id="h5" href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a> b/<a href="../file/pkg/bmqsim/templates.go.html">pkg/bmqsim/templates.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -25,11 +25,19 @@ var HardwareFlavorsTags = map[string][]string{
+</a> var AppFlavors = map[string]string{
+ 	&quot;python_pynq_real&quot;:    PythonPynqReal,
+ 	&quot;python_pynq_complex&quot;: PythonPynqComplex,
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;c_pynqapi_real&quot;:      CPynqApiReal,
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	&quot;c_pynqapi_complex&quot;:   CPynqApiComplex,
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	&quot;cpp_opencl_real&quot;:     CppOpenCLReal,
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+	&quot;cpp_opencl_complex&quot;:  CppOpenCLComplex,
+</a> }
+ 
+ var AppFlavorsTags = map[string][]string{
+ 	&quot;python_pynq_real&quot;:    {&quot;real&quot;},
+ 	&quot;python_pynq_complex&quot;: {&quot;complex&quot;},
+<a href="#h5-0-12" id="h5-0-12" class="i">+	&quot;c_pynqapi_real&quot;:      {&quot;real&quot;},
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	&quot;c_pynqapi_complex&quot;:   {&quot;complex&quot;},
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+	&quot;cpp_opencl_real&quot;:     {&quot;real&quot;},
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+	&quot;cpp_opencl_complex&quot;:  {&quot;complex&quot;},
+</a> }
+ 
+ type templateData struct {
+<a href="#h5-1" id="h5-1" class="h">@@ -126,7 +134,7 @@ func (sim *BmQSimulator) VerifyConditions(mode string) error {
+</a> 			for i := 0; i &lt; m.N; i++ {
+ 				for j := 0; j &lt; m.N; j++ {
+ 					if m.Data[i][j].Imag != 0 {
+<a href="#h5-1-3" id="h5-1-3" class="d">-						return fmt.Errorf(&quot;Complex numbers are not supported in this mode&quot;)
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+						return fmt.Errorf(&quot;complex numbers are not supported in this mode&quot;)
+</a> 					}
+ 				}
+ 			}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HW optimizations - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/eb49ddb86afad643eb08bd9eeb6572f8c6381805.html">eb49ddb86afad643eb08bd9eeb6572f8c6381805</a>
+<b>parent</b> <a href="../commit/41f4b37addb9b88964759e0c4fad9f84b1b7551a.html">41f4b37addb9b88964759e0c4fad9f84b1b7551a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 31 Mar 2023 11:45:05 +0200
+
+HW optimizations
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmreqs/objectset.go</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/hwoptimizations.go</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_multf.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 26 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a> b/<a href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -42,9 +42,11 @@ func (o *objectSet) insertReq(req string) error {
+</a> 	if o.set == nil {
+ 		return fmt.Errorf(&quot;uninitialized Set&quot;)
+ 	}
+<a href="#h0-0-3" id="h0-0-3" class="d">-	newObj := new(bmReqObj)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	newObj.init()
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	o.set[req] = newObj
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	if _, ok := o.set[req]; !ok {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		newObj := new(bmReqObj)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		newObj.init()
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		o.set[req] = newObj
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	}
+</a> 	return nil
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/hwoptimizations.go.html">pkg/procbuilder/hwoptimizations.go</a> b/<a href="../file/pkg/procbuilder/hwoptimizations.go.html">pkg/procbuilder/hwoptimizations.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,15 +1,18 @@
+</a> package procbuilder
+ 
+ const (
+<a href="#h1-0-3" id="h1-0-3" class="d">-	HwOptimize = uint64(1)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	OnlyDestRegs = uint64(1)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	OnlySrcRegs  = uint64(2)
+</a> )
+ 
+ type HwOptimizations uint64
+ 
+ func HwOptimizationId(name string) HwOptimizations {
+ 	switch name {
+<a href="#h1-0-12" id="h1-0-12" class="d">-	case &quot;hwoptimize&quot;:
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-		return HwOptimizations(HwOptimize)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	case &quot;onlydestregs&quot;:
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		return HwOptimizations(OnlyDestRegs)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	case &quot;onlysrcregs&quot;:
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+		return HwOptimizations(OnlySrcRegs)
+</a> 	}
+ 	return 0
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a> b/<a href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -69,8 +69,12 @@ func (op Multf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(HwOptimize)) {
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + strconv.Itoa(1), T: bmreqs.ObjectSet, Name: &quot;processors&quot;, Value: &quot;cp5&quot;, Op: bmreqs.OpCheck})
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+			cp := arch.Tag
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multf&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+				continue
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+			}
+</a> 		}
+ 
+ 		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -82,6 +86,15 @@ func (op Multf) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, r
+</a> 		}
+ 
+ 		for j := 0; j &lt; reg_num; j++ {
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+				cp := arch.Tag
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:multf&quot;, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+					continue
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+				}
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+			}
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+
+</a> 			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 			result += &quot;							case (multiplier_&quot; + arch.Tag + &quot;_state)\n&quot;
+ 			result += &quot;							multiplier_&quot; + arch.Tag + &quot;_put_a : begin\n&quot;
+</pre>
+</div>
+</body>
+</html>

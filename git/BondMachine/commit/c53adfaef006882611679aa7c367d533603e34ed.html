@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>symbol of combine ROM/RAM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c53adfaef006882611679aa7c367d533603e34ed.html">c53adfaef006882611679aa7c367d533603e34ed</a>
+<b>parent</b> <a href="../commit/e8323ebd4408066c1c57cf23f02b2d11b04c5646.html">e8323ebd4408066c1c57cf23f02b2d11b04c5646</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  5 Sep 2023 11:53:51 +0200
+
+symbol of combine ROM/RAM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 31 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;fmt&quot;
+ 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strings&quot;
+</a> )
+ 
+ func symbolResolver(bi *BasmInstance) error {
+<a href="#h0-1" id="h0-1" class="h">@@ -14,6 +15,7 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 	}
+ 
+ 	// Loop over the sections TODO over the cps (the unused sections are supposed to be removed at this point)
+<a href="#h0-1-3" id="h0-1-3" class="i">+	// This are the sections that are not combined
+</a> 	for sectName, section := range bi.sections {
+ 		if section.sectionType == sectRomText || section.sectionType == sectRamText {
+ 			if bi.debug {
+<a href="#h0-2" id="h0-2" class="h">@@ -28,6 +30,33 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 			}
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	// Loop over the cps to resolve the symbols of the combined sections
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	for _, cp := range bi.cps {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		romCodeName := cp.GetMeta(&quot;romcode&quot;)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		if strings.HasPrefix(romCodeName, &quot;romcode&quot;) {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			if section, ok := bi.sections[romCodeName]; ok {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+				name := romCodeName[7:]
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+				fmt.Println(name)
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+				if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+					return err
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+				}
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			} else {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+				return errors.New(&quot;romcode section not found: &quot; + romCodeName)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+			}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		}
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		ramCodeName := cp.GetMeta(&quot;ramcode&quot;)
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		if strings.HasPrefix(ramCodeName, &quot;ramcode&quot;) {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+			if section, ok := bi.sections[ramCodeName]; ok {
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				name := ramCodeName[7:]
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+				if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+					return err
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+				}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+			} else {
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+				return errors.New(&quot;ramcode section not found: &quot; + ramCodeName)
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+			}
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+		}
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	}
+</a> 	return nil
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -135,7 +164,7 @@ func (bi *BasmInstance) resolveSymbols(section *BasmSection, name string) error 
+</a> 				if name == &quot;&quot; {
+ 					romSymbol = &quot;rom.&quot; + section.sectionName + &quot;.&quot; + symbol
+ 				} else {
+<a href="#h0-3-3" id="h0-3-3" class="d">-					romSymbol = &quot;romcode.romcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+					romSymbol = &quot;rom.romcode&quot; + name + &quot;.&quot; + symbol
+</a> 				}
+ 				if loc, ok := bi.symbols[romSymbol]; ok {
+ 					arg.SetValue(strconv.Itoa(int(loc)))
+<a href="#h0-4" id="h0-4" class="h">@@ -177,7 +206,7 @@ func (bi *BasmInstance) resolveSymbols(section *BasmSection, name string) error 
+</a> 				if name == &quot;&quot; {
+ 					ramSymbol = &quot;ram.&quot; + section.sectionName + &quot;.&quot; + symbol
+ 				} else {
+<a href="#h0-4-3" id="h0-4-3" class="d">-					ramSymbol = &quot;ramcode.ramcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+					ramSymbol = &quot;ram.ramcode&quot; + name + &quot;.&quot; + symbol
+</a> 				}
+ 				if loc, ok := bi.symbols[ramSymbol]; ok {
+ 					arg.SetValue(strconv.Itoa(int(loc)))
+</pre>
+</div>
+</body>
+</html>

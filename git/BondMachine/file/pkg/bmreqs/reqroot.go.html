@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reqroot.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> reqroot.go (1094B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bmreqs
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;context&quot;
+<a href="#l5" class="line" id="l5">      5</a> )
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> // Requirements types
+<a href="#l8" class="line" id="l8">      8</a> const (
+<a href="#l9" class="line" id="l9">      9</a> 	// ObjectSet is the set-alike requirements
+<a href="#l10" class="line" id="l10">     10</a> 	ObjectSet = uint8(0) + iota
+<a href="#l11" class="line" id="l11">     11</a> 	ObjectMax
+<a href="#l12" class="line" id="l12">     12</a> )
+<a href="#l13" class="line" id="l13">     13</a> 
+<a href="#l14" class="line" id="l14">     14</a> // Requirements operations
+<a href="#l15" class="line" id="l15">     15</a> const (
+<a href="#l16" class="line" id="l16">     16</a> 	OpAdd = uint8(0) + iota
+<a href="#l17" class="line" id="l17">     17</a> 	OpCheck
+<a href="#l18" class="line" id="l18">     18</a> 	OpGet
+<a href="#l19" class="line" id="l19">     19</a> 	OpDump
+<a href="#l20" class="line" id="l20">     20</a> 	OpClone
+<a href="#l21" class="line" id="l21">     21</a> )
+<a href="#l22" class="line" id="l22">     22</a> 
+<a href="#l23" class="line" id="l23">     23</a> type ReqRequest struct {
+<a href="#l24" class="line" id="l24">     24</a> 	Node  string
+<a href="#l25" class="line" id="l25">     25</a> 	Name  string
+<a href="#l26" class="line" id="l26">     26</a> 	T     uint8
+<a href="#l27" class="line" id="l27">     27</a> 	Op    uint8
+<a href="#l28" class="line" id="l28">     28</a> 	Value string
+<a href="#l29" class="line" id="l29">     29</a> }
+<a href="#l30" class="line" id="l30">     30</a> 
+<a href="#l31" class="line" id="l31">     31</a> type ReqResponse struct {
+<a href="#l32" class="line" id="l32">     32</a> 	Value string
+<a href="#l33" class="line" id="l33">     33</a> 	Error error
+<a href="#l34" class="line" id="l34">     34</a> }
+<a href="#l35" class="line" id="l35">     35</a> 
+<a href="#l36" class="line" id="l36">     36</a> // ReqRoot is the entry point data structure for all the bmreqs operations
+<a href="#l37" class="line" id="l37">     37</a> type ReqRoot struct {
+<a href="#l38" class="line" id="l38">     38</a> 	ask    chan ReqRequest
+<a href="#l39" class="line" id="l39">     39</a> 	answer chan ReqResponse
+<a href="#l40" class="line" id="l40">     40</a> 	ctx    context.Context
+<a href="#l41" class="line" id="l41">     41</a> 	cancel context.CancelFunc
+<a href="#l42" class="line" id="l42">     42</a> 	obj    *bmReqObj
+<a href="#l43" class="line" id="l43">     43</a> }
+<a href="#l44" class="line" id="l44">     44</a> 
+<a href="#l45" class="line" id="l45">     45</a> // NewReqRoot creates a new *ReqGroup object
+<a href="#l46" class="line" id="l46">     46</a> func NewReqRoot() *ReqRoot {
+<a href="#l47" class="line" id="l47">     47</a> 	rg := new(ReqRoot)
+<a href="#l48" class="line" id="l48">     48</a> 	rg.ask = make(chan ReqRequest)
+<a href="#l49" class="line" id="l49">     49</a> 	rg.answer = make(chan ReqResponse)
+<a href="#l50" class="line" id="l50">     50</a> 	obj := new(bmReqObj)
+<a href="#l51" class="line" id="l51">     51</a> 	obj.init()
+<a href="#l52" class="line" id="l52">     52</a> 	rg.obj = obj
+<a href="#l53" class="line" id="l53">     53</a> 	ctx, cancel := context.WithCancel(context.Background())
+<a href="#l54" class="line" id="l54">     54</a> 	rg.ctx = ctx
+<a href="#l55" class="line" id="l55">     55</a> 	rg.cancel = cancel
+<a href="#l56" class="line" id="l56">     56</a> 	go rg.run()
+<a href="#l57" class="line" id="l57">     57</a> 	return rg
+<a href="#l58" class="line" id="l58">     58</a> }
+<a href="#l59" class="line" id="l59">     59</a> 
+<a href="#l60" class="line" id="l60">     60</a> func (rg *ReqRoot) Requirement(req ReqRequest) ReqResponse {
+<a href="#l61" class="line" id="l61">     61</a> 	rg.ask &lt;- req
+<a href="#l62" class="line" id="l62">     62</a> 	return &lt;-rg.answer
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> }
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> func (rg *ReqRoot) Close() {
+<a href="#l67" class="line" id="l67">     67</a> 	rg.cancel()
+<a href="#l68" class="line" id="l68">     68</a> }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Show prefix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/63513f3c094a4af843fca0ccdaafe5fc363a5048.html">63513f3c094a4af843fca0ccdaafe5fc363a5048</a>
+<b>parent</b> <a href="../commit/4de4473bf45320b6ecca5efda670e7c33aa2fffb.html">4de4473bf45320b6ecca5efda670e7c33aa2fffb</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  9 May 2023 13:57:19 +0200
+
+Show prefix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -24,6 +24,8 @@ var useFiles = flag.Bool(&quot;use-files&quot;, false, &quot;Load files instead of command line
+</a> 
+ var serve = flag.Bool(&quot;serve&quot;, false, &quot;Serve as REST API&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+var getPrefix = flag.String(&quot;get-prefix&quot;, &quot;&quot;, &quot;Get prefix from type&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> // Custom types
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -39,7 +41,16 @@ func init() {
+</a> 
+ func main() {
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if *serve {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if *getPrefix != &quot;&quot; {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		if _, err := bmnumbers.EventuallyCreateType(*getPrefix, nil); err != nil {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			log.Fatal(err)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		if v := bmnumbers.GetType(*getPrefix); v == nil {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			log.Fatal(&quot;Error: Unknown type&quot;)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		} else {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			fmt.Println(v.ShowPrefix())
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	} else if *serve {
+</a> 		bmnumbers.Serve()
+ 	} else {
+ 
+</pre>
+</div>
+</body>
+</html>

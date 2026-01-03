@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bm2basm initial - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b3c439cf8b5605c6f7ae49945f60198581b92910.html">b3c439cf8b5605c6f7ae49945f60198581b92910</a>
+<b>parent</b> <a href="../commit/f5d6d2a1fc7339746dd29819f9b058309fd05ec4.html">f5d6d2a1fc7339746dd29819f9b058309fd05ec4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 18 Sep 2024 16:53:57 +0200
+
+bm2basm initial
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bm2basm/bm2basm.go</a></td><td> | </td><td class="num">92</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bm2basm/bm2basm.go</a></td><td> | </td><td class="num">221</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 311 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bm2basm/bm2basm.go.html">cmd/bm2basm/bm2basm.go</a> b/<a href="../file/cmd/bm2basm/bm2basm.go.html">cmd/bm2basm/bm2basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,96 @@
+</a> package main
+ 
+<a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;flag&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;log&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;os&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bm2basm&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+// Build modes
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+var bmFile = flag.String(&quot;bondmachine-file&quot;, &quot;&quot;, &quot;Load the BM file&quot;)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+var basmFile = flag.String(&quot;basm-file&quot;, &quot;bondmachine.basm&quot;, &quot;save the BASM file&quot;)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+func init() {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	flag.Parse()
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	if *linearDataRange != &quot;&quot; {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			log.Fatal(err)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		}
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			}
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		}
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+		for i, t := range procbuilder.AllDynamicalInstructions {
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+				dynIst := t.(procbuilder.DynLinearQuantizer)
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				dynIst.Ranges = lqRanges
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+				procbuilder.AllDynamicalInstructions[i] = dynIst
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+			}
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+		}
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	}
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+}
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+
+</a> func main() {
+<a href="#h0-0-50" id="h0-0-50" class="i">+	if *bmFile == &quot;&quot; {
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		log.Fatal(&quot;No source BM file specified&quot;)
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+	}
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	if *basmFile == &quot;&quot; {
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		log.Fatal(&quot;No target BASM file specified&quot;)
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	}
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+	if *verbose {
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+		log.Printf(&quot;Loading BM file %s\n&quot;, *bmFile)
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+	}
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+	var bm *bondmachine.Bondmachine
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+	if _, err := os.Stat(*bmFile); err == nil {
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+		// Open the bondmachine file is exists
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+		if bondmachineJSON, err := os.ReadFile(*bmFile); err == nil {
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+			var bmj bondmachine.Bondmachine_json
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+			if err := json.Unmarshal([]byte(bondmachineJSON), &amp;bmj); err == nil {
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+				bm = (&amp;bmj).Dejsoner()
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+			} else {
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+				log.Fatal(err)
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+			}
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+		} else {
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+			log.Fatal(err)
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+		}
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+		bm.Init()
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	} else {
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+	}
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+	b := new(bm2basm.Bm2Basm)
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+	if basmContent, err := b.Convert(bm); err != nil {
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+	} else {
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+		// Write the BASM file
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+		if *verbose {
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+			log.Printf(&quot;Saving BASM file %s\n&quot;, *basmFile)
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+		}
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+		if err := os.WriteFile(*basmFile, []byte(basmContent), 0644); err != nil {
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+			log.Fatal(err)
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+		}
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+	}
+</a> }
+<b>diff --git a/<a id="h1" href="../file/pkg/bm2basm/bm2basm.go.html">pkg/bm2basm/bm2basm.go</a> b/<a href="../file/pkg/bm2basm/bm2basm.go.html">pkg/bm2basm/bm2basm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1 +1,219 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-package bm2basm
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-\ No newline at end of file
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+package bm2basm
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+import (
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	&quot;strconv&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;strings&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+type Bm2Basm struct {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	debug bool
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+func (b *Bm2Basm) Convert(bm *bondmachine.Bondmachine) (string, error) {
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	result := &quot;&quot;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	globalIoMode := &quot;&quot;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	for _, cpId := range bm.Processors {
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+		// Start by dissasembling the CP code
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		machId := bm.Processors[cpId]
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		mach := bm.Domains[machId]
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		code, _ := mach.Disassembler()
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		// Get the number of inputs and outputs
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		cpInputs := int(mach.N)
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+		cpOutputs := int(mach.M)
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+		// mapping I/O resources
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+		inputMap := make(map[string]string)
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+		outputMap := make(map[string]string)
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+		// Create the input/output mapping by filling the maps with empty strings
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+		for i := 0; i &lt; cpInputs; i++ {
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+			inputMap[&quot;i&quot;+strconv.Itoa(i)] = &quot;&quot;
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+		}
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+		for i := 0; i &lt; cpOutputs; i++ {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+			outputMap[&quot;o&quot;+strconv.Itoa(i)] = &quot;&quot;
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+		}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+		// Get the first N free registers, N being the number of inputs + outputs
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+		// A proper implementation would need to check if the registers are actually free by analyzing the code
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+		// and checking if the registers are used
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+		freeRegs := FirstNFreeRegisters(code, cpInputs+cpOutputs)
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+		// Map the registers to the inputs and outputs
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+		resIn := &quot;&quot;
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		for i := 0; i &lt; cpInputs; i++ {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+			inputMap[&quot;i&quot;+strconv.Itoa(i)] = freeRegs[i]
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+			resIn += freeRegs[i]
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+			if i &lt; cpInputs-1 {
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+				resIn += &quot;:&quot;
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+			}
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+		}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+		resOut := &quot;&quot;
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+		for i := 0; i &lt; cpOutputs; i++ {
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+			outputMap[&quot;o&quot;+strconv.Itoa(i)] = freeRegs[cpInputs+i]
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+			resOut += freeRegs[cpInputs+i]
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+			if i &lt; cpOutputs-1 {
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+				resOut += &quot;:&quot;
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+			}
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+		}
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+		syncOrAsync := &quot;&quot;
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+		if IsAllSync(code) {
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+			syncOrAsync = &quot;iomode:sync&quot;
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+			if globalIoMode == &quot;&quot; {
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+				globalIoMode = &quot;iomode:sync&quot;
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+			} else if globalIoMode == &quot;iomode:async&quot; {
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+				globalIoMode = &quot;failed&quot;
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+			}
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+		} else if IsAllAsync(code) {
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+			syncOrAsync = &quot;iomode:async&quot;
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+			if globalIoMode == &quot;&quot; {
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+				globalIoMode = &quot;iomode:async&quot;
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+			} else if globalIoMode == &quot;iomode:sync&quot; {
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+				globalIoMode = &quot;failed&quot;
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+			}
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+		}
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+		result += &quot;%fragment cp&quot; + strconv.Itoa(cpId) + &quot;fragment &quot; + syncOrAsync + &quot;\n&quot;
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+		result += &quot;%meta literal resin &quot; + resIn + &quot;\n&quot;
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+		result += &quot;%meta literal resout &quot; + resOut + &quot;\n&quot;
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+		spCode := strings.Split(code, &quot;\n&quot;)
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+		// Remove empty lines at the end
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+		for {
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+			if spCode[len(spCode)-1] == &quot;&quot; {
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+				spCode = spCode[:len(spCode)-1]
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+			} else {
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+				break
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+			}
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+		}
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+		// Remove j 0 at the end
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+		if spCode[len(spCode)-1] == &quot;j 0&quot; {
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+			spCode = spCode[:len(spCode)-1]
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+		}
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+		for _, line := range spCode {
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+			if line != &quot;&quot; {
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+				tokens := strings.Split(line, &quot; &quot;)
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+				switch tokens[0] {
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+				case &quot;i2r&quot;:
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+					result += &quot;\tcpy &quot; + tokens[1] + &quot;,&quot; + inputMap[tokens[2]] + &quot;\n&quot;
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+				case &quot;r2o&quot;:
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+					result += &quot;\tcpy &quot; + outputMap[tokens[2]] + &quot;,&quot; + tokens[1] + &quot;\n&quot;
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+				case &quot;i2rw&quot;:
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+					result += &quot;\tcpy &quot; + tokens[1] + &quot;,&quot; + inputMap[tokens[2]] + &quot;\n&quot;
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+				case &quot;r2owa&quot;:
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+					result += &quot;\tcpy &quot; + outputMap[tokens[2]] + &quot;,&quot; + tokens[1] + &quot;\n&quot;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+				default:
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+					result += &quot;\t&quot; + tokens[0] + &quot; &quot; + strings.Join(tokens[1:], &quot;,&quot;) + &quot;\n&quot;
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+				}
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+			}
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+		}
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+		result += &quot;%endfragment\n&quot;
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+		result += &quot;\n&quot;
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+	}
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	result += &quot;\n&quot;
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+	// Meta code
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+	result += &quot;%meta bmdef global registersize:&quot; + strconv.Itoa(int(bm.Rsize)) + &quot;\n&quot;
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+	if globalIoMode != &quot;failed&quot; {
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+		result += &quot;%meta bmdef global &quot; + globalIoMode + &quot;\n&quot;
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+	}
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+	for _, cpId := range bm.Processors {
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+		result += &quot;%meta fidef cp&quot; + strconv.Itoa(cpId) + &quot;fi fragment:cp&quot; + strconv.Itoa(cpId) + &quot;fragment\n&quot;
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+	}
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+	result += &quot;\n&quot;
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+	for i, bond := range bm.Links {
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+		result += &quot;%meta filinkdef bond&quot; + strconv.Itoa(i) + &quot; type:fl\n&quot;
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+		endPoint1 := bm.Internal_inputs[i]
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+		endPoint2 := bm.Internal_outputs[bond]
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+		e1 := &quot;&quot;
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+		e2 := &quot;&quot;
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+		switch endPoint1.Map_to {
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+		case bondmachine.BMOUTPUT:
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+			e1 = &quot;fi:ext, type:output, index:&quot; + strconv.Itoa(endPoint1.Res_id)
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+		case bondmachine.CPINPUT:
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+			e1 = &quot;fi:cp&quot; + strconv.Itoa(endPoint1.Res_id) + &quot;fi, type:input, index:&quot; + strconv.Itoa(endPoint1.Ext_id)
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+		}
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+		switch endPoint2.Map_to {
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+		case bondmachine.BMINPUT:
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+			e2 = &quot;fi:ext, type:input, index:&quot; + strconv.Itoa(endPoint2.Res_id)
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+		case bondmachine.CPOUTPUT:
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+			e2 = &quot;fi:cp&quot; + strconv.Itoa(endPoint2.Res_id) + &quot;fi, type:output, index:&quot; + strconv.Itoa(endPoint2.Ext_id)
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+		}
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+		result += &quot;%meta filinkatt bond&quot; + strconv.Itoa(i) + &quot; &quot; + e1 + &quot;\n&quot;
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+		result += &quot;%meta filinkatt bond&quot; + strconv.Itoa(i) + &quot; &quot; + e2 + &quot;\n&quot;
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+		result += &quot;\n&quot;
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+	}
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+	for _, cpId := range bm.Processors {
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+		result += &quot;%meta cpdef cp&quot; + strconv.Itoa(cpId) + &quot; fragcollapse:cp&quot; + strconv.Itoa(cpId) + &quot;fi\n&quot;
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+	}
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+	return result, nil
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+}
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+func FirstNFreeRegisters(code string, n int) []string {
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+	usedRegs := make(map[string]struct{})
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+	for _, line := range strings.Split(code, &quot;\n&quot;) {
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+		for _, token := range strings.Split(line, &quot; &quot;) {
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+			re := regexp.MustCompile(`^r[0-9]+$`)
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+			if re.MatchString(token) {
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+				usedRegs[token] = struct{}{}
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+			}
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+		}
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+	}
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+	result := make([]string, n)
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+	for i, j := 0, 0; i &lt; n; i++ {
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+		for {
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+			rNumS := &quot;r&quot; + strconv.Itoa(j)
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+			if _, ok := usedRegs[rNumS]; !ok {
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+				result[i] = rNumS
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+				j++
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+				break
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+			}
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+			j++
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+		}
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+	}
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+	return result
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+}
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+func IsAllSync(code string) bool {
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+	for _, line := range strings.Split(code, &quot;\n&quot;) {
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+		if strings.Contains(line, &quot;i2r&quot;) {
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+			return false
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+		}
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+		if strings.Contains(line, &quot;r2o&quot;) {
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+			return false
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+		}
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+	}
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+	return true
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+}
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+func IsAllAsync(code string) bool {
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+	for _, line := range strings.Split(code, &quot;\n&quot;) {
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+		if strings.Contains(line, &quot;i2rw&quot;) {
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+			return false
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+		}
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+		if strings.Contains(line, &quot;r2owa&quot;) {
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+			return false
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+		}
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+	}
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+	return true
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

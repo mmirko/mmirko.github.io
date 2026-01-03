@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Linear quantization - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/29fd947d78655fe3220c6d387d43094fcfd5f000.html">29fd947d78655fe3220c6d387d43094fcfd5f000</a>
+<b>parent</b> <a href="../commit/f74b21e72fa420954569d873173cee6ce0095d30.html">f74b21e72fa420954569d873173cee6ce0095d30</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 18 Apr 2023 12:14:32 +0200
+
+Linear quantization
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">71</td><td><span class="i">++</span><span class="d">---------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">71</td><td><span class="i">++</span><span class="d">---------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">68</td><td><span class="i">++</span><span class="d">------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmnumbers/dynamical_linear_quantizer.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmnumbers/dyntype_linear_quantizer.go</a></td><td> | </td><td class="num">100</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmnumbers/import.go</a></td><td> | </td><td class="num">72</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 138 insertions(+), 245 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,15 +1,12 @@
+</a> package main
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;bufio&quot;
+</a> 	&quot;encoding/json&quot;
+ 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+ 	&quot;io/ioutil&quot;
+ 	&quot;log&quot;
+ 	&quot;os&quot;
+<a href="#h0-0-10" id="h0-0-10" class="d">-	&quot;strconv&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/basm&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -45,74 +42,10 @@ func init() {
+</a> 	flag.Parse()
+ 
+ 	if *linearDataRange != &quot;&quot; {
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		// Get the linear quantizer ranges struct
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-			}
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		splitted := strings.Split(*linearDataRange, &quot;,&quot;)
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-		if len(splitted)%2 != 0 {
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-			log.Fatal(&quot;Error: Invalid linear data range files&quot;)
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		}
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		// Load a file for each index
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-		for i := 0; i &lt; len(splitted); i += 2 {
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-			index, err := strconv.Atoi(splitted[i])
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-			if err != nil {
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-				log.Fatal(err)
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-			}
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-			if index == 0 {
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-				log.Fatal(&quot;Error: Index cannot be 0 (reserved)&quot;)
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-			}
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-			// Check if the index is already present
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-			if _, ok := (*lqRanges)[index]; ok {
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-				log.Fatal(&quot;Error: Index already present&quot;)
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-			}
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-			filename := splitted[i+1]
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-			// Read all the lines of the file
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-			f, err := os.Open(filename)
+</a><a href="#h0-1-37" id="h0-1-37" class="d">-			if err != nil {
+</a><a href="#h0-1-38" id="h0-1-38" class="d">-				log.Fatal(err)
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-			}
+</a><a href="#h0-1-40" id="h0-1-40" class="d">-
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-			// Read all the lines of the file
+</a><a href="#h0-1-42" id="h0-1-42" class="d">-			var min, max float64
+</a><a href="#h0-1-43" id="h0-1-43" class="d">-			scanner := bufio.NewScanner(f)
+</a><a href="#h0-1-44" id="h0-1-44" class="d">-			first := true
+</a><a href="#h0-1-45" id="h0-1-45" class="d">-			for scanner.Scan() {
+</a><a href="#h0-1-46" id="h0-1-46" class="d">-				line := scanner.Text()
+</a><a href="#h0-1-47" id="h0-1-47" class="d">-
+</a><a href="#h0-1-48" id="h0-1-48" class="d">-				// Parse the min and max values
+</a><a href="#h0-1-49" id="h0-1-49" class="d">-				if val, err := strconv.ParseFloat(line, 64); err == nil {
+</a><a href="#h0-1-50" id="h0-1-50" class="d">-					if first {
+</a><a href="#h0-1-51" id="h0-1-51" class="d">-						min = val
+</a><a href="#h0-1-52" id="h0-1-52" class="d">-						max = val
+</a><a href="#h0-1-53" id="h0-1-53" class="d">-						first = false
+</a><a href="#h0-1-54" id="h0-1-54" class="d">-					}
+</a><a href="#h0-1-55" id="h0-1-55" class="d">-
+</a><a href="#h0-1-56" id="h0-1-56" class="d">-					if val &lt; min {
+</a><a href="#h0-1-57" id="h0-1-57" class="d">-						min = val
+</a><a href="#h0-1-58" id="h0-1-58" class="d">-					}
+</a><a href="#h0-1-59" id="h0-1-59" class="d">-					if val &gt; max {
+</a><a href="#h0-1-60" id="h0-1-60" class="d">-						max = val
+</a><a href="#h0-1-61" id="h0-1-61" class="d">-					}
+</a><a href="#h0-1-62" id="h0-1-62" class="d">-				}
+</a><a href="#h0-1-63" id="h0-1-63" class="d">-			}
+</a><a href="#h0-1-64" id="h0-1-64" class="d">-
+</a><a href="#h0-1-65" id="h0-1-65" class="d">-			// Add the range to the map
+</a><a href="#h0-1-66" id="h0-1-66" class="d">-			(*lqRanges)[index] = bmnumbers.LinearDataRange{Min: min, Max: max}
+</a><a href="#h0-1-67" id="h0-1-67" class="d">-			f.Close()
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+			log.Fatal(err)
+</a> 		}
+ 	}
+<a href="#h0-1-72" id="h0-1-72" class="d">-
+</a> }
+ 
+ func main() {
+<b>diff --git a/<a id="h1" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,13 +1,9 @@
+</a> package main
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;bufio&quot;
+</a> 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+ 	&quot;log&quot;
+<a href="#h1-0-7" id="h1-0-7" class="d">-	&quot;os&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	&quot;strconv&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+<a href="#h1-1" id="h1-1" class="h">@@ -32,71 +28,8 @@ func init() {
+</a> 	flag.Parse()
+ 	// Load custom types
+ 	if *linearDataRange != &quot;&quot; {
+<a href="#h1-1-3" id="h1-1-3" class="d">-
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		// Get the linear quantizer ranges struct
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-			}
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-		}
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-		splitted := strings.Split(*linearDataRange, &quot;,&quot;)
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-		if len(splitted)%2 != 0 {
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-			log.Fatal(&quot;Error: Invalid linear data range files&quot;)
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-		}
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-		// Load a file for each index
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-		for i := 0; i &lt; len(splitted); i += 2 {
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-			index, err := strconv.Atoi(splitted[i])
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-			if err != nil {
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-				log.Fatal(err)
+</a><a href="#h1-1-22" id="h1-1-22" class="d">-			}
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-			if index == 0 {
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-				log.Fatal(&quot;Error: Index cannot be 0 (reserved)&quot;)
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-			}
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-			// Check if the index is already present
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-			if _, ok := (*lqRanges)[index]; ok {
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-				log.Fatal(&quot;Error: Index already present&quot;)
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-			}
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-			filename := splitted[i+1]
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-			// Read all the lines of the file
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-			f, err := os.Open(filename)
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-			if err != nil {
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-				log.Fatal(err)
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-			}
+</a><a href="#h1-1-40" id="h1-1-40" class="d">-
+</a><a href="#h1-1-41" id="h1-1-41" class="d">-			// Read all the lines of the file
+</a><a href="#h1-1-42" id="h1-1-42" class="d">-			var min, max float64
+</a><a href="#h1-1-43" id="h1-1-43" class="d">-			scanner := bufio.NewScanner(f)
+</a><a href="#h1-1-44" id="h1-1-44" class="d">-			first := true
+</a><a href="#h1-1-45" id="h1-1-45" class="d">-			for scanner.Scan() {
+</a><a href="#h1-1-46" id="h1-1-46" class="d">-				line := scanner.Text()
+</a><a href="#h1-1-47" id="h1-1-47" class="d">-
+</a><a href="#h1-1-48" id="h1-1-48" class="d">-				// Parse the min and max values
+</a><a href="#h1-1-49" id="h1-1-49" class="d">-				if val, err := strconv.ParseFloat(line, 64); err == nil {
+</a><a href="#h1-1-50" id="h1-1-50" class="d">-					if first {
+</a><a href="#h1-1-51" id="h1-1-51" class="d">-						min = val
+</a><a href="#h1-1-52" id="h1-1-52" class="d">-						max = val
+</a><a href="#h1-1-53" id="h1-1-53" class="d">-						first = false
+</a><a href="#h1-1-54" id="h1-1-54" class="d">-					}
+</a><a href="#h1-1-55" id="h1-1-55" class="d">-
+</a><a href="#h1-1-56" id="h1-1-56" class="d">-					if val &lt; min {
+</a><a href="#h1-1-57" id="h1-1-57" class="d">-						min = val
+</a><a href="#h1-1-58" id="h1-1-58" class="d">-					}
+</a><a href="#h1-1-59" id="h1-1-59" class="d">-					if val &gt; max {
+</a><a href="#h1-1-60" id="h1-1-60" class="d">-						max = val
+</a><a href="#h1-1-61" id="h1-1-61" class="d">-					}
+</a><a href="#h1-1-62" id="h1-1-62" class="d">-				}
+</a><a href="#h1-1-63" id="h1-1-63" class="d">-			}
+</a><a href="#h1-1-64" id="h1-1-64" class="d">-
+</a><a href="#h1-1-65" id="h1-1-65" class="d">-			// Add the range to the map
+</a><a href="#h1-1-66" id="h1-1-66" class="d">-			(*lqRanges)[index] = bmnumbers.LinearDataRange{Min: min, Max: max}
+</a><a href="#h1-1-67" id="h1-1-67" class="d">-			f.Close()
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+			log.Fatal(err)
+</a> 		}
+ 	}
+ }
+<b>diff --git a/<a id="h2" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,7 +1,6 @@
+</a> package main
+ 
+ import (
+<a href="#h2-0-3" id="h2-0-3" class="d">-	&quot;bufio&quot;
+</a> 	&quot;encoding/binary&quot;
+ 	&quot;encoding/json&quot;
+ 	&quot;errors&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -196,71 +195,8 @@ func init() {
+</a> 	flag.Parse()
+ 
+ 	if *linearDataRange != &quot;&quot; {
+<a href="#h2-1-3" id="h2-1-3" class="d">-
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-		// Get the linear quantizer ranges struct
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-		var lqRanges *map[int]bmnumbers.LinearDataRange
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-		for _, t := range bmnumbers.AllDynamicalTypes {
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-			if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-				lqRanges = t.(bmnumbers.DynLinearQuantizer).Ranges
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-			}
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-		}
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-		splitted := strings.Split(*linearDataRange, &quot;,&quot;)
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-		if len(splitted)%2 != 0 {
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-			log.Fatal(&quot;Error: Invalid linear data range files&quot;)
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-		}
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-
+</a><a href="#h2-1-17" id="h2-1-17" class="d">-		// Load a file for each index
+</a><a href="#h2-1-18" id="h2-1-18" class="d">-		for i := 0; i &lt; len(splitted); i += 2 {
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-			index, err := strconv.Atoi(splitted[i])
+</a><a href="#h2-1-20" id="h2-1-20" class="d">-			if err != nil {
+</a><a href="#h2-1-21" id="h2-1-21" class="d">-				log.Fatal(err)
+</a><a href="#h2-1-22" id="h2-1-22" class="d">-			}
+</a><a href="#h2-1-23" id="h2-1-23" class="d">-
+</a><a href="#h2-1-24" id="h2-1-24" class="d">-			if index == 0 {
+</a><a href="#h2-1-25" id="h2-1-25" class="d">-				log.Fatal(&quot;Error: Index cannot be 0 (reserved)&quot;)
+</a><a href="#h2-1-26" id="h2-1-26" class="d">-			}
+</a><a href="#h2-1-27" id="h2-1-27" class="d">-
+</a><a href="#h2-1-28" id="h2-1-28" class="d">-			// Check if the index is already present
+</a><a href="#h2-1-29" id="h2-1-29" class="d">-			if _, ok := (*lqRanges)[index]; ok {
+</a><a href="#h2-1-30" id="h2-1-30" class="d">-				log.Fatal(&quot;Error: Index already present&quot;)
+</a><a href="#h2-1-31" id="h2-1-31" class="d">-			}
+</a><a href="#h2-1-32" id="h2-1-32" class="d">-
+</a><a href="#h2-1-33" id="h2-1-33" class="d">-			filename := splitted[i+1]
+</a><a href="#h2-1-34" id="h2-1-34" class="d">-
+</a><a href="#h2-1-35" id="h2-1-35" class="d">-			// Read all the lines of the file
+</a><a href="#h2-1-36" id="h2-1-36" class="d">-			f, err := os.Open(filename)
+</a><a href="#h2-1-37" id="h2-1-37" class="d">-			if err != nil {
+</a><a href="#h2-1-38" id="h2-1-38" class="d">-				log.Fatal(err)
+</a><a href="#h2-1-39" id="h2-1-39" class="d">-			}
+</a><a href="#h2-1-40" id="h2-1-40" class="d">-
+</a><a href="#h2-1-41" id="h2-1-41" class="d">-			// Read all the lines of the file
+</a><a href="#h2-1-42" id="h2-1-42" class="d">-			var min, max float64
+</a><a href="#h2-1-43" id="h2-1-43" class="d">-			scanner := bufio.NewScanner(f)
+</a><a href="#h2-1-44" id="h2-1-44" class="d">-			first := true
+</a><a href="#h2-1-45" id="h2-1-45" class="d">-			for scanner.Scan() {
+</a><a href="#h2-1-46" id="h2-1-46" class="d">-				line := scanner.Text()
+</a><a href="#h2-1-47" id="h2-1-47" class="d">-
+</a><a href="#h2-1-48" id="h2-1-48" class="d">-				// Parse the min and max values
+</a><a href="#h2-1-49" id="h2-1-49" class="d">-				if val, err := strconv.ParseFloat(line, 64); err == nil {
+</a><a href="#h2-1-50" id="h2-1-50" class="d">-					if first {
+</a><a href="#h2-1-51" id="h2-1-51" class="d">-						min = val
+</a><a href="#h2-1-52" id="h2-1-52" class="d">-						max = val
+</a><a href="#h2-1-53" id="h2-1-53" class="d">-						first = false
+</a><a href="#h2-1-54" id="h2-1-54" class="d">-					}
+</a><a href="#h2-1-55" id="h2-1-55" class="d">-
+</a><a href="#h2-1-56" id="h2-1-56" class="d">-					if val &lt; min {
+</a><a href="#h2-1-57" id="h2-1-57" class="d">-						min = val
+</a><a href="#h2-1-58" id="h2-1-58" class="d">-					}
+</a><a href="#h2-1-59" id="h2-1-59" class="d">-					if val &gt; max {
+</a><a href="#h2-1-60" id="h2-1-60" class="d">-						max = val
+</a><a href="#h2-1-61" id="h2-1-61" class="d">-					}
+</a><a href="#h2-1-62" id="h2-1-62" class="d">-				}
+</a><a href="#h2-1-63" id="h2-1-63" class="d">-			}
+</a><a href="#h2-1-64" id="h2-1-64" class="d">-
+</a><a href="#h2-1-65" id="h2-1-65" class="d">-			// Add the range to the map
+</a><a href="#h2-1-66" id="h2-1-66" class="d">-			(*lqRanges)[index] = bmnumbers.LinearDataRange{Min: min, Max: max}
+</a><a href="#h2-1-67" id="h2-1-67" class="d">-			f.Close()
+</a><a href="#h2-1-68" id="h2-1-68" class="i">+		if err := bmnumbers.LoadLinearDataRangesFromFile(*linearDataRange); err != nil {
+</a><a href="#h2-1-69" id="h2-1-69" class="i">+			log.Fatal(err)
+</a> 		}
+ 	}
+ }
+<b>diff --git a/<a id="h3" href="../file/pkg/bmnumbers/dynamical_linear_quantizer.go.html">pkg/bmnumbers/dynamical_linear_quantizer.go</a> b/<a href="../file/pkg/bmnumbers/dynamical_linear_quantizer.go.html">pkg/bmnumbers/dynamical_linear_quantizer.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -7,7 +7,6 @@ import (
+</a> )
+ 
+ type LinearDataRange struct {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	Min float64
+</a> 	Max float64
+ }
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a> b/<a href="../file/pkg/bmnumbers/dyntype_linear_quantizer.go.html">pkg/bmnumbers/dyntype_linear_quantizer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,7 +1,10 @@
+</a> package bmnumbers
+ 
+ import (
+<a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;bytes&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	&quot;encoding/binary&quot;
+</a> 	&quot;errors&quot;
+<a href="#h4-0-6" id="h4-0-6" class="i">+	&quot;fmt&quot;
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ )
+<a href="#h4-1" id="h4-1" class="h">@@ -71,50 +74,38 @@ func linearQuantizerImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a> 
+ 	EventuallyCreateType(&quot;lqs&quot;+ss+&quot;t&quot;+ts, nil)
+ 
+<a href="#h4-1-3" id="h4-1-3" class="d">-	var binNum string
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-
+</a><a href="#h4-1-5" id="h4-1-5" class="d">-	bandNum := float64(int(1) &lt;&lt; uint(s))
+</a><a href="#h4-1-6" id="h4-1-6" class="d">-	bandSize := ((*lqRanges)[t].Max - (*lqRanges)[t].Min) / bandNum
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	bandNum := float64(int(1) &lt;&lt; uint(s-1))
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+	bandSize := ((*lqRanges)[t].Max) / bandNum
+</a> 
+ 	if numberNum, err := strconv.ParseFloat(number, 64); err != nil {
+ 		return nil, errors.New(&quot;invalid number for linear quantizer&quot;)
+ 	} else {
+<a href="#h4-1-13" id="h4-1-13" class="d">-		band := int((numberNum - (*lqRanges)[t].Min) / bandSize)
+</a><a href="#h4-1-14" id="h4-1-14" class="d">-		if band &lt; 0 {
+</a><a href="#h4-1-15" id="h4-1-15" class="d">-			band = 0
+</a><a href="#h4-1-16" id="h4-1-16" class="d">-		} else if band &gt;= int(bandNum) {
+</a><a href="#h4-1-17" id="h4-1-17" class="d">-			band = int(bandNum) - 1
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+		band := int64(numberNum / bandSize)
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+		if band &gt;= int64(bandNum) || band &lt;= -int64(bandNum) {
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+			return nil, errors.New(&quot;number out of range for linear quantizer&quot;)
+</a> 		}
+<a href="#h4-1-22" id="h4-1-22" class="d">-		binNum = &quot;00000000000000000000000000000000&quot; + strconv.FormatInt(int64(band), 2)
+</a><a href="#h4-1-23" id="h4-1-23" class="d">-		binNum = binNum[len(binNum)-s:]
+</a><a href="#h4-1-24" id="h4-1-24" class="d">-	}
+</a> 
+<a href="#h4-1-26" id="h4-1-26" class="d">-	var nextByte string
+</a><a href="#h4-1-27" id="h4-1-27" class="d">-	newNumber := BMNumber{}
+</a><a href="#h4-1-28" id="h4-1-28" class="d">-	newNumber.number = make([]byte, (len(binNum)-1)/8+1)
+</a><a href="#h4-1-29" id="h4-1-29" class="d">-	newNumber.bits = len(binNum)
+</a><a href="#h4-1-30" id="h4-1-30" class="d">-	newNumber.nType = LinearQuantizer{linearQuantizerName: &quot;lqs&quot; + ss + &quot;t&quot; + ts, s: s, t: t}
+</a><a href="#h4-1-31" id="h4-1-31" class="d">-
+</a><a href="#h4-1-32" id="h4-1-32" class="d">-	for i := 0; ; i++ {
+</a><a href="#h4-1-33" id="h4-1-33" class="d">-
+</a><a href="#h4-1-34" id="h4-1-34" class="d">-		if len(binNum) &gt; 8 {
+</a><a href="#h4-1-35" id="h4-1-35" class="d">-			nextByte = binNum[len(binNum)-8:]
+</a><a href="#h4-1-36" id="h4-1-36" class="d">-			binNum = binNum[:len(binNum)-8]
+</a><a href="#h4-1-37" id="h4-1-37" class="d">-		} else if len(binNum) &gt; 0 {
+</a><a href="#h4-1-38" id="h4-1-38" class="d">-			nextByte = binNum
+</a><a href="#h4-1-39" id="h4-1-39" class="d">-			binNum = &quot;&quot;
+</a><a href="#h4-1-40" id="h4-1-40" class="d">-		} else {
+</a><a href="#h4-1-41" id="h4-1-41" class="d">-			break
+</a><a href="#h4-1-42" id="h4-1-42" class="d">-		}
+</a><a href="#h4-1-43" id="h4-1-43" class="i">+		fmt.Println(band)
+</a> 
+<a href="#h4-1-45" id="h4-1-45" class="d">-		if val, err := strconv.ParseUint(nextByte, 2, 8); err == nil {
+</a><a href="#h4-1-46" id="h4-1-46" class="d">-			decoded := byte(val)
+</a><a href="#h4-1-47" id="h4-1-47" class="d">-			newNumber.number[i] = decoded
+</a><a href="#h4-1-48" id="h4-1-48" class="d">-		} else {
+</a><a href="#h4-1-49" id="h4-1-49" class="d">-			return nil, errors.New(&quot;invalid binary number&quot; + input)
+</a><a href="#h4-1-50" id="h4-1-50" class="d">-		}
+</a><a href="#h4-1-51" id="h4-1-51" class="i">+		// Create a temporary buffer to write the number to
+</a><a href="#h4-1-52" id="h4-1-52" class="i">+		buf := new(bytes.Buffer)
+</a><a href="#h4-1-53" id="h4-1-53" class="i">+		binary.Write(buf, binary.LittleEndian, band)
+</a><a href="#h4-1-54" id="h4-1-54" class="i">+
+</a><a href="#h4-1-55" id="h4-1-55" class="i">+		// Compute how many bytes we need to copy according to the number of bits (s)
+</a><a href="#h4-1-56" id="h4-1-56" class="i">+		toCopy := (s-1)/8 + 1
+</a><a href="#h4-1-57" id="h4-1-57" class="i">+
+</a><a href="#h4-1-58" id="h4-1-58" class="i">+		newNumber := BMNumber{}
+</a><a href="#h4-1-59" id="h4-1-59" class="i">+		newNumber.nType = LinearQuantizer{linearQuantizerName: &quot;lqs&quot; + ss + &quot;t&quot; + ts, s: s, t: t}
+</a><a href="#h4-1-60" id="h4-1-60" class="i">+		newNumber.number = make([]byte, toCopy)
+</a><a href="#h4-1-61" id="h4-1-61" class="i">+		copy(newNumber.number, buf.Bytes()[0:toCopy])
+</a><a href="#h4-1-62" id="h4-1-62" class="i">+		newNumber.bits = s
+</a><a href="#h4-1-63" id="h4-1-63" class="i">+
+</a><a href="#h4-1-64" id="h4-1-64" class="i">+		// Use a mask to clear the eventually unused bits on the last byte
+</a><a href="#h4-1-65" id="h4-1-65" class="i">+		mask := byte(0xFF &gt;&gt; uint(8-(s-1)%8-1))
+</a><a href="#h4-1-66" id="h4-1-66" class="i">+		newNumber.number[toCopy-1] = newNumber.number[toCopy-1] &amp; mask
+</a><a href="#h4-1-67" id="h4-1-67" class="i">+
+</a><a href="#h4-1-68" id="h4-1-68" class="i">+		return &amp;newNumber, nil
+</a> 	}
+<a href="#h4-1-70" id="h4-1-70" class="d">-	return &amp;newNumber, nil
+</a> }
+ 
+ func (d LinearQuantizer) ExportString(n *BMNumber) (string, error) {
+<a href="#h4-2" id="h4-2" class="h">@@ -122,7 +113,36 @@ func (d LinearQuantizer) ExportString(n *BMNumber) (string, error) {
+</a> 	t := d.t
+ 	ss := strconv.Itoa(s)
+ 	ts := strconv.Itoa(t)
+<a href="#h4-2-3" id="h4-2-3" class="d">-	number, _ := n.ExportUint64()
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+	// Find out if the number is negative
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+	var isNegative bool
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+	if n.number[len(n.number)-1]&amp;(uint8(128)&gt;&gt;uint(8-(s-1)%8-1)) != 0 {
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+		isNegative = true
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+	}
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+
+</a><a href="#h4-2-11" id="h4-2-11" class="i">+	copied := make([]byte, len(n.number))
+</a><a href="#h4-2-12" id="h4-2-12" class="i">+	copy(copied, n.number)
+</a><a href="#h4-2-13" id="h4-2-13" class="i">+
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+	if isNegative {
+</a><a href="#h4-2-15" id="h4-2-15" class="i">+		// Use a mask to clear the eventually unused bits on the last byte
+</a><a href="#h4-2-16" id="h4-2-16" class="i">+		lastByte := (s-1)/8 + 1
+</a><a href="#h4-2-17" id="h4-2-17" class="i">+		mask := byte(0xFF &gt;&gt; uint(8-(s-1)%8-1))
+</a><a href="#h4-2-18" id="h4-2-18" class="i">+		copied[lastByte-1] = copied[lastByte-1] | ^mask
+</a><a href="#h4-2-19" id="h4-2-19" class="i">+
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+		for i := len(copied); i &lt; 8; i++ {
+</a><a href="#h4-2-21" id="h4-2-21" class="i">+			copied = append(copied, 0xFF)
+</a><a href="#h4-2-22" id="h4-2-22" class="i">+		}
+</a><a href="#h4-2-23" id="h4-2-23" class="i">+	} else {
+</a><a href="#h4-2-24" id="h4-2-24" class="i">+		for i := len(copied); i &lt; 8; i++ {
+</a><a href="#h4-2-25" id="h4-2-25" class="i">+			copied = append(copied, 0x00)
+</a><a href="#h4-2-26" id="h4-2-26" class="i">+		}
+</a><a href="#h4-2-27" id="h4-2-27" class="i">+	}
+</a><a href="#h4-2-28" id="h4-2-28" class="i">+
+</a><a href="#h4-2-29" id="h4-2-29" class="i">+	var number int64
+</a><a href="#h4-2-30" id="h4-2-30" class="i">+	buf := bytes.NewReader(copied)
+</a><a href="#h4-2-31" id="h4-2-31" class="i">+	if err := binary.Read(buf, binary.LittleEndian, &amp;number); err != nil {
+</a><a href="#h4-2-32" id="h4-2-32" class="i">+		return &quot;&quot;, err
+</a><a href="#h4-2-33" id="h4-2-33" class="i">+	}
+</a> 
+ 	// Get the linear quantizer ranges struct
+ 	var lqRanges *map[int]LinearDataRange
+<a href="#h4-3" id="h4-3" class="h">@@ -132,10 +152,10 @@ func (d LinearQuantizer) ExportString(n *BMNumber) (string, error) {
+</a> 		}
+ 	}
+ 
+<a href="#h4-3-3" id="h4-3-3" class="d">-	bandNum := float64(int(1) &lt;&lt; uint(s))
+</a><a href="#h4-3-4" id="h4-3-4" class="d">-	bandSize := ((*lqRanges)[t].Max - (*lqRanges)[t].Min) / bandNum
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+	bandNum := float64(int(1) &lt;&lt; uint(s-1))
+</a><a href="#h4-3-6" id="h4-3-6" class="i">+	bandSize := (*lqRanges)[t].Max / bandNum
+</a> 
+<a href="#h4-3-8" id="h4-3-8" class="d">-	numberF := float64(number)*bandSize + (*lqRanges)[t].Min
+</a><a href="#h4-3-9" id="h4-3-9" class="i">+	numberF := float64(number) * bandSize
+</a> 
+ 	result := &quot;0lq&lt;&quot; + ss + &quot;.&quot; + ts + &quot;&gt;&quot; + strconv.FormatFloat(numberF, &#39;f&#39;, -1, 64)
+ 	return result, nil
+<b>diff --git a/<a id="h5" href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a> b/<a href="../file/pkg/bmnumbers/import.go.html">pkg/bmnumbers/import.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,8 +1,13 @@
+</a> package bmnumbers
+ 
+ import (
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;bufio&quot;
+</a> 	&quot;errors&quot;
+<a href="#h5-0-5" id="h5-0-5" class="i">+	&quot;math&quot;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+	&quot;os&quot;
+</a> 	&quot;regexp&quot;
+<a href="#h5-0-8" id="h5-0-8" class="i">+	&quot;strconv&quot;
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+	&quot;strings&quot;
+</a> )
+ 
+ // InitBMNumber creates a new BMNumber for a string
+<a href="#h5-1" id="h5-1" class="h">@@ -17,3 +22,70 @@ func ImportString(input string) (*BMNumber, error) {
+</a> 
+ 	return nil, errors.New(&quot;unknown number format &quot; + input)
+ }
+<a href="#h5-1-3" id="h5-1-3" class="i">+
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+func LoadLinearDataRangesFromFile(filename string) error {
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	// Get the linear quantizer ranges struct
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+	var lqRanges *map[int]LinearDataRange
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+	for _, t := range AllDynamicalTypes {
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+		if t.GetName() == &quot;dyn_linear_quantizer&quot; {
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+			lqRanges = t.(DynLinearQuantizer).Ranges
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+		}
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+	}
+</a><a href="#h5-1-13" id="h5-1-13" class="i">+
+</a><a href="#h5-1-14" id="h5-1-14" class="i">+	splitted := strings.Split(filename, &quot;,&quot;)
+</a><a href="#h5-1-15" id="h5-1-15" class="i">+	if len(splitted)%2 != 0 {
+</a><a href="#h5-1-16" id="h5-1-16" class="i">+		return errors.New(&quot;Error: Invalid linear data range files&quot;)
+</a><a href="#h5-1-17" id="h5-1-17" class="i">+	}
+</a><a href="#h5-1-18" id="h5-1-18" class="i">+
+</a><a href="#h5-1-19" id="h5-1-19" class="i">+	// Load a file for each index
+</a><a href="#h5-1-20" id="h5-1-20" class="i">+	for i := 0; i &lt; len(splitted); i += 2 {
+</a><a href="#h5-1-21" id="h5-1-21" class="i">+		index, err := strconv.Atoi(splitted[i])
+</a><a href="#h5-1-22" id="h5-1-22" class="i">+		if err != nil {
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+			return err
+</a><a href="#h5-1-24" id="h5-1-24" class="i">+		}
+</a><a href="#h5-1-25" id="h5-1-25" class="i">+
+</a><a href="#h5-1-26" id="h5-1-26" class="i">+		if index == 0 {
+</a><a href="#h5-1-27" id="h5-1-27" class="i">+			return errors.New(&quot;index cannot be 0 (reserved)&quot;)
+</a><a href="#h5-1-28" id="h5-1-28" class="i">+		}
+</a><a href="#h5-1-29" id="h5-1-29" class="i">+
+</a><a href="#h5-1-30" id="h5-1-30" class="i">+		// Check if the index is already present
+</a><a href="#h5-1-31" id="h5-1-31" class="i">+		if _, ok := (*lqRanges)[index]; ok {
+</a><a href="#h5-1-32" id="h5-1-32" class="i">+			return errors.New(&quot;index already present&quot;)
+</a><a href="#h5-1-33" id="h5-1-33" class="i">+		}
+</a><a href="#h5-1-34" id="h5-1-34" class="i">+
+</a><a href="#h5-1-35" id="h5-1-35" class="i">+		filename := splitted[i+1]
+</a><a href="#h5-1-36" id="h5-1-36" class="i">+
+</a><a href="#h5-1-37" id="h5-1-37" class="i">+		// Read all the lines of the file
+</a><a href="#h5-1-38" id="h5-1-38" class="i">+		f, err := os.Open(filename)
+</a><a href="#h5-1-39" id="h5-1-39" class="i">+		if err != nil {
+</a><a href="#h5-1-40" id="h5-1-40" class="i">+			return err
+</a><a href="#h5-1-41" id="h5-1-41" class="i">+		}
+</a><a href="#h5-1-42" id="h5-1-42" class="i">+
+</a><a href="#h5-1-43" id="h5-1-43" class="i">+		// Read all the lines of the file
+</a><a href="#h5-1-44" id="h5-1-44" class="i">+		var max float64
+</a><a href="#h5-1-45" id="h5-1-45" class="i">+		scanner := bufio.NewScanner(f)
+</a><a href="#h5-1-46" id="h5-1-46" class="i">+		first := true
+</a><a href="#h5-1-47" id="h5-1-47" class="i">+		for scanner.Scan() {
+</a><a href="#h5-1-48" id="h5-1-48" class="i">+			line := scanner.Text()
+</a><a href="#h5-1-49" id="h5-1-49" class="i">+
+</a><a href="#h5-1-50" id="h5-1-50" class="i">+			// Parse the max values
+</a><a href="#h5-1-51" id="h5-1-51" class="i">+			if val, err := strconv.ParseFloat(line, 64); err == nil {
+</a><a href="#h5-1-52" id="h5-1-52" class="i">+				val = math.Abs(val)
+</a><a href="#h5-1-53" id="h5-1-53" class="i">+				if first {
+</a><a href="#h5-1-54" id="h5-1-54" class="i">+					max = val
+</a><a href="#h5-1-55" id="h5-1-55" class="i">+					first = false
+</a><a href="#h5-1-56" id="h5-1-56" class="i">+				}
+</a><a href="#h5-1-57" id="h5-1-57" class="i">+
+</a><a href="#h5-1-58" id="h5-1-58" class="i">+				if val &gt; max {
+</a><a href="#h5-1-59" id="h5-1-59" class="i">+					max = val
+</a><a href="#h5-1-60" id="h5-1-60" class="i">+				}
+</a><a href="#h5-1-61" id="h5-1-61" class="i">+			}
+</a><a href="#h5-1-62" id="h5-1-62" class="i">+		}
+</a><a href="#h5-1-63" id="h5-1-63" class="i">+
+</a><a href="#h5-1-64" id="h5-1-64" class="i">+		// Add the range to the map
+</a><a href="#h5-1-65" id="h5-1-65" class="i">+		(*lqRanges)[index] = LinearDataRange{Max: max}
+</a><a href="#h5-1-66" id="h5-1-66" class="i">+		f.Close()
+</a><a href="#h5-1-67" id="h5-1-67" class="i">+	}
+</a><a href="#h5-1-68" id="h5-1-68" class="i">+	return nil
+</a><a href="#h5-1-69" id="h5-1-69" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

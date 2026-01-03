@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>neurons metadata - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dcac66668c74f03b676acb95e293be97e3b261a4.html">dcac66668c74f03b676acb95e293be97e3b261a4</a>
+<b>parent</b> <a href="../commit/354a55c378bc9a9e8da24afcf5eabd5b64c30496.html">354a55c378bc9a9e8da24afcf5eabd5b64c30496</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 12 Oct 2022 00:01:47 +0200
+
+neurons metadata
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">library/neurons/linear.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">library/neurons/relu.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">library/neurons/softmax.basm</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">library/neurons/softmax.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">library/neurons/summation.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">library/neurons/terminal.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">library/neurons/weight.nb</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">81</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>9 files changed, 121 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,10 @@ var registerSize = flag.Int(&quot;register-size&quot;, 8, &quot;Number of bits per register (n-
+</a> 
+ var saveBasm = flag.String(&quot;save-basm&quot;, &quot;&quot;, &quot;Create a basm file&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+var neuronLibPath = flag.String(&quot;neuron-lib-path&quot;, &quot;&quot;, &quot;Path to the neuron library to use&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> var netFile = flag.String(&quot;net-file&quot;, &quot;&quot;, &quot;JSON description of the net&quot;)
+<a href="#h0-0-6" id="h0-0-6" class="i">+var configFile = flag.String(&quot;config-file&quot;, &quot;&quot;, &quot;JSON description of the net configuration&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<a href="#h0-1" id="h0-1" class="h">@@ -40,7 +43,33 @@ func main() {
+</a> 		panic(&quot;No net file specified&quot;)
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	// fmt.Println(net.Weights)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	config := new(neuralbond.Config)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// Load net from a JSON file the configuration
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if *configFile != &quot;&quot; {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		if netFileJSON, err := ioutil.ReadFile(*configFile); err == nil {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			if err := json.Unmarshal(netFileJSON, config); err != nil {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				panic(err)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			}
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		} else {
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			panic(err)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	} else {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		config.Debug = *debug
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		config.Verbose = *verbose
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		config.Params = make(map[string]string)
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	if *neuronLibPath != &quot;&quot; {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		config.NeuronLibPath = *neuronLibPath
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	} else {
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		panic(&quot;No neuron library path specified&quot;)
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	}
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	if err := net.Init(config); err != nil {
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		panic(err)
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	}
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+
+</a> 	net.Normalize()
+ 
+ 	if *saveBasm != &quot;&quot; {
+<b>diff --git a/<a id="h1" href="../file/library/neurons/linear.nb.html">library/neurons/linear.nb</a> b/<a href="../file/library/neurons/linear.nb.html">library/neurons/linear.nb</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+{
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;]
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/library/neurons/relu.nb.html">library/neurons/relu.nb</a> b/<a href="../file/library/neurons/relu.nb.html">library/neurons/relu.nb</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+{
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;]
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/library/neurons/softmax.basm.html">library/neurons/softmax.basm</a> b/<a href="../file/library/neurons/softmax.basm.html">library/neurons/softmax.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -9,7 +9,7 @@ _start:
+</a>         mov     r3, 0f1.0
+         mov     r4, 0f1.0
+         mov     r5, 0f1.0
+<a href="#h3-0-3" id="h3-0-3" class="d">-        mov     r7, 20
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+        mov     r7, {{$.Params.expprec}}
+</a> loop{{printf &quot;%d&quot; $y}}:
+         multf   r2, r1
+         multf   r3, r4
+<b>diff --git a/<a id="h4" href="../file/library/neurons/softmax.nb.html">library/neurons/softmax.nb</a> b/<a href="../file/library/neurons/softmax.nb.html">library/neurons/softmax.nb</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+{
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;, &quot;pos&quot;, &quot;expprec&quot;]
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/library/neurons/summation.nb.html">library/neurons/summation.nb</a> b/<a href="../file/library/neurons/summation.nb.html">library/neurons/summation.nb</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+{
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+	&quot;params&quot;: [&quot;inputs&quot;, &quot;bias&quot;]
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/library/neurons/terminal.nb.html">library/neurons/terminal.nb</a> b/<a href="../file/library/neurons/terminal.nb.html">library/neurons/terminal.nb</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+{
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+	&quot;params&quot;: []
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/library/neurons/weight.nb.html">library/neurons/weight.nb</a> b/<a href="../file/library/neurons/weight.nb.html">library/neurons/weight.nb</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,3 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+{
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+	&quot;params&quot;: [&quot;weight&quot;]
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -1,13 +1,29 @@
+</a> package neuralbond
+ 
+ import (
+<a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+<a href="#h8-0-6" id="h8-0-6" class="i">+	&quot;io/ioutil&quot;
+</a> 	&quot;sort&quot;
+ )
+ 
+ type TrainedNet struct {
+<a href="#h8-0-11" id="h8-0-11" class="d">-	Nodes   []Node
+</a><a href="#h8-0-12" id="h8-0-12" class="d">-	Weights []Weight
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+	Nodes     []Node
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+	Weights   []Weight
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	Neurons   map[string]*Neuron
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+	NetConfig *Config
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+}
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+type Config struct {
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+	Params        map[string]string
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+	Debug         bool
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+	Verbose       bool
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+	NeuronLibPath string
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+}
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+type Neuron struct {
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+	Params []string
+</a> }
+ 
+ type Weight struct {
+<a href="#h8-1" id="h8-1" class="h">@@ -28,6 +44,31 @@ type Node struct {
+</a> 	Outputs int
+ }
+ 
+<a href="#h8-1-3" id="h8-1-3" class="i">+func (n *TrainedNet) Init(config *Config) error {
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+	n.NetConfig = config
+</a><a href="#h8-1-5" id="h8-1-5" class="i">+	n.Neurons = make(map[string]*Neuron)
+</a><a href="#h8-1-6" id="h8-1-6" class="i">+
+</a><a href="#h8-1-7" id="h8-1-7" class="i">+	// List nb files in the neuron library path and load them
+</a><a href="#h8-1-8" id="h8-1-8" class="i">+	neuronFiles, err := ioutil.ReadDir(n.NetConfig.NeuronLibPath)
+</a><a href="#h8-1-9" id="h8-1-9" class="i">+	if err != nil {
+</a><a href="#h8-1-10" id="h8-1-10" class="i">+		return err
+</a><a href="#h8-1-11" id="h8-1-11" class="i">+	}
+</a><a href="#h8-1-12" id="h8-1-12" class="i">+	for _, f := range neuronFiles {
+</a><a href="#h8-1-13" id="h8-1-13" class="i">+		if len(f.Name()) &gt; 3 &amp;&amp; f.Name()[len(f.Name())-3:] == &quot;.nb&quot; {
+</a><a href="#h8-1-14" id="h8-1-14" class="i">+			neuronFile, err := ioutil.ReadFile(n.NetConfig.NeuronLibPath + &quot;/&quot; + f.Name())
+</a><a href="#h8-1-15" id="h8-1-15" class="i">+			if err != nil {
+</a><a href="#h8-1-16" id="h8-1-16" class="i">+				return err
+</a><a href="#h8-1-17" id="h8-1-17" class="i">+			}
+</a><a href="#h8-1-18" id="h8-1-18" class="i">+			neuron := new(Neuron)
+</a><a href="#h8-1-19" id="h8-1-19" class="i">+			if err := json.Unmarshal(neuronFile, neuron); err != nil {
+</a><a href="#h8-1-20" id="h8-1-20" class="i">+				return err
+</a><a href="#h8-1-21" id="h8-1-21" class="i">+			}
+</a><a href="#h8-1-22" id="h8-1-22" class="i">+			n.Neurons[f.Name()[0:len(f.Name())-3]] = neuron
+</a><a href="#h8-1-23" id="h8-1-23" class="i">+		}
+</a><a href="#h8-1-24" id="h8-1-24" class="i">+	}
+</a><a href="#h8-1-25" id="h8-1-25" class="i">+	return nil
+</a><a href="#h8-1-26" id="h8-1-26" class="i">+}
+</a><a href="#h8-1-27" id="h8-1-27" class="i">+
+</a> func (n *TrainedNet) Normalize() {
+ 	for w, weight := range n.Weights {
+ 		downL, downP := weight.Layer-1, weight.PosPrevLayer
+<a href="#h8-2" id="h8-2" class="h">@@ -78,6 +119,7 @@ func (n *TrainedNet) Normalize() {
+</a> }
+ 
+ func (n *TrainedNet) WriteBasm() (string, error) {
+<a href="#h8-2-3" id="h8-2-3" class="i">+	c := n.NetConfig
+</a> 	result := &quot;%meta bmdef     global registersize:32\n&quot;
+ 	for _, node := range n.Nodes {
+ 		if node.Type == &quot;input&quot; {
+<a href="#h8-3" id="h8-3" class="h">@@ -85,19 +127,40 @@ func (n *TrainedNet) WriteBasm() (string, error) {
+</a> 			result += fmt.Sprintf(&quot;%%meta iodef input_%d type:io\n&quot;, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+<a href="#h8-3-3" id="h8-3-3" class="d">-		} else if node.Type == &quot;linear&quot; {
+</a><a href="#h8-3-4" id="h8-3-4" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h8-3-5" id="h8-3-5" class="d">-		} else if node.Type == &quot;summation&quot; {
+</a><a href="#h8-3-6" id="h8-3-6" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:summation, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h8-3-7" id="h8-3-7" class="d">-		} else if node.Type == &quot;softmax&quot; {
+</a><a href="#h8-3-8" id="h8-3-8" class="d">-			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d, pos:%d\n&quot;, node.Layer, node.Pos, node.Inputs, node.Pos)
+</a><a href="#h8-3-9" id="h8-3-9" class="i">+			// } else if node.Type == &quot;linear&quot; {
+</a><a href="#h8-3-10" id="h8-3-10" class="i">+			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h8-3-11" id="h8-3-11" class="i">+			// } else if node.Type == &quot;summation&quot; {
+</a><a href="#h8-3-12" id="h8-3-12" class="i">+			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:summation, inputs:%d, bias:0f%f\n&quot;, node.Layer, node.Pos, node.Inputs, node.Bias)
+</a><a href="#h8-3-13" id="h8-3-13" class="i">+			// } else if node.Type == &quot;softmax&quot; {
+</a><a href="#h8-3-14" id="h8-3-14" class="i">+			// 	result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, inputs:%d, pos:%d\n&quot;, node.Layer, node.Pos, node.Inputs, node.Pos)
+</a> 		} else if node.Type == &quot;output&quot; {
+ 			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+ 			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:bm, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+ 		} else {
+<a href="#h8-3-21" id="h8-3-21" class="d">-			return &quot;&quot;, fmt.Errorf(&quot;Unknown node type: %s&quot;, node.Type)
+</a><a href="#h8-3-22" id="h8-3-22" class="i">+			if neuron, ok := n.Neurons[node.Type]; ok {
+</a><a href="#h8-3-23" id="h8-3-23" class="i">+				result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:%s&quot;, node.Layer, node.Pos, node.Type)
+</a><a href="#h8-3-24" id="h8-3-24" class="i">+				for _, param := range neuron.Params {
+</a><a href="#h8-3-25" id="h8-3-25" class="i">+					switch param {
+</a><a href="#h8-3-26" id="h8-3-26" class="i">+					case &quot;inputs&quot;:
+</a><a href="#h8-3-27" id="h8-3-27" class="i">+						result += fmt.Sprintf(&quot;, inputs:%d&quot;, node.Inputs)
+</a><a href="#h8-3-28" id="h8-3-28" class="i">+					case &quot;outputs&quot;:
+</a><a href="#h8-3-29" id="h8-3-29" class="i">+						result += fmt.Sprintf(&quot;, outputs:%d&quot;, node.Outputs)
+</a><a href="#h8-3-30" id="h8-3-30" class="i">+					case &quot;bias&quot;:
+</a><a href="#h8-3-31" id="h8-3-31" class="i">+						result += fmt.Sprintf(&quot;, bias:0f%f&quot;, node.Bias)
+</a><a href="#h8-3-32" id="h8-3-32" class="i">+					case &quot;pos&quot;:
+</a><a href="#h8-3-33" id="h8-3-33" class="i">+						result += fmt.Sprintf(&quot;, pos:%d&quot;, node.Pos)
+</a><a href="#h8-3-34" id="h8-3-34" class="i">+					default:
+</a><a href="#h8-3-35" id="h8-3-35" class="i">+						if value, ok := c.Params[param]; ok {
+</a><a href="#h8-3-36" id="h8-3-36" class="i">+							result += fmt.Sprintf(&quot;, %s:%s&quot;, param, value)
+</a><a href="#h8-3-37" id="h8-3-37" class="i">+						} else {
+</a><a href="#h8-3-38" id="h8-3-38" class="i">+							return &quot;&quot;, errors.New(&quot;Unknown parameter &quot; + param)
+</a><a href="#h8-3-39" id="h8-3-39" class="i">+						}
+</a><a href="#h8-3-40" id="h8-3-40" class="i">+					}
+</a><a href="#h8-3-41" id="h8-3-41" class="i">+				}
+</a><a href="#h8-3-42" id="h8-3-42" class="i">+				result += &quot;\n&quot;
+</a><a href="#h8-3-43" id="h8-3-43" class="i">+			}
+</a> 		}
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Config init - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e2438946b7716aa121bb469872d9415bbc3d4db3.html">e2438946b7716aa121bb469872d9415bbc3d4db3</a>
+<b>parent</b> <a href="../commit/c0af7528cf5916ee6557a9f811b9f3ec76f26d5b.html">c0af7528cf5916ee6557a9f811b9f3ec76f26d5b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  5 Apr 2023 00:32:41 +0200
+
+Config init
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/melbond/melbond.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/melbond/melbond.go</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 37 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a> b/<a href="../file/cmd/melbond/melbond.go.html">cmd/melbond/melbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -134,11 +134,16 @@ func main() {
+</a> 		}
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	if err := bc.Init(); err != nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		panic(err)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a> 	a := new(m3melbond.M3MelBondMe3li)
+ 	var ep *mel.EvolutionParameters
+ 	c := new(mel.MelConfig)
+ 	a.Mel3Object.DefaultCreator = bc.BasmCreator
+ 	c.Debug = false
+<a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> 	a.Init(c, ep, []string{&quot;m3uint&quot;, &quot;m3uintcmp&quot;, &quot;m3number&quot;, &quot;m3bool&quot;, &quot;m3boolcmp&quot;, &quot;m3statements&quot;})
+ 
+ 	prog := new(melbond.MelBondProgram)
+<b>diff --git a/<a id="h1" href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a> b/<a href="../file/pkg/melbond/melbond.go.html">pkg/melbond/melbond.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,6 +2,8 @@ package melbond
+</a> 
+ import (
+ 	&quot;context&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;io/ioutil&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+ 	&quot;github.com/mmirko/mel/pkg/m3melbond&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -9,11 +11,16 @@ import (
+</a> 
+ type Group []string
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+type Neuron struct {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Params []string
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+}
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+
+</a> type MelBondConfig struct {
+ 	RegisterSize  uint8
+ 	DataType      string
+ 	TypePrefix    string
+ 	Params        map[string]string
+<a href="#h1-1-12" id="h1-1-12" class="i">+	Neurons       map[string]*Neuron
+</a> 	Pruned        []string
+ 	Collapsed     []Group
+ 	Debug         bool
+<a href="#h1-2" id="h1-2" class="h">@@ -32,6 +39,31 @@ type MelBondProgram struct {
+</a> 	BasmCode string
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+func (n *MelBondConfig) Init() error {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	n.Neurons = make(map[string]*Neuron)
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	// List nb files in the neuron library path and load them
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	neuronFiles, err := ioutil.ReadDir(n.NeuronLibPath)
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	if err != nil {
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		return err
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	}
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+	for _, f := range neuronFiles {
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		if len(f.Name()) &gt; 3 &amp;&amp; f.Name()[len(f.Name())-3:] == &quot;.nb&quot; {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			neuronFile, err := ioutil.ReadFile(n.NeuronLibPath + &quot;/&quot; + f.Name())
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+			if err != nil {
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+				return err
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+			}
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+			neuron := new(Neuron)
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+			if err := json.Unmarshal(neuronFile, neuron); err != nil {
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+				return err
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+			}
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+			n.Neurons[f.Name()[0:len(f.Name())-3]] = neuron
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+		}
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+	}
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+	return nil
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+}
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+
+</a> func (p *MelBondProgram) WriteBasm() (string, error) {
+ 
+ 	ctx, cancel := context.WithCancel(context.Background())
+</pre>
+</div>
+</body>
+</html>

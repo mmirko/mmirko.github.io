@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>threads - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5ba048046b0e66e388fd5bf7f115a61903eba15f.html">5ba048046b0e66e388fd5bf7f115a61903eba15f</a>
+<b>parent</b> <a href="../commit/8497be19d6cc577db5172df1158b47fb301c4815.html">8497be19d6cc577db5172df1158b47fb301c4815</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  9 Sep 2024 22:24:08 +0200
+
+threads
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">library/fragments/newline.basm</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">library/fragments/putline.basm</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/fragments/readline.basm</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmbuilder/generator_maxpool.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">204</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_r2v.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_r2vri.go</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h10">pkg/procbuilder/op_tsp.go</a></td><td> | </td><td class="num">294</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/utils.go</a></td><td> | </td><td class="num">34</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>12 files changed, 648 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/fragments/newline.basm.html">library/fragments/newline.basm</a> b/<a href="../file/library/fragments/newline.basm.html">library/fragments/newline.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,7 +4,6 @@
+</a> %fragment newline default_out:vtm0 default_height:16 default_width:16
+         mov     r1, {{ .Params.height }}
+         dec     r1
+<a href="#h0-0-3" id="h0-0-3" class="d">-        dec     r1
+</a>         mov     r3, {{ .Params.width }}
+         mult    r1, r3 ; this is the start cell of the last line
+         mov     r3, r2
+<a href="#h0-1" id="h0-1" class="h">@@ -12,7 +11,22 @@
+</a>         cmprlt  r3, r1 ; if the current cell is less than the start of the last line don&#39;t scroll
+         jcmp    dontscroll ; at this point r3 is the offset from the start of the memory, r1 is the current cell (no offset)
+ scroll:
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+        mov     r4, r0
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+        mov     r5, {{ .Params.width }}
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+        add     r4, r5 ; This is the source
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+        mov     r5, r0 ; This is the destination
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+scrollloop:
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+        mov     r6, {{ .Params.out }}:[r4]
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+        mov     {{ .Params.out }}:[r5], r6
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+        inc     r5
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+        inc     r4
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+        cmpr    r4, r2
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+        jcmp    scrollloopdone
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+        j       scrollloop
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+scrollloopdone:
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+        mov     r5, {{ .Params.width }}
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+        sub     r2, r5
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+        sub     r3, r5
+</a> dontscroll:
+         ; find out the next line position
+         mov     r1, 0
+<a href="#h0-2" id="h0-2" class="h">@@ -23,15 +37,29 @@ findnextline:
+</a>         mult    r5, r4
+         cmprlt  r5, r3
+         jcmp    findnextline
+<a href="#h0-2-3" id="h0-2-3" class="d">-        mov     r1, 0x49
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+        mov     r1, 0x00
+</a> fillblank:
+         cmpr    r5, r3
+<a href="#h0-2-7" id="h0-2-7" class="d">-        jcmp    end
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+        jcmp    fillblank2prep
+</a>         mov     r6, r3
+         add     r6, r0
+         mov     {{ .Params.out }}:[r6], r1
+         inc     r3
+         j       fillblank
+<a href="#h0-2-14" id="h0-2-14" class="i">+fillblank2prep:
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+        mov     r5, {{ .Params.width }}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+        mov     r4, {{ .Params.height }}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+        mult    r4, r5
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+        dec     r4
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+        mov     r5, r3
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+fillblank2:
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+        cmpr    r5, r4
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+        jcmp    end
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+        mov     r7, r5
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+        add     r7, r0
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+        mov     {{ .Params.out }}:[r7], r1
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+        inc     r5
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+        j       fillblank2
+</a> end:
+         inc     r6
+         mov     r2, r6
+<b>diff --git a/<a id="h1" href="../file/library/fragments/putline.basm.html">library/fragments/putline.basm</a> b/<a href="../file/library/fragments/putline.basm.html">library/fragments/putline.basm</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,11 +5,11 @@
+</a>         nop
+ putchar:
+         mov     r1, {{ .Params.mem }}:[r0]
+<a href="#h1-0-3" id="h1-0-3" class="d">-        jz      r1, end
+</a>         mov     {{ .Params.out }}:[r2], r1
+         inc     r0
+         inc     r2
+         inc     r4
+<a href="#h1-0-8" id="h1-0-8" class="i">+        jz      r1, end
+</a>         j putchar
+ end:
+         nop
+<b>diff --git a/<a id="h2" href="../file/library/fragments/readline.basm.html">library/fragments/readline.basm</a> b/<a href="../file/library/fragments/readline.basm.html">library/fragments/readline.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,14 +5,14 @@
+</a> 	rsets8	r3, 13
+ getchar:
+ 	i2rw	r1, {{ .Params.kbd }}
+<a href="#h2-0-3" id="h2-0-3" class="d">-	cmpr	r1, r3
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	jcmp	end
+</a>         mov     {{ .Params.out }}:[r2], r1
+ 	mov	ram:[r0], r1
+ 	mov	{{ .Params.feedout }}:[{{ .Params.feedreg }}], r1
+ 	inc	{{ .Params.feedreg }}
+         inc     r0
+         inc     r2
+<a href="#h2-0-11" id="h2-0-11" class="i">+	cmpr	r1, r3
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	jcmp	end
+</a>         j getchar
+ end:
+ 	mov	r1, 0
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -480,6 +480,17 @@ outer:
+</a> 
+ 	myArch.Op = opCodes
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	threads := 0
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	if cp.GetMeta(&quot;threaded&quot;) != &quot;&quot; {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+		if value, err := strconv.Atoi(cp.GetMeta(&quot;threaded&quot;)); err == nil {
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+			threads = value
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+		} else {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+			return nil, err
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+		}
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	myArch.Threaded = threads
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a> 	// TODO: check how it is used and if it is needed, eventually remove or substitute with the merge of the two lists
+ 	bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romCode, &quot;/bm:cps/id:&quot;+strconv.Itoa(procid))
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/bmbuilder/generator_maxpool.go.html">pkg/bmbuilder/generator_maxpool.go</a> b/<a href="../file/pkg/bmbuilder/generator_maxpool.go.html">pkg/bmbuilder/generator_maxpool.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -9,6 +9,9 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+ )
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+// Needed: avg, max,
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+// Data type
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+
+</a> func MaxPoolGenerator(b *BMBuilder, e *bmline.BasmElement, l *bmline.BasmLine) (*bondmachine.Bondmachine, error) {
+ 	// Pay attention to the following: This code works only if the Generator function is called on a sequential block
+ 	// TODO Include here a check and error if the Generator function is called outside a sequential block
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bcof&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmstack&quot;
+</a> )
+ 
+ const (
+<a href="#h5-1" id="h5-1" class="h">@@ -17,12 +18,13 @@ const (
+</a> 
+ // The CPU
+ type Conproc struct {
+<a href="#h5-1-3" id="h5-1-3" class="d">-	CpID  uint32
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-	Rsize uint8
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-	R     uint8 // Number of n-bit registers
+</a><a href="#h5-1-6" id="h5-1-6" class="d">-	N     uint8 // Number of n-bit inputs
+</a><a href="#h5-1-7" id="h5-1-7" class="d">-	M     uint8 // Number of n-bit outputs
+</a><a href="#h5-1-8" id="h5-1-8" class="d">-	Op    []Opcode
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+	CpID     uint32
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+	Rsize    uint8
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+	R        uint8 // Number of n-bit registers
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+	N        uint8 // Number of n-bit inputs
+</a><a href="#h5-1-13" id="h5-1-13" class="i">+	M        uint8 // Number of n-bit outputs
+</a><a href="#h5-1-14" id="h5-1-14" class="i">+	Op       []Opcode
+</a><a href="#h5-1-15" id="h5-1-15" class="i">+	Threaded int
+</a> }
+ 
+ type Config struct {
+<a href="#h5-2" id="h5-2" class="h">@@ -115,7 +117,7 @@ func (proc *Conproc) Write_opcodes_verilog() string {
+</a> 	opbits := proc.Opcodes_bits()
+ 
+ 	result := &quot;&quot;
+<a href="#h5-2-3" id="h5-2-3" class="d">-	result += &quot;			// Opcodes in the istructions, lenght accourding the number of the selected.\n&quot;
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+	result += &quot;			// Opcodes in the instructions, length according the number of the selected.\n&quot;
+</a> 
+ 	for i, op := range proc.Op {
+ 		if i == 0 {
+<a href="#h5-3" id="h5-3" class="h">@@ -134,6 +136,95 @@ func (proc *Conproc) Write_opcodes_verilog() string {
+</a> 	result += &quot;\n&quot;
+ 	return result
+ }
+<a href="#h5-3-3" id="h5-3-3" class="i">+func ThreadInstructionStart(conf *Config, arch *Arch, tabs int) string {
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+	result := &quot;&quot;
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+	tabS := &quot;&quot;
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+	for i := 0; i &lt; tabs; i++ {
+</a><a href="#h5-3-7" id="h5-3-7" class="i">+		tabS += &quot;\t&quot;
+</a><a href="#h5-3-8" id="h5-3-8" class="i">+	}
+</a><a href="#h5-3-9" id="h5-3-9" class="i">+	switch arch.Modes[0] {
+</a><a href="#h5-3-10" id="h5-3-10" class="i">+	case &quot;ha&quot;:
+</a><a href="#h5-3-11" id="h5-3-11" class="i">+		if arch.Threaded &gt; 0 {
+</a><a href="#h5-3-12" id="h5-3-12" class="i">+			regNum := 1 &lt;&lt; arch.R
+</a><a href="#h5-3-13" id="h5-3-13" class="i">+			threadStack := &quot;threadStack&quot; + strconv.Itoa(arch.Threaded)
+</a><a href="#h5-3-14" id="h5-3-14" class="i">+			sm := threadStack + &quot;SM&quot;
+</a><a href="#h5-3-15" id="h5-3-15" class="i">+			result += tabS + &quot;if (nicecount == 8&#39;b0) begin\n&quot;
+</a><a href="#h5-3-16" id="h5-3-16" class="i">+			result += tabS + &quot;\tcase (&quot; + sm + &quot;)\n&quot;
+</a><a href="#h5-3-17" id="h5-3-17" class="i">+			result += tabS + &quot;\tCTXEXE: begin\n&quot;
+</a><a href="#h5-3-18" id="h5-3-18" class="i">+			result += tabS + &quot;\t\t&quot; + sm + &quot; &lt;= CTXSEND;\n&quot;
+</a><a href="#h5-3-19" id="h5-3-19" class="i">+			result += tabS + &quot;\t\tprovpc &lt;= _pc;\n&quot;
+</a><a href="#h5-3-20" id="h5-3-20" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-21" id="h5-3-21" class="i">+			result += tabS + &quot;\tCTXSEND: begin\n&quot;
+</a><a href="#h5-3-22" id="h5-3-22" class="i">+			// result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;empty) begin\n&quot;
+</a><a href="#h5-3-23" id="h5-3-23" class="i">+			// result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXEXE;\n&quot;
+</a><a href="#h5-3-24" id="h5-3-24" class="i">+			// result += tabS + &quot;\t\t\tnicecount &lt;= nice;\n&quot;
+</a><a href="#h5-3-25" id="h5-3-25" class="i">+			// result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-26" id="h5-3-26" class="i">+			// result += tabS + &quot;\t\telse begin\n&quot;
+</a><a href="#h5-3-27" id="h5-3-27" class="i">+			result += tabS + &quot;\t\t\tif (!&quot; + threadStack + &quot;senderAck) begin\n&quot;
+</a><a href="#h5-3-28" id="h5-3-28" class="i">+			regList := &quot;&quot;
+</a><a href="#h5-3-29" id="h5-3-29" class="i">+			for i := 0; i &lt; regNum; i++ {
+</a><a href="#h5-3-30" id="h5-3-30" class="i">+				regList += &quot;_&quot; + strings.ToLower(Get_register_name(i)) + &quot;, &quot;
+</a><a href="#h5-3-31" id="h5-3-31" class="i">+			}
+</a><a href="#h5-3-32" id="h5-3-32" class="i">+			result += tabS + &quot;\t\t\t\t&quot; + threadStack + &quot;senderData &lt;= {ThreadID, 1&#39;b0, provpc, &quot; + regList + &quot;nice};\n&quot;
+</a><a href="#h5-3-33" id="h5-3-33" class="i">+			result += tabS + &quot;\t\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h5-3-34" id="h5-3-34" class="i">+			result += tabS + &quot;\t\t\t\t&quot; + sm + &quot; &lt;= CTXWSEND;\n&quot;
+</a><a href="#h5-3-35" id="h5-3-35" class="i">+			// result += tabS + &quot;\t\t\tend\n&quot;
+</a><a href="#h5-3-36" id="h5-3-36" class="i">+			result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-37" id="h5-3-37" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-38" id="h5-3-38" class="i">+			result += tabS + &quot;\tCTXWSEND: begin\n&quot;
+</a><a href="#h5-3-39" id="h5-3-39" class="i">+			result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;senderAck) begin\n&quot;
+</a><a href="#h5-3-40" id="h5-3-40" class="i">+			result += tabS + &quot;\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h5-3-41" id="h5-3-41" class="i">+			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXREQNEW;\n&quot;
+</a><a href="#h5-3-42" id="h5-3-42" class="i">+			result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-43" id="h5-3-43" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-44" id="h5-3-44" class="i">+			result += tabS + &quot;\tCTXREQNEW: begin\n&quot;
+</a><a href="#h5-3-45" id="h5-3-45" class="i">+			result += tabS + &quot;\t\t&quot; + threadStack + &quot;receiverRead &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h5-3-46" id="h5-3-46" class="i">+			result += tabS + &quot;\t\t&quot; + sm + &quot; &lt;= CTXNEW;\n&quot;
+</a><a href="#h5-3-47" id="h5-3-47" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-48" id="h5-3-48" class="i">+			result += tabS + &quot;\tCTXNEW: begin\n&quot;
+</a><a href="#h5-3-49" id="h5-3-49" class="i">+			result += tabS + &quot;\t\tif (&quot; + threadStack + &quot;receiverAck &amp;&amp; &quot; + threadStack + &quot;receiverRead) begin\n&quot;
+</a><a href="#h5-3-50" id="h5-3-50" class="i">+			result += tabS + &quot;\t\t\t&quot; + threadStack + &quot;receiverRead &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h5-3-51" id="h5-3-51" class="i">+			result += tabS + &quot;\t\t\t{ThreadID, dummy_source, provpc, &quot; + regList + &quot;nice} &lt;= &quot; + threadStack + &quot;receiverData;\n&quot;
+</a><a href="#h5-3-52" id="h5-3-52" class="i">+			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXCHKNICE;\n&quot;
+</a><a href="#h5-3-53" id="h5-3-53" class="i">+			result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-54" id="h5-3-54" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-55" id="h5-3-55" class="i">+			result += tabS + &quot;\tCTXCHKNICE: begin\n&quot;
+</a><a href="#h5-3-56" id="h5-3-56" class="i">+			result += tabS + &quot;\t\tif (nice == 8&#39;b0) begin\n&quot;
+</a><a href="#h5-3-57" id="h5-3-57" class="i">+			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXSEND;\n&quot;
+</a><a href="#h5-3-58" id="h5-3-58" class="i">+			result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-59" id="h5-3-59" class="i">+			result += tabS + &quot;\t\telse begin\n&quot;
+</a><a href="#h5-3-60" id="h5-3-60" class="i">+			result += tabS + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXEXE;\n&quot;
+</a><a href="#h5-3-61" id="h5-3-61" class="i">+			result += tabS + &quot;\t\t\tnicecount &lt;= nice;\n&quot;
+</a><a href="#h5-3-62" id="h5-3-62" class="i">+			result += tabS + &quot;\t\t\t_pc &lt;= provpc;\n&quot;
+</a><a href="#h5-3-63" id="h5-3-63" class="i">+			result += tabS + &quot;\t\tend\n&quot;
+</a><a href="#h5-3-64" id="h5-3-64" class="i">+			result += tabS + &quot;\tend\n&quot;
+</a><a href="#h5-3-65" id="h5-3-65" class="i">+			result += tabS + &quot;\tendcase\n&quot;
+</a><a href="#h5-3-66" id="h5-3-66" class="i">+			result += tabS + &quot;end\n&quot;
+</a><a href="#h5-3-67" id="h5-3-67" class="i">+			result += tabS + &quot;else begin\n&quot;
+</a><a href="#h5-3-68" id="h5-3-68" class="i">+			result += tabS + &quot;\tnicecount &lt;= nicecount - 1;\n&quot;
+</a><a href="#h5-3-69" id="h5-3-69" class="i">+		}
+</a><a href="#h5-3-70" id="h5-3-70" class="i">+	case &quot;hy&quot;:
+</a><a href="#h5-3-71" id="h5-3-71" class="i">+	case &quot;vn&quot;:
+</a><a href="#h5-3-72" id="h5-3-72" class="i">+	}
+</a><a href="#h5-3-73" id="h5-3-73" class="i">+	return result
+</a><a href="#h5-3-74" id="h5-3-74" class="i">+}
+</a><a href="#h5-3-75" id="h5-3-75" class="i">+
+</a><a href="#h5-3-76" id="h5-3-76" class="i">+func ThreadInstructionEnd(conf *Config, arch *Arch, tabs int) string {
+</a><a href="#h5-3-77" id="h5-3-77" class="i">+	result := &quot;&quot;
+</a><a href="#h5-3-78" id="h5-3-78" class="i">+	tabS := &quot;&quot;
+</a><a href="#h5-3-79" id="h5-3-79" class="i">+	for i := 0; i &lt; tabs; i++ {
+</a><a href="#h5-3-80" id="h5-3-80" class="i">+		tabS += &quot;\t&quot;
+</a><a href="#h5-3-81" id="h5-3-81" class="i">+	}
+</a><a href="#h5-3-82" id="h5-3-82" class="i">+	switch arch.Modes[0] {
+</a><a href="#h5-3-83" id="h5-3-83" class="i">+	case &quot;ha&quot;:
+</a><a href="#h5-3-84" id="h5-3-84" class="i">+		if arch.Threaded &gt; 0 {
+</a><a href="#h5-3-85" id="h5-3-85" class="i">+			result += tabS + &quot;end\n&quot;
+</a><a href="#h5-3-86" id="h5-3-86" class="i">+		}
+</a><a href="#h5-3-87" id="h5-3-87" class="i">+	case &quot;hy&quot;:
+</a><a href="#h5-3-88" id="h5-3-88" class="i">+	case &quot;vn&quot;:
+</a><a href="#h5-3-89" id="h5-3-89" class="i">+	}
+</a><a href="#h5-3-90" id="h5-3-90" class="i">+	return result
+</a><a href="#h5-3-91" id="h5-3-91" class="i">+}
+</a> 
+ func NextInstruction(conf *Config, arch *Arch, tabs int, jumpTo string) string {
+ 	result := &quot;&quot;
+<a href="#h5-4" id="h5-4" class="h">@@ -368,6 +459,105 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	(* KEEP = \&quot;TRUE\&quot; *) reg [&quot; + strconv.Itoa(regsize-1) + &quot;:0] _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+ 	}
+ 
+<a href="#h5-4-3" id="h5-4-3" class="i">+	// Multithreading
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+	if proc.Threaded &gt; 0 {
+</a><a href="#h5-4-5" id="h5-4-5" class="i">+
+</a><a href="#h5-4-6" id="h5-4-6" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-7" id="h5-4-7" class="i">+		result += &quot;	// Threaded processor\n&quot;
+</a><a href="#h5-4-8" id="h5-4-8" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-9" id="h5-4-9" class="i">+
+</a><a href="#h5-4-10" id="h5-4-10" class="i">+		pcBits := 0
+</a><a href="#h5-4-11" id="h5-4-11" class="i">+		sourceBit := 0
+</a><a href="#h5-4-12" id="h5-4-12" class="i">+		switch arch.Modes[0] {
+</a><a href="#h5-4-13" id="h5-4-13" class="i">+		case &quot;ha&quot;:
+</a><a href="#h5-4-14" id="h5-4-14" class="i">+			pcBits = int(arch.O)
+</a><a href="#h5-4-15" id="h5-4-15" class="i">+			sourceBit = 0
+</a><a href="#h5-4-16" id="h5-4-16" class="i">+		case &quot;hy&quot;:
+</a><a href="#h5-4-17" id="h5-4-17" class="i">+			if arch.L &gt; arch.O {
+</a><a href="#h5-4-18" id="h5-4-18" class="i">+				pcBits = int(arch.L)
+</a><a href="#h5-4-19" id="h5-4-19" class="i">+			} else {
+</a><a href="#h5-4-20" id="h5-4-20" class="i">+				pcBits = int(arch.O)
+</a><a href="#h5-4-21" id="h5-4-21" class="i">+			}
+</a><a href="#h5-4-22" id="h5-4-22" class="i">+			sourceBit = 1
+</a><a href="#h5-4-23" id="h5-4-23" class="i">+		case &quot;vn&quot;:
+</a><a href="#h5-4-24" id="h5-4-24" class="i">+			pcBits = int(arch.L)
+</a><a href="#h5-4-25" id="h5-4-25" class="i">+			sourceBit = 1
+</a><a href="#h5-4-26" id="h5-4-26" class="i">+		}
+</a><a href="#h5-4-27" id="h5-4-27" class="i">+
+</a><a href="#h5-4-28" id="h5-4-28" class="i">+		depth := strconv.Itoa(proc.Threaded)
+</a><a href="#h5-4-29" id="h5-4-29" class="i">+		thIDBits := Needed_bits(proc.Threaded)
+</a><a href="#h5-4-30" id="h5-4-30" class="i">+		regNum := 1 &lt;&lt; proc.R
+</a><a href="#h5-4-31" id="h5-4-31" class="i">+		regBits := regNum * regsize
+</a><a href="#h5-4-32" id="h5-4-32" class="i">+
+</a><a href="#h5-4-33" id="h5-4-33" class="i">+		// threadStack is the name of the thread stack TODO
+</a><a href="#h5-4-34" id="h5-4-34" class="i">+		threadStack := &quot;threadStack&quot; + depth
+</a><a href="#h5-4-35" id="h5-4-35" class="i">+		// datasize is:
+</a><a href="#h5-4-36" id="h5-4-36" class="i">+		// - the bits to store the thread id
+</a><a href="#h5-4-37" id="h5-4-37" class="i">+		// - the bits to store the code source
+</a><a href="#h5-4-38" id="h5-4-38" class="i">+		// - the bits to store the PC
+</a><a href="#h5-4-39" id="h5-4-39" class="i">+		// - the bits to store the registers
+</a><a href="#h5-4-40" id="h5-4-40" class="i">+		// - the bits to store the nice (8 bits)
+</a><a href="#h5-4-41" id="h5-4-41" class="i">+
+</a><a href="#h5-4-42" id="h5-4-42" class="i">+		result += &quot;\treg[&quot; + strconv.Itoa(thIDBits-1) + &quot;:0] ThreadID;\n&quot;
+</a><a href="#h5-4-43" id="h5-4-43" class="i">+		result += &quot;\treg[7:0] nice;\n&quot;
+</a><a href="#h5-4-44" id="h5-4-44" class="i">+		result += &quot;\treg[7:0] nicecount;\n&quot;
+</a><a href="#h5-4-45" id="h5-4-45" class="i">+		result += &quot;\treg dummy_source;\n&quot;
+</a><a href="#h5-4-46" id="h5-4-46" class="i">+		result += &quot;\treg[&quot; + strconv.Itoa(pcBits-1) + &quot;:0] provpc;\n&quot;
+</a><a href="#h5-4-47" id="h5-4-47" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-48" id="h5-4-48" class="i">+		dataSize := thIDBits + sourceBit + pcBits + regBits + 8
+</a><a href="#h5-4-49" id="h5-4-49" class="i">+		result += &quot;	reg [2:0] &quot; + threadStack + &quot;SM;\n&quot;
+</a><a href="#h5-4-50" id="h5-4-50" class="i">+		result += &quot;	localparam	CTXSEND = 3&#39;b000,\n&quot; // Context switch send the current thread to the stack
+</a><a href="#h5-4-51" id="h5-4-51" class="i">+		result += &quot;			CTXWSEND = 3&#39;b001,\n&quot;         // Wait for the stack to send the current thread
+</a><a href="#h5-4-52" id="h5-4-52" class="i">+		result += &quot;			CTXREQNEW = 3&#39;b010,\n&quot;        // Request a new thread from the stack
+</a><a href="#h5-4-53" id="h5-4-53" class="i">+		result += &quot;			CTXNEW = 3&#39;b011,\n&quot;           // New thread from the stack received
+</a><a href="#h5-4-54" id="h5-4-54" class="i">+		result += &quot;			CTXCHKNICE = 3&#39;b100,\n&quot;       // Check if the nice is 0
+</a><a href="#h5-4-55" id="h5-4-55" class="i">+		result += &quot;			CTXEXE = 3&#39;b101;\n&quot;           // Execute the thread
+</a><a href="#h5-4-56" id="h5-4-56" class="i">+
+</a><a href="#h5-4-57" id="h5-4-57" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-58" id="h5-4-58" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + threadStack + &quot;senderData;\n&quot;
+</a><a href="#h5-4-59" id="h5-4-59" class="i">+		result += &quot;\treg &quot; + threadStack + &quot;senderWrite;\n&quot;
+</a><a href="#h5-4-60" id="h5-4-60" class="i">+		result += &quot;\twire &quot; + threadStack + &quot;senderAck;\n&quot;
+</a><a href="#h5-4-61" id="h5-4-61" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-62" id="h5-4-62" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + threadStack + &quot;receiverData;\n&quot;
+</a><a href="#h5-4-63" id="h5-4-63" class="i">+		result += &quot;\treg &quot; + threadStack + &quot;receiverRead;\n&quot;
+</a><a href="#h5-4-64" id="h5-4-64" class="i">+		result += &quot;\twire &quot; + threadStack + &quot;receiverAck;\n&quot;
+</a><a href="#h5-4-65" id="h5-4-65" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-66" id="h5-4-66" class="i">+		result += &quot;\twire &quot; + threadStack + &quot;empty;\n&quot;
+</a><a href="#h5-4-67" id="h5-4-67" class="i">+		result += &quot;\twire &quot; + threadStack + &quot;full;\n&quot;
+</a><a href="#h5-4-68" id="h5-4-68" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-69" id="h5-4-69" class="i">+		result += &quot;\t&quot; + threadStack + &quot; &quot; + threadStack + &quot;_inst (\n&quot;
+</a><a href="#h5-4-70" id="h5-4-70" class="i">+		result += &quot;\t\t.clk(clock_signal),\n&quot;
+</a><a href="#h5-4-71" id="h5-4-71" class="i">+		result += &quot;\t\t.reset(reset_signal),\n&quot;
+</a><a href="#h5-4-72" id="h5-4-72" class="i">+		result += &quot;\t\t.senderData(&quot; + threadStack + &quot;senderData),\n&quot;
+</a><a href="#h5-4-73" id="h5-4-73" class="i">+		result += &quot;\t\t.senderWrite(&quot; + threadStack + &quot;senderWrite),\n&quot;
+</a><a href="#h5-4-74" id="h5-4-74" class="i">+		result += &quot;\t\t.senderAck(&quot; + threadStack + &quot;senderAck),\n&quot;
+</a><a href="#h5-4-75" id="h5-4-75" class="i">+		result += &quot;\t\t.receiverData(&quot; + threadStack + &quot;receiverData),\n&quot;
+</a><a href="#h5-4-76" id="h5-4-76" class="i">+		result += &quot;\t\t.receiverRead(&quot; + threadStack + &quot;receiverRead),\n&quot;
+</a><a href="#h5-4-77" id="h5-4-77" class="i">+		result += &quot;\t\t.receiverAck(&quot; + threadStack + &quot;receiverAck),\n&quot;
+</a><a href="#h5-4-78" id="h5-4-78" class="i">+		result += &quot;\t\t.empty(&quot; + threadStack + &quot;empty),\n&quot;
+</a><a href="#h5-4-79" id="h5-4-79" class="i">+		result += &quot;\t\t.full(&quot; + threadStack + &quot;full)\n&quot;
+</a><a href="#h5-4-80" id="h5-4-80" class="i">+		result += &quot;\t);\n&quot;
+</a><a href="#h5-4-81" id="h5-4-81" class="i">+		result += &quot;\n&quot;
+</a><a href="#h5-4-82" id="h5-4-82" class="i">+		result += &quot;initial begin\n&quot;
+</a><a href="#h5-4-83" id="h5-4-83" class="i">+		result += &quot;	&quot; + threadStack + &quot;SM &lt;= CTXEXE;\n&quot;
+</a><a href="#h5-4-84" id="h5-4-84" class="i">+		result += &quot;\tnice &lt;= 8&#39;b00000100;\n&quot;
+</a><a href="#h5-4-85" id="h5-4-85" class="i">+		result += &quot;\tnicecount &lt;= 8&#39;b00000100;\n&quot;
+</a><a href="#h5-4-86" id="h5-4-86" class="i">+		result += &quot;end\n&quot;
+</a><a href="#h5-4-87" id="h5-4-87" class="i">+
+</a><a href="#h5-4-88" id="h5-4-88" class="i">+		s := bmstack.CreateBasicStack()
+</a><a href="#h5-4-89" id="h5-4-89" class="i">+		s.ModuleName = threadStack
+</a><a href="#h5-4-90" id="h5-4-90" class="i">+		s.DataSize = dataSize
+</a><a href="#h5-4-91" id="h5-4-91" class="i">+		s.Depth = proc.Threaded
+</a><a href="#h5-4-92" id="h5-4-92" class="i">+		s.MemType = &quot;FIFO&quot;
+</a><a href="#h5-4-93" id="h5-4-93" class="i">+		s.Senders = []string{&quot;sender&quot;}
+</a><a href="#h5-4-94" id="h5-4-94" class="i">+		s.Receivers = []string{&quot;receiver&quot;}
+</a><a href="#h5-4-95" id="h5-4-95" class="i">+
+</a><a href="#h5-4-96" id="h5-4-96" class="i">+		f, _ := os.Create(threadStack + &quot;stack.v&quot;)
+</a><a href="#h5-4-97" id="h5-4-97" class="i">+		r, _ := s.WriteHDL()
+</a><a href="#h5-4-98" id="h5-4-98" class="i">+		f.WriteString(r)
+</a><a href="#h5-4-99" id="h5-4-99" class="i">+		f.Close()
+</a><a href="#h5-4-100" id="h5-4-100" class="i">+	}
+</a><a href="#h5-4-101" id="h5-4-101" class="i">+
+</a> 	// modes handling
+ 	switch arch.Modes[0] {
+ 	case &quot;ha&quot;:
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -25,6 +25,7 @@ type Machine_json struct {
+</a> 	Op                 []string
+ 	Slocs              []string
+ 	Vars               []string
+<a href="#h6-0-3" id="h6-0-3" class="i">+	Threaded           int
+</a> }
+ 
+ var Allopcodes []Opcode
+<a href="#h6-1" id="h6-1" class="h">@@ -127,6 +128,7 @@ func init() {
+</a> 	Allopcodes = append(Allopcodes, Sbc{})
+ 	Allopcodes = append(Allopcodes, Sub{})
+ 	Allopcodes = append(Allopcodes, T2r{})
+<a href="#h6-1-3" id="h6-1-3" class="i">+	Allopcodes = append(Allopcodes, Tsp{})
+</a> 	Allopcodes = append(Allopcodes, U2r{})
+ 	Allopcodes = append(Allopcodes, Wrd{})
+ 	Allopcodes = append(Allopcodes, Wwr{})
+<a href="#h6-2" id="h6-2" class="h">@@ -192,6 +194,7 @@ func (mach *Machine) Jsoner() *Machine_json {
+</a> 	for i, val := range mach.Op {
+ 		result.Op[i] = val.Op_get_name()
+ 	}
+<a href="#h6-2-3" id="h6-2-3" class="i">+	result.Threaded = mach.Threaded
+</a> 	return result
+ }
+ 
+<a href="#h6-3" id="h6-3" class="h">@@ -228,6 +231,7 @@ func (machj *Machine_json) Dejsoner() *Machine {
+</a> 			}
+ 		}
+ 	}
+<a href="#h6-3-3" id="h6-3-3" class="i">+	result.Threaded = machj.Threaded
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -52,15 +52,19 @@ func (Op Inc) Op_instruction_verilog_default_state(arch *Arch, flavor string) st
+</a> func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+ 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+<a href="#h7-0-3" id="h7-0-3" class="d">-
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	tabsNum := 5
+</a> 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	result := &quot;&quot;
+<a href="#h7-0-8" id="h7-0-8" class="d">-	result += &quot;					INC: begin\n&quot;
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+	result += tabs(tabsNum) + &quot;INC: begin\n&quot;
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+	if th := ThreadInstructionStart(conf, arch, tabsNum+1); th != &quot;&quot; {
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+		result += th
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+		tabsNum++
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+	}
+</a> 	if arch.R == 1 {
+<a href="#h7-0-15" id="h7-0-15" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h7-0-18" id="h7-0-18" class="d">-		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+</a> 	}
+ 	for i := 0; i &lt; reg_num; i++ {
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -71,14 +75,18 @@ func (op Inc) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg 
+</a> 				continue
+ 			}
+ 		}
+<a href="#h7-1-3" id="h7-1-3" class="d">-		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-		result += &quot;							_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot; + 1&#39;b1;\n&quot;
+</a><a href="#h7-1-5" id="h7-1-5" class="d">-		result += &quot;							$display(\&quot;INC &quot; + strings.ToUpper(Get_register_name(i)) + &quot;\&quot;);\n&quot;
+</a><a href="#h7-1-6" id="h7-1-6" class="d">-		result += &quot;						end\n&quot;
+</a><a href="#h7-1-7" id="h7-1-7" class="i">+		result += tabs(tabsNum+1) + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h7-1-8" id="h7-1-8" class="i">+		result += tabs(tabsNum+2) + &quot;_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot; + 1&#39;b1;\n&quot;
+</a><a href="#h7-1-9" id="h7-1-9" class="i">+		result += tabs(tabsNum+2) + &quot;$display(\&quot;INC &quot; + strings.ToUpper(Get_register_name(i)) + &quot;\&quot;);\n&quot;
+</a><a href="#h7-1-10" id="h7-1-10" class="i">+		result += tabs(tabsNum+1) + &quot;end\n&quot;
+</a><a href="#h7-1-11" id="h7-1-11" class="i">+	}
+</a><a href="#h7-1-12" id="h7-1-12" class="i">+	result += tabs(tabsNum+1) + &quot;endcase\n&quot;
+</a><a href="#h7-1-13" id="h7-1-13" class="i">+	result += NextInstruction(conf, arch, tabsNum+1, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h7-1-14" id="h7-1-14" class="i">+	if th := ThreadInstructionEnd(conf, arch, tabsNum); th != &quot;&quot; {
+</a><a href="#h7-1-15" id="h7-1-15" class="i">+		result += th
+</a><a href="#h7-1-16" id="h7-1-16" class="i">+		tabsNum--
+</a> 	}
+<a href="#h7-1-18" id="h7-1-18" class="d">-	result += &quot;						endcase\n&quot;
+</a><a href="#h7-1-19" id="h7-1-19" class="d">-	result += NextInstruction(conf, arch, 6, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h7-1-20" id="h7-1-20" class="d">-	result += &quot;					end\n&quot;
+</a><a href="#h7-1-21" id="h7-1-21" class="i">+	result += tabs(tabsNum) + &quot;end\n&quot;
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a> b/<a href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -2,6 +2,7 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;errors&quot;
+<a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;fmt&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h8-1" id="h8-1" class="h">@@ -23,6 +24,7 @@ func (op R2v) Op_get_desc() string {
+</a> 
+ func (op R2v) Op_show_assembler(arch *Arch) string {
+ 	opbits := arch.Opcodes_bits()
+<a href="#h8-1-3" id="h8-1-3" class="i">+	fmt.Println(arch.Shared_constraints)
+</a> 	result := &quot;r2v [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [ 8 (RAM address)]	// &quot; + op.Op_get_desc() + &quot; [&quot; + strconv.Itoa(opbits+int(arch.R)+8) + &quot;]\n&quot;
+ 	return result
+ }
+<a href="#h8-2" id="h8-2" class="h">@@ -82,6 +84,22 @@ func (op R2v) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h8-2-3" id="h8-2-3" class="i">+	boxes := soLists(&quot;vtextmem&quot;, arch.Shared_constraints, 5)
+</a><a href="#h8-2-4" id="h8-2-4" class="i">+	vtmBits := 8
+</a><a href="#h8-2-5" id="h8-2-5" class="i">+	vtmBitsS := &quot;7&quot;
+</a><a href="#h8-2-6" id="h8-2-6" class="i">+
+</a><a href="#h8-2-7" id="h8-2-7" class="i">+loop:
+</a><a href="#h8-2-8" id="h8-2-8" class="i">+	for _, box := range boxes {
+</a><a href="#h8-2-9" id="h8-2-9" class="i">+		if box[0] == arch.Tag {
+</a><a href="#h8-2-10" id="h8-2-10" class="i">+			memWidth, _ := strconv.Atoi(box[3])
+</a><a href="#h8-2-11" id="h8-2-11" class="i">+			memHeight, _ := strconv.Atoi(box[4])
+</a><a href="#h8-2-12" id="h8-2-12" class="i">+			memDepth := memWidth * memHeight
+</a><a href="#h8-2-13" id="h8-2-13" class="i">+			vtmBits = Needed_bits(memDepth)
+</a><a href="#h8-2-14" id="h8-2-14" class="i">+			vtmBitsS = strconv.Itoa(vtmBits - 1)
+</a><a href="#h8-2-15" id="h8-2-15" class="i">+			break loop
+</a><a href="#h8-2-16" id="h8-2-16" class="i">+		}
+</a><a href="#h8-2-17" id="h8-2-17" class="i">+	}
+</a><a href="#h8-2-18" id="h8-2-18" class="i">+
+</a> 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	// This is always the first module if present
+<a href="#h8-3" id="h8-3" class="h">@@ -126,7 +144,7 @@ func (op R2v) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 	for i := 0; i &lt; reg_num; i++ {
+ 		result += &quot;				&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+ 		result += &quot;					vtm0_wren_i &lt;= 1&#39;b1;\n&quot;
+<a href="#h8-3-3" id="h8-3-3" class="d">-		result += &quot;					vtm0_addr_i[7:0] &lt;= current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-8) + &quot;];\n&quot;
+</a><a href="#h8-3-4" id="h8-3-4" class="i">+		result += &quot;					vtm0_addr_i[&quot; + vtmBitsS + &quot;:0] &lt;= current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-vtmBits) + &quot;];\n&quot;
+</a> 		result += &quot;					vtm0_din_i[7:0] &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[7:0];\n&quot;
+ 		result += &quot;					$display(\&quot;R2V &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 		result += &quot;				end\n&quot;
+<a href="#h8-4" id="h8-4" class="h">@@ -146,8 +164,19 @@ func (op R2v) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> func (op R2v) Assembler(arch *Arch, words []string) (string, error) {
+ 	opbits := arch.Opcodes_bits()
+ 	rom_word := arch.Max_word()
+<a href="#h8-4-3" id="h8-4-3" class="d">-	ramdepth := 8
+</a><a href="#h8-4-4" id="h8-4-4" class="d">-
+</a><a href="#h8-4-5" id="h8-4-5" class="i">+	ramDepth := 8
+</a><a href="#h8-4-6" id="h8-4-6" class="i">+	boxes := soLists(&quot;vtextmem&quot;, arch.Shared_constraints, 5)
+</a><a href="#h8-4-7" id="h8-4-7" class="i">+loop:
+</a><a href="#h8-4-8" id="h8-4-8" class="i">+	for _, box := range boxes {
+</a><a href="#h8-4-9" id="h8-4-9" class="i">+		if box[0] == arch.Tag {
+</a><a href="#h8-4-10" id="h8-4-10" class="i">+			memWidth, _ := strconv.Atoi(box[3])
+</a><a href="#h8-4-11" id="h8-4-11" class="i">+			memHeight, _ := strconv.Atoi(box[4])
+</a><a href="#h8-4-12" id="h8-4-12" class="i">+			memDepth := memWidth * memHeight
+</a><a href="#h8-4-13" id="h8-4-13" class="i">+			ramDepth = Needed_bits(memDepth)
+</a><a href="#h8-4-14" id="h8-4-14" class="i">+			break loop
+</a><a href="#h8-4-15" id="h8-4-15" class="i">+		}
+</a><a href="#h8-4-16" id="h8-4-16" class="i">+	}
+</a><a href="#h8-4-17" id="h8-4-17" class="i">+	// fmt.Println(&quot;ramDepth&quot;, ramDepth)
+</a> 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	if len(words) != 2 {
+<a href="#h8-5" id="h8-5" class="h">@@ -167,12 +196,12 @@ func (op R2v) Assembler(arch *Arch, words []string) (string, error) {
+</a> 	}
+ 
+ 	if partial, err := Process_number(words[1]); err == nil {
+<a href="#h8-5-3" id="h8-5-3" class="d">-		result += zeros_prefix(ramdepth, partial)
+</a><a href="#h8-5-4" id="h8-5-4" class="i">+		result += zeros_prefix(ramDepth, partial)
+</a> 	} else {
+ 		return &quot;&quot;, Prerror{err.Error()}
+ 	}
+ 
+<a href="#h8-5-9" id="h8-5-9" class="d">-	for i := opbits + int(arch.R) + ramdepth; i &lt; rom_word; i++ {
+</a><a href="#h8-5-10" id="h8-5-10" class="i">+	for i := opbits + int(arch.R) + ramDepth; i &lt; rom_word; i++ {
+</a> 		result += &quot;0&quot;
+ 	}
+ 
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a> b/<a href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -75,6 +75,22 @@ func (op R2vri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 	rom_word := arch.Max_word()
+ 	opbits := arch.Opcodes_bits()
+ 
+<a href="#h9-0-3" id="h9-0-3" class="i">+	boxes := soLists(&quot;vtextmem&quot;, arch.Shared_constraints, 5)
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	vtmBits := 8
+</a><a href="#h9-0-5" id="h9-0-5" class="i">+	vtmBitsS := &quot;7&quot;
+</a><a href="#h9-0-6" id="h9-0-6" class="i">+
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+loop:
+</a><a href="#h9-0-8" id="h9-0-8" class="i">+	for _, box := range boxes {
+</a><a href="#h9-0-9" id="h9-0-9" class="i">+		if box[0] == arch.Tag {
+</a><a href="#h9-0-10" id="h9-0-10" class="i">+			memWidth, _ := strconv.Atoi(box[3])
+</a><a href="#h9-0-11" id="h9-0-11" class="i">+			memHeight, _ := strconv.Atoi(box[4])
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+			memDepth := memWidth * memHeight
+</a><a href="#h9-0-13" id="h9-0-13" class="i">+			vtmBits = Needed_bits(memDepth)
+</a><a href="#h9-0-14" id="h9-0-14" class="i">+			vtmBitsS = strconv.Itoa(vtmBits - 1)
+</a><a href="#h9-0-15" id="h9-0-15" class="i">+			break loop
+</a><a href="#h9-0-16" id="h9-0-16" class="i">+		}
+</a><a href="#h9-0-17" id="h9-0-17" class="i">+	}
+</a><a href="#h9-0-18" id="h9-0-18" class="i">+
+</a> 	reg_num := 1 &lt;&lt; arch.R
+ 
+ 	// This is always the last module if present
+<a href="#h9-1" id="h9-1" class="h">@@ -118,7 +134,7 @@ func (op R2vri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 		for j := 0; j &lt; reg_num; j++ {
+ 			result += &quot;						&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+ 			result += &quot;							vtm0_wren_i &lt;= 1&#39;b1;\n&quot;
+<a href="#h9-1-3" id="h9-1-3" class="d">-			result += &quot;							vtm0_addr_i[7:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;[7:0];\n&quot;
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+			result += &quot;							vtm0_addr_i[&quot; + vtmBitsS + &quot;:0] &lt;= _&quot; + strings.ToLower(Get_register_name(j)) + &quot;[&quot; + vtmBitsS + &quot;:0];\n&quot;
+</a> 			result += &quot;							vtm0_din_i[7:0] &lt;= _&quot; + strings.ToLower(Get_register_name(i)) + &quot;[7:0];\n&quot;
+ 			result += &quot;							$display(\&quot;R2VRI &quot; + strings.ToUpper(Get_register_name(i)) + &quot; \&quot;,_&quot; + strings.ToLower(Get_register_name(i)) + &quot;);\n&quot;
+ 			result += &quot;						end\n&quot;
+<b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_tsp.go.html">pkg/procbuilder/op_tsp.go</a> b/<a href="../file/pkg/procbuilder/op_tsp.go.html">pkg/procbuilder/op_tsp.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -0,0 +1,294 @@
+</a><a href="#h10-0-0" id="h10-0-0" class="i">+package procbuilder
+</a><a href="#h10-0-1" id="h10-0-1" class="i">+
+</a><a href="#h10-0-2" id="h10-0-2" class="i">+// TODO This is the ROM, change it to halndle also the RAM case
+</a><a href="#h10-0-3" id="h10-0-3" class="i">+
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+import (
+</a><a href="#h10-0-5" id="h10-0-5" class="i">+	&quot;errors&quot;
+</a><a href="#h10-0-6" id="h10-0-6" class="i">+	&quot;math/rand&quot;
+</a><a href="#h10-0-7" id="h10-0-7" class="i">+	&quot;strconv&quot;
+</a><a href="#h10-0-8" id="h10-0-8" class="i">+	&quot;strings&quot;
+</a><a href="#h10-0-9" id="h10-0-9" class="i">+
+</a><a href="#h10-0-10" id="h10-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h10-0-11" id="h10-0-11" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a><a href="#h10-0-12" id="h10-0-12" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h10-0-13" id="h10-0-13" class="i">+)
+</a><a href="#h10-0-14" id="h10-0-14" class="i">+
+</a><a href="#h10-0-15" id="h10-0-15" class="i">+type Tsp struct{}
+</a><a href="#h10-0-16" id="h10-0-16" class="i">+
+</a><a href="#h10-0-17" id="h10-0-17" class="i">+func (op Tsp) Op_get_name() string {
+</a><a href="#h10-0-18" id="h10-0-18" class="i">+	return &quot;tsp&quot;
+</a><a href="#h10-0-19" id="h10-0-19" class="i">+}
+</a><a href="#h10-0-20" id="h10-0-20" class="i">+
+</a><a href="#h10-0-21" id="h10-0-21" class="i">+func (op Tsp) Op_get_desc() string {
+</a><a href="#h10-0-22" id="h10-0-22" class="i">+	return &quot;Start a thread at a specific location&quot;
+</a><a href="#h10-0-23" id="h10-0-23" class="i">+}
+</a><a href="#h10-0-24" id="h10-0-24" class="i">+
+</a><a href="#h10-0-25" id="h10-0-25" class="i">+func (op Tsp) Op_show_assembler(arch *Arch) string {
+</a><a href="#h10-0-26" id="h10-0-26" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h10-0-27" id="h10-0-27" class="i">+	result := &quot;&quot;
+</a><a href="#h10-0-28" id="h10-0-28" class="i">+	switch arch.Modes[0] {
+</a><a href="#h10-0-29" id="h10-0-29" class="i">+	case &quot;ha&quot;:
+</a><a href="#h10-0-30" id="h10-0-30" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)] [ 8 (nice)] 	// Start a thread at a specific location [&quot; + strconv.Itoa(opBits+int(arch.O)+8) + &quot;]\n&quot;
+</a><a href="#h10-0-31" id="h10-0-31" class="i">+	case &quot;vn&quot;:
+</a><a href="#h10-0-32" id="h10-0-32" class="i">+		result = &quot;j [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)] [ 8 (nice)] // Start a thread at a specific location [&quot; + strconv.Itoa(opBits+int(arch.L)+8) + &quot;]\n&quot;
+</a><a href="#h10-0-33" id="h10-0-33" class="i">+	case &quot;hy&quot;:
+</a><a href="#h10-0-34" id="h10-0-34" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h10-0-35" id="h10-0-35" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.O)) + &quot;(Location)] [ 8 (nice)]	// Start a thread at a specific location [&quot; + strconv.Itoa(opBits+int(arch.O)+8) + &quot;]\n&quot;
+</a><a href="#h10-0-36" id="h10-0-36" class="i">+		} else {
+</a><a href="#h10-0-37" id="h10-0-37" class="i">+			result = &quot;j [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.L)) + &quot;(Location)] [ 8 (nice)]	// Start a thread at a specific location [&quot; + strconv.Itoa(opBits+int(arch.L)+8) + &quot;]\n&quot;
+</a><a href="#h10-0-38" id="h10-0-38" class="i">+		}
+</a><a href="#h10-0-39" id="h10-0-39" class="i">+	}
+</a><a href="#h10-0-40" id="h10-0-40" class="i">+	return result
+</a><a href="#h10-0-41" id="h10-0-41" class="i">+}
+</a><a href="#h10-0-42" id="h10-0-42" class="i">+
+</a><a href="#h10-0-43" id="h10-0-43" class="i">+func (op Tsp) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h10-0-44" id="h10-0-44" class="i">+	opbits := arch.Opcodes_bits()
+</a><a href="#h10-0-45" id="h10-0-45" class="i">+	switch arch.Modes[0] {
+</a><a href="#h10-0-46" id="h10-0-46" class="i">+	case &quot;ha&quot;:
+</a><a href="#h10-0-47" id="h10-0-47" class="i">+		return opbits + int(arch.R) + int(arch.O) + 8 // The bits for the opcode + bits for the register + bits for a location + 8 bits for the nice
+</a><a href="#h10-0-48" id="h10-0-48" class="i">+	case &quot;vn&quot;:
+</a><a href="#h10-0-49" id="h10-0-49" class="i">+		return opbits + int(arch.R) + int(arch.L) + 8 // The bits for the opcode + bits for the register + bits for a location + 8 bits for the nice
+</a><a href="#h10-0-50" id="h10-0-50" class="i">+	case &quot;hy&quot;:
+</a><a href="#h10-0-51" id="h10-0-51" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h10-0-52" id="h10-0-52" class="i">+			return opbits + int(arch.R) + int(arch.O) + 8 // The bii for the opcode + bits for the register + bits for a location + 8 bits for the nice
+</a><a href="#h10-0-53" id="h10-0-53" class="i">+		} else {
+</a><a href="#h10-0-54" id="h10-0-54" class="i">+			return opbits + int(arch.R) + int(arch.L) + 8 // The bits for the opcode + bits for the register + bits for a location + 8 bits for the nice
+</a><a href="#h10-0-55" id="h10-0-55" class="i">+		}
+</a><a href="#h10-0-56" id="h10-0-56" class="i">+	}
+</a><a href="#h10-0-57" id="h10-0-57" class="i">+	return 0
+</a><a href="#h10-0-58" id="h10-0-58" class="i">+}
+</a><a href="#h10-0-59" id="h10-0-59" class="i">+
+</a><a href="#h10-0-60" id="h10-0-60" class="i">+func (op Tsp) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+</a><a href="#h10-0-61" id="h10-0-61" class="i">+	return &quot;&quot;
+</a><a href="#h10-0-62" id="h10-0-62" class="i">+}
+</a><a href="#h10-0-63" id="h10-0-63" class="i">+
+</a><a href="#h10-0-64" id="h10-0-64" class="i">+func (op Tsp) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h10-0-65" id="h10-0-65" class="i">+	return &quot;&quot;
+</a><a href="#h10-0-66" id="h10-0-66" class="i">+}
+</a><a href="#h10-0-67" id="h10-0-67" class="i">+
+</a><a href="#h10-0-68" id="h10-0-68" class="i">+func (op Tsp) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h10-0-69" id="h10-0-69" class="i">+	return &quot;&quot;
+</a><a href="#h10-0-70" id="h10-0-70" class="i">+}
+</a><a href="#h10-0-71" id="h10-0-71" class="i">+
+</a><a href="#h10-0-72" id="h10-0-72" class="i">+func (op Tsp) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h10-0-73" id="h10-0-73" class="i">+	return &quot;&quot;
+</a><a href="#h10-0-74" id="h10-0-74" class="i">+}
+</a><a href="#h10-0-75" id="h10-0-75" class="i">+
+</a><a href="#h10-0-76" id="h10-0-76" class="i">+func (op Tsp) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h10-0-77" id="h10-0-77" class="i">+
+</a><a href="#h10-0-78" id="h10-0-78" class="i">+	romWord := arch.Max_word()
+</a><a href="#h10-0-79" id="h10-0-79" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h10-0-80" id="h10-0-80" class="i">+	tabsNum := 5
+</a><a href="#h10-0-81" id="h10-0-81" class="i">+	regNum := 1 &lt;&lt; arch.R
+</a><a href="#h10-0-82" id="h10-0-82" class="i">+	locationBits := arch.O
+</a><a href="#h10-0-83" id="h10-0-83" class="i">+
+</a><a href="#h10-0-84" id="h10-0-84" class="i">+	threadStack := &quot;threadStack&quot; + strconv.Itoa(arch.Threaded)
+</a><a href="#h10-0-85" id="h10-0-85" class="i">+	sm := threadStack + &quot;SM&quot;
+</a><a href="#h10-0-86" id="h10-0-86" class="i">+
+</a><a href="#h10-0-87" id="h10-0-87" class="i">+	switch arch.Modes[0] {
+</a><a href="#h10-0-88" id="h10-0-88" class="i">+	case &quot;ha&quot;:
+</a><a href="#h10-0-89" id="h10-0-89" class="i">+		locationBits = arch.O
+</a><a href="#h10-0-90" id="h10-0-90" class="i">+	case &quot;vn&quot;:
+</a><a href="#h10-0-91" id="h10-0-91" class="i">+		locationBits = arch.L
+</a><a href="#h10-0-92" id="h10-0-92" class="i">+	case &quot;hy&quot;:
+</a><a href="#h10-0-93" id="h10-0-93" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h10-0-94" id="h10-0-94" class="i">+			locationBits = arch.O
+</a><a href="#h10-0-95" id="h10-0-95" class="i">+		} else {
+</a><a href="#h10-0-96" id="h10-0-96" class="i">+			locationBits = arch.L
+</a><a href="#h10-0-97" id="h10-0-97" class="i">+		}
+</a><a href="#h10-0-98" id="h10-0-98" class="i">+	}
+</a><a href="#h10-0-99" id="h10-0-99" class="i">+
+</a><a href="#h10-0-100" id="h10-0-100" class="i">+	result := &quot;&quot;
+</a><a href="#h10-0-101" id="h10-0-101" class="i">+	result += tabs(tabsNum) + &quot;TSP: begin\n&quot;
+</a><a href="#h10-0-102" id="h10-0-102" class="i">+	if arch.R == 1 {
+</a><a href="#h10-0-103" id="h10-0-103" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;])\n&quot;
+</a><a href="#h10-0-104" id="h10-0-104" class="i">+	} else {
+</a><a href="#h10-0-105" id="h10-0-105" class="i">+		result += tabs(tabsNum+1) + &quot;case (current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h10-0-106" id="h10-0-106" class="i">+	}
+</a><a href="#h10-0-107" id="h10-0-107" class="i">+	for i := 0; i &lt; regNum; i++ {
+</a><a href="#h10-0-108" id="h10-0-108" class="i">+
+</a><a href="#h10-0-109" id="h10-0-109" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h10-0-110" id="h10-0-110" class="i">+			cp := arch.Tag
+</a><a href="#h10-0-111" id="h10-0-111" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:tsp&quot;, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h10-0-112" id="h10-0-112" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h10-0-113" id="h10-0-113" class="i">+				continue
+</a><a href="#h10-0-114" id="h10-0-114" class="i">+			}
+</a><a href="#h10-0-115" id="h10-0-115" class="i">+		}
+</a><a href="#h10-0-116" id="h10-0-116" class="i">+
+</a><a href="#h10-0-117" id="h10-0-117" class="i">+		result += tabs(tabsNum+2) + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h10-0-118" id="h10-0-118" class="i">+
+</a><a href="#h10-0-119" id="h10-0-119" class="i">+		result += tabs(tabsNum+2) + &quot;\tcase (&quot; + sm + &quot;)\n&quot;
+</a><a href="#h10-0-120" id="h10-0-120" class="i">+		result += tabs(tabsNum+2) + &quot;\tCTXEXE: begin\n&quot;
+</a><a href="#h10-0-121" id="h10-0-121" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t&quot; + sm + &quot; &lt;= CTXSEND;\n&quot;
+</a><a href="#h10-0-122" id="h10-0-122" class="i">+		result += tabs(tabsNum+2) + &quot;\t\tprovpc &lt;= current_instruction[&quot; + strconv.Itoa(romWord-opBits-1-int(arch.R)) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(locationBits)-int(arch.R)) + &quot;];\n&quot;
+</a><a href="#h10-0-123" id="h10-0-123" class="i">+
+</a><a href="#h10-0-124" id="h10-0-124" class="i">+		result += tabs(tabsNum+2) + &quot;\tend\n&quot;
+</a><a href="#h10-0-125" id="h10-0-125" class="i">+		result += tabs(tabsNum+2) + &quot;\tCTXSEND: begin\n&quot;
+</a><a href="#h10-0-126" id="h10-0-126" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\tif (!&quot; + threadStack + &quot;senderAck) begin\n&quot;
+</a><a href="#h10-0-127" id="h10-0-127" class="i">+		regList := &quot;&quot;
+</a><a href="#h10-0-128" id="h10-0-128" class="i">+		for j := 0; j &lt; regNum; j++ {
+</a><a href="#h10-0-129" id="h10-0-129" class="i">+			regList += &quot;_&quot; + strings.ToLower(Get_register_name(j)) + &quot;, &quot;
+</a><a href="#h10-0-130" id="h10-0-130" class="i">+		}
+</a><a href="#h10-0-131" id="h10-0-131" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\t\t&quot; + threadStack + &quot;senderData &lt;= {ThreadID, 1&#39;b0, provpc, &quot; + regList + &quot;current_instruction[&quot; + strconv.Itoa(romWord-opBits-1-int(arch.R)-int(locationBits)) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(locationBits)-int(arch.R)-8) + &quot;]};\n&quot;
+</a><a href="#h10-0-132" id="h10-0-132" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b1;\n&quot;
+</a><a href="#h10-0-133" id="h10-0-133" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\t\t&quot; + sm + &quot; &lt;= CTXWSEND;\n&quot;
+</a><a href="#h10-0-134" id="h10-0-134" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\tend\n&quot;
+</a><a href="#h10-0-135" id="h10-0-135" class="i">+		result += tabs(tabsNum+2) + &quot;\t\tend\n&quot;
+</a><a href="#h10-0-136" id="h10-0-136" class="i">+		result += tabs(tabsNum+2) + &quot;\tCTXWSEND: begin\n&quot;
+</a><a href="#h10-0-137" id="h10-0-137" class="i">+		result += tabs(tabsNum+2) + &quot;\t\tif (&quot; + threadStack + &quot;senderAck) begin\n&quot;
+</a><a href="#h10-0-138" id="h10-0-138" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\t&quot; + threadStack + &quot;senderWrite &lt;= 1&#39;b0;\n&quot;
+</a><a href="#h10-0-139" id="h10-0-139" class="i">+		result += tabs(tabsNum+2) + &quot;\t\t\t&quot; + sm + &quot; &lt;= CTXEXE;\n&quot;
+</a><a href="#h10-0-140" id="h10-0-140" class="i">+		result += NextInstruction(conf, arch, tabsNum+5, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h10-0-141" id="h10-0-141" class="i">+
+</a><a href="#h10-0-142" id="h10-0-142" class="i">+		result += tabs(tabsNum+2) + &quot;\t\tend\n&quot;
+</a><a href="#h10-0-143" id="h10-0-143" class="i">+		result += tabs(tabsNum+2) + &quot;\tend\n&quot;
+</a><a href="#h10-0-144" id="h10-0-144" class="i">+		result += tabs(tabsNum+2) + &quot;\tendcase\n&quot;
+</a><a href="#h10-0-145" id="h10-0-145" class="i">+
+</a><a href="#h10-0-146" id="h10-0-146" class="i">+		result += tabs(tabsNum+2) + &quot;end\n&quot;
+</a><a href="#h10-0-147" id="h10-0-147" class="i">+	}
+</a><a href="#h10-0-148" id="h10-0-148" class="i">+	result += tabs(tabsNum+1) + &quot;endcase\n&quot;
+</a><a href="#h10-0-149" id="h10-0-149" class="i">+	result += tabs(tabsNum) + &quot;end\n&quot;
+</a><a href="#h10-0-150" id="h10-0-150" class="i">+	return result
+</a><a href="#h10-0-151" id="h10-0-151" class="i">+}
+</a><a href="#h10-0-152" id="h10-0-152" class="i">+
+</a><a href="#h10-0-153" id="h10-0-153" class="i">+func (op Tsp) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h10-0-154" id="h10-0-154" class="i">+	return &quot;&quot;
+</a><a href="#h10-0-155" id="h10-0-155" class="i">+}
+</a><a href="#h10-0-156" id="h10-0-156" class="i">+
+</a><a href="#h10-0-157" id="h10-0-157" class="i">+func (op Tsp) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h10-0-158" id="h10-0-158" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h10-0-159" id="h10-0-159" class="i">+
+</a><a href="#h10-0-160" id="h10-0-160" class="i">+	locationBits := arch.O
+</a><a href="#h10-0-161" id="h10-0-161" class="i">+
+</a><a href="#h10-0-162" id="h10-0-162" class="i">+	switch arch.Modes[0] {
+</a><a href="#h10-0-163" id="h10-0-163" class="i">+	case &quot;ha&quot;:
+</a><a href="#h10-0-164" id="h10-0-164" class="i">+		locationBits = arch.O
+</a><a href="#h10-0-165" id="h10-0-165" class="i">+	case &quot;vn&quot;:
+</a><a href="#h10-0-166" id="h10-0-166" class="i">+		locationBits = arch.L
+</a><a href="#h10-0-167" id="h10-0-167" class="i">+	case &quot;hy&quot;:
+</a><a href="#h10-0-168" id="h10-0-168" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h10-0-169" id="h10-0-169" class="i">+			locationBits = arch.O
+</a><a href="#h10-0-170" id="h10-0-170" class="i">+		} else {
+</a><a href="#h10-0-171" id="h10-0-171" class="i">+			locationBits = arch.L
+</a><a href="#h10-0-172" id="h10-0-172" class="i">+		}
+</a><a href="#h10-0-173" id="h10-0-173" class="i">+	}
+</a><a href="#h10-0-174" id="h10-0-174" class="i">+
+</a><a href="#h10-0-175" id="h10-0-175" class="i">+	if len(words) != 3 {
+</a><a href="#h10-0-176" id="h10-0-176" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h10-0-177" id="h10-0-177" class="i">+	}
+</a><a href="#h10-0-178" id="h10-0-178" class="i">+
+</a><a href="#h10-0-179" id="h10-0-179" class="i">+	result := &quot;&quot;
+</a><a href="#h10-0-180" id="h10-0-180" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h10-0-181" id="h10-0-181" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h10-0-182" id="h10-0-182" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h10-0-183" id="h10-0-183" class="i">+			break
+</a><a href="#h10-0-184" id="h10-0-184" class="i">+		}
+</a><a href="#h10-0-185" id="h10-0-185" class="i">+	}
+</a><a href="#h10-0-186" id="h10-0-186" class="i">+
+</a><a href="#h10-0-187" id="h10-0-187" class="i">+	if partial, err := Process_number(words[1]); err == nil {
+</a><a href="#h10-0-188" id="h10-0-188" class="i">+		result += zeros_prefix(int(locationBits), partial)
+</a><a href="#h10-0-189" id="h10-0-189" class="i">+	} else {
+</a><a href="#h10-0-190" id="h10-0-190" class="i">+		return &quot;&quot;, Prerror{err.Error()}
+</a><a href="#h10-0-191" id="h10-0-191" class="i">+	}
+</a><a href="#h10-0-192" id="h10-0-192" class="i">+
+</a><a href="#h10-0-193" id="h10-0-193" class="i">+	if partial, err := Process_number(words[2]); err == nil {
+</a><a href="#h10-0-194" id="h10-0-194" class="i">+		result += zeros_prefix(8, partial)
+</a><a href="#h10-0-195" id="h10-0-195" class="i">+	} else {
+</a><a href="#h10-0-196" id="h10-0-196" class="i">+		return &quot;&quot;, Prerror{err.Error()}
+</a><a href="#h10-0-197" id="h10-0-197" class="i">+	}
+</a><a href="#h10-0-198" id="h10-0-198" class="i">+
+</a><a href="#h10-0-199" id="h10-0-199" class="i">+	return result, nil
+</a><a href="#h10-0-200" id="h10-0-200" class="i">+}
+</a><a href="#h10-0-201" id="h10-0-201" class="i">+
+</a><a href="#h10-0-202" id="h10-0-202" class="i">+func (op Tsp) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h10-0-203" id="h10-0-203" class="i">+	regId := get_id(instr[:arch.R])
+</a><a href="#h10-0-204" id="h10-0-204" class="i">+
+</a><a href="#h10-0-205" id="h10-0-205" class="i">+	locationBits := arch.O
+</a><a href="#h10-0-206" id="h10-0-206" class="i">+
+</a><a href="#h10-0-207" id="h10-0-207" class="i">+	switch arch.Modes[0] {
+</a><a href="#h10-0-208" id="h10-0-208" class="i">+	case &quot;ha&quot;:
+</a><a href="#h10-0-209" id="h10-0-209" class="i">+		locationBits = arch.O
+</a><a href="#h10-0-210" id="h10-0-210" class="i">+	case &quot;vn&quot;:
+</a><a href="#h10-0-211" id="h10-0-211" class="i">+		locationBits = arch.L
+</a><a href="#h10-0-212" id="h10-0-212" class="i">+	case &quot;hy&quot;:
+</a><a href="#h10-0-213" id="h10-0-213" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h10-0-214" id="h10-0-214" class="i">+			locationBits = arch.O
+</a><a href="#h10-0-215" id="h10-0-215" class="i">+		} else {
+</a><a href="#h10-0-216" id="h10-0-216" class="i">+			locationBits = arch.L
+</a><a href="#h10-0-217" id="h10-0-217" class="i">+		}
+</a><a href="#h10-0-218" id="h10-0-218" class="i">+	}
+</a><a href="#h10-0-219" id="h10-0-219" class="i">+	result := strings.ToLower(Get_register_name(regId)) + &quot; &quot;
+</a><a href="#h10-0-220" id="h10-0-220" class="i">+	value := get_id(instr[arch.R : int(arch.R)+int(locationBits)])
+</a><a href="#h10-0-221" id="h10-0-221" class="i">+	result += strconv.Itoa(value) + &quot; &quot;
+</a><a href="#h10-0-222" id="h10-0-222" class="i">+	value = get_id(instr[int(arch.R)+int(locationBits) : int(arch.R)+int(locationBits)+8])
+</a><a href="#h10-0-223" id="h10-0-223" class="i">+	result += strconv.Itoa(value)
+</a><a href="#h10-0-224" id="h10-0-224" class="i">+	return result, nil
+</a><a href="#h10-0-225" id="h10-0-225" class="i">+}
+</a><a href="#h10-0-226" id="h10-0-226" class="i">+
+</a><a href="#h10-0-227" id="h10-0-227" class="i">+func (op Tsp) Simulate(vm *VM, instr string) error {
+</a><a href="#h10-0-228" id="h10-0-228" class="i">+	value := get_id(instr[:vm.Mach.O])
+</a><a href="#h10-0-229" id="h10-0-229" class="i">+	if value &lt; len(vm.Mach.Slocs) {
+</a><a href="#h10-0-230" id="h10-0-230" class="i">+		vm.Pc = uint64(value)
+</a><a href="#h10-0-231" id="h10-0-231" class="i">+	} else {
+</a><a href="#h10-0-232" id="h10-0-232" class="i">+		vm.Pc = vm.Pc + 1
+</a><a href="#h10-0-233" id="h10-0-233" class="i">+	}
+</a><a href="#h10-0-234" id="h10-0-234" class="i">+	return nil
+</a><a href="#h10-0-235" id="h10-0-235" class="i">+}
+</a><a href="#h10-0-236" id="h10-0-236" class="i">+
+</a><a href="#h10-0-237" id="h10-0-237" class="i">+func (op Tsp) Generate(arch *Arch) string {
+</a><a href="#h10-0-238" id="h10-0-238" class="i">+	max_value := 1 &lt;&lt; arch.O
+</a><a href="#h10-0-239" id="h10-0-239" class="i">+	value := rand.Intn(max_value)
+</a><a href="#h10-0-240" id="h10-0-240" class="i">+	return zeros_prefix(int(arch.O), get_binary(value))
+</a><a href="#h10-0-241" id="h10-0-241" class="i">+}
+</a><a href="#h10-0-242" id="h10-0-242" class="i">+
+</a><a href="#h10-0-243" id="h10-0-243" class="i">+func (op Tsp) Required_shared() (bool, []string) {
+</a><a href="#h10-0-244" id="h10-0-244" class="i">+	return false, []string{}
+</a><a href="#h10-0-245" id="h10-0-245" class="i">+}
+</a><a href="#h10-0-246" id="h10-0-246" class="i">+
+</a><a href="#h10-0-247" id="h10-0-247" class="i">+func (op Tsp) Required_modes() (bool, []string) {
+</a><a href="#h10-0-248" id="h10-0-248" class="i">+	return false, []string{}
+</a><a href="#h10-0-249" id="h10-0-249" class="i">+}
+</a><a href="#h10-0-250" id="h10-0-250" class="i">+
+</a><a href="#h10-0-251" id="h10-0-251" class="i">+func (op Tsp) Forbidden_modes() (bool, []string) {
+</a><a href="#h10-0-252" id="h10-0-252" class="i">+	return false, []string{}
+</a><a href="#h10-0-253" id="h10-0-253" class="i">+}
+</a><a href="#h10-0-254" id="h10-0-254" class="i">+
+</a><a href="#h10-0-255" id="h10-0-255" class="i">+func (op Tsp) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h10-0-256" id="h10-0-256" class="i">+	return []string{}, []string{}
+</a><a href="#h10-0-257" id="h10-0-257" class="i">+}
+</a><a href="#h10-0-258" id="h10-0-258" class="i">+
+</a><a href="#h10-0-259" id="h10-0-259" class="i">+func (op Tsp) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h10-0-260" id="h10-0-260" class="i">+	result := make([]UsageNotify, 1)
+</a><a href="#h10-0-261" id="h10-0-261" class="i">+	newnot := UsageNotify{C_OPCODE, &quot;tsp&quot;, I_NIL}
+</a><a href="#h10-0-262" id="h10-0-262" class="i">+	result[0] = newnot
+</a><a href="#h10-0-263" id="h10-0-263" class="i">+	return result, nil
+</a><a href="#h10-0-264" id="h10-0-264" class="i">+}
+</a><a href="#h10-0-265" id="h10-0-265" class="i">+
+</a><a href="#h10-0-266" id="h10-0-266" class="i">+func (op Tsp) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h10-0-267" id="h10-0-267" class="i">+	result := &quot;&quot;
+</a><a href="#h10-0-268" id="h10-0-268" class="i">+	switch blockname {
+</a><a href="#h10-0-269" id="h10-0-269" class="i">+	default:
+</a><a href="#h10-0-270" id="h10-0-270" class="i">+		result = &quot;&quot;
+</a><a href="#h10-0-271" id="h10-0-271" class="i">+	}
+</a><a href="#h10-0-272" id="h10-0-272" class="i">+	return result
+</a><a href="#h10-0-273" id="h10-0-273" class="i">+}
+</a><a href="#h10-0-274" id="h10-0-274" class="i">+func (op Tsp) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h10-0-275" id="h10-0-275" class="i">+	result := make([]string, 4)
+</a><a href="#h10-0-276" id="h10-0-276" class="i">+	result[0] = &quot;tsp::*--type=reg::*--type=number::*--type=number&quot;
+</a><a href="#h10-0-277" id="h10-0-277" class="i">+	result[1] = &quot;tsp::*--type=reg::*--type=symbol::*--type=number&quot;
+</a><a href="#h10-0-278" id="h10-0-278" class="i">+	return result
+</a><a href="#h10-0-279" id="h10-0-279" class="i">+}
+</a><a href="#h10-0-280" id="h10-0-280" class="i">+func (op Tsp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h10-0-281" id="h10-0-281" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h10-0-282" id="h10-0-282" class="i">+	case &quot;tsp&quot;:
+</a><a href="#h10-0-283" id="h10-0-283" class="i">+		return line, nil
+</a><a href="#h10-0-284" id="h10-0-284" class="i">+	}
+</a><a href="#h10-0-285" id="h10-0-285" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h10-0-286" id="h10-0-286" class="i">+}
+</a><a href="#h10-0-287" id="h10-0-287" class="i">+func (op Tsp) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h10-0-288" id="h10-0-288" class="i">+	return []string{}, []string{}
+</a><a href="#h10-0-289" id="h10-0-289" class="i">+}
+</a><a href="#h10-0-290" id="h10-0-290" class="i">+
+</a><a href="#h10-0-291" id="h10-0-291" class="i">+func (op Tsp) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h10-0-292" id="h10-0-292" class="i">+	return nil, nil
+</a><a href="#h10-0-293" id="h10-0-293" class="i">+}
+</a><b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a> b/<a href="../file/pkg/procbuilder/utils.go.html">pkg/procbuilder/utils.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -4,6 +4,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;sort&quot;
+ 	&quot;strconv&quot;
+<a href="#h11-0-3" id="h11-0-3" class="i">+	&quot;strings&quot;
+</a> 	&quot;unsafe&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+<a href="#h11-1" id="h11-1" class="h">@@ -76,6 +77,14 @@ func zeros_suffix(num int, value string) string {
+</a> 	return result
+ }
+ 
+<a href="#h11-1-3" id="h11-1-3" class="i">+func tabs(num int) string {
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+	result := &quot;&quot;
+</a><a href="#h11-1-5" id="h11-1-5" class="i">+	for i := 0; i &lt; num; i++ {
+</a><a href="#h11-1-6" id="h11-1-6" class="i">+		result = result + &quot;\t&quot;
+</a><a href="#h11-1-7" id="h11-1-7" class="i">+	}
+</a><a href="#h11-1-8" id="h11-1-8" class="i">+	return result
+</a><a href="#h11-1-9" id="h11-1-9" class="i">+}
+</a><a href="#h11-1-10" id="h11-1-10" class="i">+
+</a> func get_id(intr string) int {
+ 	result := 0
+ 	for i := 0; i &lt; len(intr); i++ {
+<a href="#h11-2" id="h11-2" class="h">@@ -226,3 +235,28 @@ func Int32FromBits(f uint32) int32 {
+</a> func Int64FromBits(f uint64) int64 {
+ 	return *(*int64)(unsafe.Pointer(&amp;f))
+ }
+<a href="#h11-2-3" id="h11-2-3" class="i">+
+</a><a href="#h11-2-4" id="h11-2-4" class="i">+func soLists(t string, sharedConstrains string, num int) [][]string {
+</a><a href="#h11-2-5" id="h11-2-5" class="i">+	if sharedConstrains != &quot;&quot; {
+</a><a href="#h11-2-6" id="h11-2-6" class="i">+		constraints := strings.Split(sharedConstrains, &quot;,&quot;)
+</a><a href="#h11-2-7" id="h11-2-7" class="i">+		for _, constraint := range constraints {
+</a><a href="#h11-2-8" id="h11-2-8" class="i">+			values := strings.Split(constraint, &quot;:&quot;)
+</a><a href="#h11-2-9" id="h11-2-9" class="i">+			soName := values[0]
+</a><a href="#h11-2-10" id="h11-2-10" class="i">+			if soName == t {
+</a><a href="#h11-2-11" id="h11-2-11" class="i">+				args := values[1:]
+</a><a href="#h11-2-12" id="h11-2-12" class="i">+				if len(args)%num == 0 {
+</a><a href="#h11-2-13" id="h11-2-13" class="i">+					result := make([][]string, len(args)/num)
+</a><a href="#h11-2-14" id="h11-2-14" class="i">+					for i := 0; i &lt; len(args)/num; i++ {
+</a><a href="#h11-2-15" id="h11-2-15" class="i">+						result[i] = make([]string, num)
+</a><a href="#h11-2-16" id="h11-2-16" class="i">+						for j := 0; j &lt; num; j++ {
+</a><a href="#h11-2-17" id="h11-2-17" class="i">+							result[i][j] = args[i*num+j]
+</a><a href="#h11-2-18" id="h11-2-18" class="i">+						}
+</a><a href="#h11-2-19" id="h11-2-19" class="i">+					}
+</a><a href="#h11-2-20" id="h11-2-20" class="i">+					return result
+</a><a href="#h11-2-21" id="h11-2-21" class="i">+				}
+</a><a href="#h11-2-22" id="h11-2-22" class="i">+			}
+</a><a href="#h11-2-23" id="h11-2-23" class="i">+		}
+</a><a href="#h11-2-24" id="h11-2-24" class="i">+	}
+</a><a href="#h11-2-25" id="h11-2-25" class="i">+
+</a><a href="#h11-2-26" id="h11-2-26" class="i">+	return nil
+</a><a href="#h11-2-27" id="h11-2-27" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

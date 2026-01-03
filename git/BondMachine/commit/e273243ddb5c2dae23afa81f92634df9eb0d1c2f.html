@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prefix optional - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e273243ddb5c2dae23afa81f92634df9eb0d1c2f.html">e273243ddb5c2dae23afa81f92634df9eb0d1c2f</a>
+<b>parent</b> <a href="../commit/70bf47e9f938390898a1f99d85067a7d8a1e1078.html">70bf47e9f938390898a1f99d85067a7d8a1e1078</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  1 Jun 2023 10:27:31 +0200
+
+Prefix optional
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmnumbers/export.go</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmnumbers/serve.go</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 50 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,6 +25,7 @@ var useFiles = flag.Bool(&quot;use-files&quot;, false, &quot;Load files instead of command line
+</a> var serve = flag.Bool(&quot;serve&quot;, false, &quot;Serve as REST API&quot;)
+ 
+ var getPrefix = flag.String(&quot;get-prefix&quot;, &quot;&quot;, &quot;Get prefix from type&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="i">+var OmitPrefix = flag.Bool(&quot;omit-prefix&quot;, false, &quot;Omit prefix&quot;)
+</a> 
+ // Custom types
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -41,6 +42,9 @@ func init() {
+</a> 
+ func main() {
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	conf := new(bmnumbers.BMNumberConfig)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	conf.OmitPrefix = *OmitPrefix
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a> 	if *getPrefix != &quot;&quot; {
+ 		if _, err := bmnumbers.EventuallyCreateType(*getPrefix, nil); err != nil {
+ 			log.Fatal(err)
+<a href="#h0-2" id="h0-2" class="h">@@ -51,7 +55,7 @@ func main() {
+</a> 			fmt.Println(v.ShowPrefix())
+ 		}
+ 	} else if *serve {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		bmnumbers.Serve()
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		bmnumbers.Serve(conf)
+</a> 	} else {
+ 
+ 		var newType bmnumbers.BMNumberType
+<a href="#h0-3" id="h0-3" class="h">@@ -108,21 +112,29 @@ func main() {
+</a> 					for i, v := range record {
+ 						if output, err := bmnumbers.ImportString(v); err != nil {
+ 							fmt.Println(&quot;Error: &quot;, err)
+<a href="#h0-3-3" id="h0-3-3" class="i">+							recordC[i] = v
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+							continue
+</a> 						} else {
+ 
+ 							if *convertTo != &quot;&quot; {
+ 								if err := newType.Convert(output); err != nil {
+ 									fmt.Println(&quot;Error: &quot;, err)
+<a href="#h0-3-10" id="h0-3-10" class="i">+									recordC[i] = v
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+									continue
+</a> 								}
+ 							}
+ 
+ 							if *castTo != &quot;&quot; {
+ 								if err := bmnumbers.CastType(output, newType); err != nil {
+ 									fmt.Println(&quot;Error: &quot;, err)
+<a href="#h0-3-18" id="h0-3-18" class="i">+									recordC[i] = v
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+									continue
+</a> 								}
+ 							}
+<a href="#h0-3-22" id="h0-3-22" class="d">-							if value, err := output.ExportString(); err != nil {
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+							if value, err := output.ExportString(conf); err != nil {
+</a> 								fmt.Println(&quot;Error: &quot;, err)
+<a href="#h0-3-26" id="h0-3-26" class="i">+								log.Fatal(err)
+</a> 							} else {
+ 								recordC[i] = value
+ 							}
+<a href="#h0-4" id="h0-4" class="h">@@ -160,7 +172,7 @@ func main() {
+</a> 
+ 					switch *showAs {
+ 					case &quot;native&quot;:
+<a href="#h0-4-3" id="h0-4-3" class="d">-						if value, err := output.ExportString(); err != nil {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+						if value, err := output.ExportString(conf); err != nil {
+</a> 							fmt.Println(&quot;Error: &quot;, err)
+ 						} else {
+ 							fmt.Println(value)
+<b>diff --git a/<a id="h1" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -980,7 +980,7 @@ func main() {
+</a> 							if err := bmnumbers.CastType(number, v); err != nil {
+ 								log.Fatal(err)
+ 							} else {
+<a href="#h1-0-3" id="h1-0-3" class="d">-								if numberS, err := number.ExportString(); err != nil {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+								if numberS, err := number.ExportString(nil); err != nil {
+</a> 									log.Fatal(err)
+ 								} else {
+ 									fmt.Print(numberS + &quot; &quot;)
+<a href="#h1-1" id="h1-1" class="h">@@ -1051,7 +1051,7 @@ func main() {
+</a> 								if err := bmnumbers.CastType(number, v); err != nil {
+ 									log.Fatal(err)
+ 								} else {
+<a href="#h1-1-3" id="h1-1-3" class="d">-									if numberS, err := number.ExportString(); err != nil {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+									if numberS, err := number.ExportString(nil); err != nil {
+</a> 										log.Fatal(err)
+ 									} else {
+ 										someToReport = true
+<a href="#h1-2" id="h1-2" class="h">@@ -1072,13 +1072,15 @@ func main() {
+</a> 
+ 						for recI, recV := range recordC {
+ 							if sconfig.GetTicks {
+<a href="#h1-2-3" id="h1-2-3" class="d">-								if oldRecordC == nil || ((recI != 0) &amp;&amp; (*oldRecordC)[recI] != recV) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+								if conf.FormatSimReports &amp;&amp; (oldRecordC == nil || ((recI != 0) &amp;&amp; (*oldRecordC)[recI] != recV)) {
+</a> 									reportWrite[recI] = &quot;\033[31m&quot; + fmt.Sprintf(&quot;%-25s&quot;, recV) + &quot;\033[0m&quot;
+<a href="#h1-2-6" id="h1-2-6" class="d">-								} else {
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+								} else if conf.FormatSimReports {
+</a> 									reportWrite[recI] = fmt.Sprintf(&quot;%-25s&quot;, recV)
+<a href="#h1-2-9" id="h1-2-9" class="i">+								} else {
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+									reportWrite[recI] = recV
+</a> 								}
+ 							} else {
+<a href="#h1-2-13" id="h1-2-13" class="d">-								if oldRecordC == nil || (*oldRecordC)[recI] != recV {
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+								if conf.FormatSimReports &amp;&amp; (oldRecordC == nil || (*oldRecordC)[recI] != recV) {
+</a> 									reportWrite[recI] = &quot;\033[31m&quot; + recV + &quot;\033[0m&quot;
+ 								} else {
+ 									reportWrite[recI] = recV
+<b>diff --git a/<a id="h2" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -8,6 +8,10 @@ import (
+</a> 
+ type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+type BMNumberConfig struct {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	OmitPrefix bool
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+}
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a> type BMNumberType interface {
+ 	GetName() string
+ 	getInfo() string
+<b>diff --git a/<a id="h3" href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a> b/<a href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,13 +3,22 @@ package bmnumbers
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;strconv&quot;
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;strings&quot;
+</a> )
+ 
+<a href="#h3-0-6" id="h3-0-6" class="d">-func (n *BMNumber) ExportString() (string, error) {
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+func (n *BMNumber) ExportString(c *BMNumberConfig) (string, error) {
+</a> 	if n == nil || n.number == nil {
+ 		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+ 	}
+ 
+<a href="#h3-0-12" id="h3-0-12" class="i">+	if c != nil &amp;&amp; c.OmitPrefix {
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+		if value, err := n.nType.ExportString(n); err != nil {
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+			return &quot;&quot;, err
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+		} else {
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+			return strings.ReplaceAll(value, n.nType.ShowPrefix(), &quot;&quot;), nil
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+		}
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	}
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+
+</a> 	return n.nType.ExportString(n)
+ }
+ 
+<b>diff --git a/<a id="h4" href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a> b/<a href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -12,6 +12,10 @@ import (
+</a> 	&quot;strconv&quot;
+ )
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+type BMNumberServer struct {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	conf *BMNumberConfig
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+}
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+
+</a> type BMNumbersRequest struct {
+ 	Action   string   `json:&quot;action&quot;`
+ 	Numbers  []string `json:&quot;numbers&quot;`
+<a href="#h4-1" id="h4-1" class="h">@@ -23,14 +27,14 @@ type BMNumbersResponse struct {
+</a> 	Numbers []string `json:&quot;numbers&quot;`
+ }
+ 
+<a href="#h4-1-3" id="h4-1-3" class="d">-func HomePage(w http.ResponseWriter, r *http.Request) {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+func (s *BMNumberServer) HomePage(w http.ResponseWriter, r *http.Request) {
+</a> 	fmt.Fprintf(w, &quot;Welcome to the BM Numbers server!\n&quot;)
+ 	fmt.Fprintf(w, &quot;There is one endpoint available: \n&quot;)
+ 	fmt.Fprintf(w, &quot;[POST] bmnumbers \n&quot;)
+ 	fmt.Fprintf(w, &quot;[POST] body example: {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [&#39;0f0.45&#39;, &#39;0f0.30&#39;], &#39;reqType&#39;: &#39;bin&#39;, &#39;viewMode&#39;: &#39;native&#39;} \n&quot;)
+ }
+ 
+<a href="#h4-1-11" id="h4-1-11" class="d">-func ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+func (s *BMNumberServer) ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a> 	reqBody, err := ioutil.ReadAll(r.Body)
+ 	if err != nil {
+ 		http.Error(w, &quot;Failed to read request body&quot;, http.StatusBadRequest)
+<a href="#h4-2" id="h4-2" class="h">@@ -75,7 +79,7 @@ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a> 
+ 			switch bmNumbersRequest.DumpMode {
+ 			case &quot;native&quot;:
+<a href="#h4-2-3" id="h4-2-3" class="d">-				if value, err := output.ExportString(); err != nil {
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+				if value, err := output.ExportString(s.conf); err != nil {
+</a> 					http.Error(w, fmt.Sprintf(&quot;Error: %v&quot;, err), http.StatusInternalServerError)
+ 					return
+ 				} else {
+<a href="#h4-3" id="h4-3" class="h">@@ -107,10 +111,13 @@ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a> }
+ 
+ // REST API to convert numbers
+<a href="#h4-3-3" id="h4-3-3" class="d">-func Serve() {
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+func Serve(conf *BMNumberConfig) {
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+
+</a><a href="#h4-3-6" id="h4-3-6" class="i">+	server := new(BMNumberServer)
+</a><a href="#h4-3-7" id="h4-3-7" class="i">+	server.conf = conf
+</a> 
+<a href="#h4-3-9" id="h4-3-9" class="d">-	http.HandleFunc(&quot;/&quot;, HomePage)
+</a><a href="#h4-3-10" id="h4-3-10" class="d">-	http.HandleFunc(&quot;/bmnumbers&quot;, ExecRequest)
+</a><a href="#h4-3-11" id="h4-3-11" class="i">+	http.HandleFunc(&quot;/&quot;, server.HomePage)
+</a><a href="#h4-3-12" id="h4-3-12" class="i">+	http.HandleFunc(&quot;/bmnumbers&quot;, server.ExecRequest)
+</a> 
+ 	fmt.Println(&quot;Server started on localhost:8080&quot;)
+ 	log.Fatal(http.ListenAndServe(&quot;:8080&quot;, nil))
+<b>diff --git a/<a id="h5" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -63,6 +63,7 @@ type Config struct {
+</a> 	Debug            bool
+ 	Dotdetail        uint8
+ 	CommentedVerilog bool
+<a href="#h5-0-3" id="h5-0-3" class="i">+	FormatSimReports bool
+</a> }
+ 
+ //reorg {&quot;name&quot;: &quot;BondMachine typedefs&quot;, &quot;descr&quot;: &quot;Definition of BondMachine and BondMachine JSON data structures&quot;}
+</pre>
+</div>
+</body>
+</html>

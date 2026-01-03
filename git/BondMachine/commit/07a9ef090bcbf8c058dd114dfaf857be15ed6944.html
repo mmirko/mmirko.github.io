@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alveo - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/07a9ef090bcbf8c058dd114dfaf857be15ed6944.html">07a9ef090bcbf8c058dd114dfaf857be15ed6944</a>
+<b>parent</b> <a href="../commit/d502b7f93070a295bc70c2c08173f72793e304be.html">d502b7f93070a295bc70c2c08173f72793e304be</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 14 Nov 2023 09:53:28 +0100
+
+Alveo
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/bmapi.go</a></td><td> | </td><td class="num">91</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bondmachine/files_krnl_bondmachine_rtl.go</a></td><td> | </td><td class="num">176</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_read_master.go</a></td><td> | </td><td class="num">281</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_write_master.go</a></td><td> | </td><td class="num">283</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/bondmachine/files_krnl_bondmachine_rtl_caller.go</a></td><td> | </td><td class="num">103</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">pkg/bondmachine/files_krnl_bondmachine_rtl_control_s_axi.go</a></td><td> | </td><td class="num">444</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">pkg/bondmachine/files_krnl_bondmachine_rtl_counter.go</a></td><td> | </td><td class="num">94</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a></td><td> | </td><td class="num">372</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/bondmachine/verilog.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>9 files changed, 1827 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a> b/<a href="../file/pkg/bondmachine/bmapi.go.html">pkg/bondmachine/bmapi.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -187,32 +187,83 @@ func (bmach *Bondmachine) WriteBMAPI(conf *Config, flavor string, iomaps *IOmap,
+</a> 			}
+ 		}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-		vFiles := make(map[string]string)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		if bmapiFlavorVersion == &quot;basic&quot; {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			vFiles[&quot;axistream.v&quot;] = basicAXIStream
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		} else if bmapiFlavorVersion == &quot;optimized&quot; {
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-			vFiles[&quot;axistream.v&quot;] = optimizedAXIStream
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-		} else {
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-			return errors.New(&quot;unknown AXI Stream flavor version&quot;)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-		}
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-		for file, temp := range vFiles {
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-			t, err := template.New(file).Funcs(axiStData.funcmap).Parse(temp)
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			if err != nil {
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-				return err
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		switch flavor {
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		case &quot;alveou50&quot;:
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			// This is the generation of the directory for the kernel project
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			if _, err := os.Stat(bmapiModOutDir); os.IsNotExist(err) {
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				os.Mkdir(bmapiModOutDir, 0700)
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+				os.Mkdir(bmapiModOutDir+&quot;/src&quot;, 0700)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				os.Mkdir(bmapiModOutDir+&quot;/src/krnl_bondmachine&quot;, 0700)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+				os.Mkdir(bmapiModOutDir+&quot;/src/krnl_bondmachine/hdl&quot;, 0700)
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+			} else {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				return errors.New(&quot;BMAPI modoutdir already exists&quot;)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+			// Adding the files to the project
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			vFiles := make(map[string]string)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			vFiles[&quot;krnl_bondmachine_rtl.v&quot;] = krnlBondmachineRTL
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_axi_read_master.sv&quot;] = krnlBondmachineRTLAxiReadMaster
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_axi_write_master.sv&quot;] = krnlBondmachineRTLAxiWriteMaster
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_caller.sv&quot;] = krnlBondmachineRTLCaller
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_control_s_axi.v&quot;] = krnlBondmachineRTLControlSAxi
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_counter.sv&quot;] = krnlBondmachineRTLCounter
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			vFiles[&quot;krnl_bondmachine_rtl_int.sv&quot;] = krnlBondmachineRTLInt
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			if bmapiFlavorVersion == &quot;basic&quot; {
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+				vFiles[&quot;bmaccelerator_v1_0.v&quot;] = basicAXIStream
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+			} else if bmapiFlavorVersion == &quot;optimized&quot; {
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+				vFiles[&quot;bmaccelerator_v1_0.v&quot;] = optimizedAXIStream
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			} else {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+				return errors.New(&quot;unknown AXI Stream flavor version&quot;)
+</a> 			}
+ 
+<a href="#h0-0-44" id="h0-0-44" class="d">-			f, err := os.Create(file)
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-			if err != nil {
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-				return err
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+			for file, temp := range vFiles {
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+				t, err := template.New(file).Funcs(axiStData.funcmap).Parse(temp)
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+				if err != nil {
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+					return err
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+				}
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+				f, err := os.Create(bmapiModOutDir + &quot;/src/krnl_bondmachine/hdl/&quot; + file)
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+				if err != nil {
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+					return err
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+				}
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+				err = t.Execute(f, axiStData)
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+				if err != nil {
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+					return err
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+				}
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+				f.Close()
+</a> 			}
+ 
+<a href="#h0-0-66" id="h0-0-66" class="d">-			err = t.Execute(f, axiStData)
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-			if err != nil {
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-				return err
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+		case &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;zc702&quot;:
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+			vFiles := make(map[string]string)
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+			if bmapiFlavorVersion == &quot;basic&quot; {
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+				vFiles[&quot;axistream.v&quot;] = basicAXIStream
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+			} else if bmapiFlavorVersion == &quot;optimized&quot; {
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+				vFiles[&quot;axistream.v&quot;] = optimizedAXIStream
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+			} else {
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+				return errors.New(&quot;unknown AXI Stream flavor version&quot;)
+</a> 			}
+ 
+<a href="#h0-0-79" id="h0-0-79" class="d">-			f.Close()
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+			for file, temp := range vFiles {
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+				t, err := template.New(file).Funcs(axiStData.funcmap).Parse(temp)
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+				if err != nil {
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+					return err
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+				}
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+				f, err := os.Create(file)
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+				if err != nil {
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+					return err
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+				}
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+				err = t.Execute(f, axiStData)
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+				if err != nil {
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+					return err
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+				}
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+
+</a><a href="#h0-0-96" id="h0-0-96" class="i">+				f.Close()
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+			}
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+		default:
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+			return errors.New(&quot;unknown board&quot;)
+</a> 		}
+ 
+ 		switch bmapiLanguage {
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,176 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bondmachine
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+const (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	krnlBondmachineRTL = `
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+/**
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+*
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+* License is located at
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+*
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+*
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+* under the License.
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+*/
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+// Description: This is a wrapper of module &quot;krnl_bondmachine_rtl_int&quot;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+// default_nettype of none prevents implicit wire declaration.
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+` + &quot;`timescale 1 ns / 1 ps &quot; + `
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+module krnl_bondmachine_rtl #( 
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+  parameter integer  C_S_AXI_CONTROL_DATA_WIDTH = 32,
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+  parameter integer  C_S_AXI_CONTROL_ADDR_WIDTH = 6,
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+  parameter integer  C_M_AXI_GMEM_ID_WIDTH = 1,
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+  parameter integer  C_M_AXI_GMEM_ADDR_WIDTH = 64,
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+  parameter integer  C_M_AXI_GMEM_DATA_WIDTH = 32
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+)
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+(
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+  // System signals
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+  input  wire  ap_clk,
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+  input  wire  ap_rst_n,
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+  // AXI4 master interface 
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+  output wire                                 m_axi_gmem_AWVALID,
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+  input  wire                                 m_axi_gmem_AWREADY,
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+  output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_AWADDR,
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+  output wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_AWID,
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+  output wire [7:0]                           m_axi_gmem_AWLEN,
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+  output wire [2:0]                           m_axi_gmem_AWSIZE,
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+  // Tie-off AXI4 transaction options that are not being used.
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+  output wire [1:0]                           m_axi_gmem_AWBURST,
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+  output wire [1:0]                           m_axi_gmem_AWLOCK,
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+  output wire [3:0]                           m_axi_gmem_AWCACHE,
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+  output wire [2:0]                           m_axi_gmem_AWPROT,
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+  output wire [3:0]                           m_axi_gmem_AWQOS,
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+  output wire [3:0]                           m_axi_gmem_AWREGION,
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+  output wire                                 m_axi_gmem_WVALID,
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+  input  wire                                 m_axi_gmem_WREADY,
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+  output wire [C_M_AXI_GMEM_DATA_WIDTH-1:0]   m_axi_gmem_WDATA,
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+  output wire [C_M_AXI_GMEM_DATA_WIDTH/8-1:0] m_axi_gmem_WSTRB,
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+  output wire                                 m_axi_gmem_WLAST,
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+  output wire                                 m_axi_gmem_ARVALID,
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+  input  wire                                 m_axi_gmem_ARREADY,
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+  output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_ARADDR,
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+  output wire [C_M_AXI_GMEM_ID_WIDTH-1:0]     m_axi_gmem_ARID,
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+  output wire [7:0]                           m_axi_gmem_ARLEN,
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+  output wire [2:0]                           m_axi_gmem_ARSIZE,
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+  output wire [1:0]                           m_axi_gmem_ARBURST,
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+  output wire [1:0]                           m_axi_gmem_ARLOCK,
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+  output wire [3:0]                           m_axi_gmem_ARCACHE,
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+  output wire [2:0]                           m_axi_gmem_ARPROT,
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+  output wire [3:0]                           m_axi_gmem_ARQOS,
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+  output wire [3:0]                           m_axi_gmem_ARREGION,
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+  input  wire                                 m_axi_gmem_RVALID,
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+  output wire                                 m_axi_gmem_RREADY,
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+  input  wire [C_M_AXI_GMEM_DATA_WIDTH - 1:0] m_axi_gmem_RDATA,
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+  input  wire                                 m_axi_gmem_RLAST,
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+  input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_RID,
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+  input  wire [1:0]                           m_axi_gmem_RRESP,
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+  input  wire                                 m_axi_gmem_BVALID,
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+  output wire                                 m_axi_gmem_BREADY,
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+  input  wire [1:0]                           m_axi_gmem_BRESP,
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+  input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_BID,
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+  // AXI4-Lite slave interface
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+  input  wire                                    s_axi_control_AWVALID,
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+  output wire                                    s_axi_control_AWREADY,
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+  input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_AWADDR,
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+  input  wire                                    s_axi_control_WVALID,
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+  output wire                                    s_axi_control_WREADY,
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+  input  wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_WDATA,
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+  input  wire [C_S_AXI_CONTROL_DATA_WIDTH/8-1:0] s_axi_control_WSTRB,
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+  input  wire                                    s_axi_control_ARVALID,
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+  output wire                                    s_axi_control_ARREADY,
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+  input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_ARADDR,
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+  output wire                                    s_axi_control_RVALID,
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+  input  wire                                    s_axi_control_RREADY,
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+  output wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_RDATA,
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+  output wire [1:0]                              s_axi_control_RRESP,
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+  output wire                                    s_axi_control_BVALID,
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+  input  wire                                    s_axi_control_BREADY,
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+  output wire [1:0]                              s_axi_control_BRESP,
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+  output wire                                    interrupt 
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+);
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+krnl_bondmachine_rtl_int #(
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+  .C_S_AXI_CONTROL_DATA_WIDTH  ( C_S_AXI_CONTROL_DATA_WIDTH ),
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+  .C_S_AXI_CONTROL_ADDR_WIDTH  ( C_S_AXI_CONTROL_ADDR_WIDTH ),
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+  .C_M_AXI_GMEM_ID_WIDTH       ( C_M_AXI_GMEM_ID_WIDTH ),
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+  .C_M_AXI_GMEM_ADDR_WIDTH     ( C_M_AXI_GMEM_ADDR_WIDTH ),
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+  .C_M_AXI_GMEM_DATA_WIDTH     ( C_M_AXI_GMEM_DATA_WIDTH )
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+)
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+inst_krnl_bondmachine_rtl_int (
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+  .ap_clk                 ( ap_clk ),
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+  .ap_rst_n               ( ap_rst_n ),
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+  .m_axi_gmem_AWVALID     ( m_axi_gmem_AWVALID ),
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+  .m_axi_gmem_AWREADY     ( m_axi_gmem_AWREADY ),
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+  .m_axi_gmem_AWADDR      ( m_axi_gmem_AWADDR ),
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+  .m_axi_gmem_AWID        ( m_axi_gmem_AWID ),
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+  .m_axi_gmem_AWLEN       ( m_axi_gmem_AWLEN ),
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+  .m_axi_gmem_AWSIZE      ( m_axi_gmem_AWSIZE ),
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+  .m_axi_gmem_AWBURST     ( m_axi_gmem_AWBURST ),
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+  .m_axi_gmem_AWLOCK      ( m_axi_gmem_AWLOCK ),
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+  .m_axi_gmem_AWCACHE     ( m_axi_gmem_AWCACHE ),
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+  .m_axi_gmem_AWPROT      ( m_axi_gmem_AWPROT ),
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+  .m_axi_gmem_AWQOS       ( m_axi_gmem_AWQOS ),
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+  .m_axi_gmem_AWREGION    ( m_axi_gmem_AWREGION ),
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+  .m_axi_gmem_WVALID      ( m_axi_gmem_WVALID ),
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+  .m_axi_gmem_WREADY      ( m_axi_gmem_WREADY ),
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+  .m_axi_gmem_WDATA       ( m_axi_gmem_WDATA ),
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+  .m_axi_gmem_WSTRB       ( m_axi_gmem_WSTRB ),
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+  .m_axi_gmem_WLAST       ( m_axi_gmem_WLAST ),
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+  .m_axi_gmem_ARVALID     ( m_axi_gmem_ARVALID ),
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+  .m_axi_gmem_ARREADY     ( m_axi_gmem_ARREADY ),
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+  .m_axi_gmem_ARADDR      ( m_axi_gmem_ARADDR ),
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+  .m_axi_gmem_ARID        ( m_axi_gmem_ARID ),
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+  .m_axi_gmem_ARLEN       ( m_axi_gmem_ARLEN ),
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+  .m_axi_gmem_ARSIZE      ( m_axi_gmem_ARSIZE ),
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+  .m_axi_gmem_ARBURST     ( m_axi_gmem_ARBURST ),
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+  .m_axi_gmem_ARLOCK      ( m_axi_gmem_ARLOCK ),
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+  .m_axi_gmem_ARCACHE     ( m_axi_gmem_ARCACHE ),
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+  .m_axi_gmem_ARPROT      ( m_axi_gmem_ARPROT ),
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+  .m_axi_gmem_ARQOS       ( m_axi_gmem_ARQOS ),
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+  .m_axi_gmem_ARREGION    ( m_axi_gmem_ARREGION ),
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+  .m_axi_gmem_RVALID      ( m_axi_gmem_RVALID ),
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+  .m_axi_gmem_RREADY      ( m_axi_gmem_RREADY ),
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+  .m_axi_gmem_RDATA       ( m_axi_gmem_RDATA ),
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+  .m_axi_gmem_RLAST       ( m_axi_gmem_RLAST ),
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+  .m_axi_gmem_RID         ( m_axi_gmem_RID ),
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+  .m_axi_gmem_RRESP       ( m_axi_gmem_RRESP ),
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+  .m_axi_gmem_BVALID      ( m_axi_gmem_BVALID ),
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+  .m_axi_gmem_BREADY      ( m_axi_gmem_BREADY ),
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+  .m_axi_gmem_BRESP       ( m_axi_gmem_BRESP ),
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+  .m_axi_gmem_BID         ( m_axi_gmem_BID ),
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+  .s_axi_control_AWVALID  ( s_axi_control_AWVALID ),
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+  .s_axi_control_AWREADY  ( s_axi_control_AWREADY ),
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+  .s_axi_control_AWADDR   ( s_axi_control_AWADDR ),
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+  .s_axi_control_WVALID   ( s_axi_control_WVALID ),
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+  .s_axi_control_WREADY   ( s_axi_control_WREADY ),
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+  .s_axi_control_WDATA    ( s_axi_control_WDATA ),
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+  .s_axi_control_WSTRB    ( s_axi_control_WSTRB ),
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+  .s_axi_control_ARVALID  ( s_axi_control_ARVALID ),
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+  .s_axi_control_ARREADY  ( s_axi_control_ARREADY ),
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+  .s_axi_control_ARADDR   ( s_axi_control_ARADDR ),
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+  .s_axi_control_RVALID   ( s_axi_control_RVALID ),
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+  .s_axi_control_RREADY   ( s_axi_control_RREADY ),
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+  .s_axi_control_RDATA    ( s_axi_control_RDATA ),
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+  .s_axi_control_RRESP    ( s_axi_control_RRESP ),
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+  .s_axi_control_BVALID   ( s_axi_control_BVALID ),
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+  .s_axi_control_BREADY   ( s_axi_control_BREADY ),
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+  .s_axi_control_BRESP    ( s_axi_control_BRESP ),
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+  .interrupt              ( interrupt )
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+);
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+endmodule : krnl_bondmachine_rtl
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+`
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+)
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_axi_read_master.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_read_master.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_axi_read_master.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_read_master.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,281 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+const (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	krnlBondmachineRTLAxiReadMaster = `
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+/**
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+*
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+* License is located at
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+*
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+*
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+* under the License.
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+*/
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+// Description: This is a multi-threaded AXI4 read master.  Each channel will
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+// issue commands on a different IDs.  As a result data may arrive out of 
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+// order.  The amount of data requested is equal to the ctrl_length variable.
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+// Prog full is set and sampled such that the FIFO will never overflow.  Thus 
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+// rready can be always asserted for better timing.
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+module krnl_bondmachine_rtl_axi_read_master #( 
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+  parameter integer C_ID_WIDTH         = 1,   // Must be &gt;= $clog2(C_NUM_CHANNELS)
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+  parameter integer C_ADDR_WIDTH       = 64,
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+  parameter integer C_DATA_WIDTH       = 32,
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+  parameter integer C_NUM_CHANNELS     = 1,   // Only 2 tested.
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+  parameter integer C_LENGTH_WIDTH     = 32,  
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+  parameter integer C_BURST_LEN        = 256, // Max AXI burst length for read commands
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+  parameter integer C_LOG_BURST_LEN    = 8,
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+  parameter integer C_MAX_OUTSTANDING  = 3 
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+)
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+(
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+  // System signals
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+  input  wire                                          aclk,
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+  input  wire                                          areset,
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+  // Control signals 
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+  input  wire                                          ctrl_start, 
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+  output wire                                          ctrl_done, 
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+  input  wire [C_NUM_CHANNELS-1:0][C_ADDR_WIDTH-1:0]   ctrl_offset,
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+  input  wire                     [C_LENGTH_WIDTH-1:0] ctrl_length,
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+  input  wire [C_NUM_CHANNELS-1:0]                     ctrl_prog_full,
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+  // AXI4 master interface                             
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+  output wire                                          arvalid,
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+  input  wire                                          arready,
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+  output wire [C_ADDR_WIDTH-1:0]                       araddr,
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+  output wire [C_ID_WIDTH-1:0]                         arid,
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+  output wire [7:0]                                    arlen,
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+  output wire [2:0]                                    arsize,
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+  input  wire                                          rvalid,
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+  output wire                                          rready,
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+  input  wire [C_DATA_WIDTH - 1:0]                     rdata,
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+  input  wire                                          rlast,
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+  input  wire [C_ID_WIDTH - 1:0]                       rid,
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+  input  wire [1:0]                                    rresp,
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+  // AXI4-Stream master interface, 1 interface per channel.
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+  output wire [C_NUM_CHANNELS-1:0]                     m_tvalid,
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+  input  wire [C_NUM_CHANNELS-1:0]                     m_tready,
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+  output wire [C_NUM_CHANNELS-1:0][C_DATA_WIDTH-1:0]   m_tdata
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+);
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+timeunit 1ps; 
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+timeprecision 1ps; 
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+// Local Parameters
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+localparam integer LP_MAX_OUTSTANDING_CNTR_WIDTH = $clog2(C_MAX_OUTSTANDING+1); 
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+localparam integer LP_TRANSACTION_CNTR_WIDTH = C_LENGTH_WIDTH-C_LOG_BURST_LEN;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+// Variables
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+// Control logic
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+logic [C_NUM_CHANNELS-1:0]            done = &#39;0;
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_full_bursts;
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+logic                                 num_partial_bursts;
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+logic                                 start    = 1&#39;b0;
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_transactions;
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+logic                                 has_partial_burst;
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+logic [C_LOG_BURST_LEN-1:0]           final_burst_len;
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+logic                                 single_transaction;
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+logic                                 ar_idle = 1&#39;b1;
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+logic                                 ar_done;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+// AXI Read Address Channel
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+logic                                                         fifo_stall;
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+logic                                                         arxfer;
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+logic                                                         arvalid_r = 1&#39;b0; 
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+logic [C_NUM_CHANNELS-1:0][C_ADDR_WIDTH-1:0]                  addr;
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+logic [C_ID_WIDTH-1:0]                                        id = {C_ID_WIDTH{1&#39;b1}};
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0]                         ar_transactions_to_go;
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+logic                                                         ar_final_transaction;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+logic [C_NUM_CHANNELS-1:0]                                    incr_ar_to_r_cnt;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+logic [C_NUM_CHANNELS-1:0]                                    decr_ar_to_r_cnt;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+logic [C_NUM_CHANNELS-1:0]                                    stall_ar;
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+logic [C_NUM_CHANNELS-1:0][LP_MAX_OUTSTANDING_CNTR_WIDTH-1:0] outstanding_vacancy_count;
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+// AXI Data Channel
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+logic [C_NUM_CHANNELS-1:0]                                tvalid;
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+logic [C_NUM_CHANNELS-1:0][C_DATA_WIDTH-1:0]              tdata;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+logic                                                     rxfer;
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+logic [C_NUM_CHANNELS-1:0]                                decr_r_transaction_cntr;
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+logic [C_NUM_CHANNELS-1:0][LP_TRANSACTION_CNTR_WIDTH-1:0] r_transactions_to_go;
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+logic [C_NUM_CHANNELS-1:0]                                r_final_transaction;
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+// Control Logic 
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+always @(posedge aclk) begin
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+  for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+    done[i] &lt;= rxfer &amp; rlast &amp; (rid == i) &amp; r_final_transaction[i] ? 1&#39;b1 : 
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+          ctrl_done ? 1&#39;b0 : done[i]; 
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+  end
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+end
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+assign ctrl_done = &amp;done;
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+// Determine how many full burst to issue and if there are any partial bursts.
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+assign num_full_bursts = ctrl_length[C_LOG_BURST_LEN+:C_LENGTH_WIDTH-C_LOG_BURST_LEN];
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+assign num_partial_bursts = ctrl_length[0+:C_LOG_BURST_LEN] ? 1&#39;b1 : 1&#39;b0; 
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+always @(posedge aclk) begin 
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+  start &lt;= ctrl_start;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+  num_transactions &lt;= (num_partial_bursts == 1&#39;b0) ? num_full_bursts - 1&#39;b1 : num_full_bursts;
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+  has_partial_burst &lt;= num_partial_bursts;
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+  final_burst_len &lt;=  ctrl_length[0+:C_LOG_BURST_LEN] - 1&#39;b1;
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+end
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+// Special case if there is only 1 AXI transaction. 
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+assign single_transaction = (num_transactions == {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}}) ? 1&#39;b1 : 1&#39;b0;
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+// AXI Read Address Channel
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+assign arvalid = arvalid_r;
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+assign araddr = addr[id];
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+assign arlen  = ar_final_transaction || (start &amp; single_transaction) ? final_burst_len : C_BURST_LEN - 1;
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+assign arsize = $clog2((C_DATA_WIDTH/8));
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+assign arid   = id;
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+assign arxfer = arvalid &amp; arready;
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+assign fifo_stall = ctrl_prog_full[id];
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+always @(posedge aclk) begin 
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+  if (areset) begin 
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+    arvalid_r &lt;= 1&#39;b0;
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+  end
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+  else begin
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+    arvalid_r &lt;= ~ar_idle &amp; ~stall_ar[id] &amp; ~arvalid_r &amp; ~fifo_stall ? 1&#39;b1 : 
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+                 arready ? 1&#39;b0 : arvalid_r;
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+  end
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+end
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+// When ar_idle, there are no transactions to issue.
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+always @(posedge aclk) begin 
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+  if (areset) begin 
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+    ar_idle &lt;= 1&#39;b1; 
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+  end
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+  else begin 
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+    ar_idle &lt;= start   ? 1&#39;b0 :
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+               ar_done ? 1&#39;b1 : 
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+                         ar_idle;
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+  end
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+end
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+// each channel is assigned a different id. The transactions are interleaved.
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+always @(posedge aclk) begin 
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+  if (start) begin 
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+    id &lt;= {C_ID_WIDTH{1&#39;b1}};
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+  end
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+  else begin
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+    id &lt;= arxfer ? id - 1&#39;b1 : id; 
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+  end
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+end
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+// Increment to next address after each transaction is issued.
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+always @(posedge aclk) begin 
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+  for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+    addr[i] &lt;= ctrl_start          ? ctrl_offset[i] :
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+               arxfer &amp;&amp; (id == i) ? addr[i] + C_BURST_LEN*C_DATA_WIDTH/8 : 
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+                                     addr[i];
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+  end
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+end
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+// Counts down the number of transactions to send.
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+  .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+  .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+)
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+inst_ar_transaction_cntr ( 
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+  .clk        ( aclk                   ) ,
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+  .clken      ( 1&#39;b1                   ) ,
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+  .rst        ( areset                 ) ,
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+  .load       ( start                  ) ,
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+  .incr       ( 1&#39;b0                   ) ,
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+  .decr       ( arxfer &amp;&amp; id == &#39;0     ) ,
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+  .load_value ( num_transactions       ) ,
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+  .count      ( ar_transactions_to_go  ) ,
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+  .is_zero    ( ar_final_transaction   ) 
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+);
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+assign ar_done = ar_final_transaction &amp;&amp; arxfer &amp;&amp; id == 1&#39;b0;
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+always_comb begin 
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+  for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+    incr_ar_to_r_cnt[i] = rxfer &amp; rlast &amp; (rid == i);
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+    decr_ar_to_r_cnt[i] = arxfer &amp; (arid == i);
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+  end
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+end
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+// Keeps track of the number of outstanding transactions. Stalls 
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+// when the value is reached so that the FIFO won&#39;t overflow.
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+  .C_WIDTH ( LP_MAX_OUTSTANDING_CNTR_WIDTH                       ) ,
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+  .C_INIT  ( C_MAX_OUTSTANDING[0+:LP_MAX_OUTSTANDING_CNTR_WIDTH] ) 
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+)
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+inst_ar_to_r_transaction_cntr[C_NUM_CHANNELS-1:0] ( 
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+  .clk        ( aclk                           ) ,
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+  .clken      ( 1&#39;b1                           ) ,
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+  .rst        ( areset                         ) ,
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+  .load       ( 1&#39;b0                           ) ,
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+  .incr       ( incr_ar_to_r_cnt               ) ,
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+  .decr       ( decr_ar_to_r_cnt               ) ,
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+  .load_value ( {LP_MAX_OUTSTANDING_CNTR_WIDTH{1&#39;b0}} ) ,
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+  .count      ( outstanding_vacancy_count      ) ,
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+  .is_zero    ( stall_ar                       ) 
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+);
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+// AXI Read Channel
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+///////////////////////////////////////////////////////////////////////////////
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+assign m_tvalid = tvalid;
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+assign m_tdata = tdata;
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+always_comb begin 
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+  for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+    tvalid[i] = rvalid &amp;&amp; (rid == i); 
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+    tdata[i] = rdata;
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+  end
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+end
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+// rready can remain high for optimal timing because ar transactions are not issued
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+// unless there is enough space in the FIFO.
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+assign rready = 1&#39;b1;
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+assign rxfer = rready &amp; rvalid;
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+always_comb begin 
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+  for (int i = 0; i &lt; C_NUM_CHANNELS; i++) begin 
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+    decr_r_transaction_cntr[i] = rxfer &amp; rlast &amp; (rid == i);
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+  end
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+end
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+  .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+  .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+)
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+inst_r_transaction_cntr[C_NUM_CHANNELS-1:0] ( 
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+  .clk        ( aclk                          ) ,
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+  .clken      ( 1&#39;b1                          ) ,
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+  .rst        ( areset                        ) ,
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+  .load       ( start                         ) ,
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+  .incr       ( 1&#39;b0                          ) ,
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+  .decr       ( decr_r_transaction_cntr       ) ,
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+  .load_value ( num_transactions              ) ,
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+  .count      ( r_transactions_to_go          ) ,
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+  .is_zero    ( r_final_transaction           ) 
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+);
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+endmodule : krnl_bondmachine_rtl_axi_read_master
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+`
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+)
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_axi_write_master.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_write_master.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_axi_write_master.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_axi_write_master.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,283 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package bondmachine
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+const (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	krnlBondmachineRTLAxiWriteMaster = `
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+/**
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+*
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+* License is located at
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+*
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+*
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+* under the License.
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+*/
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+////////////////////////////////////////////////////////////
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+// Description: AXI4 Write Master.  Takes a stream of data in,
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+// appends address information and sends it out.
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+module krnl_bondmachine_rtl_axi_write_master #(
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+  parameter integer C_ADDR_WIDTH       = 64,
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+  parameter integer C_DATA_WIDTH       = 32,
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+  parameter integer C_MAX_LENGTH_WIDTH = 32,
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+  parameter integer C_BURST_LEN        = 256,
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+  parameter integer C_LOG_BURST_LEN    = 8
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+)
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+(
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+  // Control interface
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+  input wire                          ctrl_start,
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+  input wire [C_ADDR_WIDTH-1:0]       ctrl_offset,
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+  input wire [C_MAX_LENGTH_WIDTH-1:0] ctrl_length,
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+  output wire                         ctrl_done,
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+  // AXI4-Stream interface
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+  input wire                          s_tvalid,
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+  input wire  [C_DATA_WIDTH-1:0]      s_tdata,
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+  output wire                         s_tready,
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+  // AXI Interface 
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+  input wire                          aclk,
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+  input wire                          areset,
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+  output wire [C_ADDR_WIDTH-1:0]      awaddr,
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+  output wire [7:0]                   awlen,
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+  output wire [2:0]                   awsize,
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+  output wire                         awvalid,
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+  input wire                          awready,
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+  output wire [C_DATA_WIDTH-1:0]      wdata,
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+  output wire [C_DATA_WIDTH/8-1:0]    wstrb,
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+  output wire                         wlast,
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+  output wire                         wvalid,
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+  input wire                          wready,
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+  input wire [1:0]                    bresp,
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+  input wire                          bvalid,
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+  output wire                         bready
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+);
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+timeunit 1ps; 
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+timeprecision 1ps; 
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+// Local Parameters
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+localparam integer LP_LOG_MAX_W_TO_AW = 8; // Allow up to 256 outstanding w to aw transactions
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+localparam integer LP_TRANSACTION_CNTR_WIDTH = C_MAX_LENGTH_WIDTH-C_LOG_BURST_LEN;
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+// Variables
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_full_bursts;
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+logic                                 num_partial_bursts;
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+logic                                 start    = 1&#39;b0;
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] num_transactions;
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+logic                                 has_partial_burst;
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+logic [C_LOG_BURST_LEN-1:0]           final_burst_len;
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+logic                                 single_transaction;
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+logic                                 wxfer;       // Unregistered write data transfer
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+logic                                 wfirst = 1&#39;b1;
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+logic                                 load_burst_cntr;
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+logic [C_LOG_BURST_LEN-1:0]           wxfers_to_go;  // Used for simulation debug
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] w_transactions_to_go;
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+logic                                 w_final_transaction;
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+logic                                 w_almost_final_transaction = 1&#39;b0;
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+logic                                 awxfer;
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+logic                                 awvalid_r    = 1&#39;b0; 
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+logic [C_ADDR_WIDTH-1:0]              addr;
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+logic                                 wfirst_d1    = 1&#39;b0; 
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+logic                                 wfirst_pulse = 1&#39;b0;
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+logic [LP_LOG_MAX_W_TO_AW-1:0]        dbg_w_to_aw_outstanding;
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+logic                                 idle_aw;
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] aw_transactions_to_go;
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+logic                                 aw_final_transaction;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+wire                                  bxfer;
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+logic [LP_TRANSACTION_CNTR_WIDTH-1:0] b_transactions_to_go;
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+logic                                 b_final_transaction;
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+// Control logic
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+// Count the number of transfers and assert done when the last bvalid is received.
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+assign num_full_bursts = ctrl_length[C_LOG_BURST_LEN+:C_MAX_LENGTH_WIDTH-C_LOG_BURST_LEN];
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+assign num_partial_bursts = ctrl_length[0+:C_LOG_BURST_LEN] ? 1&#39;b1 : 1&#39;b0; 
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+  start &lt;= ctrl_start;
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+  num_transactions &lt;= (num_partial_bursts == 1&#39;b0) ? num_full_bursts - 1&#39;b1 : num_full_bursts;
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+  has_partial_burst &lt;= num_partial_bursts;
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+  final_burst_len &lt;=  ctrl_length[0+:C_LOG_BURST_LEN] - 1&#39;b1;
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+end
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+assign ctrl_done = bxfer &amp; b_final_transaction;
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+assign single_transaction = (num_transactions == {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}}) ? 1&#39;b1 : 1&#39;b0;
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+// AXI Write Data Channel
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+assign wvalid        = s_tvalid;
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+assign wdata         = s_tdata;
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+assign wstrb         = {(C_DATA_WIDTH/8){1&#39;b1}};
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+assign s_tready = wready;
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+assign wxfer = wvalid &amp; wready; 
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+  if (areset) begin 
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+    wfirst &lt;= 1&#39;b1;
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+  end
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+  else begin
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+    wfirst &lt;= wxfer ? wlast : wfirst;
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+  end
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+end
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+// Load burst counter with partial burst if on final transaction or if there is only 1 transaction
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+assign load_burst_cntr = (wxfer &amp; wlast &amp; w_almost_final_transaction) || (start &amp; single_transaction);
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+  .C_WIDTH ( C_LOG_BURST_LEN         ) ,
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+  .C_INIT  ( {C_LOG_BURST_LEN{1&#39;b1}} ) 
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+)
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+inst_burst_cntr ( 
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+  .clk        ( aclk            ) ,
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+  .clken      ( 1&#39;b1            ) ,
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+  .rst        ( areset          ) ,
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+  .load       ( load_burst_cntr ) ,
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+  .incr       ( 1&#39;b0            ) ,
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+  .decr       ( wxfer           ) ,
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+  .load_value ( final_burst_len ) ,
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+  .count      ( wxfers_to_go    ) ,
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+  .is_zero    ( wlast           ) 
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+);
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h3-0-163" id="h3-0-163" class="i">+  .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+</a><a href="#h3-0-164" id="h3-0-164" class="i">+  .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+</a><a href="#h3-0-165" id="h3-0-165" class="i">+)
+</a><a href="#h3-0-166" id="h3-0-166" class="i">+inst_w_transaction_cntr ( 
+</a><a href="#h3-0-167" id="h3-0-167" class="i">+  .clk        ( aclk                 ) ,
+</a><a href="#h3-0-168" id="h3-0-168" class="i">+  .clken      ( 1&#39;b1                 ) ,
+</a><a href="#h3-0-169" id="h3-0-169" class="i">+  .rst        ( areset               ) ,
+</a><a href="#h3-0-170" id="h3-0-170" class="i">+  .load       ( start                ) ,
+</a><a href="#h3-0-171" id="h3-0-171" class="i">+  .incr       ( 1&#39;b0                 ) ,
+</a><a href="#h3-0-172" id="h3-0-172" class="i">+  .decr       ( wxfer &amp; wlast        ) ,
+</a><a href="#h3-0-173" id="h3-0-173" class="i">+  .load_value ( num_transactions     ) ,
+</a><a href="#h3-0-174" id="h3-0-174" class="i">+  .count      ( w_transactions_to_go ) ,
+</a><a href="#h3-0-175" id="h3-0-175" class="i">+  .is_zero    ( w_final_transaction  ) 
+</a><a href="#h3-0-176" id="h3-0-176" class="i">+);
+</a><a href="#h3-0-177" id="h3-0-177" class="i">+
+</a><a href="#h3-0-178" id="h3-0-178" class="i">+always @(posedge aclk) begin
+</a><a href="#h3-0-179" id="h3-0-179" class="i">+  w_almost_final_transaction &lt;= (w_transactions_to_go == 1) ? 1&#39;b1 : 1&#39;b0;
+</a><a href="#h3-0-180" id="h3-0-180" class="i">+end
+</a><a href="#h3-0-181" id="h3-0-181" class="i">+
+</a><a href="#h3-0-182" id="h3-0-182" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-183" id="h3-0-183" class="i">+// AXI Write Address Channel
+</a><a href="#h3-0-184" id="h3-0-184" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-185" id="h3-0-185" class="i">+// The address channel samples the data channel and send out transactions when 
+</a><a href="#h3-0-186" id="h3-0-186" class="i">+// first beat of wdata is asserted. This ensures that address requests are not 
+</a><a href="#h3-0-187" id="h3-0-187" class="i">+// sent without data on the way.
+</a><a href="#h3-0-188" id="h3-0-188" class="i">+
+</a><a href="#h3-0-189" id="h3-0-189" class="i">+assign awvalid = awvalid_r;
+</a><a href="#h3-0-190" id="h3-0-190" class="i">+assign awxfer = awvalid &amp; awready;
+</a><a href="#h3-0-191" id="h3-0-191" class="i">+
+</a><a href="#h3-0-192" id="h3-0-192" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-193" id="h3-0-193" class="i">+  if (areset) begin 
+</a><a href="#h3-0-194" id="h3-0-194" class="i">+    awvalid_r &lt;= 1&#39;b0;
+</a><a href="#h3-0-195" id="h3-0-195" class="i">+  end
+</a><a href="#h3-0-196" id="h3-0-196" class="i">+  else begin
+</a><a href="#h3-0-197" id="h3-0-197" class="i">+    awvalid_r &lt;= ~idle_aw &amp; ~awvalid_r ? 1&#39;b1 : 
+</a><a href="#h3-0-198" id="h3-0-198" class="i">+                 awready               ? 1&#39;b0 : 
+</a><a href="#h3-0-199" id="h3-0-199" class="i">+                                         awvalid_r;
+</a><a href="#h3-0-200" id="h3-0-200" class="i">+  end
+</a><a href="#h3-0-201" id="h3-0-201" class="i">+end
+</a><a href="#h3-0-202" id="h3-0-202" class="i">+
+</a><a href="#h3-0-203" id="h3-0-203" class="i">+assign awaddr = addr;
+</a><a href="#h3-0-204" id="h3-0-204" class="i">+
+</a><a href="#h3-0-205" id="h3-0-205" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-206" id="h3-0-206" class="i">+  addr &lt;= ctrl_start ? ctrl_offset :
+</a><a href="#h3-0-207" id="h3-0-207" class="i">+          awxfer     ? addr + C_BURST_LEN*C_DATA_WIDTH/8 : 
+</a><a href="#h3-0-208" id="h3-0-208" class="i">+                       addr;
+</a><a href="#h3-0-209" id="h3-0-209" class="i">+end
+</a><a href="#h3-0-210" id="h3-0-210" class="i">+
+</a><a href="#h3-0-211" id="h3-0-211" class="i">+assign awlen   = aw_final_transaction || (start &amp; single_transaction) ? final_burst_len : C_BURST_LEN - 1;
+</a><a href="#h3-0-212" id="h3-0-212" class="i">+assign awsize  = $clog2((C_DATA_WIDTH/8));
+</a><a href="#h3-0-213" id="h3-0-213" class="i">+
+</a><a href="#h3-0-214" id="h3-0-214" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h3-0-215" id="h3-0-215" class="i">+  .C_WIDTH (LP_LOG_MAX_W_TO_AW),
+</a><a href="#h3-0-216" id="h3-0-216" class="i">+  .C_INIT ({LP_LOG_MAX_W_TO_AW{1&#39;b0}})
+</a><a href="#h3-0-217" id="h3-0-217" class="i">+)
+</a><a href="#h3-0-218" id="h3-0-218" class="i">+inst_w_to_aw_cntr ( 
+</a><a href="#h3-0-219" id="h3-0-219" class="i">+  .clk        ( aclk                    ) ,
+</a><a href="#h3-0-220" id="h3-0-220" class="i">+  .clken      ( 1&#39;b1                    ) ,
+</a><a href="#h3-0-221" id="h3-0-221" class="i">+  .rst        ( areset                  ) ,
+</a><a href="#h3-0-222" id="h3-0-222" class="i">+  .load       ( 1&#39;b0                    ) ,
+</a><a href="#h3-0-223" id="h3-0-223" class="i">+  .incr       ( wfirst_pulse            ) ,
+</a><a href="#h3-0-224" id="h3-0-224" class="i">+  .decr       ( awxfer                  ) ,
+</a><a href="#h3-0-225" id="h3-0-225" class="i">+  .load_value (                         ) ,
+</a><a href="#h3-0-226" id="h3-0-226" class="i">+  .count      ( dbg_w_to_aw_outstanding ) ,
+</a><a href="#h3-0-227" id="h3-0-227" class="i">+  .is_zero    ( idle_aw                 ) 
+</a><a href="#h3-0-228" id="h3-0-228" class="i">+);
+</a><a href="#h3-0-229" id="h3-0-229" class="i">+
+</a><a href="#h3-0-230" id="h3-0-230" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-231" id="h3-0-231" class="i">+  wfirst_d1 &lt;= wvalid &amp; wfirst; 
+</a><a href="#h3-0-232" id="h3-0-232" class="i">+end
+</a><a href="#h3-0-233" id="h3-0-233" class="i">+
+</a><a href="#h3-0-234" id="h3-0-234" class="i">+always @(posedge aclk) begin 
+</a><a href="#h3-0-235" id="h3-0-235" class="i">+  wfirst_pulse &lt;= wvalid &amp; wfirst &amp; ~wfirst_d1;
+</a><a href="#h3-0-236" id="h3-0-236" class="i">+end
+</a><a href="#h3-0-237" id="h3-0-237" class="i">+
+</a><a href="#h3-0-238" id="h3-0-238" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h3-0-239" id="h3-0-239" class="i">+  .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+</a><a href="#h3-0-240" id="h3-0-240" class="i">+  .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+</a><a href="#h3-0-241" id="h3-0-241" class="i">+)
+</a><a href="#h3-0-242" id="h3-0-242" class="i">+inst_aw_transaction_cntr ( 
+</a><a href="#h3-0-243" id="h3-0-243" class="i">+  .clk        ( aclk                   ) ,
+</a><a href="#h3-0-244" id="h3-0-244" class="i">+  .clken      ( 1&#39;b1                   ) ,
+</a><a href="#h3-0-245" id="h3-0-245" class="i">+  .rst        ( areset                 ) ,
+</a><a href="#h3-0-246" id="h3-0-246" class="i">+  .load       ( start                  ) ,
+</a><a href="#h3-0-247" id="h3-0-247" class="i">+  .incr       ( 1&#39;b0                   ) ,
+</a><a href="#h3-0-248" id="h3-0-248" class="i">+  .decr       ( awxfer                 ) ,
+</a><a href="#h3-0-249" id="h3-0-249" class="i">+  .load_value ( num_transactions       ) ,
+</a><a href="#h3-0-250" id="h3-0-250" class="i">+  .count      ( aw_transactions_to_go  ) ,
+</a><a href="#h3-0-251" id="h3-0-251" class="i">+  .is_zero    ( aw_final_transaction   ) 
+</a><a href="#h3-0-252" id="h3-0-252" class="i">+);
+</a><a href="#h3-0-253" id="h3-0-253" class="i">+
+</a><a href="#h3-0-254" id="h3-0-254" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-255" id="h3-0-255" class="i">+// AXI Write Response Channel
+</a><a href="#h3-0-256" id="h3-0-256" class="i">+/////////////////////////////////////////////////////////////////////////////
+</a><a href="#h3-0-257" id="h3-0-257" class="i">+
+</a><a href="#h3-0-258" id="h3-0-258" class="i">+assign bready = 1&#39;b1;
+</a><a href="#h3-0-259" id="h3-0-259" class="i">+assign bxfer = bready &amp; bvalid;
+</a><a href="#h3-0-260" id="h3-0-260" class="i">+
+</a><a href="#h3-0-261" id="h3-0-261" class="i">+krnl_bondmachine_rtl_counter #(
+</a><a href="#h3-0-262" id="h3-0-262" class="i">+  .C_WIDTH ( LP_TRANSACTION_CNTR_WIDTH         ) ,
+</a><a href="#h3-0-263" id="h3-0-263" class="i">+  .C_INIT  ( {LP_TRANSACTION_CNTR_WIDTH{1&#39;b0}} ) 
+</a><a href="#h3-0-264" id="h3-0-264" class="i">+)
+</a><a href="#h3-0-265" id="h3-0-265" class="i">+inst_b_transaction_cntr ( 
+</a><a href="#h3-0-266" id="h3-0-266" class="i">+  .clk        ( aclk                 ) ,
+</a><a href="#h3-0-267" id="h3-0-267" class="i">+  .clken      ( 1&#39;b1                 ) ,
+</a><a href="#h3-0-268" id="h3-0-268" class="i">+  .rst        ( areset               ) ,
+</a><a href="#h3-0-269" id="h3-0-269" class="i">+  .load       ( start                ) ,
+</a><a href="#h3-0-270" id="h3-0-270" class="i">+  .incr       ( 1&#39;b0                 ) ,
+</a><a href="#h3-0-271" id="h3-0-271" class="i">+  .decr       ( bxfer                ) ,
+</a><a href="#h3-0-272" id="h3-0-272" class="i">+  .load_value ( num_transactions     ) ,
+</a><a href="#h3-0-273" id="h3-0-273" class="i">+  .count      ( b_transactions_to_go ) ,
+</a><a href="#h3-0-274" id="h3-0-274" class="i">+  .is_zero    ( b_final_transaction  ) 
+</a><a href="#h3-0-275" id="h3-0-275" class="i">+);
+</a><a href="#h3-0-276" id="h3-0-276" class="i">+
+</a><a href="#h3-0-277" id="h3-0-277" class="i">+endmodule : krnl_bondmachine_rtl_axi_write_master
+</a><a href="#h3-0-278" id="h3-0-278" class="i">+
+</a><a href="#h3-0-279" id="h3-0-279" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h3-0-280" id="h3-0-280" class="i">+
+</a><a href="#h3-0-281" id="h3-0-281" class="i">+`
+</a><a href="#h3-0-282" id="h3-0-282" class="i">+)
+</a><b>diff --git a/<a id="h4" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_caller.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_caller.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_caller.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_caller.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,103 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package bondmachine
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+const (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	krnlBondmachineRTLCaller = `
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+/**
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+*
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+* License is located at
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+*
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+*
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+* under the License.
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+*/
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+////////////////////////////////////////////////////////////////////////////////
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+// Description: Basic Adder, no overflow. Unsigned. Combinatorial.
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+////////////////////////////////////////////////////////////////////////////////
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+module krnl_bondmachine_rtl_caller #(
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+  parameter integer C_DATA_WIDTH   = 32, // Data width of both input and output data
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+  parameter integer C_NUM_CHANNELS = 1   // Number of input channels.  Only a value of 2 implemented.
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+)
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+(
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+  input wire                                         aclk,
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+  input wire                                         areset,
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+  input wire                     s_tvalid,
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+  input wire  [C_NUM_CHANNELS-1:0][C_DATA_WIDTH-1:0] s_tdata,
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+  output wire                    s_tready,
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+  output wire                                        m_tvalid,
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+  output wire [C_DATA_WIDTH-1:0]                     m_tdata,
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+  input  wire                                        m_tready
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+);
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+timeunit 1ps; 
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+timeprecision 1ps; 
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+wire fready;
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+wire fmvalid;
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+wire f_saxistready;
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+wire f_maxistready;
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+logic [C_DATA_WIDTH-1:0] acc;
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+logic [C_DATA_WIDTH-1:0] bmacc;
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+wire last;
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+wire slast;
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+wire reset;
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+// reg  [31:0] counter;
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+// always @ (posedge clk) begin
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+//   counter &lt;= counter + 1;
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+// end
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+// always_comb begin 
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+//   acc = s_tdata[0];
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+// end
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+bmaccelerator_v1_0 #( 
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+  .C_S00_AXIS_TDATA_WIDTH   ( C_DATA_WIDTH ) ,
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+  .C_M00_AXIS_TDATA_WIDTH   ( C_DATA_WIDTH ),
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+  .C_M00_AXIS_START_COUNT   ( 32)
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+)
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+inst_bmaccelerator_v1_0 ( 
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+  .s00_axis_aclk      ( aclk            ),
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+  .s00_axis_aresetn   ( !reset            ),
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+  .s00_axis_tready    ( s_tready    ),
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+  .s00_axis_tdata     ( s_tdata[0]     ),
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+  .s00_axis_tlast     ( slast),
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+  .s00_axis_tvalid    ( s_tvalid ), // s_tvalid
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+  .m00_axis_aclk    ( aclk),
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+  .m00_axis_aresetn ( !reset),
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+  .m00_axis_tvalid  ( m_tvalid      ),
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+  .m00_axis_tdata   ( m_tdata       ), // output
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+  .m00_axis_tlast   ( last ), // output
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+  .m00_axis_tready  ( m_tready   )
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+);
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+/*
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+TO THERE
+</a><a href="#h4-0-92" id="h4-0-92" class="i">+*/
+</a><a href="#h4-0-93" id="h4-0-93" class="i">+
+</a><a href="#h4-0-94" id="h4-0-94" class="i">+//assign s_tready = 1; // cosi quasi funziona
+</a><a href="#h4-0-95" id="h4-0-95" class="i">+
+</a><a href="#h4-0-96" id="h4-0-96" class="i">+
+</a><a href="#h4-0-97" id="h4-0-97" class="i">+endmodule : krnl_bondmachine_rtl_caller
+</a><a href="#h4-0-98" id="h4-0-98" class="i">+
+</a><a href="#h4-0-99" id="h4-0-99" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h4-0-100" id="h4-0-100" class="i">+
+</a><a href="#h4-0-101" id="h4-0-101" class="i">+`
+</a><a href="#h4-0-102" id="h4-0-102" class="i">+)
+</a><b>diff --git a/<a id="h5" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_control_s_axi.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_control_s_axi.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_control_s_axi.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_control_s_axi.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,444 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package bondmachine
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+const (
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	krnlBondmachineRTLControlSAxi = `
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+/**
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+*
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+* License is located at
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+*
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+*
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+* under the License.
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+*/
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+` + &quot;`timescale 1ns / 1ps&quot; + `
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+module krnl_bondmachine_rtl_control_s_axi
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+#(parameter
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+    C_S_AXI_ADDR_WIDTH = 6,
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+    C_S_AXI_DATA_WIDTH = 32
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+)(
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+    // axi4 lite slave signals
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+    input  wire                          ACLK,
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+    input  wire                          ARESET,
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+    input  wire                          ACLK_EN,
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+    input  wire [C_S_AXI_ADDR_WIDTH-1:0] AWADDR,
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+    input  wire                          AWVALID,
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+    output wire                          AWREADY,
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+    input  wire [C_S_AXI_DATA_WIDTH-1:0] WDATA,
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+    input  wire [C_S_AXI_DATA_WIDTH/8-1:0] WSTRB,
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+    input  wire                          WVALID,
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+    output wire                          WREADY,
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+    output wire [1:0]                    BRESP,
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+    output wire                          BVALID,
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+    input  wire                          BREADY,
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+    input  wire [C_S_AXI_ADDR_WIDTH-1:0] ARADDR,
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+    input  wire                          ARVALID,
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+    output wire                          ARREADY,
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+    output wire [C_S_AXI_DATA_WIDTH-1:0] RDATA,
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+    output wire [1:0]                    RRESP,
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+    output wire                          RVALID,
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+    input  wire                          RREADY,
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+    output wire                          interrupt,
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+    // user signals
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+    output wire                          ap_start,
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+    input  wire                          ap_done,
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+    input  wire                          ap_ready,
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+    input  wire                          ap_idle,
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+    output wire [63:0]                   a,
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+    output wire [63:0]                   b,
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+    output wire [63:0]                   c
+</a><a href="#h5-0-56" id="h5-0-56" class="i">+    //output wire [31:0]                   length_r
+</a><a href="#h5-0-57" id="h5-0-57" class="i">+);
+</a><a href="#h5-0-58" id="h5-0-58" class="i">+//------------------------Address Info-------------------
+</a><a href="#h5-0-59" id="h5-0-59" class="i">+// 0x00 : Control signals
+</a><a href="#h5-0-60" id="h5-0-60" class="i">+//        bit 0  - ap_start (Read/Write/COH)
+</a><a href="#h5-0-61" id="h5-0-61" class="i">+//        bit 1  - ap_done (Read/COR)
+</a><a href="#h5-0-62" id="h5-0-62" class="i">+//        bit 2  - ap_idle (Read)
+</a><a href="#h5-0-63" id="h5-0-63" class="i">+//        bit 3  - ap_ready (Read)
+</a><a href="#h5-0-64" id="h5-0-64" class="i">+//        bit 7  - auto_restart (Read/Write)
+</a><a href="#h5-0-65" id="h5-0-65" class="i">+//        others - reserved
+</a><a href="#h5-0-66" id="h5-0-66" class="i">+// 0x04 : Global Interrupt Enable Register
+</a><a href="#h5-0-67" id="h5-0-67" class="i">+//        bit 0  - Global Interrupt Enable (Read/Write)
+</a><a href="#h5-0-68" id="h5-0-68" class="i">+//        others - reserved
+</a><a href="#h5-0-69" id="h5-0-69" class="i">+// 0x08 : IP Interrupt Enable Register (Read/Write)
+</a><a href="#h5-0-70" id="h5-0-70" class="i">+//        bit 0  - Channel 0 (ap_done)
+</a><a href="#h5-0-71" id="h5-0-71" class="i">+//        bit 1  - Channel 1 (ap_ready)
+</a><a href="#h5-0-72" id="h5-0-72" class="i">+//        others - reserved
+</a><a href="#h5-0-73" id="h5-0-73" class="i">+// 0x0c : IP Interrupt Status Register (Read/TOW)
+</a><a href="#h5-0-74" id="h5-0-74" class="i">+//        bit 0  - Channel 0 (ap_done)
+</a><a href="#h5-0-75" id="h5-0-75" class="i">+//        bit 1  - Channel 1 (ap_ready)
+</a><a href="#h5-0-76" id="h5-0-76" class="i">+//        others - reserved
+</a><a href="#h5-0-77" id="h5-0-77" class="i">+// 0x10 : Data signal of a
+</a><a href="#h5-0-78" id="h5-0-78" class="i">+//        bit 31~0 - a[31:0] (Read/Write)
+</a><a href="#h5-0-79" id="h5-0-79" class="i">+// 0x14 : Data signal of a
+</a><a href="#h5-0-80" id="h5-0-80" class="i">+//        bit 31~0 - a[63:32] (Read/Write)
+</a><a href="#h5-0-81" id="h5-0-81" class="i">+// 0x18 : reserved
+</a><a href="#h5-0-82" id="h5-0-82" class="i">+// 0x1c : Data signal of b
+</a><a href="#h5-0-83" id="h5-0-83" class="i">+//        bit 31~0 - b[31:0] (Read/Write)
+</a><a href="#h5-0-84" id="h5-0-84" class="i">+// 0x20 : Data signal of b
+</a><a href="#h5-0-85" id="h5-0-85" class="i">+//        bit 31~0 - b[63:32] (Read/Write)
+</a><a href="#h5-0-86" id="h5-0-86" class="i">+// 0x24 : reserved
+</a><a href="#h5-0-87" id="h5-0-87" class="i">+// 0x28 : Data signal of c
+</a><a href="#h5-0-88" id="h5-0-88" class="i">+//        bit 31~0 - c[31:0] (Read/Write)
+</a><a href="#h5-0-89" id="h5-0-89" class="i">+// 0x2c : Data signal of c
+</a><a href="#h5-0-90" id="h5-0-90" class="i">+//        bit 31~0 - c[63:32] (Read/Write)
+</a><a href="#h5-0-91" id="h5-0-91" class="i">+// 0x30 : reserved
+</a><a href="#h5-0-92" id="h5-0-92" class="i">+// 0x34 : Data signal of length_r
+</a><a href="#h5-0-93" id="h5-0-93" class="i">+//        bit 31~0 - length_r[31:0] (Read/Write)
+</a><a href="#h5-0-94" id="h5-0-94" class="i">+// 0x38 : reserved
+</a><a href="#h5-0-95" id="h5-0-95" class="i">+// (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
+</a><a href="#h5-0-96" id="h5-0-96" class="i">+
+</a><a href="#h5-0-97" id="h5-0-97" class="i">+//------------------------Parameter----------------------
+</a><a href="#h5-0-98" id="h5-0-98" class="i">+localparam
+</a><a href="#h5-0-99" id="h5-0-99" class="i">+    ADDR_AP_CTRL         = 6&#39;h00,
+</a><a href="#h5-0-100" id="h5-0-100" class="i">+    ADDR_GIE             = 6&#39;h04,
+</a><a href="#h5-0-101" id="h5-0-101" class="i">+    ADDR_IER             = 6&#39;h08,
+</a><a href="#h5-0-102" id="h5-0-102" class="i">+    ADDR_ISR             = 6&#39;h0c,
+</a><a href="#h5-0-103" id="h5-0-103" class="i">+    ADDR_A_DATA_0        = 6&#39;h10,
+</a><a href="#h5-0-104" id="h5-0-104" class="i">+    ADDR_A_DATA_1        = 6&#39;h14,
+</a><a href="#h5-0-105" id="h5-0-105" class="i">+    ADDR_A_CTRL          = 6&#39;h18,
+</a><a href="#h5-0-106" id="h5-0-106" class="i">+    ADDR_B_DATA_0        = 6&#39;h1c,
+</a><a href="#h5-0-107" id="h5-0-107" class="i">+    ADDR_B_DATA_1        = 6&#39;h20,
+</a><a href="#h5-0-108" id="h5-0-108" class="i">+    ADDR_B_CTRL          = 6&#39;h24,
+</a><a href="#h5-0-109" id="h5-0-109" class="i">+    ADDR_C_DATA_0        = 6&#39;h28,
+</a><a href="#h5-0-110" id="h5-0-110" class="i">+    ADDR_C_DATA_1        = 6&#39;h2c,
+</a><a href="#h5-0-111" id="h5-0-111" class="i">+    ADDR_C_CTRL          = 6&#39;h30,
+</a><a href="#h5-0-112" id="h5-0-112" class="i">+    ADDR_LENGTH_R_DATA_0 = 6&#39;h34,
+</a><a href="#h5-0-113" id="h5-0-113" class="i">+    ADDR_LENGTH_R_CTRL   = 6&#39;h38,
+</a><a href="#h5-0-114" id="h5-0-114" class="i">+    WRIDLE               = 2&#39;d0,
+</a><a href="#h5-0-115" id="h5-0-115" class="i">+    WRDATA               = 2&#39;d1,
+</a><a href="#h5-0-116" id="h5-0-116" class="i">+    WRRESP               = 2&#39;d2,
+</a><a href="#h5-0-117" id="h5-0-117" class="i">+    RDIDLE               = 2&#39;d0,
+</a><a href="#h5-0-118" id="h5-0-118" class="i">+    RDDATA               = 2&#39;d1,
+</a><a href="#h5-0-119" id="h5-0-119" class="i">+    ADDR_BITS         = 6;
+</a><a href="#h5-0-120" id="h5-0-120" class="i">+
+</a><a href="#h5-0-121" id="h5-0-121" class="i">+//------------------------Local signal-------------------
+</a><a href="#h5-0-122" id="h5-0-122" class="i">+    reg  [1:0]                    wstate = WRIDLE;
+</a><a href="#h5-0-123" id="h5-0-123" class="i">+    reg  [1:0]                    wnext;
+</a><a href="#h5-0-124" id="h5-0-124" class="i">+    reg  [ADDR_BITS-1:0]          waddr;
+</a><a href="#h5-0-125" id="h5-0-125" class="i">+    wire [31:0]                   wmask;
+</a><a href="#h5-0-126" id="h5-0-126" class="i">+    wire                          aw_hs;
+</a><a href="#h5-0-127" id="h5-0-127" class="i">+    wire                          w_hs;
+</a><a href="#h5-0-128" id="h5-0-128" class="i">+    reg  [1:0]                    rstate = RDIDLE;
+</a><a href="#h5-0-129" id="h5-0-129" class="i">+    reg  [1:0]                    rnext;
+</a><a href="#h5-0-130" id="h5-0-130" class="i">+    reg  [31:0]                   rdata;
+</a><a href="#h5-0-131" id="h5-0-131" class="i">+    wire                          ar_hs;
+</a><a href="#h5-0-132" id="h5-0-132" class="i">+    wire [ADDR_BITS-1:0]          raddr;
+</a><a href="#h5-0-133" id="h5-0-133" class="i">+    // internal registers
+</a><a href="#h5-0-134" id="h5-0-134" class="i">+    wire                          int_ap_idle;
+</a><a href="#h5-0-135" id="h5-0-135" class="i">+    wire                          int_ap_ready;
+</a><a href="#h5-0-136" id="h5-0-136" class="i">+    reg                           int_ap_done = 1&#39;b0;
+</a><a href="#h5-0-137" id="h5-0-137" class="i">+    reg                           int_ap_start = 1&#39;b0;
+</a><a href="#h5-0-138" id="h5-0-138" class="i">+    reg                           int_auto_restart = 1&#39;b0;
+</a><a href="#h5-0-139" id="h5-0-139" class="i">+    reg                           int_gie = 2&#39;b0;
+</a><a href="#h5-0-140" id="h5-0-140" class="i">+    reg  [1:0]                    int_ier = 2&#39;b0;
+</a><a href="#h5-0-141" id="h5-0-141" class="i">+    reg  [1:0]                    int_isr = 2&#39;b0;
+</a><a href="#h5-0-142" id="h5-0-142" class="i">+    reg  [63:0]                   int_a = 64&#39;b0;
+</a><a href="#h5-0-143" id="h5-0-143" class="i">+    reg  [63:0]                   int_b = 64&#39;b0;
+</a><a href="#h5-0-144" id="h5-0-144" class="i">+    //reg  [63:0]                   int_c = 64&#39;b0;
+</a><a href="#h5-0-145" id="h5-0-145" class="i">+    //reg  [31:0]                   int_length_r = 32&#39;b0;
+</a><a href="#h5-0-146" id="h5-0-146" class="i">+
+</a><a href="#h5-0-147" id="h5-0-147" class="i">+//------------------------Instantiation------------------
+</a><a href="#h5-0-148" id="h5-0-148" class="i">+
+</a><a href="#h5-0-149" id="h5-0-149" class="i">+//------------------------AXI write fsm------------------
+</a><a href="#h5-0-150" id="h5-0-150" class="i">+assign AWREADY = (~ARESET) &amp; (wstate == WRIDLE);
+</a><a href="#h5-0-151" id="h5-0-151" class="i">+assign WREADY  = (wstate == WRDATA);
+</a><a href="#h5-0-152" id="h5-0-152" class="i">+assign BRESP   = 2&#39;b00;  // OKAY
+</a><a href="#h5-0-153" id="h5-0-153" class="i">+assign BVALID  = (wstate == WRRESP);
+</a><a href="#h5-0-154" id="h5-0-154" class="i">+assign wmask   = { {8{WSTRB[3]}}, {8{WSTRB[2]}}, {8{WSTRB[1]}}, {8{WSTRB[0]}} };
+</a><a href="#h5-0-155" id="h5-0-155" class="i">+assign aw_hs   = AWVALID &amp; AWREADY;
+</a><a href="#h5-0-156" id="h5-0-156" class="i">+assign w_hs    = WVALID &amp; WREADY;
+</a><a href="#h5-0-157" id="h5-0-157" class="i">+
+</a><a href="#h5-0-158" id="h5-0-158" class="i">+// wstate
+</a><a href="#h5-0-159" id="h5-0-159" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-160" id="h5-0-160" class="i">+    if (ARESET)
+</a><a href="#h5-0-161" id="h5-0-161" class="i">+        wstate &lt;= WRIDLE;
+</a><a href="#h5-0-162" id="h5-0-162" class="i">+    else if (ACLK_EN)
+</a><a href="#h5-0-163" id="h5-0-163" class="i">+        wstate &lt;= wnext;
+</a><a href="#h5-0-164" id="h5-0-164" class="i">+end
+</a><a href="#h5-0-165" id="h5-0-165" class="i">+
+</a><a href="#h5-0-166" id="h5-0-166" class="i">+// wnext
+</a><a href="#h5-0-167" id="h5-0-167" class="i">+always @(*) begin
+</a><a href="#h5-0-168" id="h5-0-168" class="i">+    case (wstate)
+</a><a href="#h5-0-169" id="h5-0-169" class="i">+        WRIDLE:
+</a><a href="#h5-0-170" id="h5-0-170" class="i">+            if (AWVALID)
+</a><a href="#h5-0-171" id="h5-0-171" class="i">+                wnext = WRDATA;
+</a><a href="#h5-0-172" id="h5-0-172" class="i">+            else
+</a><a href="#h5-0-173" id="h5-0-173" class="i">+                wnext = WRIDLE;
+</a><a href="#h5-0-174" id="h5-0-174" class="i">+        WRDATA:
+</a><a href="#h5-0-175" id="h5-0-175" class="i">+            if (WVALID)
+</a><a href="#h5-0-176" id="h5-0-176" class="i">+                wnext = WRRESP;
+</a><a href="#h5-0-177" id="h5-0-177" class="i">+            else
+</a><a href="#h5-0-178" id="h5-0-178" class="i">+                wnext = WRDATA;
+</a><a href="#h5-0-179" id="h5-0-179" class="i">+        WRRESP:
+</a><a href="#h5-0-180" id="h5-0-180" class="i">+            if (BREADY)
+</a><a href="#h5-0-181" id="h5-0-181" class="i">+                wnext = WRIDLE;
+</a><a href="#h5-0-182" id="h5-0-182" class="i">+            else
+</a><a href="#h5-0-183" id="h5-0-183" class="i">+                wnext = WRRESP;
+</a><a href="#h5-0-184" id="h5-0-184" class="i">+        default:
+</a><a href="#h5-0-185" id="h5-0-185" class="i">+            wnext = WRIDLE;
+</a><a href="#h5-0-186" id="h5-0-186" class="i">+    endcase
+</a><a href="#h5-0-187" id="h5-0-187" class="i">+end
+</a><a href="#h5-0-188" id="h5-0-188" class="i">+
+</a><a href="#h5-0-189" id="h5-0-189" class="i">+// waddr
+</a><a href="#h5-0-190" id="h5-0-190" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-191" id="h5-0-191" class="i">+    if (ACLK_EN) begin
+</a><a href="#h5-0-192" id="h5-0-192" class="i">+        if (aw_hs)
+</a><a href="#h5-0-193" id="h5-0-193" class="i">+            waddr &lt;= AWADDR[ADDR_BITS-1:0];
+</a><a href="#h5-0-194" id="h5-0-194" class="i">+    end
+</a><a href="#h5-0-195" id="h5-0-195" class="i">+end
+</a><a href="#h5-0-196" id="h5-0-196" class="i">+
+</a><a href="#h5-0-197" id="h5-0-197" class="i">+//------------------------AXI read fsm-------------------
+</a><a href="#h5-0-198" id="h5-0-198" class="i">+assign ARREADY = (~ARESET) &amp;&amp; (rstate == RDIDLE);
+</a><a href="#h5-0-199" id="h5-0-199" class="i">+assign RDATA   = rdata;
+</a><a href="#h5-0-200" id="h5-0-200" class="i">+assign RRESP   = 2&#39;b00;  // OKAY
+</a><a href="#h5-0-201" id="h5-0-201" class="i">+assign RVALID  = (rstate == RDDATA);
+</a><a href="#h5-0-202" id="h5-0-202" class="i">+assign ar_hs   = ARVALID &amp; ARREADY;
+</a><a href="#h5-0-203" id="h5-0-203" class="i">+assign raddr   = ARADDR[ADDR_BITS-1:0];
+</a><a href="#h5-0-204" id="h5-0-204" class="i">+
+</a><a href="#h5-0-205" id="h5-0-205" class="i">+// rstate
+</a><a href="#h5-0-206" id="h5-0-206" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-207" id="h5-0-207" class="i">+    if (ARESET)
+</a><a href="#h5-0-208" id="h5-0-208" class="i">+        rstate &lt;= RDIDLE;
+</a><a href="#h5-0-209" id="h5-0-209" class="i">+    else if (ACLK_EN)
+</a><a href="#h5-0-210" id="h5-0-210" class="i">+        rstate &lt;= rnext;
+</a><a href="#h5-0-211" id="h5-0-211" class="i">+end
+</a><a href="#h5-0-212" id="h5-0-212" class="i">+
+</a><a href="#h5-0-213" id="h5-0-213" class="i">+// rnext
+</a><a href="#h5-0-214" id="h5-0-214" class="i">+always @(*) begin
+</a><a href="#h5-0-215" id="h5-0-215" class="i">+    case (rstate)
+</a><a href="#h5-0-216" id="h5-0-216" class="i">+        RDIDLE:
+</a><a href="#h5-0-217" id="h5-0-217" class="i">+            if (ARVALID)
+</a><a href="#h5-0-218" id="h5-0-218" class="i">+                rnext = RDDATA;
+</a><a href="#h5-0-219" id="h5-0-219" class="i">+            else
+</a><a href="#h5-0-220" id="h5-0-220" class="i">+                rnext = RDIDLE;
+</a><a href="#h5-0-221" id="h5-0-221" class="i">+        RDDATA:
+</a><a href="#h5-0-222" id="h5-0-222" class="i">+            if (RREADY &amp; RVALID)
+</a><a href="#h5-0-223" id="h5-0-223" class="i">+                rnext = RDIDLE;
+</a><a href="#h5-0-224" id="h5-0-224" class="i">+            else
+</a><a href="#h5-0-225" id="h5-0-225" class="i">+                rnext = RDDATA;
+</a><a href="#h5-0-226" id="h5-0-226" class="i">+        default:
+</a><a href="#h5-0-227" id="h5-0-227" class="i">+            rnext = RDIDLE;
+</a><a href="#h5-0-228" id="h5-0-228" class="i">+    endcase
+</a><a href="#h5-0-229" id="h5-0-229" class="i">+end
+</a><a href="#h5-0-230" id="h5-0-230" class="i">+
+</a><a href="#h5-0-231" id="h5-0-231" class="i">+// rdata
+</a><a href="#h5-0-232" id="h5-0-232" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-233" id="h5-0-233" class="i">+    if (ACLK_EN) begin
+</a><a href="#h5-0-234" id="h5-0-234" class="i">+        if (ar_hs) begin
+</a><a href="#h5-0-235" id="h5-0-235" class="i">+            rdata &lt;= 1&#39;b0;
+</a><a href="#h5-0-236" id="h5-0-236" class="i">+            case (raddr)
+</a><a href="#h5-0-237" id="h5-0-237" class="i">+                ADDR_AP_CTRL: begin
+</a><a href="#h5-0-238" id="h5-0-238" class="i">+                    rdata[0] &lt;= int_ap_start;
+</a><a href="#h5-0-239" id="h5-0-239" class="i">+                    rdata[1] &lt;= int_ap_done;
+</a><a href="#h5-0-240" id="h5-0-240" class="i">+                    rdata[2] &lt;= int_ap_idle;
+</a><a href="#h5-0-241" id="h5-0-241" class="i">+                    rdata[3] &lt;= int_ap_ready;
+</a><a href="#h5-0-242" id="h5-0-242" class="i">+                    rdata[7] &lt;= int_auto_restart;
+</a><a href="#h5-0-243" id="h5-0-243" class="i">+                end
+</a><a href="#h5-0-244" id="h5-0-244" class="i">+                ADDR_GIE: begin
+</a><a href="#h5-0-245" id="h5-0-245" class="i">+                    rdata &lt;= int_gie;
+</a><a href="#h5-0-246" id="h5-0-246" class="i">+                end
+</a><a href="#h5-0-247" id="h5-0-247" class="i">+                ADDR_IER: begin
+</a><a href="#h5-0-248" id="h5-0-248" class="i">+                    rdata &lt;= int_ier;
+</a><a href="#h5-0-249" id="h5-0-249" class="i">+                end
+</a><a href="#h5-0-250" id="h5-0-250" class="i">+                ADDR_ISR: begin
+</a><a href="#h5-0-251" id="h5-0-251" class="i">+                    rdata &lt;= int_isr;
+</a><a href="#h5-0-252" id="h5-0-252" class="i">+                end
+</a><a href="#h5-0-253" id="h5-0-253" class="i">+                ADDR_A_DATA_0: begin
+</a><a href="#h5-0-254" id="h5-0-254" class="i">+                    rdata &lt;= int_a[31:0];
+</a><a href="#h5-0-255" id="h5-0-255" class="i">+                end
+</a><a href="#h5-0-256" id="h5-0-256" class="i">+                ADDR_A_DATA_1: begin
+</a><a href="#h5-0-257" id="h5-0-257" class="i">+                    rdata &lt;= int_a[63:32];
+</a><a href="#h5-0-258" id="h5-0-258" class="i">+                end
+</a><a href="#h5-0-259" id="h5-0-259" class="i">+                ADDR_B_DATA_0: begin
+</a><a href="#h5-0-260" id="h5-0-260" class="i">+                    rdata &lt;= int_b[31:0];
+</a><a href="#h5-0-261" id="h5-0-261" class="i">+                end
+</a><a href="#h5-0-262" id="h5-0-262" class="i">+                ADDR_B_DATA_1: begin
+</a><a href="#h5-0-263" id="h5-0-263" class="i">+                    rdata &lt;= int_b[63:32];
+</a><a href="#h5-0-264" id="h5-0-264" class="i">+                end
+</a><a href="#h5-0-265" id="h5-0-265" class="i">+                // ADDR_C_DATA_0: begin
+</a><a href="#h5-0-266" id="h5-0-266" class="i">+                //     rdata &lt;= int_c[31:0];
+</a><a href="#h5-0-267" id="h5-0-267" class="i">+                // end
+</a><a href="#h5-0-268" id="h5-0-268" class="i">+                // ADDR_C_DATA_1: begin
+</a><a href="#h5-0-269" id="h5-0-269" class="i">+                //     rdata &lt;= int_c[63:32];
+</a><a href="#h5-0-270" id="h5-0-270" class="i">+                // end
+</a><a href="#h5-0-271" id="h5-0-271" class="i">+                // ADDR_LENGTH_R_DATA_0: begin
+</a><a href="#h5-0-272" id="h5-0-272" class="i">+                //     rdata &lt;= int_length_r[31:0];
+</a><a href="#h5-0-273" id="h5-0-273" class="i">+                // end
+</a><a href="#h5-0-274" id="h5-0-274" class="i">+            endcase
+</a><a href="#h5-0-275" id="h5-0-275" class="i">+        end
+</a><a href="#h5-0-276" id="h5-0-276" class="i">+    end
+</a><a href="#h5-0-277" id="h5-0-277" class="i">+end
+</a><a href="#h5-0-278" id="h5-0-278" class="i">+
+</a><a href="#h5-0-279" id="h5-0-279" class="i">+
+</a><a href="#h5-0-280" id="h5-0-280" class="i">+//------------------------Register logic-----------------
+</a><a href="#h5-0-281" id="h5-0-281" class="i">+assign interrupt    = int_gie &amp; (|int_isr);
+</a><a href="#h5-0-282" id="h5-0-282" class="i">+assign ap_start     = int_ap_start;
+</a><a href="#h5-0-283" id="h5-0-283" class="i">+assign int_ap_idle  = ap_idle;
+</a><a href="#h5-0-284" id="h5-0-284" class="i">+assign int_ap_ready = ap_ready;
+</a><a href="#h5-0-285" id="h5-0-285" class="i">+assign a            = int_a;
+</a><a href="#h5-0-286" id="h5-0-286" class="i">+assign b            = int_b;
+</a><a href="#h5-0-287" id="h5-0-287" class="i">+//assign c            = int_c;
+</a><a href="#h5-0-288" id="h5-0-288" class="i">+//assign length_r     = int_length_r;
+</a><a href="#h5-0-289" id="h5-0-289" class="i">+// int_ap_start
+</a><a href="#h5-0-290" id="h5-0-290" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-291" id="h5-0-291" class="i">+    if (ARESET)
+</a><a href="#h5-0-292" id="h5-0-292" class="i">+        int_ap_start &lt;= 1&#39;b0;
+</a><a href="#h5-0-293" id="h5-0-293" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-294" id="h5-0-294" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_AP_CTRL &amp;&amp; WSTRB[0] &amp;&amp; WDATA[0])
+</a><a href="#h5-0-295" id="h5-0-295" class="i">+            int_ap_start &lt;= 1&#39;b1;
+</a><a href="#h5-0-296" id="h5-0-296" class="i">+        else if (int_ap_ready)
+</a><a href="#h5-0-297" id="h5-0-297" class="i">+            int_ap_start &lt;= int_auto_restart; // clear on handshake/auto restart
+</a><a href="#h5-0-298" id="h5-0-298" class="i">+    end
+</a><a href="#h5-0-299" id="h5-0-299" class="i">+end
+</a><a href="#h5-0-300" id="h5-0-300" class="i">+
+</a><a href="#h5-0-301" id="h5-0-301" class="i">+// int_ap_done
+</a><a href="#h5-0-302" id="h5-0-302" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-303" id="h5-0-303" class="i">+    if (ARESET)
+</a><a href="#h5-0-304" id="h5-0-304" class="i">+        int_ap_done &lt;= 1&#39;b0;
+</a><a href="#h5-0-305" id="h5-0-305" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-306" id="h5-0-306" class="i">+        if (ap_done)
+</a><a href="#h5-0-307" id="h5-0-307" class="i">+            int_ap_done &lt;= 1&#39;b1;
+</a><a href="#h5-0-308" id="h5-0-308" class="i">+        else if (ar_hs &amp;&amp; raddr == ADDR_AP_CTRL)
+</a><a href="#h5-0-309" id="h5-0-309" class="i">+            int_ap_done &lt;= 1&#39;b0; // clear on read
+</a><a href="#h5-0-310" id="h5-0-310" class="i">+    end
+</a><a href="#h5-0-311" id="h5-0-311" class="i">+end
+</a><a href="#h5-0-312" id="h5-0-312" class="i">+
+</a><a href="#h5-0-313" id="h5-0-313" class="i">+// int_auto_restart
+</a><a href="#h5-0-314" id="h5-0-314" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-315" id="h5-0-315" class="i">+    if (ARESET)
+</a><a href="#h5-0-316" id="h5-0-316" class="i">+        int_auto_restart &lt;= 1&#39;b0;
+</a><a href="#h5-0-317" id="h5-0-317" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-318" id="h5-0-318" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_AP_CTRL &amp;&amp; WSTRB[0])
+</a><a href="#h5-0-319" id="h5-0-319" class="i">+            int_auto_restart &lt;=  WDATA[7];
+</a><a href="#h5-0-320" id="h5-0-320" class="i">+    end
+</a><a href="#h5-0-321" id="h5-0-321" class="i">+end
+</a><a href="#h5-0-322" id="h5-0-322" class="i">+
+</a><a href="#h5-0-323" id="h5-0-323" class="i">+// int_gie
+</a><a href="#h5-0-324" id="h5-0-324" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-325" id="h5-0-325" class="i">+    if (ARESET)
+</a><a href="#h5-0-326" id="h5-0-326" class="i">+        int_gie &lt;= 1&#39;b0;
+</a><a href="#h5-0-327" id="h5-0-327" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-328" id="h5-0-328" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_GIE &amp;&amp; WSTRB[0])
+</a><a href="#h5-0-329" id="h5-0-329" class="i">+            int_gie &lt;= WDATA[0];
+</a><a href="#h5-0-330" id="h5-0-330" class="i">+    end
+</a><a href="#h5-0-331" id="h5-0-331" class="i">+end
+</a><a href="#h5-0-332" id="h5-0-332" class="i">+
+</a><a href="#h5-0-333" id="h5-0-333" class="i">+// int_ier
+</a><a href="#h5-0-334" id="h5-0-334" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-335" id="h5-0-335" class="i">+    if (ARESET)
+</a><a href="#h5-0-336" id="h5-0-336" class="i">+        int_ier &lt;= 1&#39;b0;
+</a><a href="#h5-0-337" id="h5-0-337" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-338" id="h5-0-338" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_IER &amp;&amp; WSTRB[0])
+</a><a href="#h5-0-339" id="h5-0-339" class="i">+            int_ier &lt;= WDATA[1:0];
+</a><a href="#h5-0-340" id="h5-0-340" class="i">+    end
+</a><a href="#h5-0-341" id="h5-0-341" class="i">+end
+</a><a href="#h5-0-342" id="h5-0-342" class="i">+
+</a><a href="#h5-0-343" id="h5-0-343" class="i">+// int_isr[0]
+</a><a href="#h5-0-344" id="h5-0-344" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-345" id="h5-0-345" class="i">+    if (ARESET)
+</a><a href="#h5-0-346" id="h5-0-346" class="i">+        int_isr[0] &lt;= 1&#39;b0;
+</a><a href="#h5-0-347" id="h5-0-347" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-348" id="h5-0-348" class="i">+        if (int_ier[0] &amp; ap_done)
+</a><a href="#h5-0-349" id="h5-0-349" class="i">+            int_isr[0] &lt;= 1&#39;b1;
+</a><a href="#h5-0-350" id="h5-0-350" class="i">+        else if (w_hs &amp;&amp; waddr == ADDR_ISR &amp;&amp; WSTRB[0])
+</a><a href="#h5-0-351" id="h5-0-351" class="i">+            int_isr[0] &lt;= int_isr[0] ^ WDATA[0]; // toggle on write
+</a><a href="#h5-0-352" id="h5-0-352" class="i">+    end
+</a><a href="#h5-0-353" id="h5-0-353" class="i">+end
+</a><a href="#h5-0-354" id="h5-0-354" class="i">+
+</a><a href="#h5-0-355" id="h5-0-355" class="i">+// int_isr[1]
+</a><a href="#h5-0-356" id="h5-0-356" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-357" id="h5-0-357" class="i">+    if (ARESET)
+</a><a href="#h5-0-358" id="h5-0-358" class="i">+        int_isr[1] &lt;= 1&#39;b0;
+</a><a href="#h5-0-359" id="h5-0-359" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-360" id="h5-0-360" class="i">+        if (int_ier[1] &amp; ap_ready)
+</a><a href="#h5-0-361" id="h5-0-361" class="i">+            int_isr[1] &lt;= 1&#39;b1;
+</a><a href="#h5-0-362" id="h5-0-362" class="i">+        else if (w_hs &amp;&amp; waddr == ADDR_ISR &amp;&amp; WSTRB[0])
+</a><a href="#h5-0-363" id="h5-0-363" class="i">+            int_isr[1] &lt;= int_isr[1] ^ WDATA[1]; // toggle on write
+</a><a href="#h5-0-364" id="h5-0-364" class="i">+    end
+</a><a href="#h5-0-365" id="h5-0-365" class="i">+end
+</a><a href="#h5-0-366" id="h5-0-366" class="i">+
+</a><a href="#h5-0-367" id="h5-0-367" class="i">+// int_a[31:0]
+</a><a href="#h5-0-368" id="h5-0-368" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-369" id="h5-0-369" class="i">+    if (ARESET)
+</a><a href="#h5-0-370" id="h5-0-370" class="i">+        int_a[31:0] &lt;= 0;
+</a><a href="#h5-0-371" id="h5-0-371" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-372" id="h5-0-372" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_A_DATA_0)
+</a><a href="#h5-0-373" id="h5-0-373" class="i">+            int_a[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_a[31:0] &amp; ~wmask);
+</a><a href="#h5-0-374" id="h5-0-374" class="i">+    end
+</a><a href="#h5-0-375" id="h5-0-375" class="i">+end
+</a><a href="#h5-0-376" id="h5-0-376" class="i">+
+</a><a href="#h5-0-377" id="h5-0-377" class="i">+// int_a[63:32]
+</a><a href="#h5-0-378" id="h5-0-378" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-379" id="h5-0-379" class="i">+    if (ARESET)
+</a><a href="#h5-0-380" id="h5-0-380" class="i">+        int_a[63:32] &lt;= 0;
+</a><a href="#h5-0-381" id="h5-0-381" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-382" id="h5-0-382" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_A_DATA_1)
+</a><a href="#h5-0-383" id="h5-0-383" class="i">+            int_a[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_a[63:32] &amp; ~wmask);
+</a><a href="#h5-0-384" id="h5-0-384" class="i">+    end
+</a><a href="#h5-0-385" id="h5-0-385" class="i">+end
+</a><a href="#h5-0-386" id="h5-0-386" class="i">+
+</a><a href="#h5-0-387" id="h5-0-387" class="i">+// int_b[31:0]
+</a><a href="#h5-0-388" id="h5-0-388" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-389" id="h5-0-389" class="i">+    if (ARESET)
+</a><a href="#h5-0-390" id="h5-0-390" class="i">+        int_b[31:0] &lt;= 0;
+</a><a href="#h5-0-391" id="h5-0-391" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-392" id="h5-0-392" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_B_DATA_0)
+</a><a href="#h5-0-393" id="h5-0-393" class="i">+            int_b[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_b[31:0] &amp; ~wmask);
+</a><a href="#h5-0-394" id="h5-0-394" class="i">+    end
+</a><a href="#h5-0-395" id="h5-0-395" class="i">+end
+</a><a href="#h5-0-396" id="h5-0-396" class="i">+
+</a><a href="#h5-0-397" id="h5-0-397" class="i">+// int_b[63:32]
+</a><a href="#h5-0-398" id="h5-0-398" class="i">+always @(posedge ACLK) begin
+</a><a href="#h5-0-399" id="h5-0-399" class="i">+    if (ARESET)
+</a><a href="#h5-0-400" id="h5-0-400" class="i">+        int_b[63:32] &lt;= 0;
+</a><a href="#h5-0-401" id="h5-0-401" class="i">+    else if (ACLK_EN) begin
+</a><a href="#h5-0-402" id="h5-0-402" class="i">+        if (w_hs &amp;&amp; waddr == ADDR_B_DATA_1)
+</a><a href="#h5-0-403" id="h5-0-403" class="i">+            int_b[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_b[63:32] &amp; ~wmask);
+</a><a href="#h5-0-404" id="h5-0-404" class="i">+    end
+</a><a href="#h5-0-405" id="h5-0-405" class="i">+end
+</a><a href="#h5-0-406" id="h5-0-406" class="i">+
+</a><a href="#h5-0-407" id="h5-0-407" class="i">+// int_c[31:0]
+</a><a href="#h5-0-408" id="h5-0-408" class="i">+// always @(posedge ACLK) begin
+</a><a href="#h5-0-409" id="h5-0-409" class="i">+//     if (ARESET)
+</a><a href="#h5-0-410" id="h5-0-410" class="i">+//         int_c[31:0] &lt;= 0;
+</a><a href="#h5-0-411" id="h5-0-411" class="i">+//     else if (ACLK_EN) begin
+</a><a href="#h5-0-412" id="h5-0-412" class="i">+//         if (w_hs &amp;&amp; waddr == ADDR_C_DATA_0)
+</a><a href="#h5-0-413" id="h5-0-413" class="i">+//             int_c[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_c[31:0] &amp; ~wmask);
+</a><a href="#h5-0-414" id="h5-0-414" class="i">+//     end
+</a><a href="#h5-0-415" id="h5-0-415" class="i">+// end
+</a><a href="#h5-0-416" id="h5-0-416" class="i">+
+</a><a href="#h5-0-417" id="h5-0-417" class="i">+// // int_c[63:32]
+</a><a href="#h5-0-418" id="h5-0-418" class="i">+// always @(posedge ACLK) begin
+</a><a href="#h5-0-419" id="h5-0-419" class="i">+//     if (ARESET)
+</a><a href="#h5-0-420" id="h5-0-420" class="i">+//         int_c[63:32] &lt;= 0;
+</a><a href="#h5-0-421" id="h5-0-421" class="i">+//     else if (ACLK_EN) begin
+</a><a href="#h5-0-422" id="h5-0-422" class="i">+//         if (w_hs &amp;&amp; waddr == ADDR_C_DATA_1)
+</a><a href="#h5-0-423" id="h5-0-423" class="i">+//             int_c[63:32] &lt;= (WDATA[31:0] &amp; wmask) | (int_c[63:32] &amp; ~wmask);
+</a><a href="#h5-0-424" id="h5-0-424" class="i">+//     end
+</a><a href="#h5-0-425" id="h5-0-425" class="i">+// end
+</a><a href="#h5-0-426" id="h5-0-426" class="i">+
+</a><a href="#h5-0-427" id="h5-0-427" class="i">+// int_length_r[31:0]
+</a><a href="#h5-0-428" id="h5-0-428" class="i">+// always @(posedge ACLK) begin
+</a><a href="#h5-0-429" id="h5-0-429" class="i">+//     if (ARESET)
+</a><a href="#h5-0-430" id="h5-0-430" class="i">+//         int_length_r[31:0] &lt;= 0;
+</a><a href="#h5-0-431" id="h5-0-431" class="i">+//     else if (ACLK_EN) begin
+</a><a href="#h5-0-432" id="h5-0-432" class="i">+//         if (w_hs &amp;&amp; waddr == ADDR_LENGTH_R_DATA_0)
+</a><a href="#h5-0-433" id="h5-0-433" class="i">+//             int_length_r[31:0] &lt;= (WDATA[31:0] &amp; wmask) | (int_length_r[31:0] &amp; ~wmask);
+</a><a href="#h5-0-434" id="h5-0-434" class="i">+//     end
+</a><a href="#h5-0-435" id="h5-0-435" class="i">+// end
+</a><a href="#h5-0-436" id="h5-0-436" class="i">+
+</a><a href="#h5-0-437" id="h5-0-437" class="i">+
+</a><a href="#h5-0-438" id="h5-0-438" class="i">+//------------------------Memory logic-------------------
+</a><a href="#h5-0-439" id="h5-0-439" class="i">+
+</a><a href="#h5-0-440" id="h5-0-440" class="i">+endmodule
+</a><a href="#h5-0-441" id="h5-0-441" class="i">+
+</a><a href="#h5-0-442" id="h5-0-442" class="i">+`
+</a><a href="#h5-0-443" id="h5-0-443" class="i">+)
+</a><b>diff --git a/<a id="h6" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_counter.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_counter.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_counter.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_counter.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,94 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package bondmachine
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+const (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	krnlBondmachineRTLCounter = `
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+/**
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+* Copyright (C) 2019-2021 Xilinx, Inc
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+*
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+* not use this file except in compliance with the License. A copy of the
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+* License is located at
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+*
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+*     http://www.apache.org/licenses/LICENSE-2.0
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+*
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+* Unless required by applicable law or agreed to in writing, software
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+* distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+* License for the specific language governing permissions and limitations
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+* under the License.
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+*/
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+//-----------------------------------------------------------------------------
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+// Simple up/down counter with reset.
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+//-----------------------------------------------------------------------------
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+` + &quot;`timescale 1ps/1ps&quot; + `
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+module krnl_bondmachine_rtl_counter  #(
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+  parameter integer C_WIDTH  = 4,
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+  parameter [C_WIDTH-1:0] C_INIT = {C_WIDTH{1&#39;b0}}
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+)
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+( 
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+  input  wire               clk,
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+  input  wire               clken,
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+  input  wire               rst,
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+  input  wire               load,
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+  input  wire               incr,
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+  input  wire               decr,
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+  input  wire [C_WIDTH-1:0] load_value,
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+  output wire [C_WIDTH-1:0] count,
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+  output wire               is_zero
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+);
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+  localparam [C_WIDTH-1:0] LP_ZERO = {C_WIDTH{1&#39;b0}};
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+  localparam [C_WIDTH-1:0] LP_ONE = {{&quot;{{&quot;}}C_WIDTH-1{1&#39;b0{{&quot;}}&quot;}},1&#39;b1};
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+  localparam [C_WIDTH-1:0] LP_MAX = {C_WIDTH{1&#39;b1}};
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+  reg [C_WIDTH-1:0] count_r = C_INIT;
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+  reg   is_zero_r = (C_INIT == LP_ZERO);
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+  assign count = count_r;
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+  always @(posedge clk) begin 
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+    if (rst) begin 
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+      count_r &lt;= C_INIT;
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+    end
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+    else if (clken) begin 
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+      if (load) begin
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+        count_r &lt;= load_value; 
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+      end
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+      else if (incr &amp; ~decr) begin
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+        count_r &lt;= count_r + 1&#39;b1;
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+      end
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+      else if (~incr &amp; decr) begin 
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+        count_r &lt;= count_r - 1&#39;b1;
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+      end
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+      else 
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+        count_r &lt;= count_r;
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+    end
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+  end
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+  assign is_zero = is_zero_r;
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+  always @(posedge clk) begin 
+</a><a href="#h6-0-72" id="h6-0-72" class="i">+    if (rst) begin 
+</a><a href="#h6-0-73" id="h6-0-73" class="i">+      is_zero_r &lt;= (C_INIT == LP_ZERO);
+</a><a href="#h6-0-74" id="h6-0-74" class="i">+    end
+</a><a href="#h6-0-75" id="h6-0-75" class="i">+    else if (clken) begin 
+</a><a href="#h6-0-76" id="h6-0-76" class="i">+      if (load) begin 
+</a><a href="#h6-0-77" id="h6-0-77" class="i">+        is_zero_r &lt;= (load_value == LP_ZERO);
+</a><a href="#h6-0-78" id="h6-0-78" class="i">+      end
+</a><a href="#h6-0-79" id="h6-0-79" class="i">+      else begin
+</a><a href="#h6-0-80" id="h6-0-80" class="i">+        is_zero_r &lt;= incr ^ decr ? (decr &amp;&amp; (count_r == LP_ONE)) || (incr &amp;&amp; (count_r == LP_MAX)) : is_zero_r;
+</a><a href="#h6-0-81" id="h6-0-81" class="i">+      end
+</a><a href="#h6-0-82" id="h6-0-82" class="i">+    end
+</a><a href="#h6-0-83" id="h6-0-83" class="i">+    else begin
+</a><a href="#h6-0-84" id="h6-0-84" class="i">+      is_zero_r &lt;= is_zero_r;
+</a><a href="#h6-0-85" id="h6-0-85" class="i">+    end
+</a><a href="#h6-0-86" id="h6-0-86" class="i">+  end
+</a><a href="#h6-0-87" id="h6-0-87" class="i">+
+</a><a href="#h6-0-88" id="h6-0-88" class="i">+
+</a><a href="#h6-0-89" id="h6-0-89" class="i">+endmodule : krnl_bondmachine_rtl_counter
+</a><a href="#h6-0-90" id="h6-0-90" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h6-0-91" id="h6-0-91" class="i">+
+</a><a href="#h6-0-92" id="h6-0-92" class="i">+`
+</a><a href="#h6-0-93" id="h6-0-93" class="i">+)
+</a><b>diff --git a/<a id="h7" href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_int.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a> b/<a href="../file/pkg/bondmachine/files_krnl_bondmachine_rtl_int.go.html">pkg/bondmachine/files_krnl_bondmachine_rtl_int.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,372 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+package bondmachine
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+const (
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+	krnlBondmachineRTLInt = `
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+` + &quot;`default_nettype none&quot; + `
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+` + &quot;`timescale 1 ns / 1 ps&quot; + `
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+module krnl_bondmachine_rtl_int #( 
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+  parameter integer  C_S_AXI_CONTROL_DATA_WIDTH = 32,
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+  parameter integer  C_S_AXI_CONTROL_ADDR_WIDTH = 6,
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+  parameter integer  C_M_AXI_GMEM_ID_WIDTH = 1,
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+  parameter integer  C_M_AXI_GMEM_ADDR_WIDTH = 64,
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+  parameter integer  C_M_AXI_GMEM_DATA_WIDTH = 32
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+)
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+(
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+  input  wire  ap_clk,
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+  input  wire  ap_rst_n,
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+  output wire                                 m_axi_gmem_AWVALID,
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+  input  wire                                 m_axi_gmem_AWREADY,
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+  output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_AWADDR,
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+  output wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_AWID,
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+  output wire [7:0]                           m_axi_gmem_AWLEN,
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+  output wire [2:0]                           m_axi_gmem_AWSIZE,
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+  output wire [1:0]                           m_axi_gmem_AWBURST,
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+  output wire [1:0]                           m_axi_gmem_AWLOCK,
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+  output wire [3:0]                           m_axi_gmem_AWCACHE,
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+  output wire [2:0]                           m_axi_gmem_AWPROT,
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+  output wire [3:0]                           m_axi_gmem_AWQOS,
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+  output wire [3:0]                           m_axi_gmem_AWREGION,
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+  output wire                                 m_axi_gmem_WVALID,
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+  input  wire                                 m_axi_gmem_WREADY,
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+  output wire [C_M_AXI_GMEM_DATA_WIDTH-1:0]   m_axi_gmem_WDATA,
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+  output wire [C_M_AXI_GMEM_DATA_WIDTH/8-1:0] m_axi_gmem_WSTRB,
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+  output wire                                 m_axi_gmem_WLAST,
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+  output wire                                 m_axi_gmem_ARVALID,
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+  input  wire                                 m_axi_gmem_ARREADY,
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+  output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_ARADDR,
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+  output wire [C_M_AXI_GMEM_ID_WIDTH-1:0]     m_axi_gmem_ARID,
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+  output wire [7:0]                           m_axi_gmem_ARLEN,
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+  output wire [2:0]                           m_axi_gmem_ARSIZE,
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+  output wire [1:0]                           m_axi_gmem_ARBURST,
+</a><a href="#h7-0-41" id="h7-0-41" class="i">+  output wire [1:0]                           m_axi_gmem_ARLOCK,
+</a><a href="#h7-0-42" id="h7-0-42" class="i">+  output wire [3:0]                           m_axi_gmem_ARCACHE,
+</a><a href="#h7-0-43" id="h7-0-43" class="i">+  output wire [2:0]                           m_axi_gmem_ARPROT,
+</a><a href="#h7-0-44" id="h7-0-44" class="i">+  output wire [3:0]                           m_axi_gmem_ARQOS,
+</a><a href="#h7-0-45" id="h7-0-45" class="i">+  output wire [3:0]                           m_axi_gmem_ARREGION,
+</a><a href="#h7-0-46" id="h7-0-46" class="i">+  input  wire                                 m_axi_gmem_RVALID,
+</a><a href="#h7-0-47" id="h7-0-47" class="i">+  output wire                                 m_axi_gmem_RREADY,
+</a><a href="#h7-0-48" id="h7-0-48" class="i">+  input  wire [C_M_AXI_GMEM_DATA_WIDTH - 1:0] m_axi_gmem_RDATA,
+</a><a href="#h7-0-49" id="h7-0-49" class="i">+  input  wire                                 m_axi_gmem_RLAST,
+</a><a href="#h7-0-50" id="h7-0-50" class="i">+  input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_RID,
+</a><a href="#h7-0-51" id="h7-0-51" class="i">+  input  wire [1:0]                           m_axi_gmem_RRESP,
+</a><a href="#h7-0-52" id="h7-0-52" class="i">+  input  wire                                 m_axi_gmem_BVALID,
+</a><a href="#h7-0-53" id="h7-0-53" class="i">+  output wire                                 m_axi_gmem_BREADY,
+</a><a href="#h7-0-54" id="h7-0-54" class="i">+  input  wire [1:0]                           m_axi_gmem_BRESP,
+</a><a href="#h7-0-55" id="h7-0-55" class="i">+  input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_BID,
+</a><a href="#h7-0-56" id="h7-0-56" class="i">+
+</a><a href="#h7-0-57" id="h7-0-57" class="i">+  // AXI4-Lite slave interface
+</a><a href="#h7-0-58" id="h7-0-58" class="i">+  input  wire                                    s_axi_control_AWVALID,
+</a><a href="#h7-0-59" id="h7-0-59" class="i">+  output wire                                    s_axi_control_AWREADY,
+</a><a href="#h7-0-60" id="h7-0-60" class="i">+  input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_AWADDR,
+</a><a href="#h7-0-61" id="h7-0-61" class="i">+  input  wire                                    s_axi_control_WVALID,
+</a><a href="#h7-0-62" id="h7-0-62" class="i">+  output wire                                    s_axi_control_WREADY,
+</a><a href="#h7-0-63" id="h7-0-63" class="i">+  input  wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_WDATA,
+</a><a href="#h7-0-64" id="h7-0-64" class="i">+  input  wire [C_S_AXI_CONTROL_DATA_WIDTH/8-1:0] s_axi_control_WSTRB,
+</a><a href="#h7-0-65" id="h7-0-65" class="i">+  input  wire                                    s_axi_control_ARVALID,
+</a><a href="#h7-0-66" id="h7-0-66" class="i">+  output wire                                    s_axi_control_ARREADY,
+</a><a href="#h7-0-67" id="h7-0-67" class="i">+  input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_ARADDR,
+</a><a href="#h7-0-68" id="h7-0-68" class="i">+  output wire                                    s_axi_control_RVALID,
+</a><a href="#h7-0-69" id="h7-0-69" class="i">+  input  wire                                    s_axi_control_RREADY,
+</a><a href="#h7-0-70" id="h7-0-70" class="i">+  output wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_RDATA,
+</a><a href="#h7-0-71" id="h7-0-71" class="i">+  output wire [1:0]                              s_axi_control_RRESP,
+</a><a href="#h7-0-72" id="h7-0-72" class="i">+  output wire                                    s_axi_control_BVALID,
+</a><a href="#h7-0-73" id="h7-0-73" class="i">+  input  wire                                    s_axi_control_BREADY,
+</a><a href="#h7-0-74" id="h7-0-74" class="i">+  output wire [1:0]                              s_axi_control_BRESP,
+</a><a href="#h7-0-75" id="h7-0-75" class="i">+  output wire                                    interrupt 
+</a><a href="#h7-0-76" id="h7-0-76" class="i">+);
+</a><a href="#h7-0-77" id="h7-0-77" class="i">+
+</a><a href="#h7-0-78" id="h7-0-78" class="i">+localparam integer LP_NUM_READ_CHANNELS  = 1;
+</a><a href="#h7-0-79" id="h7-0-79" class="i">+localparam integer LP_LENGTH_WIDTH       = 32;
+</a><a href="#h7-0-80" id="h7-0-80" class="i">+localparam integer LP_DW_BYTES           = C_M_AXI_GMEM_DATA_WIDTH/8;
+</a><a href="#h7-0-81" id="h7-0-81" class="i">+localparam integer LP_AXI_BURST_LEN      = 4096/LP_DW_BYTES &lt; 256 ? 4096/LP_DW_BYTES : 256;
+</a><a href="#h7-0-82" id="h7-0-82" class="i">+localparam integer LP_LOG_BURST_LEN      = $clog2(LP_AXI_BURST_LEN);
+</a><a href="#h7-0-83" id="h7-0-83" class="i">+localparam integer LP_RD_MAX_OUTSTANDING = 3;
+</a><a href="#h7-0-84" id="h7-0-84" class="i">+localparam integer LP_RD_FIFO_DEPTH      = LP_AXI_BURST_LEN*(LP_RD_MAX_OUTSTANDING + 1);
+</a><a href="#h7-0-85" id="h7-0-85" class="i">+localparam integer LP_WR_FIFO_DEPTH      = LP_AXI_BURST_LEN;
+</a><a href="#h7-0-86" id="h7-0-86" class="i">+localparam samples = {{ .Samples }}; // number of samples that I expect from the client
+</a><a href="#h7-0-87" id="h7-0-87" class="i">+localparam bminputs = {{ .InputNum }};  // number of bminputs for each sample (or bminputs)
+</a><a href="#h7-0-88" id="h7-0-88" class="i">+localparam bmoutputs = {{ .OutputNum }}; // number of output for the classificationP
+</a><a href="#h7-0-89" id="h7-0-89" class="i">+
+</a><a href="#h7-0-90" id="h7-0-90" class="i">+logic areset = 1&#39;b0;  
+</a><a href="#h7-0-91" id="h7-0-91" class="i">+logic ap_start;
+</a><a href="#h7-0-92" id="h7-0-92" class="i">+logic ap_start_pulse;
+</a><a href="#h7-0-93" id="h7-0-93" class="i">+logic ap_start_r;
+</a><a href="#h7-0-94" id="h7-0-94" class="i">+logic ap_ready;
+</a><a href="#h7-0-95" id="h7-0-95" class="i">+logic ap_done;
+</a><a href="#h7-0-96" id="h7-0-96" class="i">+logic ap_idle = 1&#39;b1;
+</a><a href="#h7-0-97" id="h7-0-97" class="i">+logic [C_M_AXI_GMEM_ADDR_WIDTH-1:0] a;
+</a><a href="#h7-0-98" id="h7-0-98" class="i">+logic [C_M_AXI_GMEM_ADDR_WIDTH-1:0] b;
+</a><a href="#h7-0-99" id="h7-0-99" class="i">+
+</a><a href="#h7-0-100" id="h7-0-100" class="i">+logic read_done;
+</a><a href="#h7-0-101" id="h7-0-101" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] rd_tvalid;
+</a><a href="#h7-0-102" id="h7-0-102" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] rd_tready_n; 
+</a><a href="#h7-0-103" id="h7-0-103" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] [C_M_AXI_GMEM_DATA_WIDTH-1:0] rd_tdata;
+</a><a href="#h7-0-104" id="h7-0-104" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] ctrl_rd_fifo_prog_full;
+</a><a href="#h7-0-105" id="h7-0-105" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] rd_fifo_tvalid_n;
+</a><a href="#h7-0-106" id="h7-0-106" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] rd_fifo_tready; 
+</a><a href="#h7-0-107" id="h7-0-107" class="i">+logic [LP_NUM_READ_CHANNELS-1:0] [C_M_AXI_GMEM_DATA_WIDTH-1:0] rd_fifo_tdata;
+</a><a href="#h7-0-108" id="h7-0-108" class="i">+
+</a><a href="#h7-0-109" id="h7-0-109" class="i">+logic                               bondmachine_tvalid;
+</a><a href="#h7-0-110" id="h7-0-110" class="i">+logic                               bondmachine_tready_n; 
+</a><a href="#h7-0-111" id="h7-0-111" class="i">+logic [C_M_AXI_GMEM_DATA_WIDTH-1:0] bondmachine_tdata;
+</a><a href="#h7-0-112" id="h7-0-112" class="i">+logic                               wr_fifo_tvalid_n;
+</a><a href="#h7-0-113" id="h7-0-113" class="i">+logic                               wr_fifo_tready; 
+</a><a href="#h7-0-114" id="h7-0-114" class="i">+logic [C_M_AXI_GMEM_DATA_WIDTH-1:0] wr_fifo_tdata;
+</a><a href="#h7-0-115" id="h7-0-115" class="i">+
+</a><a href="#h7-0-116" id="h7-0-116" class="i">+assign m_axi_gmem_AWID     = {C_M_AXI_GMEM_ID_WIDTH{1&#39;b0}};
+</a><a href="#h7-0-117" id="h7-0-117" class="i">+assign m_axi_gmem_AWBURST  = 2&#39;b01;
+</a><a href="#h7-0-118" id="h7-0-118" class="i">+assign m_axi_gmem_AWLOCK   = 2&#39;b00;
+</a><a href="#h7-0-119" id="h7-0-119" class="i">+assign m_axi_gmem_AWCACHE  = 4&#39;b0011;
+</a><a href="#h7-0-120" id="h7-0-120" class="i">+assign m_axi_gmem_AWPROT   = 3&#39;b000;
+</a><a href="#h7-0-121" id="h7-0-121" class="i">+assign m_axi_gmem_AWQOS    = 4&#39;b0000;
+</a><a href="#h7-0-122" id="h7-0-122" class="i">+assign m_axi_gmem_AWREGION = 4&#39;b0000;
+</a><a href="#h7-0-123" id="h7-0-123" class="i">+assign m_axi_gmem_ARBURST  = 2&#39;b01;
+</a><a href="#h7-0-124" id="h7-0-124" class="i">+assign m_axi_gmem_ARLOCK   = 2&#39;b00;
+</a><a href="#h7-0-125" id="h7-0-125" class="i">+assign m_axi_gmem_ARCACHE  = 4&#39;b0011;
+</a><a href="#h7-0-126" id="h7-0-126" class="i">+assign m_axi_gmem_ARPROT   = 3&#39;b000;
+</a><a href="#h7-0-127" id="h7-0-127" class="i">+assign m_axi_gmem_ARQOS    = 4&#39;b0000;
+</a><a href="#h7-0-128" id="h7-0-128" class="i">+assign m_axi_gmem_ARREGION = 4&#39;b0000;
+</a><a href="#h7-0-129" id="h7-0-129" class="i">+
+</a><a href="#h7-0-130" id="h7-0-130" class="i">+always @(posedge ap_clk) begin 
+</a><a href="#h7-0-131" id="h7-0-131" class="i">+  areset &lt;= ~ap_rst_n; 
+</a><a href="#h7-0-132" id="h7-0-132" class="i">+end
+</a><a href="#h7-0-133" id="h7-0-133" class="i">+
+</a><a href="#h7-0-134" id="h7-0-134" class="i">+always @(posedge ap_clk) begin 
+</a><a href="#h7-0-135" id="h7-0-135" class="i">+  begin 
+</a><a href="#h7-0-136" id="h7-0-136" class="i">+    ap_start_r &lt;= ap_start;
+</a><a href="#h7-0-137" id="h7-0-137" class="i">+  end
+</a><a href="#h7-0-138" id="h7-0-138" class="i">+end
+</a><a href="#h7-0-139" id="h7-0-139" class="i">+
+</a><a href="#h7-0-140" id="h7-0-140" class="i">+assign ap_start_pulse = ap_start &amp; ~ap_start_r;
+</a><a href="#h7-0-141" id="h7-0-141" class="i">+
+</a><a href="#h7-0-142" id="h7-0-142" class="i">+always @(posedge ap_clk) begin 
+</a><a href="#h7-0-143" id="h7-0-143" class="i">+  if (areset) begin 
+</a><a href="#h7-0-144" id="h7-0-144" class="i">+    ap_idle &lt;= 1&#39;b1;
+</a><a href="#h7-0-145" id="h7-0-145" class="i">+  end
+</a><a href="#h7-0-146" id="h7-0-146" class="i">+  else begin 
+</a><a href="#h7-0-147" id="h7-0-147" class="i">+    ap_idle &lt;= ap_done        ? 1&#39;b1 : 
+</a><a href="#h7-0-148" id="h7-0-148" class="i">+               ap_start_pulse ? 1&#39;b0 : 
+</a><a href="#h7-0-149" id="h7-0-149" class="i">+                                ap_idle;
+</a><a href="#h7-0-150" id="h7-0-150" class="i">+  end
+</a><a href="#h7-0-151" id="h7-0-151" class="i">+end
+</a><a href="#h7-0-152" id="h7-0-152" class="i">+
+</a><a href="#h7-0-153" id="h7-0-153" class="i">+assign ap_ready = ap_done;
+</a><a href="#h7-0-154" id="h7-0-154" class="i">+
+</a><a href="#h7-0-155" id="h7-0-155" class="i">+krnl_bondmachine_rtl_control_s_axi #(
+</a><a href="#h7-0-156" id="h7-0-156" class="i">+  .C_S_AXI_ADDR_WIDTH( C_S_AXI_CONTROL_ADDR_WIDTH ),
+</a><a href="#h7-0-157" id="h7-0-157" class="i">+  .C_S_AXI_DATA_WIDTH( C_S_AXI_CONTROL_DATA_WIDTH )
+</a><a href="#h7-0-158" id="h7-0-158" class="i">+) 
+</a><a href="#h7-0-159" id="h7-0-159" class="i">+inst_krnl_bondmachine_control_s_axi (
+</a><a href="#h7-0-160" id="h7-0-160" class="i">+  .AWVALID   ( s_axi_control_AWVALID         ) ,
+</a><a href="#h7-0-161" id="h7-0-161" class="i">+  .AWREADY   ( s_axi_control_AWREADY         ) ,
+</a><a href="#h7-0-162" id="h7-0-162" class="i">+  .AWADDR    ( s_axi_control_AWADDR          ) ,
+</a><a href="#h7-0-163" id="h7-0-163" class="i">+  .WVALID    ( s_axi_control_WVALID          ) ,
+</a><a href="#h7-0-164" id="h7-0-164" class="i">+  .WREADY    ( s_axi_control_WREADY          ) ,
+</a><a href="#h7-0-165" id="h7-0-165" class="i">+  .WDATA     ( s_axi_control_WDATA           ) ,
+</a><a href="#h7-0-166" id="h7-0-166" class="i">+  .WSTRB     ( s_axi_control_WSTRB           ) ,
+</a><a href="#h7-0-167" id="h7-0-167" class="i">+  .ARVALID   ( s_axi_control_ARVALID         ) ,
+</a><a href="#h7-0-168" id="h7-0-168" class="i">+  .ARREADY   ( s_axi_control_ARREADY         ) ,
+</a><a href="#h7-0-169" id="h7-0-169" class="i">+  .ARADDR    ( s_axi_control_ARADDR          ) ,
+</a><a href="#h7-0-170" id="h7-0-170" class="i">+  .RVALID    ( s_axi_control_RVALID          ) ,
+</a><a href="#h7-0-171" id="h7-0-171" class="i">+  .RREADY    ( s_axi_control_RREADY          ) ,
+</a><a href="#h7-0-172" id="h7-0-172" class="i">+  .RDATA     ( s_axi_control_RDATA           ) ,
+</a><a href="#h7-0-173" id="h7-0-173" class="i">+  .RRESP     ( s_axi_control_RRESP           ) ,
+</a><a href="#h7-0-174" id="h7-0-174" class="i">+  .BVALID    ( s_axi_control_BVALID          ) ,
+</a><a href="#h7-0-175" id="h7-0-175" class="i">+  .BREADY    ( s_axi_control_BREADY          ) ,
+</a><a href="#h7-0-176" id="h7-0-176" class="i">+  .BRESP     ( s_axi_control_BRESP           ) ,
+</a><a href="#h7-0-177" id="h7-0-177" class="i">+  .ACLK      ( ap_clk                        ) ,
+</a><a href="#h7-0-178" id="h7-0-178" class="i">+  .ARESET    ( areset                        ) ,
+</a><a href="#h7-0-179" id="h7-0-179" class="i">+  .ACLK_EN   ( 1&#39;b1                          ) ,
+</a><a href="#h7-0-180" id="h7-0-180" class="i">+  .ap_start  ( ap_start                      ) ,
+</a><a href="#h7-0-181" id="h7-0-181" class="i">+  .interrupt ( interrupt                     ) ,
+</a><a href="#h7-0-182" id="h7-0-182" class="i">+  .ap_ready  ( ap_ready                      ) ,
+</a><a href="#h7-0-183" id="h7-0-183" class="i">+  .ap_done   ( ap_done                       ) ,
+</a><a href="#h7-0-184" id="h7-0-184" class="i">+  .ap_idle   ( ap_idle                       ) ,
+</a><a href="#h7-0-185" id="h7-0-185" class="i">+  .a         ( a[0+:C_M_AXI_GMEM_ADDR_WIDTH] ) ,
+</a><a href="#h7-0-186" id="h7-0-186" class="i">+  .b         ( b[0+:C_M_AXI_GMEM_ADDR_WIDTH] )
+</a><a href="#h7-0-187" id="h7-0-187" class="i">+);
+</a><a href="#h7-0-188" id="h7-0-188" class="i">+
+</a><a href="#h7-0-189" id="h7-0-189" class="i">+
+</a><a href="#h7-0-190" id="h7-0-190" class="i">+    krnl_bondmachine_rtl_axi_read_master #( 
+</a><a href="#h7-0-191" id="h7-0-191" class="i">+  .C_ADDR_WIDTH       ( C_M_AXI_GMEM_ADDR_WIDTH ) ,
+</a><a href="#h7-0-192" id="h7-0-192" class="i">+  .C_DATA_WIDTH       ( C_M_AXI_GMEM_DATA_WIDTH ) ,
+</a><a href="#h7-0-193" id="h7-0-193" class="i">+  .C_ID_WIDTH         ( C_M_AXI_GMEM_ID_WIDTH   ) ,
+</a><a href="#h7-0-194" id="h7-0-194" class="i">+  .C_NUM_CHANNELS     ( LP_NUM_READ_CHANNELS    ) ,
+</a><a href="#h7-0-195" id="h7-0-195" class="i">+  .C_LENGTH_WIDTH     ( LP_LENGTH_WIDTH         ) ,
+</a><a href="#h7-0-196" id="h7-0-196" class="i">+  .C_BURST_LEN        ( LP_AXI_BURST_LEN        ) ,
+</a><a href="#h7-0-197" id="h7-0-197" class="i">+  .C_LOG_BURST_LEN    ( LP_LOG_BURST_LEN        ) ,
+</a><a href="#h7-0-198" id="h7-0-198" class="i">+  .C_MAX_OUTSTANDING  ( LP_RD_MAX_OUTSTANDING   )
+</a><a href="#h7-0-199" id="h7-0-199" class="i">+)
+</a><a href="#h7-0-200" id="h7-0-200" class="i">+inst_axi_read_master ( 
+</a><a href="#h7-0-201" id="h7-0-201" class="i">+  .aclk           ( ap_clk                 ) ,
+</a><a href="#h7-0-202" id="h7-0-202" class="i">+  .areset         ( areset                 ) ,
+</a><a href="#h7-0-203" id="h7-0-203" class="i">+
+</a><a href="#h7-0-204" id="h7-0-204" class="i">+  .ctrl_start     ( ap_start_pulse         ) ,
+</a><a href="#h7-0-205" id="h7-0-205" class="i">+  .ctrl_done      ( read_done              ) ,
+</a><a href="#h7-0-206" id="h7-0-206" class="i">+  .ctrl_offset    ( {a}                  ) , 
+</a><a href="#h7-0-207" id="h7-0-207" class="i">+  .ctrl_length    ( samples * bminputs ) ,
+</a><a href="#h7-0-208" id="h7-0-208" class="i">+  .ctrl_prog_full ( ctrl_rd_fifo_prog_full ) ,
+</a><a href="#h7-0-209" id="h7-0-209" class="i">+
+</a><a href="#h7-0-210" id="h7-0-210" class="i">+  .arvalid        ( m_axi_gmem_ARVALID     ) ,
+</a><a href="#h7-0-211" id="h7-0-211" class="i">+  .arready        ( m_axi_gmem_ARREADY     ) ,
+</a><a href="#h7-0-212" id="h7-0-212" class="i">+  .araddr         ( m_axi_gmem_ARADDR      ) ,
+</a><a href="#h7-0-213" id="h7-0-213" class="i">+  .arid           ( m_axi_gmem_ARID        ) ,
+</a><a href="#h7-0-214" id="h7-0-214" class="i">+  .arlen          ( m_axi_gmem_ARLEN       ) ,
+</a><a href="#h7-0-215" id="h7-0-215" class="i">+  .arsize         ( m_axi_gmem_ARSIZE      ) ,
+</a><a href="#h7-0-216" id="h7-0-216" class="i">+  .rvalid         ( m_axi_gmem_RVALID      ) ,
+</a><a href="#h7-0-217" id="h7-0-217" class="i">+  .rready         ( m_axi_gmem_RREADY      ) ,
+</a><a href="#h7-0-218" id="h7-0-218" class="i">+  .rdata          ( m_axi_gmem_RDATA       ) ,
+</a><a href="#h7-0-219" id="h7-0-219" class="i">+  .rlast          ( m_axi_gmem_RLAST       ) ,
+</a><a href="#h7-0-220" id="h7-0-220" class="i">+  .rid            ( m_axi_gmem_RID         ) ,
+</a><a href="#h7-0-221" id="h7-0-221" class="i">+  .rresp          ( m_axi_gmem_RRESP       ) ,
+</a><a href="#h7-0-222" id="h7-0-222" class="i">+
+</a><a href="#h7-0-223" id="h7-0-223" class="i">+  .m_tvalid       ( rd_tvalid              ) ,
+</a><a href="#h7-0-224" id="h7-0-224" class="i">+  .m_tready       ( ~rd_tready_n           ) ,
+</a><a href="#h7-0-225" id="h7-0-225" class="i">+  .m_tdata        ( rd_tdata               ) 
+</a><a href="#h7-0-226" id="h7-0-226" class="i">+);
+</a><a href="#h7-0-227" id="h7-0-227" class="i">+
+</a><a href="#h7-0-228" id="h7-0-228" class="i">+xpm_fifo_sync # (
+</a><a href="#h7-0-229" id="h7-0-229" class="i">+  .FIFO_MEMORY_TYPE          (&quot;auto&quot;),           //string; &quot;auto&quot;, &quot;block&quot;, &quot;distributed&quot;, or &quot;ultra&quot;;
+</a><a href="#h7-0-230" id="h7-0-230" class="i">+  .ECC_MODE                  (&quot;no_ecc&quot;),         //string; &quot;no_ecc&quot; or &quot;en_ecc&quot;;
+</a><a href="#h7-0-231" id="h7-0-231" class="i">+  .FIFO_WRITE_DEPTH          (LP_RD_FIFO_DEPTH),   //positive integer
+</a><a href="#h7-0-232" id="h7-0-232" class="i">+  .WRITE_DATA_WIDTH          (C_M_AXI_GMEM_DATA_WIDTH),        //positive integer
+</a><a href="#h7-0-233" id="h7-0-233" class="i">+  .WR_DATA_COUNT_WIDTH       ($clog2(LP_RD_FIFO_DEPTH)+1),       //positive integer, Not used
+</a><a href="#h7-0-234" id="h7-0-234" class="i">+  .PROG_FULL_THRESH          (LP_AXI_BURST_LEN-2),               //positive integer
+</a><a href="#h7-0-235" id="h7-0-235" class="i">+  .FULL_RESET_VALUE          (1),                //positive integer; 0 or 1
+</a><a href="#h7-0-236" id="h7-0-236" class="i">+  .READ_MODE                 (&quot;fwft&quot;),            //string; &quot;std&quot; or &quot;fwft&quot;;
+</a><a href="#h7-0-237" id="h7-0-237" class="i">+  .FIFO_READ_LATENCY         (1),                //positive integer;
+</a><a href="#h7-0-238" id="h7-0-238" class="i">+  .READ_DATA_WIDTH           (C_M_AXI_GMEM_DATA_WIDTH),               //positive integer
+</a><a href="#h7-0-239" id="h7-0-239" class="i">+  .RD_DATA_COUNT_WIDTH       ($clog2(LP_RD_FIFO_DEPTH)+1),               //positive integer, not used
+</a><a href="#h7-0-240" id="h7-0-240" class="i">+  .PROG_EMPTY_THRESH         (10),               //positive integer, not used 
+</a><a href="#h7-0-241" id="h7-0-241" class="i">+  .DOUT_RESET_VALUE          (&quot;0&quot;),              //string, don&#39;t care
+</a><a href="#h7-0-242" id="h7-0-242" class="i">+  .WAKEUP_TIME               (0)                 //positive integer; 0 or 2;
+</a><a href="#h7-0-243" id="h7-0-243" class="i">+
+</a><a href="#h7-0-244" id="h7-0-244" class="i">+) inst_rd_xpm_fifo_sync[LP_NUM_READ_CHANNELS-1:0] (
+</a><a href="#h7-0-245" id="h7-0-245" class="i">+  .sleep         ( 1&#39;b0             ) ,
+</a><a href="#h7-0-246" id="h7-0-246" class="i">+  .rst           ( areset           ) ,
+</a><a href="#h7-0-247" id="h7-0-247" class="i">+  .wr_clk        ( ap_clk           ) ,
+</a><a href="#h7-0-248" id="h7-0-248" class="i">+  .wr_en         ( rd_tvalid        ) ,
+</a><a href="#h7-0-249" id="h7-0-249" class="i">+  .din           ( rd_tdata         ) ,
+</a><a href="#h7-0-250" id="h7-0-250" class="i">+  .full          ( rd_tready_n      ) ,
+</a><a href="#h7-0-251" id="h7-0-251" class="i">+  .prog_full     ( ctrl_rd_fifo_prog_full) ,
+</a><a href="#h7-0-252" id="h7-0-252" class="i">+  .wr_data_count (                  ) ,
+</a><a href="#h7-0-253" id="h7-0-253" class="i">+  .overflow      (                  ) ,
+</a><a href="#h7-0-254" id="h7-0-254" class="i">+  .wr_rst_busy   (                  ) ,
+</a><a href="#h7-0-255" id="h7-0-255" class="i">+  .rd_en         ( rd_fifo_tready   ) ,
+</a><a href="#h7-0-256" id="h7-0-256" class="i">+  .dout          ( rd_fifo_tdata    ) ,
+</a><a href="#h7-0-257" id="h7-0-257" class="i">+  .empty         ( rd_fifo_tvalid_n ) ,
+</a><a href="#h7-0-258" id="h7-0-258" class="i">+  .prog_empty    (                  ) ,
+</a><a href="#h7-0-259" id="h7-0-259" class="i">+  .rd_data_count (                  ) ,
+</a><a href="#h7-0-260" id="h7-0-260" class="i">+  .underflow     (                  ) ,
+</a><a href="#h7-0-261" id="h7-0-261" class="i">+  .rd_rst_busy   (                  ) ,
+</a><a href="#h7-0-262" id="h7-0-262" class="i">+  .injectsbiterr ( 1&#39;b0             ) ,
+</a><a href="#h7-0-263" id="h7-0-263" class="i">+  .injectdbiterr ( 1&#39;b0             ) ,
+</a><a href="#h7-0-264" id="h7-0-264" class="i">+  .sbiterr       (                  ) ,
+</a><a href="#h7-0-265" id="h7-0-265" class="i">+  .dbiterr       (                  ) 
+</a><a href="#h7-0-266" id="h7-0-266" class="i">+
+</a><a href="#h7-0-267" id="h7-0-267" class="i">+);
+</a><a href="#h7-0-268" id="h7-0-268" class="i">+
+</a><a href="#h7-0-269" id="h7-0-269" class="i">+krnl_bondmachine_rtl_caller #( 
+</a><a href="#h7-0-270" id="h7-0-270" class="i">+  .C_DATA_WIDTH   ( C_M_AXI_GMEM_DATA_WIDTH ) ,
+</a><a href="#h7-0-271" id="h7-0-271" class="i">+  .C_NUM_CHANNELS ( LP_NUM_READ_CHANNELS    ) 
+</a><a href="#h7-0-272" id="h7-0-272" class="i">+)
+</a><a href="#h7-0-273" id="h7-0-273" class="i">+inst_bondmachine ( 
+</a><a href="#h7-0-274" id="h7-0-274" class="i">+  .aclk     ( ap_clk            ) ,
+</a><a href="#h7-0-275" id="h7-0-275" class="i">+  .areset   ( areset            ) ,
+</a><a href="#h7-0-276" id="h7-0-276" class="i">+
+</a><a href="#h7-0-277" id="h7-0-277" class="i">+  .s_tvalid ( ~rd_fifo_tvalid_n ) ,
+</a><a href="#h7-0-278" id="h7-0-278" class="i">+  .s_tready ( rd_fifo_tready    ) ,
+</a><a href="#h7-0-279" id="h7-0-279" class="i">+  .s_tdata  ( rd_fifo_tdata     ) ,
+</a><a href="#h7-0-280" id="h7-0-280" class="i">+
+</a><a href="#h7-0-281" id="h7-0-281" class="i">+  .m_tvalid ( bondmachine_tvalid      ) ,
+</a><a href="#h7-0-282" id="h7-0-282" class="i">+  .m_tready ( ~bondmachine_tready_n   ) ,
+</a><a href="#h7-0-283" id="h7-0-283" class="i">+  .m_tdata  ( bondmachine_tdata       ) 
+</a><a href="#h7-0-284" id="h7-0-284" class="i">+);
+</a><a href="#h7-0-285" id="h7-0-285" class="i">+
+</a><a href="#h7-0-286" id="h7-0-286" class="i">+xpm_fifo_sync # (
+</a><a href="#h7-0-287" id="h7-0-287" class="i">+  .FIFO_MEMORY_TYPE          (&quot;auto&quot;),           //string; &quot;auto&quot;, &quot;block&quot;, &quot;distributed&quot;, or &quot;ultra&quot;;
+</a><a href="#h7-0-288" id="h7-0-288" class="i">+  .ECC_MODE                  (&quot;no_ecc&quot;),         //string; &quot;no_ecc&quot; or &quot;en_ecc&quot;;
+</a><a href="#h7-0-289" id="h7-0-289" class="i">+  .FIFO_WRITE_DEPTH          (LP_WR_FIFO_DEPTH),   //positive integer
+</a><a href="#h7-0-290" id="h7-0-290" class="i">+  .WRITE_DATA_WIDTH          (C_M_AXI_GMEM_DATA_WIDTH),               //positive integer
+</a><a href="#h7-0-291" id="h7-0-291" class="i">+  .WR_DATA_COUNT_WIDTH       ($clog2(LP_WR_FIFO_DEPTH)),               //positive integer, Not used
+</a><a href="#h7-0-292" id="h7-0-292" class="i">+  .PROG_FULL_THRESH          (10),               //positive integer, Not used 
+</a><a href="#h7-0-293" id="h7-0-293" class="i">+  .FULL_RESET_VALUE          (1),                //positive integer; 0 or 1
+</a><a href="#h7-0-294" id="h7-0-294" class="i">+  .READ_MODE                 (&quot;fwft&quot;),            //string; &quot;std&quot; or &quot;fwft&quot;;
+</a><a href="#h7-0-295" id="h7-0-295" class="i">+  .FIFO_READ_LATENCY         (1),                //positive integer;
+</a><a href="#h7-0-296" id="h7-0-296" class="i">+  .READ_DATA_WIDTH           (C_M_AXI_GMEM_DATA_WIDTH),               //positive integer
+</a><a href="#h7-0-297" id="h7-0-297" class="i">+  .RD_DATA_COUNT_WIDTH       ($clog2(LP_WR_FIFO_DEPTH)),               //positive integer, not used
+</a><a href="#h7-0-298" id="h7-0-298" class="i">+  .PROG_EMPTY_THRESH         (10),               //positive integer, not used 
+</a><a href="#h7-0-299" id="h7-0-299" class="i">+  .DOUT_RESET_VALUE          (&quot;0&quot;),              //string, don&#39;t care
+</a><a href="#h7-0-300" id="h7-0-300" class="i">+  .WAKEUP_TIME               (0)                 //positive integer; 0 or 2;
+</a><a href="#h7-0-301" id="h7-0-301" class="i">+
+</a><a href="#h7-0-302" id="h7-0-302" class="i">+) inst_wr_xpm_fifo_sync (
+</a><a href="#h7-0-303" id="h7-0-303" class="i">+  .sleep         ( 1&#39;b0             ) ,
+</a><a href="#h7-0-304" id="h7-0-304" class="i">+  .rst           ( areset           ) ,
+</a><a href="#h7-0-305" id="h7-0-305" class="i">+  .wr_clk        ( ap_clk           ) ,
+</a><a href="#h7-0-306" id="h7-0-306" class="i">+  .wr_en         ( bondmachine_tvalid     ) ,
+</a><a href="#h7-0-307" id="h7-0-307" class="i">+  .din           ( bondmachine_tdata      ) ,
+</a><a href="#h7-0-308" id="h7-0-308" class="i">+  .full          ( bondmachine_tready_n   ) ,
+</a><a href="#h7-0-309" id="h7-0-309" class="i">+  .prog_full     (                  ) ,
+</a><a href="#h7-0-310" id="h7-0-310" class="i">+  .wr_data_count (                  ) ,
+</a><a href="#h7-0-311" id="h7-0-311" class="i">+  .overflow      (                  ) ,
+</a><a href="#h7-0-312" id="h7-0-312" class="i">+  .wr_rst_busy   (                  ) ,
+</a><a href="#h7-0-313" id="h7-0-313" class="i">+  .rd_en         ( wr_fifo_tready   ) ,
+</a><a href="#h7-0-314" id="h7-0-314" class="i">+  .dout          ( wr_fifo_tdata    ) ,
+</a><a href="#h7-0-315" id="h7-0-315" class="i">+  .empty         ( wr_fifo_tvalid_n ) ,
+</a><a href="#h7-0-316" id="h7-0-316" class="i">+  .prog_empty    (                  ) ,
+</a><a href="#h7-0-317" id="h7-0-317" class="i">+  .rd_data_count (                  ) ,
+</a><a href="#h7-0-318" id="h7-0-318" class="i">+  .underflow     (                  ) ,
+</a><a href="#h7-0-319" id="h7-0-319" class="i">+  .rd_rst_busy   (                  ) ,
+</a><a href="#h7-0-320" id="h7-0-320" class="i">+  .injectsbiterr ( 1&#39;b0             ) ,
+</a><a href="#h7-0-321" id="h7-0-321" class="i">+  .injectdbiterr ( 1&#39;b0             ) ,
+</a><a href="#h7-0-322" id="h7-0-322" class="i">+  .sbiterr       (                  ) ,
+</a><a href="#h7-0-323" id="h7-0-323" class="i">+  .dbiterr       (                  ) 
+</a><a href="#h7-0-324" id="h7-0-324" class="i">+
+</a><a href="#h7-0-325" id="h7-0-325" class="i">+);
+</a><a href="#h7-0-326" id="h7-0-326" class="i">+
+</a><a href="#h7-0-327" id="h7-0-327" class="i">+
+</a><a href="#h7-0-328" id="h7-0-328" class="i">+// AXI4 Write Master
+</a><a href="#h7-0-329" id="h7-0-329" class="i">+krnl_bondmachine_rtl_axi_write_master #( 
+</a><a href="#h7-0-330" id="h7-0-330" class="i">+  .C_ADDR_WIDTH       ( C_M_AXI_GMEM_ADDR_WIDTH ) ,
+</a><a href="#h7-0-331" id="h7-0-331" class="i">+  .C_DATA_WIDTH       ( C_M_AXI_GMEM_DATA_WIDTH ) ,
+</a><a href="#h7-0-332" id="h7-0-332" class="i">+  .C_MAX_LENGTH_WIDTH ( LP_LENGTH_WIDTH     ) ,
+</a><a href="#h7-0-333" id="h7-0-333" class="i">+  .C_BURST_LEN        ( LP_AXI_BURST_LEN        ) ,
+</a><a href="#h7-0-334" id="h7-0-334" class="i">+  .C_LOG_BURST_LEN    ( LP_LOG_BURST_LEN        ) 
+</a><a href="#h7-0-335" id="h7-0-335" class="i">+)
+</a><a href="#h7-0-336" id="h7-0-336" class="i">+inst_axi_write_master ( 
+</a><a href="#h7-0-337" id="h7-0-337" class="i">+  .aclk        ( ap_clk             ) ,
+</a><a href="#h7-0-338" id="h7-0-338" class="i">+  .areset      ( areset             ) ,
+</a><a href="#h7-0-339" id="h7-0-339" class="i">+
+</a><a href="#h7-0-340" id="h7-0-340" class="i">+  .ctrl_start  ( ap_start_pulse     ) ,
+</a><a href="#h7-0-341" id="h7-0-341" class="i">+  .ctrl_offset ( b                  ) ,
+</a><a href="#h7-0-342" id="h7-0-342" class="i">+  .ctrl_length ( samples * bmoutputs ) ,
+</a><a href="#h7-0-343" id="h7-0-343" class="i">+  .ctrl_done   ( ap_done            ) ,
+</a><a href="#h7-0-344" id="h7-0-344" class="i">+
+</a><a href="#h7-0-345" id="h7-0-345" class="i">+  .awvalid     ( m_axi_gmem_AWVALID ) ,
+</a><a href="#h7-0-346" id="h7-0-346" class="i">+  .awready     ( m_axi_gmem_AWREADY ) ,
+</a><a href="#h7-0-347" id="h7-0-347" class="i">+  .awaddr      ( m_axi_gmem_AWADDR  ) ,
+</a><a href="#h7-0-348" id="h7-0-348" class="i">+  .awlen       ( m_axi_gmem_AWLEN   ) ,
+</a><a href="#h7-0-349" id="h7-0-349" class="i">+  .awsize      ( m_axi_gmem_AWSIZE  ) ,
+</a><a href="#h7-0-350" id="h7-0-350" class="i">+
+</a><a href="#h7-0-351" id="h7-0-351" class="i">+  .s_tvalid    ( ~wr_fifo_tvalid_n   ) ,
+</a><a href="#h7-0-352" id="h7-0-352" class="i">+  .s_tready    ( wr_fifo_tready     ) ,
+</a><a href="#h7-0-353" id="h7-0-353" class="i">+  .s_tdata     ( wr_fifo_tdata      ) ,
+</a><a href="#h7-0-354" id="h7-0-354" class="i">+
+</a><a href="#h7-0-355" id="h7-0-355" class="i">+  .wvalid      ( m_axi_gmem_WVALID  ) ,
+</a><a href="#h7-0-356" id="h7-0-356" class="i">+  .wready      ( m_axi_gmem_WREADY  ) ,
+</a><a href="#h7-0-357" id="h7-0-357" class="i">+  .wdata       ( m_axi_gmem_WDATA   ) ,
+</a><a href="#h7-0-358" id="h7-0-358" class="i">+  .wstrb       ( m_axi_gmem_WSTRB   ) ,
+</a><a href="#h7-0-359" id="h7-0-359" class="i">+  .wlast       ( m_axi_gmem_WLAST   ) ,
+</a><a href="#h7-0-360" id="h7-0-360" class="i">+
+</a><a href="#h7-0-361" id="h7-0-361" class="i">+  .bvalid      ( m_axi_gmem_BVALID  ) ,
+</a><a href="#h7-0-362" id="h7-0-362" class="i">+  .bready      ( m_axi_gmem_BREADY  ) ,
+</a><a href="#h7-0-363" id="h7-0-363" class="i">+  .bresp       ( m_axi_gmem_BRESP   ) 
+</a><a href="#h7-0-364" id="h7-0-364" class="i">+);
+</a><a href="#h7-0-365" id="h7-0-365" class="i">+
+</a><a href="#h7-0-366" id="h7-0-366" class="i">+endmodule : krnl_bondmachine_rtl_int
+</a><a href="#h7-0-367" id="h7-0-367" class="i">+
+</a><a href="#h7-0-368" id="h7-0-368" class="i">+` + &quot;`default_nettype wire&quot; + `
+</a><a href="#h7-0-369" id="h7-0-369" class="i">+
+</a><a href="#h7-0-370" id="h7-0-370" class="i">+`
+</a><a href="#h7-0-371" id="h7-0-371" class="i">+)
+</a><b>diff --git a/<a id="h8" href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a> b/<a href="../file/pkg/bondmachine/verilog.go.html">pkg/bondmachine/verilog.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -169,7 +169,8 @@ func (bmach *Bondmachine) Write_verilog(conf *Config, flavor string, iomaps *IOm
+</a> 				_, err = f.WriteString(bmach.Write_verilog_testbench(&quot;bondmachine&quot;, flavor, iomaps, extramods, sbox))
+ 				check(err)
+ 			}
+<a href="#h8-0-3" id="h8-0-3" class="d">-		case &quot;basys3&quot;, &quot;kc705&quot;, &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;zc702&quot;, &quot;ice40lp1k&quot;, &quot;icefun&quot;, &quot;icebreaker&quot;, &quot;de10nano&quot;, &quot;max1000&quot;, &quot;icesugarnano&quot;:
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+		case &quot;alveou50&quot;, &quot;basys3&quot;, &quot;kc705&quot;, &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;zc702&quot;, &quot;ice40lp1k&quot;, &quot;icefun&quot;, &quot;icebreaker&quot;, &quot;de10nano&quot;, &quot;max1000&quot;, &quot;icesugarnano&quot;:
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+
+</a> 			// Create the board file only if it doesn&#39;t belong to an AXIStream accelerator
+ 			if !bmapiModuleAXIStream {
+ 				if _, err := os.Stat(&quot;bondmachine_main.v&quot;); os.IsNotExist(err) {
+<a href="#h8-1" id="h8-1" class="h">@@ -2024,7 +2025,7 @@ func (bmach *Bondmachine) Write_verilog_board(conf *Config, module_name string, 
+</a> 
+ 	switch flavor {
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-	case &quot;basys3&quot;, &quot;kc705&quot;, &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;icebreaker&quot;, &quot;icefun&quot;, &quot;icesugarnano&quot;, &quot;max1000&quot;, &quot;de10nano&quot;, &quot;zc702&quot;, &quot;ice40lp1k&quot;:
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+	case &quot;alveou50&quot;, &quot;basys3&quot;, &quot;kc705&quot;, &quot;zedboard&quot;, &quot;ebaz4205&quot;, &quot;icebreaker&quot;, &quot;icefun&quot;, &quot;icesugarnano&quot;, &quot;max1000&quot;, &quot;de10nano&quot;, &quot;zc702&quot;, &quot;ice40lp1k&quot;:
+</a> 
+ 		for _, iores := range resolved_io {
+ 
+</pre>
+</div>
+</body>
+</html>

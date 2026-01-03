@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Req checks - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c7208662f5fba679a1430b3ffa8b0b5c2ba48a12.html">c7208662f5fba679a1430b3ffa8b0b5c2ba48a12</a>
+<b>parent</b> <a href="../commit/dc0e2bf6ea3f668eaa45fb22798e6f86c5ce3bf4.html">dc0e2bf6ea3f668eaa45fb22798e6f86c5ce3bf4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 30 Mar 2023 23:32:09 +0200
+
+Req checks
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmreqs/bmreqs.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmreqs/bmreqs_test.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmreqs/engine.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmreqs/objectmax.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/bmreqs/objectset.go</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/bmreqs/reqroot.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 51 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmreqs/bmreqs.go.html">pkg/bmreqs/bmreqs.go</a> b/<a href="../file/pkg/bmreqs/bmreqs.go.html">pkg/bmreqs/bmreqs.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -19,6 +19,9 @@ type bmReqSet interface {
+</a> 	insertReq(string) error
+ 	removeReq(string) error
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	// Check if the current node contains the given requirement
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	checkReq(string) (string, error)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> 	// Exporting requirements for the current node
+ 	getReqs() string
+ 	importReqs(*ReqRoot, string, string, string) error
+<b>diff --git a/<a id="h1" href="../file/pkg/bmreqs/bmreqs_test.go.html">pkg/bmreqs/bmreqs_test.go</a> b/<a href="../file/pkg/bmreqs/bmreqs_test.go.html">pkg/bmreqs/bmreqs_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -19,6 +19,9 @@ func TestBMReq(t *testing.T) {
+</a> 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/&quot;, T: ObjectSet, Name: &quot;processors&quot;, Value: &quot;cp4&quot;, Op: OpAdd}))
+ 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/&quot;, Name: &quot;processors&quot;, Op: OpGet}))
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/&quot;, T: ObjectSet, Name: &quot;processors&quot;, Value: &quot;cp4&quot;, Op: OpCheck}))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/&quot;, T: ObjectSet, Name: &quot;processors&quot;, Value: &quot;cp5&quot;, Op: OpCheck}))
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, T: ObjectSet, Name: &quot;opcodes&quot;, Value: &quot;rset&quot;, Op: OpAdd}))
+ 	fmt.Println(rg.Requirement(ReqRequest{Node: &quot;/processors:cp0&quot;, Name: &quot;opcodes&quot;, Op: OpGet}))
+ 
+<b>diff --git a/<a id="h2" href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a> b/<a href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -97,6 +97,24 @@ func (rg *ReqRoot) run() {
+</a> 				} else {
+ 					resp.Error = errors.New(&quot;node decoding failed: &quot; + fmt.Sprint(err))
+ 				}
+<a href="#h2-0-3" id="h2-0-3" class="i">+			case OpCheck:
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+				if node, err := rg.decodeNode(req.Node); err == nil {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+					currMap := node.getMap()
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+					if reqSet, ok := currMap[req.Name]; ok {
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+						if reqSet.getType() != req.T {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+							resp.Error = errors.New(&quot;check failed: Mismatch types&quot;)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+						} else {
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+							if present, err := reqSet.checkReq(req.Value); err != nil {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+								resp.Error = errors.New(&quot;check failed: &quot; + fmt.Sprint(err))
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+							} else {
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+								resp.Value = present
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+							}
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+						}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+					} else {
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+					}
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+				} else {
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+					resp.Error = errors.New(&quot;node decoding failed: &quot; + fmt.Sprint(err))
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+				}
+</a> 			case OpGet:
+ 				if node, err := rg.decodeNode(req.Node); err == nil {
+ 					if reqSet, ok := node.getMap()[req.Name]; ok {
+<b>diff --git a/<a id="h3" href="../file/pkg/bmreqs/objectmax.go.html">pkg/bmreqs/objectmax.go</a> b/<a href="../file/pkg/bmreqs/objectmax.go.html">pkg/bmreqs/objectmax.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -53,6 +53,19 @@ func (o *objectMax) removeReq(req string) error {
+</a> 
+ //
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+func (o *objectMax) checkReq(req string) (string, error) {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	if i, err := strconv.ParseInt(req, 10, 64); err == nil {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+		if i &lt;= o.value {
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+			return &quot;true&quot;, nil
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+		} else {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+			return &quot;false&quot;, nil
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+		}
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	return &quot;&quot;, errors.New(&quot;Integer parse failed&quot;)
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+}
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+//
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+
+</a> func (o *objectMax) getReqs() string {
+ 	return fmt.Sprint(o.value)
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a> b/<a href="../file/pkg/bmreqs/objectset.go.html">pkg/bmreqs/objectset.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -61,6 +61,19 @@ func (o *objectSet) removeReq(req string) error {
+</a> 
+ //
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+func (o *objectSet) checkReq(req string) (string, error) {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	if o.set != nil {
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		if _, ok := o.set[req]; ok {
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+			return &quot;true&quot;, nil
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+		} else {
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+			return &quot;false&quot;, nil
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+		}
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+	}
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	return &quot;&quot;, errors.New(&quot;uninitialized Set&quot;)
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+}
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+//
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+
+</a> func (o *objectSet) getReqs() string {
+ 	if o.set == nil {
+ 		return &quot;&quot;
+<b>diff --git a/<a id="h5" href="../file/pkg/bmreqs/reqroot.go.html">pkg/bmreqs/reqroot.go</a> b/<a href="../file/pkg/bmreqs/reqroot.go.html">pkg/bmreqs/reqroot.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -14,6 +14,7 @@ const (
+</a> // Requirements operations
+ const (
+ 	OpAdd = uint8(0) + iota
+<a href="#h5-0-3" id="h5-0-3" class="i">+	OpCheck
+</a> 	OpGet
+ 	OpDump
+ 	OpClone
+</pre>
+</div>
+</body>
+</html>

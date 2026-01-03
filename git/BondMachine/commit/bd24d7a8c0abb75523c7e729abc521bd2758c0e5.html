@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minor - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bd24d7a8c0abb75523c7e729abc521bd2758c0e5.html">bd24d7a8c0abb75523c7e729abc521bd2758c0e5</a>
+<b>parent</b> <a href="../commit/69adeabf5baa6020bb692b20467a2a296cd24865.html">69adeabf5baa6020bb692b20467a2a296cd24865</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 15 Apr 2023 23:19:26 +0200
+
+Minor
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bondmachine/vm.go</a></td><td> | </td><td class="num">46</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>2 files changed, 36 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -26,7 +26,7 @@ var useFiles = flag.Bool(&quot;use-files&quot;, false, &quot;Load files instead of command line
+</a> var serve = flag.Bool(&quot;serve&quot;, false, &quot;Serve as REST API&quot;)
+ 
+ // Custom types
+<a href="#h0-0-3" id="h0-0-3" class="d">-var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the sintax index,filename)&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+</a> 
+ func init() {
+ 	flag.Parse()
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a> b/<a href="../file/pkg/bondmachine/vm.go.html">pkg/bondmachine/vm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -258,7 +258,7 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 
+ 	if sc != nil {
+ 		if sc.Show_io_pre {
+<a href="#h1-0-3" id="h1-0-3" class="d">-			result += &quot;\tPre-compute IO: &quot; + vm.Dump_io() + &quot;\n&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			result += &quot;\tPre-compute IO: &quot; + vm.DumpIO() + &quot;\n&quot;
+</a> 		}
+ 	}
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -283,7 +283,7 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 
+ 	if sc != nil {
+ 		if sc.Show_io_post {
+<a href="#h1-1-3" id="h1-1-3" class="d">-			result += &quot;\tPost-compute IO: &quot; + vm.Dump_io() + &quot;\n&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			result += &quot;\tPost-compute IO: &quot; + vm.DumpIO() + &quot;\n&quot;
+</a> 		}
+ 	}
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -319,7 +319,7 @@ func (vm *VM) Step(sc *Sim_config) (string, error) {
+</a> 	return result, nil
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-func (vm *VM) Dump_io() string {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+func (vm *VM) DumpIO() string {
+</a> 	result := &quot;&quot;
+ 	for i, reg := range vm.Inputs_regs {
+ 		switch vm.Bmach.Rsize {
+<a href="#h1-3" id="h1-3" class="h">@@ -327,8 +327,12 @@ func (vm *VM) Dump_io() string {
+</a> 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint8)))) + &quot; &quot;
+ 		case 16:
+ 			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint16)))) + &quot; &quot;
+<a href="#h1-3-3" id="h1-3-3" class="i">+		case 32:
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint32)))) + &quot; &quot;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+		case 64:
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+			result = result + Get_input_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint64)))) + &quot; &quot;
+</a> 		default:
+<a href="#h1-3-8" id="h1-3-8" class="d">-			// TODO Fix
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+			result = result + &quot;ERROR, Rsize not supported, only 8, 16, 32, 64\n&quot;
+</a> 		}
+ 	}
+ 	for i, reg := range vm.Outputs_regs {
+<a href="#h1-4" id="h1-4" class="h">@@ -337,8 +341,12 @@ func (vm *VM) Dump_io() string {
+</a> 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint8)))) + &quot; &quot;
+ 		case 16:
+ 			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint16)))) + &quot; &quot;
+<a href="#h1-4-3" id="h1-4-3" class="i">+		case 32:
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint32)))) + &quot; &quot;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+		case 64:
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+			result = result + Get_output_name(i) + &quot;: &quot; + zeros_prefix(int(vm.Bmach.Rsize), get_binary(int(reg.(uint64)))) + &quot; &quot;
+</a> 		default:
+<a href="#h1-4-8" id="h1-4-8" class="d">-			// TODO Fix
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+			result = result + &quot;ERROR, Rsize not supported, only 8, 16, 32, 64&quot;
+</a> 		}
+ 	}
+ 	return result
+<a href="#h1-5" id="h1-5" class="h">@@ -468,8 +476,12 @@ func (sd *Sim_drive) Init(c *Config, s *simbox.Simbox, vm *VM) error {
+</a> 							act_on_tick[ipos] = uint8(val)
+ 						case 16:
+ 							act_on_tick[ipos] = uint16(val)
+<a href="#h1-5-3" id="h1-5-3" class="i">+						case 32:
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+							act_on_tick[ipos] = uint32(val)
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+						case 64:
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+							act_on_tick[ipos] = uint64(val)
+</a> 						default:
+<a href="#h1-5-8" id="h1-5-8" class="d">-							// TODO Fix
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 						}
+ 					} else {
+ 						act_on_tick := make(map[int]interface{})
+<a href="#h1-6" id="h1-6" class="h">@@ -478,8 +490,12 @@ func (sd *Sim_drive) Init(c *Config, s *simbox.Simbox, vm *VM) error {
+</a> 							act_on_tick[ipos] = uint8(val)
+ 						case 16:
+ 							act_on_tick[ipos] = uint16(val)
+<a href="#h1-6-3" id="h1-6-3" class="i">+						case 32:
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+							act_on_tick[ipos] = uint32(val)
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+						case 64:
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+							act_on_tick[ipos] = uint64(val)
+</a> 						default:
+<a href="#h1-6-8" id="h1-6-8" class="d">-							// TODO Fix
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+							return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 						}
+ 						perset[rule.Tick] = act_on_tick
+ 					}
+<a href="#h1-7" id="h1-7" class="h">@@ -538,7 +554,7 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 64:
+ 						str_on_tick[ipos] = uint64(0)
+ 					default:
+<a href="#h1-7-3" id="h1-7-3" class="d">-						return errors.New(&quot;unsupported register size&quot;)
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 					}
+ 				} else {
+ 					str_on_tick := make(map[int]interface{})
+<a href="#h1-8" id="h1-8" class="h">@@ -556,7 +572,7 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 					case 64:
+ 						str_on_tick[ipos] = uint64(0)
+ 					default:
+<a href="#h1-8-3" id="h1-8-3" class="d">-						return errors.New(&quot;unsupported register size&quot;)
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 					}
+ 					absget[rule.Tick] = str_on_tick
+ 				}
+<a href="#h1-9" id="h1-9" class="h">@@ -585,8 +601,12 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 						str_on_tick[ipos] = uint8(0)
+ 					case 16:
+ 						str_on_tick[ipos] = uint16(0)
+<a href="#h1-9-3" id="h1-9-3" class="i">+					case 32:
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+						str_on_tick[ipos] = uint32(0)
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+					case 64:
+</a><a href="#h1-9-6" id="h1-9-6" class="i">+						str_on_tick[ipos] = uint64(0)
+</a> 					default:
+<a href="#h1-9-8" id="h1-9-8" class="d">-						// TODO Fix
+</a><a href="#h1-9-9" id="h1-9-9" class="i">+						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 					}
+ 				} else {
+ 					str_on_tick := make(map[int]interface{})
+<a href="#h1-10" id="h1-10" class="h">@@ -595,8 +615,12 @@ func (sd *Sim_report) Init(s *simbox.Simbox, vm *VM) error {
+</a> 						str_on_tick[ipos] = uint8(0)
+ 					case 16:
+ 						str_on_tick[ipos] = uint16(0)
+<a href="#h1-10-3" id="h1-10-3" class="i">+					case 32:
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+						str_on_tick[ipos] = uint32(0)
+</a><a href="#h1-10-5" id="h1-10-5" class="i">+					case 64:
+</a><a href="#h1-10-6" id="h1-10-6" class="i">+						str_on_tick[ipos] = uint64(0)
+</a> 					default:
+<a href="#h1-10-8" id="h1-10-8" class="d">-						// TODO Fix
+</a><a href="#h1-10-9" id="h1-10-9" class="i">+						return errors.New(&quot;unsupported register size, only 8, 16, 32 and 64 are supported&quot;)
+</a> 					}
+ 					perget[rule.Tick] = str_on_tick
+ 				}
+</pre>
+</div>
+</body>
+</html>

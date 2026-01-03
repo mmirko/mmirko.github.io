@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmbuilder - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d42135e4286ab57f3bb94db8565fd7dba64a477f.html">d42135e4286ab57f3bb94db8565fd7dba64a477f</a>
+<b>parent</b> <a href="../commit/9f2d050033e229823346647ab830d3581c76a648.html">9f2d050033e229823346647ab830d3581c76a648</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 11 May 2024 00:32:22 +0200
+
+bmbuilder
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmbuilder/test.basm</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmbuilder/creatorbm.go</a></td><td> | </td><td class="num">58</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmbuilder/merger.go</a></td><td> | </td><td class="num">414</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 474 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmbuilder/test.basm.html">cmd/bmbuilder/test.basm</a> b/<a href="../file/cmd/bmbuilder/test.basm.html">cmd/bmbuilder/test.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,7 @@
+</a> %section code1 .romtext iomode:async
+         entry _start    ; Entry point
+ _start:
+<a href="#h0-0-3" id="h0-0-3" class="i">+	mov	r0, i0
+</a> 	inc	r0
+ 	mov	o0, r0		
+ 	j 	_start
+<a href="#h0-1" id="h0-1" class="h">@@ -11,3 +12,5 @@ _start:
+</a> %meta bmdef	global  registersize:8
+ %meta ioatt	testio1 cp: cpu1, index:0, type:output
+ %meta ioatt	testio1 cp: bm, index:0, type:output
+<a href="#h0-1-3" id="h0-1-3" class="i">+%meta ioatt	testio2 cp: cpu1, index:0, type:input
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+%meta ioatt	testio2 cp: bm, index:0, type:input
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a> b/<a href="../file/pkg/bmbuilder/creatorbm.go.html">pkg/bmbuilder/creatorbm.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -58,5 +58,63 @@ func (bi *BMBuilder) BuildBondMachine() error {
+</a> }
+ 
+ func (bi *BMBuilder) BuildSequentialBlock(block *BMBuilderBlock) error {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	if bi.debug {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		fmt.Println(&quot;\t&quot; + green(&quot;Building Sequential block&quot;))
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	BMNum := len(block.blockBMs)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	if BMNum == 0 {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		return errors.New(&quot;no BMs in the block&quot;)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	if BMNum == 1 {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		bi.result = block.blockBMs[0]
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		return nil
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	bm1 := block.blockBMs[0]
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	for i := 1; i &lt; BMNum; i++ {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+		bm2 := block.blockBMs[i]
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+		if bm1.Outputs != bm2.Inputs {
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+			return errors.New(&quot;BM outputs and inputs do not match&quot;)
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		}
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		con := new(BMConnections)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		con.Links = make([]BMLink, 0)
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		// Set the bm1 inputs as final inputs
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		for j := 0; j &lt; bm1.Inputs; j++ {
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+			e1 := BMEndPoint{BType: FinalBMInput, BNum: j}
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+			e2 := BMEndPoint{BType: FirstBMInput, BNum: j}
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+		}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+		// Set the bm1 to bm2 connections
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+		for j := 0; j &lt; bm1.Outputs; j++ {
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+			e1 := BMEndPoint{BType: FirstBMOutput, BNum: j}
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+			e2 := BMEndPoint{BType: SecondBMInput, BNum: j}
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+		}
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+		// Set the bm2 outputs as final outputs
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+		for j := 0; j &lt; bm2.Outputs; j++ {
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+			e1 := BMEndPoint{BType: SecondBMOutput, BNum: j}
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+			e2 := BMEndPoint{BType: FinalBMOutput, BNum: j}
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+			con.Links = append(con.Links, BMLink{E1: e1, E2: e2})
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+		}
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+		// Merge the two bondmachines
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+		if bm, err := bi.BMMerge(bm1, bm2, con); err == nil {
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+			bm1 = bm
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+		} else {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+			return err
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+		}
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	}
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	bi.result = bm1
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+
+</a> 	return nil
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/bmbuilder/merger.go.html">pkg/bmbuilder/merger.go</a> b/<a href="../file/pkg/bmbuilder/merger.go.html">pkg/bmbuilder/merger.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,11 +1,15 @@
+</a> package bmbuilder
+ 
+ import (
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#h2-0-7" id="h2-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+</a> )
+ 
+ const (
+<a href="#h2-0-11" id="h2-0-11" class="d">-	FinalBMInput = uint8(1) &lt;&lt; iota
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	FinalBMInput = uint8(1) + iota
+</a> 	FinalBMOutput
+ 	FirstBMInput
+ 	FirstBMOutput
+<a href="#h2-1" id="h2-1" class="h">@@ -27,10 +31,416 @@ type BMConnections struct {
+</a> 	Links []BMLink
+ }
+ 
+<a href="#h2-1-3" id="h2-1-3" class="i">+func (e BMEndPoint) String() string {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	switch e.BType {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	case FinalBMInput:
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		return fmt.Sprintf(&quot;i%d&quot;, e.BNum)
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	case FinalBMOutput:
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+		return fmt.Sprintf(&quot;o%d&quot;, e.BNum)
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+	case FirstBMInput:
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+		return fmt.Sprintf(&quot;bm1i%d&quot;, e.BNum)
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+	case FirstBMOutput:
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+		return fmt.Sprintf(&quot;bm1o%d&quot;, e.BNum)
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+	case SecondBMInput:
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+		return fmt.Sprintf(&quot;bm2i%d&quot;, e.BNum)
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+	case SecondBMOutput:
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+		return fmt.Sprintf(&quot;bm2o%d&quot;, e.BNum)
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+	}
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+	return fmt.Sprintf(&quot;Unknown(%d)&quot;, e.BNum)
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+}
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+func (c *BMConnections) String() string {
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+	str := &quot;&quot;
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+	for _, link := range c.Links {
+</a><a href="#h2-1-24" id="h2-1-24" class="i">+		str += fmt.Sprintf(&quot;\t%v -&gt; %v\n&quot;, link.E1, link.E2)
+</a><a href="#h2-1-25" id="h2-1-25" class="i">+	}
+</a><a href="#h2-1-26" id="h2-1-26" class="i">+	return str
+</a><a href="#h2-1-27" id="h2-1-27" class="i">+}
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+
+</a><a href="#h2-1-29" id="h2-1-29" class="i">+type bmOrigin struct {
+</a><a href="#h2-1-30" id="h2-1-30" class="i">+	originBM int
+</a><a href="#h2-1-31" id="h2-1-31" class="i">+	originID int
+</a><a href="#h2-1-32" id="h2-1-32" class="i">+}
+</a><a href="#h2-1-33" id="h2-1-33" class="i">+
+</a><a href="#h2-1-34" id="h2-1-34" class="i">+type chMap map[int]bmOrigin
+</a><a href="#h2-1-35" id="h2-1-35" class="i">+
+</a><a href="#h2-1-36" id="h2-1-36" class="i">+func (o chMap) getNewID(bm int, idx int) int {
+</a><a href="#h2-1-37" id="h2-1-37" class="i">+	for i, or := range o {
+</a><a href="#h2-1-38" id="h2-1-38" class="i">+		if or.originBM == bm &amp;&amp; or.originID == idx {
+</a><a href="#h2-1-39" id="h2-1-39" class="i">+			return i
+</a><a href="#h2-1-40" id="h2-1-40" class="i">+		}
+</a><a href="#h2-1-41" id="h2-1-41" class="i">+	}
+</a><a href="#h2-1-42" id="h2-1-42" class="i">+	return -1
+</a><a href="#h2-1-43" id="h2-1-43" class="i">+}
+</a><a href="#h2-1-44" id="h2-1-44" class="i">+
+</a><a href="#h2-1-45" id="h2-1-45" class="i">+func followLink(bm1 *bondmachine.Bondmachine, bm2 *bondmachine.Bondmachine, result *bondmachine.Bondmachine, intOutMap chMap, endPoint BMEndPoint) (int, error) {
+</a><a href="#h2-1-46" id="h2-1-46" class="i">+	// This function finds out the internal output that corresponds to the given endpoint
+</a><a href="#h2-1-47" id="h2-1-47" class="i">+
+</a><a href="#h2-1-48" id="h2-1-48" class="i">+	switch endPoint.BType {
+</a><a href="#h2-1-49" id="h2-1-49" class="i">+	case FinalBMInput:
+</a><a href="#h2-1-50" id="h2-1-50" class="i">+		for i, bond := range result.Internal_outputs {
+</a><a href="#h2-1-51" id="h2-1-51" class="i">+			if bond.Map_to == bondmachine.BMINPUT &amp;&amp; bond.Res_id == endPoint.BNum {
+</a><a href="#h2-1-52" id="h2-1-52" class="i">+				return i, nil
+</a><a href="#h2-1-53" id="h2-1-53" class="i">+			}
+</a><a href="#h2-1-54" id="h2-1-54" class="i">+		}
+</a><a href="#h2-1-55" id="h2-1-55" class="i">+	case FirstBMOutput:
+</a><a href="#h2-1-56" id="h2-1-56" class="i">+		for i, bond := range bm1.Internal_inputs {
+</a><a href="#h2-1-57" id="h2-1-57" class="i">+			if bond.Map_to == bondmachine.BMOUTPUT &amp;&amp; bond.Res_id == endPoint.BNum {
+</a><a href="#h2-1-58" id="h2-1-58" class="i">+				if bm1.Links[i] == -1 {
+</a><a href="#h2-1-59" id="h2-1-59" class="i">+					return -1, nil
+</a><a href="#h2-1-60" id="h2-1-60" class="i">+				}
+</a><a href="#h2-1-61" id="h2-1-61" class="i">+				return intOutMap.getNewID(1, bm1.Links[i]), nil
+</a><a href="#h2-1-62" id="h2-1-62" class="i">+			}
+</a><a href="#h2-1-63" id="h2-1-63" class="i">+		}
+</a><a href="#h2-1-64" id="h2-1-64" class="i">+	case SecondBMOutput:
+</a><a href="#h2-1-65" id="h2-1-65" class="i">+		for i, bond := range bm2.Internal_inputs {
+</a><a href="#h2-1-66" id="h2-1-66" class="i">+			if bond.Map_to == bondmachine.BMOUTPUT &amp;&amp; bond.Res_id == endPoint.BNum {
+</a><a href="#h2-1-67" id="h2-1-67" class="i">+				if bm2.Links[i] == -1 {
+</a><a href="#h2-1-68" id="h2-1-68" class="i">+					return -1, nil
+</a><a href="#h2-1-69" id="h2-1-69" class="i">+				}
+</a><a href="#h2-1-70" id="h2-1-70" class="i">+				return intOutMap.getNewID(2, bm2.Links[i]), nil
+</a><a href="#h2-1-71" id="h2-1-71" class="i">+			}
+</a><a href="#h2-1-72" id="h2-1-72" class="i">+		}
+</a><a href="#h2-1-73" id="h2-1-73" class="i">+	}
+</a><a href="#h2-1-74" id="h2-1-74" class="i">+	return 0, errors.New(&quot;endpoint not Found&quot;)
+</a><a href="#h2-1-75" id="h2-1-75" class="i">+}
+</a><a href="#h2-1-76" id="h2-1-76" class="i">+
+</a> func (bld *BMBuilder) BMMerge(bm1 *bondmachine.Bondmachine, bm2 *bondmachine.Bondmachine, l *BMConnections) (*bondmachine.Bondmachine, error) {
+ 	// Merge two bondmachines
+ 	// bm1 and bm2 are the bondmachines to merge
+ 	// Returns the merged bondmachine
+ 
+<a href="#h2-1-82" id="h2-1-82" class="d">-	return nil, nil
+</a><a href="#h2-1-83" id="h2-1-83" class="i">+	if bm1.Rsize != bm2.Rsize {
+</a><a href="#h2-1-84" id="h2-1-84" class="i">+		return nil, errors.New(&quot;bondmachines have different register sizes&quot;)
+</a><a href="#h2-1-85" id="h2-1-85" class="i">+	}
+</a><a href="#h2-1-86" id="h2-1-86" class="i">+
+</a><a href="#h2-1-87" id="h2-1-87" class="i">+	if bld.debug {
+</a><a href="#h2-1-88" id="h2-1-88" class="i">+		fmt.Println(&quot;Connections:\n&quot;, l)
+</a><a href="#h2-1-89" id="h2-1-89" class="i">+	}
+</a><a href="#h2-1-90" id="h2-1-90" class="i">+
+</a><a href="#h2-1-91" id="h2-1-91" class="i">+	result := new(bondmachine.Bondmachine)
+</a><a href="#h2-1-92" id="h2-1-92" class="i">+	result.Rsize = bm1.Rsize
+</a><a href="#h2-1-93" id="h2-1-93" class="i">+
+</a><a href="#h2-1-94" id="h2-1-94" class="i">+	result.Init()
+</a><a href="#h2-1-95" id="h2-1-95" class="i">+
+</a><a href="#h2-1-96" id="h2-1-96" class="i">+	mergedInputs := 0
+</a><a href="#h2-1-97" id="h2-1-97" class="i">+	mergedOutputs := 0
+</a><a href="#h2-1-98" id="h2-1-98" class="i">+	for _, link := range l.Links {
+</a><a href="#h2-1-99" id="h2-1-99" class="i">+		if link.E1.BType == FinalBMInput {
+</a><a href="#h2-1-100" id="h2-1-100" class="i">+			if link.E1.BNum &gt;= mergedInputs {
+</a><a href="#h2-1-101" id="h2-1-101" class="i">+				mergedInputs = link.E1.BNum + 1
+</a><a href="#h2-1-102" id="h2-1-102" class="i">+			}
+</a><a href="#h2-1-103" id="h2-1-103" class="i">+		}
+</a><a href="#h2-1-104" id="h2-1-104" class="i">+		if link.E1.BType == FinalBMOutput {
+</a><a href="#h2-1-105" id="h2-1-105" class="i">+			if link.E1.BNum &gt;= mergedOutputs {
+</a><a href="#h2-1-106" id="h2-1-106" class="i">+				mergedOutputs = link.E1.BNum + 1
+</a><a href="#h2-1-107" id="h2-1-107" class="i">+			}
+</a><a href="#h2-1-108" id="h2-1-108" class="i">+		}
+</a><a href="#h2-1-109" id="h2-1-109" class="i">+
+</a><a href="#h2-1-110" id="h2-1-110" class="i">+		if link.E2.BType == FinalBMInput {
+</a><a href="#h2-1-111" id="h2-1-111" class="i">+			if link.E2.BNum &gt;= mergedInputs {
+</a><a href="#h2-1-112" id="h2-1-112" class="i">+				mergedInputs = link.E2.BNum + 1
+</a><a href="#h2-1-113" id="h2-1-113" class="i">+			}
+</a><a href="#h2-1-114" id="h2-1-114" class="i">+		}
+</a><a href="#h2-1-115" id="h2-1-115" class="i">+		if link.E2.BType == FinalBMOutput {
+</a><a href="#h2-1-116" id="h2-1-116" class="i">+			if link.E2.BNum &gt;= mergedOutputs {
+</a><a href="#h2-1-117" id="h2-1-117" class="i">+				mergedOutputs = link.E2.BNum + 1
+</a><a href="#h2-1-118" id="h2-1-118" class="i">+			}
+</a><a href="#h2-1-119" id="h2-1-119" class="i">+		}
+</a><a href="#h2-1-120" id="h2-1-120" class="i">+	}
+</a><a href="#h2-1-121" id="h2-1-121" class="i">+
+</a><a href="#h2-1-122" id="h2-1-122" class="i">+	result.Inputs = mergedInputs
+</a><a href="#h2-1-123" id="h2-1-123" class="i">+	result.Outputs = mergedOutputs
+</a><a href="#h2-1-124" id="h2-1-124" class="i">+
+</a><a href="#h2-1-125" id="h2-1-125" class="i">+	if bld.debug {
+</a><a href="#h2-1-126" id="h2-1-126" class="i">+		fmt.Printf(&quot;Inputs of the merged bondmachine: %d\n&quot;, mergedInputs)
+</a><a href="#h2-1-127" id="h2-1-127" class="i">+		fmt.Printf(&quot;Outputs of the merged bondmachine: %d\n&quot;, mergedOutputs)
+</a><a href="#h2-1-128" id="h2-1-128" class="i">+	}
+</a><a href="#h2-1-129" id="h2-1-129" class="i">+
+</a><a href="#h2-1-130" id="h2-1-130" class="i">+	// Processing domains
+</a><a href="#h2-1-131" id="h2-1-131" class="i">+	domainsMap := make(chMap)
+</a><a href="#h2-1-132" id="h2-1-132" class="i">+
+</a><a href="#h2-1-133" id="h2-1-133" class="i">+	result.Domains = make([]*procbuilder.Machine, len(bm1.Domains)+len(bm2.Domains))
+</a><a href="#h2-1-134" id="h2-1-134" class="i">+
+</a><a href="#h2-1-135" id="h2-1-135" class="i">+	for i, dom := range bm1.Domains {
+</a><a href="#h2-1-136" id="h2-1-136" class="i">+		result.Domains[i] = dom
+</a><a href="#h2-1-137" id="h2-1-137" class="i">+		domainsMap[i] = bmOrigin{originBM: 1, originID: i}
+</a><a href="#h2-1-138" id="h2-1-138" class="i">+	}
+</a><a href="#h2-1-139" id="h2-1-139" class="i">+	for i, dom := range bm2.Domains {
+</a><a href="#h2-1-140" id="h2-1-140" class="i">+		result.Domains[i+len(bm1.Domains)] = dom
+</a><a href="#h2-1-141" id="h2-1-141" class="i">+		domainsMap[i+len(bm1.Domains)] = bmOrigin{originBM: 2, originID: i}
+</a><a href="#h2-1-142" id="h2-1-142" class="i">+	}
+</a><a href="#h2-1-143" id="h2-1-143" class="i">+
+</a><a href="#h2-1-144" id="h2-1-144" class="i">+	if bld.debug {
+</a><a href="#h2-1-145" id="h2-1-145" class="i">+		fmt.Println(&quot;Domains map: &quot;, domainsMap)
+</a><a href="#h2-1-146" id="h2-1-146" class="i">+		fmt.Println(&quot;Domains: &quot;, result.Domains)
+</a><a href="#h2-1-147" id="h2-1-147" class="i">+	}
+</a><a href="#h2-1-148" id="h2-1-148" class="i">+
+</a><a href="#h2-1-149" id="h2-1-149" class="i">+	// Processing processors
+</a><a href="#h2-1-150" id="h2-1-150" class="i">+	procsMap := make(chMap)
+</a><a href="#h2-1-151" id="h2-1-151" class="i">+
+</a><a href="#h2-1-152" id="h2-1-152" class="i">+	result.Processors = make([]int, len(bm1.Processors)+len(bm2.Processors))
+</a><a href="#h2-1-153" id="h2-1-153" class="i">+
+</a><a href="#h2-1-154" id="h2-1-154" class="i">+	for i, domId := range bm1.Processors {
+</a><a href="#h2-1-155" id="h2-1-155" class="i">+		result.Processors[i] = domainsMap.getNewID(1, i)
+</a><a href="#h2-1-156" id="h2-1-156" class="i">+		procsMap[i] = bmOrigin{originBM: 1, originID: domId}
+</a><a href="#h2-1-157" id="h2-1-157" class="i">+	}
+</a><a href="#h2-1-158" id="h2-1-158" class="i">+
+</a><a href="#h2-1-159" id="h2-1-159" class="i">+	for i, domId := range bm2.Processors {
+</a><a href="#h2-1-160" id="h2-1-160" class="i">+		result.Processors[i+len(bm1.Processors)] = domainsMap.getNewID(2, domId)
+</a><a href="#h2-1-161" id="h2-1-161" class="i">+		procsMap[i+len(bm1.Processors)] = bmOrigin{originBM: 2, originID: i}
+</a><a href="#h2-1-162" id="h2-1-162" class="i">+	}
+</a><a href="#h2-1-163" id="h2-1-163" class="i">+
+</a><a href="#h2-1-164" id="h2-1-164" class="i">+	if bld.debug {
+</a><a href="#h2-1-165" id="h2-1-165" class="i">+		fmt.Println(&quot;Processors map: &quot;, procsMap)
+</a><a href="#h2-1-166" id="h2-1-166" class="i">+		fmt.Println(&quot;Processors: &quot;, result.Processors)
+</a><a href="#h2-1-167" id="h2-1-167" class="i">+	}
+</a><a href="#h2-1-168" id="h2-1-168" class="i">+
+</a><a href="#h2-1-169" id="h2-1-169" class="i">+	if bld.debug {
+</a><a href="#h2-1-170" id="h2-1-170" class="i">+		fmt.Println(&quot;BM 1 internal inputs: &quot;, bm1.Internal_inputs)
+</a><a href="#h2-1-171" id="h2-1-171" class="i">+		fmt.Println(&quot;BM 1 internal outputs: &quot;, bm1.Internal_outputs)
+</a><a href="#h2-1-172" id="h2-1-172" class="i">+		fmt.Println(&quot;BM 2 internal inputs: &quot;, bm2.Internal_inputs)
+</a><a href="#h2-1-173" id="h2-1-173" class="i">+		fmt.Println(&quot;BM 2 internal outputs: &quot;, bm2.Internal_outputs)
+</a><a href="#h2-1-174" id="h2-1-174" class="i">+		fmt.Println(&quot;BM 1 links: &quot;, bm1.Links)
+</a><a href="#h2-1-175" id="h2-1-175" class="i">+		fmt.Println(&quot;BM 2 links: &quot;, bm2.Links)
+</a><a href="#h2-1-176" id="h2-1-176" class="i">+	}
+</a><a href="#h2-1-177" id="h2-1-177" class="i">+
+</a><a href="#h2-1-178" id="h2-1-178" class="i">+	// Processing shared objects
+</a><a href="#h2-1-179" id="h2-1-179" class="i">+	soMap := make(chMap)
+</a><a href="#h2-1-180" id="h2-1-180" class="i">+	result.Shared_objects = make([]bondmachine.Shared_instance, len(bm1.Shared_objects)+len(bm2.Shared_objects))
+</a><a href="#h2-1-181" id="h2-1-181" class="i">+
+</a><a href="#h2-1-182" id="h2-1-182" class="i">+	for i, so := range bm1.Shared_objects {
+</a><a href="#h2-1-183" id="h2-1-183" class="i">+		result.Shared_objects[i] = so
+</a><a href="#h2-1-184" id="h2-1-184" class="i">+		soMap[i] = bmOrigin{originBM: 1, originID: i}
+</a><a href="#h2-1-185" id="h2-1-185" class="i">+	}
+</a><a href="#h2-1-186" id="h2-1-186" class="i">+
+</a><a href="#h2-1-187" id="h2-1-187" class="i">+	for i, so := range bm2.Shared_objects {
+</a><a href="#h2-1-188" id="h2-1-188" class="i">+		result.Shared_objects[i+len(bm1.Shared_objects)] = so
+</a><a href="#h2-1-189" id="h2-1-189" class="i">+		soMap[i+len(bm1.Shared_objects)] = bmOrigin{originBM: 2, originID: i}
+</a><a href="#h2-1-190" id="h2-1-190" class="i">+	}
+</a><a href="#h2-1-191" id="h2-1-191" class="i">+
+</a><a href="#h2-1-192" id="h2-1-192" class="i">+	result.Shared_links = make([]bondmachine.Shared_instance_list, len(result.Processors))
+</a><a href="#h2-1-193" id="h2-1-193" class="i">+	for i, _ := range result.Processors {
+</a><a href="#h2-1-194" id="h2-1-194" class="i">+		soList := make(bondmachine.Shared_instance_list, 0)
+</a><a href="#h2-1-195" id="h2-1-195" class="i">+		bm := procsMap[i].originBM
+</a><a href="#h2-1-196" id="h2-1-196" class="i">+		origProc := procsMap[i].originID
+</a><a href="#h2-1-197" id="h2-1-197" class="i">+		switch bm {
+</a><a href="#h2-1-198" id="h2-1-198" class="i">+		case 1:
+</a><a href="#h2-1-199" id="h2-1-199" class="i">+			for _, so := range bm1.Shared_links[origProc] {
+</a><a href="#h2-1-200" id="h2-1-200" class="i">+				soList = append(soList, soMap.getNewID(1, so))
+</a><a href="#h2-1-201" id="h2-1-201" class="i">+			}
+</a><a href="#h2-1-202" id="h2-1-202" class="i">+		case 2:
+</a><a href="#h2-1-203" id="h2-1-203" class="i">+			for _, so := range bm2.Shared_links[origProc] {
+</a><a href="#h2-1-204" id="h2-1-204" class="i">+				soList = append(soList, soMap.getNewID(2, so))
+</a><a href="#h2-1-205" id="h2-1-205" class="i">+			}
+</a><a href="#h2-1-206" id="h2-1-206" class="i">+		}
+</a><a href="#h2-1-207" id="h2-1-207" class="i">+		result.Shared_links[i] = soList
+</a><a href="#h2-1-208" id="h2-1-208" class="i">+	}
+</a><a href="#h2-1-209" id="h2-1-209" class="i">+
+</a><a href="#h2-1-210" id="h2-1-210" class="i">+	// Merging internal outputs
+</a><a href="#h2-1-211" id="h2-1-211" class="i">+
+</a><a href="#h2-1-212" id="h2-1-212" class="i">+	intOutMap := make(chMap)
+</a><a href="#h2-1-213" id="h2-1-213" class="i">+	result.Internal_outputs = make([]bondmachine.Bond, mergedInputs)
+</a><a href="#h2-1-214" id="h2-1-214" class="i">+
+</a><a href="#h2-1-215" id="h2-1-215" class="i">+	for i := 0; i &lt; mergedInputs; i++ {
+</a><a href="#h2-1-216" id="h2-1-216" class="i">+		newBond := bondmachine.Bond{Map_to: bondmachine.BMINPUT, Res_id: i, Ext_id: 0}
+</a><a href="#h2-1-217" id="h2-1-217" class="i">+		result.Internal_outputs[i] = newBond
+</a><a href="#h2-1-218" id="h2-1-218" class="i">+	}
+</a><a href="#h2-1-219" id="h2-1-219" class="i">+
+</a><a href="#h2-1-220" id="h2-1-220" class="i">+	no := mergedInputs
+</a><a href="#h2-1-221" id="h2-1-221" class="i">+	for i, bond := range bm1.Internal_outputs {
+</a><a href="#h2-1-222" id="h2-1-222" class="i">+		switch bond.Map_to {
+</a><a href="#h2-1-223" id="h2-1-223" class="i">+		case bondmachine.BMINPUT:
+</a><a href="#h2-1-224" id="h2-1-224" class="i">+			if bld.debug {
+</a><a href="#h2-1-225" id="h2-1-225" class="i">+				fmt.Println(&quot;Ignoring internal output &quot;, bond, &quot; from BM 1&quot;)
+</a><a href="#h2-1-226" id="h2-1-226" class="i">+			}
+</a><a href="#h2-1-227" id="h2-1-227" class="i">+		case bondmachine.CPOUTPUT:
+</a><a href="#h2-1-228" id="h2-1-228" class="i">+			newBond := bondmachine.Bond{Map_to: bondmachine.CPOUTPUT, Res_id: procsMap.getNewID(1, bond.Res_id), Ext_id: bond.Ext_id}
+</a><a href="#h2-1-229" id="h2-1-229" class="i">+			result.Internal_outputs = append(result.Internal_outputs, newBond)
+</a><a href="#h2-1-230" id="h2-1-230" class="i">+			intOutMap[no] = bmOrigin{originBM: 1, originID: i}
+</a><a href="#h2-1-231" id="h2-1-231" class="i">+			no++
+</a><a href="#h2-1-232" id="h2-1-232" class="i">+		}
+</a><a href="#h2-1-233" id="h2-1-233" class="i">+	}
+</a><a href="#h2-1-234" id="h2-1-234" class="i">+
+</a><a href="#h2-1-235" id="h2-1-235" class="i">+	for i, bond := range bm2.Internal_outputs {
+</a><a href="#h2-1-236" id="h2-1-236" class="i">+		switch bond.Map_to {
+</a><a href="#h2-1-237" id="h2-1-237" class="i">+		case bondmachine.BMINPUT:
+</a><a href="#h2-1-238" id="h2-1-238" class="i">+			if bld.debug {
+</a><a href="#h2-1-239" id="h2-1-239" class="i">+				fmt.Println(&quot;Ignoring internal output &quot;, bond, &quot; from BM 2&quot;)
+</a><a href="#h2-1-240" id="h2-1-240" class="i">+			}
+</a><a href="#h2-1-241" id="h2-1-241" class="i">+		case bondmachine.CPOUTPUT:
+</a><a href="#h2-1-242" id="h2-1-242" class="i">+			newBond := bondmachine.Bond{Map_to: bondmachine.CPOUTPUT, Res_id: procsMap.getNewID(2, bond.Res_id), Ext_id: bond.Ext_id}
+</a><a href="#h2-1-243" id="h2-1-243" class="i">+			result.Internal_outputs = append(result.Internal_outputs, newBond)
+</a><a href="#h2-1-244" id="h2-1-244" class="i">+			intOutMap[no] = bmOrigin{originBM: 2, originID: i}
+</a><a href="#h2-1-245" id="h2-1-245" class="i">+			no++
+</a><a href="#h2-1-246" id="h2-1-246" class="i">+		}
+</a><a href="#h2-1-247" id="h2-1-247" class="i">+	}
+</a><a href="#h2-1-248" id="h2-1-248" class="i">+
+</a><a href="#h2-1-249" id="h2-1-249" class="i">+	if bld.debug {
+</a><a href="#h2-1-250" id="h2-1-250" class="i">+		fmt.Println(&quot;Internal outputs: &quot;, result.Internal_outputs)
+</a><a href="#h2-1-251" id="h2-1-251" class="i">+		fmt.Println(&quot;\t&quot;, intOutMap)
+</a><a href="#h2-1-252" id="h2-1-252" class="i">+	}
+</a><a href="#h2-1-253" id="h2-1-253" class="i">+
+</a><a href="#h2-1-254" id="h2-1-254" class="i">+	// Merging internal inputs
+</a><a href="#h2-1-255" id="h2-1-255" class="i">+	intInMap := make(chMap)
+</a><a href="#h2-1-256" id="h2-1-256" class="i">+	result.Internal_inputs = make([]bondmachine.Bond, mergedOutputs)
+</a><a href="#h2-1-257" id="h2-1-257" class="i">+
+</a><a href="#h2-1-258" id="h2-1-258" class="i">+	for i := 0; i &lt; mergedOutputs; i++ {
+</a><a href="#h2-1-259" id="h2-1-259" class="i">+		newBond := bondmachine.Bond{Map_to: bondmachine.BMOUTPUT, Res_id: i, Ext_id: 0}
+</a><a href="#h2-1-260" id="h2-1-260" class="i">+		result.Internal_inputs[i] = newBond
+</a><a href="#h2-1-261" id="h2-1-261" class="i">+	}
+</a><a href="#h2-1-262" id="h2-1-262" class="i">+
+</a><a href="#h2-1-263" id="h2-1-263" class="i">+	ni := mergedOutputs
+</a><a href="#h2-1-264" id="h2-1-264" class="i">+	for i, bond := range bm1.Internal_inputs {
+</a><a href="#h2-1-265" id="h2-1-265" class="i">+		switch bond.Map_to {
+</a><a href="#h2-1-266" id="h2-1-266" class="i">+		case bondmachine.BMOUTPUT:
+</a><a href="#h2-1-267" id="h2-1-267" class="i">+			if bld.debug {
+</a><a href="#h2-1-268" id="h2-1-268" class="i">+				fmt.Println(&quot;Ignoring internal input &quot;, bond, &quot; from BM 1&quot;)
+</a><a href="#h2-1-269" id="h2-1-269" class="i">+			}
+</a><a href="#h2-1-270" id="h2-1-270" class="i">+
+</a><a href="#h2-1-271" id="h2-1-271" class="i">+		case bondmachine.CPINPUT:
+</a><a href="#h2-1-272" id="h2-1-272" class="i">+			newBond := bondmachine.Bond{Map_to: bondmachine.CPINPUT, Res_id: procsMap.getNewID(1, bond.Res_id), Ext_id: bond.Ext_id}
+</a><a href="#h2-1-273" id="h2-1-273" class="i">+			result.Internal_inputs = append(result.Internal_inputs, newBond)
+</a><a href="#h2-1-274" id="h2-1-274" class="i">+			intInMap[ni] = bmOrigin{originBM: 1, originID: i}
+</a><a href="#h2-1-275" id="h2-1-275" class="i">+			ni++
+</a><a href="#h2-1-276" id="h2-1-276" class="i">+		}
+</a><a href="#h2-1-277" id="h2-1-277" class="i">+	}
+</a><a href="#h2-1-278" id="h2-1-278" class="i">+
+</a><a href="#h2-1-279" id="h2-1-279" class="i">+	for i, bond := range bm2.Internal_inputs {
+</a><a href="#h2-1-280" id="h2-1-280" class="i">+		switch bond.Map_to {
+</a><a href="#h2-1-281" id="h2-1-281" class="i">+		case bondmachine.BMOUTPUT:
+</a><a href="#h2-1-282" id="h2-1-282" class="i">+			if bld.debug {
+</a><a href="#h2-1-283" id="h2-1-283" class="i">+				fmt.Println(&quot;Ignoring internal input &quot;, bond, &quot; from BM 2&quot;)
+</a><a href="#h2-1-284" id="h2-1-284" class="i">+			}
+</a><a href="#h2-1-285" id="h2-1-285" class="i">+		case bondmachine.CPINPUT:
+</a><a href="#h2-1-286" id="h2-1-286" class="i">+			newBond := bondmachine.Bond{Map_to: bondmachine.CPINPUT, Res_id: procsMap.getNewID(2, bond.Res_id), Ext_id: bond.Ext_id}
+</a><a href="#h2-1-287" id="h2-1-287" class="i">+			result.Internal_inputs = append(result.Internal_inputs, newBond)
+</a><a href="#h2-1-288" id="h2-1-288" class="i">+			intInMap[ni] = bmOrigin{originBM: 2, originID: i}
+</a><a href="#h2-1-289" id="h2-1-289" class="i">+			ni++
+</a><a href="#h2-1-290" id="h2-1-290" class="i">+		}
+</a><a href="#h2-1-291" id="h2-1-291" class="i">+	}
+</a><a href="#h2-1-292" id="h2-1-292" class="i">+
+</a><a href="#h2-1-293" id="h2-1-293" class="i">+	if bld.debug {
+</a><a href="#h2-1-294" id="h2-1-294" class="i">+		fmt.Println(&quot;Internal inputs: &quot;, result.Internal_inputs)
+</a><a href="#h2-1-295" id="h2-1-295" class="i">+	}
+</a><a href="#h2-1-296" id="h2-1-296" class="i">+
+</a><a href="#h2-1-297" id="h2-1-297" class="i">+	// Merging links
+</a><a href="#h2-1-298" id="h2-1-298" class="i">+	result.Links = make([]int, len(result.Internal_inputs))
+</a><a href="#h2-1-299" id="h2-1-299" class="i">+
+</a><a href="#h2-1-300" id="h2-1-300" class="i">+	for i, bond := range result.Internal_inputs {
+</a><a href="#h2-1-301" id="h2-1-301" class="i">+		if bld.debug {
+</a><a href="#h2-1-302" id="h2-1-302" class="i">+			fmt.Println(&quot;Following internal input: &quot;, bond)
+</a><a href="#h2-1-303" id="h2-1-303" class="i">+		}
+</a><a href="#h2-1-304" id="h2-1-304" class="i">+
+</a><a href="#h2-1-305" id="h2-1-305" class="i">+		switch bond.Map_to {
+</a><a href="#h2-1-306" id="h2-1-306" class="i">+		case bondmachine.BMOUTPUT:
+</a><a href="#h2-1-307" id="h2-1-307" class="i">+			for _, link := range l.Links {
+</a><a href="#h2-1-308" id="h2-1-308" class="i">+				if link.E2.BType == FinalBMOutput &amp;&amp; link.E2.BNum == bond.Res_id {
+</a><a href="#h2-1-309" id="h2-1-309" class="i">+					if bld.debug {
+</a><a href="#h2-1-310" id="h2-1-310" class="i">+						fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E1)
+</a><a href="#h2-1-311" id="h2-1-311" class="i">+					}
+</a><a href="#h2-1-312" id="h2-1-312" class="i">+					if io, err := followLink(bm1, bm2, result, intOutMap, link.E1); err == nil {
+</a><a href="#h2-1-313" id="h2-1-313" class="i">+						result.Links[i] = io
+</a><a href="#h2-1-314" id="h2-1-314" class="i">+					} else {
+</a><a href="#h2-1-315" id="h2-1-315" class="i">+						return nil, err
+</a><a href="#h2-1-316" id="h2-1-316" class="i">+					}
+</a><a href="#h2-1-317" id="h2-1-317" class="i">+
+</a><a href="#h2-1-318" id="h2-1-318" class="i">+					break
+</a><a href="#h2-1-319" id="h2-1-319" class="i">+				}
+</a><a href="#h2-1-320" id="h2-1-320" class="i">+
+</a><a href="#h2-1-321" id="h2-1-321" class="i">+				if link.E1.BType == FinalBMOutput &amp;&amp; link.E1.BNum == bond.Res_id {
+</a><a href="#h2-1-322" id="h2-1-322" class="i">+					if bld.debug {
+</a><a href="#h2-1-323" id="h2-1-323" class="i">+						fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E2)
+</a><a href="#h2-1-324" id="h2-1-324" class="i">+					}
+</a><a href="#h2-1-325" id="h2-1-325" class="i">+					if io, err := followLink(bm1, bm2, result, intOutMap, link.E2); err == nil {
+</a><a href="#h2-1-326" id="h2-1-326" class="i">+						result.Links[i] = io
+</a><a href="#h2-1-327" id="h2-1-327" class="i">+					} else {
+</a><a href="#h2-1-328" id="h2-1-328" class="i">+						return nil, err
+</a><a href="#h2-1-329" id="h2-1-329" class="i">+					}
+</a><a href="#h2-1-330" id="h2-1-330" class="i">+
+</a><a href="#h2-1-331" id="h2-1-331" class="i">+					break
+</a><a href="#h2-1-332" id="h2-1-332" class="i">+				}
+</a><a href="#h2-1-333" id="h2-1-333" class="i">+			}
+</a><a href="#h2-1-334" id="h2-1-334" class="i">+		case bondmachine.CPINPUT:
+</a><a href="#h2-1-335" id="h2-1-335" class="i">+			origIntIn := intInMap[i]
+</a><a href="#h2-1-336" id="h2-1-336" class="i">+			fmt.Println(i, intInMap)
+</a><a href="#h2-1-337" id="h2-1-337" class="i">+			switch origIntIn.originBM {
+</a><a href="#h2-1-338" id="h2-1-338" class="i">+			case 1:
+</a><a href="#h2-1-339" id="h2-1-339" class="i">+				origIntOut := bm1.Links[origIntIn.originID]
+</a><a href="#h2-1-340" id="h2-1-340" class="i">+				origBond := bm1.Internal_outputs[origIntOut]
+</a><a href="#h2-1-341" id="h2-1-341" class="i">+				switch origBond.Map_to {
+</a><a href="#h2-1-342" id="h2-1-342" class="i">+				case bondmachine.BMINPUT:
+</a><a href="#h2-1-343" id="h2-1-343" class="i">+					for _, link := range l.Links {
+</a><a href="#h2-1-344" id="h2-1-344" class="i">+						if link.E2.BType == FirstBMInput &amp;&amp; link.E2.BNum == origBond.Res_id {
+</a><a href="#h2-1-345" id="h2-1-345" class="i">+							if bld.debug {
+</a><a href="#h2-1-346" id="h2-1-346" class="i">+								fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E1)
+</a><a href="#h2-1-347" id="h2-1-347" class="i">+							}
+</a><a href="#h2-1-348" id="h2-1-348" class="i">+							if io, err := followLink(bm1, bm2, result, intOutMap, link.E1); err == nil {
+</a><a href="#h2-1-349" id="h2-1-349" class="i">+								result.Links[i] = io
+</a><a href="#h2-1-350" id="h2-1-350" class="i">+							} else {
+</a><a href="#h2-1-351" id="h2-1-351" class="i">+								return nil, err
+</a><a href="#h2-1-352" id="h2-1-352" class="i">+							}
+</a><a href="#h2-1-353" id="h2-1-353" class="i">+
+</a><a href="#h2-1-354" id="h2-1-354" class="i">+							break
+</a><a href="#h2-1-355" id="h2-1-355" class="i">+						}
+</a><a href="#h2-1-356" id="h2-1-356" class="i">+
+</a><a href="#h2-1-357" id="h2-1-357" class="i">+						if link.E1.BType == FirstBMInput &amp;&amp; link.E1.BNum == origBond.Res_id {
+</a><a href="#h2-1-358" id="h2-1-358" class="i">+							if bld.debug {
+</a><a href="#h2-1-359" id="h2-1-359" class="i">+								fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E2)
+</a><a href="#h2-1-360" id="h2-1-360" class="i">+							}
+</a><a href="#h2-1-361" id="h2-1-361" class="i">+							if io, err := followLink(bm1, bm2, result, intOutMap, link.E2); err == nil {
+</a><a href="#h2-1-362" id="h2-1-362" class="i">+								result.Links[i] = io
+</a><a href="#h2-1-363" id="h2-1-363" class="i">+							} else {
+</a><a href="#h2-1-364" id="h2-1-364" class="i">+								return nil, err
+</a><a href="#h2-1-365" id="h2-1-365" class="i">+							}
+</a><a href="#h2-1-366" id="h2-1-366" class="i">+
+</a><a href="#h2-1-367" id="h2-1-367" class="i">+							break
+</a><a href="#h2-1-368" id="h2-1-368" class="i">+						}
+</a><a href="#h2-1-369" id="h2-1-369" class="i">+					}
+</a><a href="#h2-1-370" id="h2-1-370" class="i">+				case bondmachine.CPOUTPUT:
+</a><a href="#h2-1-371" id="h2-1-371" class="i">+					result.Links[i] = intOutMap.getNewID(1, origIntOut)
+</a><a href="#h2-1-372" id="h2-1-372" class="i">+				}
+</a><a href="#h2-1-373" id="h2-1-373" class="i">+			case 2:
+</a><a href="#h2-1-374" id="h2-1-374" class="i">+				origIntOut := bm2.Links[origIntIn.originID]
+</a><a href="#h2-1-375" id="h2-1-375" class="i">+				origBond := bm2.Internal_outputs[origIntOut]
+</a><a href="#h2-1-376" id="h2-1-376" class="i">+				switch origBond.Map_to {
+</a><a href="#h2-1-377" id="h2-1-377" class="i">+				case bondmachine.BMINPUT:
+</a><a href="#h2-1-378" id="h2-1-378" class="i">+					for _, link := range l.Links {
+</a><a href="#h2-1-379" id="h2-1-379" class="i">+						if link.E2.BType == SecondBMInput &amp;&amp; link.E2.BNum == origBond.Res_id {
+</a><a href="#h2-1-380" id="h2-1-380" class="i">+							if bld.debug {
+</a><a href="#h2-1-381" id="h2-1-381" class="i">+								fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E1)
+</a><a href="#h2-1-382" id="h2-1-382" class="i">+							}
+</a><a href="#h2-1-383" id="h2-1-383" class="i">+							if io, err := followLink(bm1, bm2, result, intOutMap, link.E1); err == nil {
+</a><a href="#h2-1-384" id="h2-1-384" class="i">+								result.Links[i] = io
+</a><a href="#h2-1-385" id="h2-1-385" class="i">+							} else {
+</a><a href="#h2-1-386" id="h2-1-386" class="i">+								return nil, err
+</a><a href="#h2-1-387" id="h2-1-387" class="i">+							}
+</a><a href="#h2-1-388" id="h2-1-388" class="i">+
+</a><a href="#h2-1-389" id="h2-1-389" class="i">+							break
+</a><a href="#h2-1-390" id="h2-1-390" class="i">+						}
+</a><a href="#h2-1-391" id="h2-1-391" class="i">+
+</a><a href="#h2-1-392" id="h2-1-392" class="i">+						if link.E1.BType == SecondBMInput &amp;&amp; link.E1.BNum == origBond.Res_id {
+</a><a href="#h2-1-393" id="h2-1-393" class="i">+							if bld.debug {
+</a><a href="#h2-1-394" id="h2-1-394" class="i">+								fmt.Println(&quot;Linking internal input&quot;, bond, &quot;to&quot;, link.E2)
+</a><a href="#h2-1-395" id="h2-1-395" class="i">+							}
+</a><a href="#h2-1-396" id="h2-1-396" class="i">+							if io, err := followLink(bm1, bm2, result, intOutMap, link.E2); err == nil {
+</a><a href="#h2-1-397" id="h2-1-397" class="i">+								result.Links[i] = io
+</a><a href="#h2-1-398" id="h2-1-398" class="i">+							} else {
+</a><a href="#h2-1-399" id="h2-1-399" class="i">+								return nil, err
+</a><a href="#h2-1-400" id="h2-1-400" class="i">+							}
+</a><a href="#h2-1-401" id="h2-1-401" class="i">+
+</a><a href="#h2-1-402" id="h2-1-402" class="i">+							break
+</a><a href="#h2-1-403" id="h2-1-403" class="i">+						}
+</a><a href="#h2-1-404" id="h2-1-404" class="i">+					}
+</a><a href="#h2-1-405" id="h2-1-405" class="i">+				case bondmachine.CPOUTPUT:
+</a><a href="#h2-1-406" id="h2-1-406" class="i">+					result.Links[i] = intOutMap.getNewID(2, origIntOut)
+</a><a href="#h2-1-407" id="h2-1-407" class="i">+				}
+</a><a href="#h2-1-408" id="h2-1-408" class="i">+			}
+</a><a href="#h2-1-409" id="h2-1-409" class="i">+		}
+</a><a href="#h2-1-410" id="h2-1-410" class="i">+
+</a><a href="#h2-1-411" id="h2-1-411" class="i">+	}
+</a><a href="#h2-1-412" id="h2-1-412" class="i">+
+</a><a href="#h2-1-413" id="h2-1-413" class="i">+	// TODO: Implement the merge logic
+</a><a href="#h2-1-414" id="h2-1-414" class="i">+
+</a><a href="#h2-1-415" id="h2-1-415" class="i">+	return result, nil
+</a> }
+<b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a> b/<a href="../file/pkg/bondmachine/bondmachine.go.html">pkg/bondmachine/bondmachine.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -160,7 +160,7 @@ func (c *Config) ProcbuilderConfig() *procbuilder.Config {
+</a> 	return result
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-func (b *Bond) String() string {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+func (b Bond) String() string {
+</a> 	result := &quot;&quot;
+ 	if b.Map_to == BMINPUT {
+ 		result += &quot;i&quot; + strconv.Itoa(b.Res_id)
+</pre>
+</div>
+</body>
+</html>

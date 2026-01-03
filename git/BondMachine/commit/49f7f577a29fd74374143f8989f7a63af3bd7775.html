@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>brvgasdl works - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/49f7f577a29fd74374143f8989f7a63af3bd7775.html">49f7f577a29fd74374143f8989f7a63af3bd7775</a>
+<b>parent</b> <a href="../commit/a64b3e303f4277711360cba03aca48c24ebb7b01.html">a64b3e303f4277711360cba03aca48c24ebb7b01</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  8 Sep 2022 11:19:26 +0200
+
+brvgasdl works
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">brvga/brvga.go</a></td><td> | </td><td class="num">52</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">brvga/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">brvga/unixsockreceiver_test.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">brvga/unixsocksender_test.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">cmd/brvgasdl/launch.sh</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>5 files changed, 77 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvga.go.html">brvga/brvga.go</a> b/<a href="../file/brvga/brvga.go.html">brvga/brvga.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,17 +7,19 @@ import (
+</a> 	&quot;net&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;sync&quot;
+</a> 
+ 	&quot;google.golang.org/protobuf/proto&quot;
+ )
+ 
+ type cpTextMemory struct {
+<a href="#h0-0-9" id="h0-0-9" class="d">-	CpId    int
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	Width   int
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	Height  int
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	TopPos  int
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-	LeftPos int
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	mem     []byte
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	CpId        int
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	Width       int
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	Height      int
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	TopPos      int
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	LeftPos     int
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	Mem         []byte
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	cpProtector sync.RWMutex
+</a> }
+ 
+ type BrvgaTextMemory struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -60,11 +62,13 @@ func NewBrvgaTextMemory(constraint string) (*BrvgaTextMemory, error) {
+</a> 			}
+ 
+ 			memL := newBox.Width * newBox.Height
+<a href="#h0-1-3" id="h0-1-3" class="d">-			newBox.mem = make([]byte, memL)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			newBox.Mem = make([]byte, memL)
+</a> 			for j := 0; j &lt; memL; j++ {
+<a href="#h0-1-6" id="h0-1-6" class="d">-				newBox.mem[j] = 0x00
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				newBox.Mem[j] = 0x00
+</a> 			}
+ 
+<a href="#h0-1-10" id="h0-1-10" class="i">+			newBox.cpProtector = sync.RWMutex{}
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+
+</a> 			boxes = append(boxes, newBox)
+ 		}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -82,17 +86,32 @@ func (b *BrvgaTextMemory) Dump() string {
+</a> 	result += fmt.Sprintf(&quot;Constraint %s\n\n&quot;, b.constraintString)
+ 	for _, cp := range b.Cps {
+ 		result += fmt.Sprintf(&quot;cp %d: %d x %d at %d, %d\n&quot;, cp.CpId, cp.Width, cp.Height, cp.LeftPos, cp.TopPos)
+<a href="#h0-2-3" id="h0-2-3" class="i">+		cp.cpProtector.RLock()
+</a> 		for i := 0; i &lt; cp.Height*cp.Width; i++ {
+ 			if i%cp.Width == 0 {
+ 				result += &quot;\n&quot;
+ 			}
+<a href="#h0-2-8" id="h0-2-8" class="d">-			result += fmt.Sprintf(&quot;%02x &quot;, cp.mem[i])
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			result += fmt.Sprintf(&quot;%02x &quot;, cp.Mem[i])
+</a> 		}
+<a href="#h0-2-11" id="h0-2-11" class="i">+		cp.cpProtector.RUnlock()
+</a> 		result += &quot;\n\n&quot;
+ 	}
+ 	return result
+ }
+ 
+<a href="#h0-2-17" id="h0-2-17" class="i">+func (b *BrvgaTextMemory) GetCpMem(cpId int) ([]byte, error) {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	for _, cp := range b.Cps {
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		if cp.CpId == cpId {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+			cp.cpProtector.RLock()
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+			result := make([]byte, len(cp.Mem))
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+			copy(result, cp.Mem)
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+			cp.cpProtector.RUnlock()
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			return result, nil
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		}
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	}
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	return nil, errors.New(&quot;cp not found&quot;)
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+}
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+
+</a> func (b *BrvgaTextMemory) UNIXSockReceiver(ctx context.Context, path string) {
+ 
+ 	// Create the socket
+<a href="#h0-3" id="h0-3" class="h">@@ -136,8 +155,19 @@ func (b *BrvgaTextMemory) handleConnection(ctx context.Context, conn net.Conn) {
+</a> func (b *BrvgaTextMemory) handleMessage(ctx context.Context, buf []byte) {
+ 	recv := &amp;Textmemupdate{}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	proto.Unmarshal(buf, recv)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	fmt.Println(recv)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if err := proto.Unmarshal(buf, recv); err != nil {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		return
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	}
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	for _, box := range b.Cps {
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		if box.CpId == int(recv.Cpid) {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			box.cpProtector.Lock()
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			for _, seq := range recv.Seq {
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+				copy(box.Mem[seq.Pos:seq.Pos+uint32(len(seq.Payload))], seq.Payload)
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+			}
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+			box.cpProtector.Unlock()
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		}
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	}
+</a> }
+ 
+ func (b *BrvgaTextMemory) UNIXSockSender(ctx context.Context, path string, buf *Textmemupdate) error {
+<b>diff --git a/<a id="h1" href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a> b/<a href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,6 +2,7 @@ package brvgasdl
+</a> 
+ import (
+ 	&quot;bufio&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;context&quot;
+</a> 	&quot;encoding/hex&quot;
+ 	&quot;image&quot;
+ 	&quot;image/color&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -108,7 +109,7 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 				if charLine&amp;byte((1&lt;&lt;j)) &gt; 0 {
+ 					newChar.Set(j, i, color.White)
+ 				} else {
+<a href="#h1-1-3" id="h1-1-3" class="d">-					newChar.Set(j, i, color.Black)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+					// newChar.Set(j, i, color.Black)
+</a> 				}
+ 			}
+ 		}
+<a href="#h1-2" id="h1-2" class="h">@@ -116,6 +117,10 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 		result.Fonts.images[byte(c)] = newChar
+ 	}
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+	ctx, _ := context.WithCancel(context.Background())
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	go result.UNIXSockReceiver(ctx, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+
+</a> 	return result, nil
+ }
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -124,23 +129,43 @@ func (b *BrvgaSdl) Run() {
+</a> 	cv := b.Canvas
+ 	wnd.MainLoop(func() {
+ 		w, h := float64(cv.Width()), float64(cv.Height())
+<a href="#h1-3-3" id="h1-3-3" class="d">-		cv.SetFillStyle(&quot;#000000&quot;)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		cv.SetFillStyle(&quot;#111&quot;)
+</a> 		cv.FillRect(0, 0, w, h)
+<a href="#h1-3-6" id="h1-3-6" class="i">+		cv.SetFillStyle(&quot;#000000&quot;)
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+		cv.FillRect(0, 0, 800, 600)
+</a> 
+ 		for i := 0; i &lt; len(b.header); i++ {
+ 			cv.DrawImage(b.Fonts.images[b.header[i]], 1+float64(i*8), 1)
+ 		}
+ 
+<a href="#h1-3-13" id="h1-3-13" class="i">+		offsetX := 6
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+		offsetY := 14
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+
+</a> 		for i, cp := range b.BrvgaTextMemory.Cps {
+<a href="#h1-3-17" id="h1-3-17" class="d">-			switch i % 3 {
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+			cv.SetFillStyle(&quot;#333&quot;)
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+			cv.FillRect(8*float64(cp.LeftPos)+float64(offsetX), 8*float64(cp.TopPos)+float64(offsetY), 8*float64(cp.Width), 8*float64(cp.Height))
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+			switch i % 4 {
+</a> 			case 0:
+<a href="#h1-3-22" id="h1-3-22" class="d">-				cv.SetStrokeStyle(&quot;#ff0000&quot;)
+</a><a href="#h1-3-23" id="h1-3-23" class="i">+				cv.SetStrokeStyle(&quot;#01c&quot;)
+</a> 			case 1:
+<a href="#h1-3-25" id="h1-3-25" class="d">-				cv.SetStrokeStyle(&quot;#00ff00&quot;)
+</a><a href="#h1-3-26" id="h1-3-26" class="i">+				cv.SetStrokeStyle(&quot;#075&quot;)
+</a> 			case 2:
+<a href="#h1-3-28" id="h1-3-28" class="d">-				cv.SetStrokeStyle(&quot;#0000ff&quot;)
+</a><a href="#h1-3-29" id="h1-3-29" class="i">+				cv.SetStrokeStyle(&quot;#a3d&quot;)
+</a><a href="#h1-3-30" id="h1-3-30" class="i">+			case 3:
+</a><a href="#h1-3-31" id="h1-3-31" class="i">+				cv.SetStrokeStyle(&quot;#603&quot;)
+</a><a href="#h1-3-32" id="h1-3-32" class="i">+			}
+</a><a href="#h1-3-33" id="h1-3-33" class="i">+			cv.StrokeRect(8*float64(cp.LeftPos)-2+float64(offsetX), 8*float64(cp.TopPos)-2+float64(offsetY), 8*float64(cp.Width)+4, 8*float64(cp.Height)+4)
+</a><a href="#h1-3-34" id="h1-3-34" class="i">+		}
+</a><a href="#h1-3-35" id="h1-3-35" class="i">+
+</a><a href="#h1-3-36" id="h1-3-36" class="i">+		cv.SetStrokeStyle(&quot;#ffffff&quot;)
+</a><a href="#h1-3-37" id="h1-3-37" class="i">+		for _, cp := range b.BrvgaTextMemory.Cps {
+</a><a href="#h1-3-38" id="h1-3-38" class="i">+			if mem, err := b.GetCpMem(cp.CpId); err == nil {
+</a><a href="#h1-3-39" id="h1-3-39" class="i">+				posX := 8*float64(cp.LeftPos) + float64(offsetX)
+</a><a href="#h1-3-40" id="h1-3-40" class="i">+				posY := 8*float64(cp.TopPos) + float64(offsetY)
+</a><a href="#h1-3-41" id="h1-3-41" class="i">+				for i := 0; i &lt; len(mem); i++ {
+</a><a href="#h1-3-42" id="h1-3-42" class="i">+					cv.DrawImage(b.Fonts.images[mem[i]], posX+float64(i%cp.Width)*8, posY+float64(i/cp.Width)*8)
+</a><a href="#h1-3-43" id="h1-3-43" class="i">+				}
+</a> 			}
+<a href="#h1-3-45" id="h1-3-45" class="d">-			cv.StrokeRect(8*float64(cp.LeftPos), 8*float64(cp.TopPos), 8*float64(cp.Width), 8*float64(cp.Height))
+</a> 		}
+ 
+ 		// for r := 0.0; r &lt; math.Pi*2; r += math.Pi * 0.1 {
+<b>diff --git a/<a id="h2" href="../file/brvga/unixsockreceiver_test.go.html">brvga/unixsockreceiver_test.go</a> b/<a href="../file/brvga/unixsockreceiver_test.go.html">brvga/unixsockreceiver_test.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,7 +11,7 @@ import (
+</a> )
+ 
+ func TestUnixSocketReceiver(t *testing.T) {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	vga, err := NewBrvgaTextMemory(&quot;textvga:1:1:1:16:16&quot;)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	vga, err := NewBrvgaTextMemory(&quot;vtextmem:0:0:0:16:16:1:25:25:16:16&quot;)
+</a> 
+ 	if err != nil {
+ 		t.Fatal(err)
+<b>diff --git a/<a id="h3" href="../file/brvga/unixsocksender_test.go.html">brvga/unixsocksender_test.go</a> b/<a href="../file/brvga/unixsocksender_test.go.html">brvga/unixsocksender_test.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -8,14 +8,14 @@ import (
+</a> )
+ 
+ func TestUnixSocketSender(t *testing.T) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	vga, _ := NewBrvgaTextMemory(&quot;1:0:0:80:25&quot;)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	vga, _ := NewBrvgaTextMemory(&quot;vtextmem:0:0:0:16:16:1:25:25:16:16&quot;)
+</a> 
+ 	ctx, _ := context.WithCancel(context.Background())
+ 
+ 	// Create a new protobuf message
+ 	msg := &amp;Textmemupdate{
+ 		Cpid: 1,
+<a href="#h3-0-11" id="h3-0-11" class="d">-		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 1, Payload: []byte(&quot;Hello&quot;)}},
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 0, Payload: []byte{0, 0, 0, 0, 0}}},
+</a> 	}
+ 
+ 	vga.UNIXSockSender(ctx, &quot;/tmp/brvga.sock&quot;, msg)
+<b>diff --git a/<a id="h4" href="../file/cmd/brvgasdl/launch.sh.html">cmd/brvgasdl/launch.sh</a> b/<a href="../file/cmd/brvgasdl/launch.sh.html">cmd/brvgasdl/launch.sh</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,2 +1,2 @@
+</a> #!/bin/bash
+<a href="#h4-0-1" id="h4-0-1" class="d">-go run brvgasdl.go -constraints vtextmem:0:3:3:16:16:1:25:25:16:16 -header header.mem -fonts fonts.mem
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+go run brvgasdl.go -constraints vtextmem:0:0:0:16:16:1:25:25:16:16 -header header.mem -fonts fonts.mem
+</a></pre>
+</div>
+</body>
+</html>

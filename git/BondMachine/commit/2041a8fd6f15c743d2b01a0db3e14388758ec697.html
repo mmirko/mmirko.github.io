@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ROM and RAM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2041a8fd6f15c743d2b01a0db3e14388758ec697.html">2041a8fd6f15c743d2b01a0db3e14388758ec697</a>
+<b>parent</b> <a href="../commit/d713d84d53f4301364c760104fac10bbfc205d11.html">d713d84d53f4301364c760104fac10bbfc205d11</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  3 Aug 2023 12:27:01 +0200
+
+ROM and RAM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_m2rri.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_r2mri.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 56 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -341,18 +341,54 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+ 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+ 		result += &quot;	reg exec_mode; // 0 = harvard , 1=VN\n&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-		result += &quot;	reg vn_state;\n&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		result += &quot;	localparam FETCH=1&#39;b0, EXECUTE=1&#39;b1;\n&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		result += &quot;	reg [1:0] vn_state;\n&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+</a> 		result += &quot;	assign current_instruction= (exec_mode==1&#39;b0) rom_value : ram_instruction;\n&quot;
+ 		result += &quot;\n&quot;
+<a href="#h0-0-9" id="h0-0-9" class="i">+		result += &quot;	always @(posedge clock_signal, posedge reset_signal)\n&quot;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		result += &quot;	begin\n&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		result += &quot;		case (vn_state)\n&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		result += &quot;		FETCH: begin\n&quot;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		result += &quot;			vn_state &lt;= WAIT;\n&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		result += &quot;		end\n&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		result += &quot;		WAIT: begin\n&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		result += &quot;			vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		result += &quot;			ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		result += &quot;		end\n&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		result += &quot;		//EXECUTE: begin\n&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		result += &quot;		//end\n&quot;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		result += &quot;		endcase\n&quot;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		result += &quot;	end\n&quot;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			result += &quot;	assign ram_addr = _pc;\n&quot;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		}
+</a> 	case &quot;vn&quot;:
+ 		result += &quot;\n&quot;
+ 		result += &quot;	wire [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] current_instruction;\n&quot;
+ 		result += &quot;	reg [&quot; + strconv.Itoa(int(rom_word)-1) + &quot;:0] ram_instruction;\n&quot;
+<a href="#h0-0-31" id="h0-0-31" class="d">-		result += &quot;	reg vn_state;\n&quot;
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-		result += &quot;	localparam FETCH=1&#39;b0, EXECUTE=1&#39;b1;\n&quot;
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		result += &quot;	reg [1:0] vn_state;\n&quot;
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+</a> 		result += &quot;	assign current_instruction=ram_instruction;\n&quot;
+ 		result += &quot;\n&quot;
+<a href="#h0-0-37" id="h0-0-37" class="i">+		result += &quot;	always @(posedge clock_signal, posedge reset_signal)\n&quot;
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+		result += &quot;	begin\n&quot;
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+		result += &quot;		case (vn_state)\n&quot;
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+		result += &quot;		FETCH: begin\n&quot;
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+		result += &quot;			vn_state &lt;= WAIT;\n&quot;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+		result += &quot;		end\n&quot;
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+		result += &quot;		WAIT: begin\n&quot;
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		result += &quot;			vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+		result += &quot;			ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+		result += &quot;		end\n&quot;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		result += &quot;		//EXECUTE: begin\n&quot;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+		result += &quot;		//end\n&quot;
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+		result += &quot;		endcase\n&quot;
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+		result += &quot;	end\n&quot;
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+			result += &quot;	assign ram_addr = _pc;\n&quot;
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+		}
+</a> 	}
+ 
+ 	for _, op := range proc.Op {
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -119,6 +119,10 @@ func (op M2r) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 		ramAddr = &quot; (current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+ 	}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+ 		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+ 	}
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a> b/<a href="../file/pkg/procbuilder/op_m2rri.go.html">pkg/procbuilder/op_m2rri.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -161,6 +161,10 @@ func (op M2rri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 		ramAddr = &quot; (current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+ 	}
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	}
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a> 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+ 		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+ 	}
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -93,6 +93,10 @@ func (op R2m) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a> 		ramAddr = &quot; (current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+ 	}
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	}
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a> 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+ 		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+ 	}
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a> b/<a href="../file/pkg/procbuilder/op_r2mri.go.html">pkg/procbuilder/op_r2mri.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -94,6 +94,10 @@ func (op R2mri) Op_instruction_verilog_footer(arch *Arch, flavor string) string 
+</a> 		ramAddr = &quot; (current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;]==M2RRI) ? addr_ram_m2rri: &quot; + ramAddr
+ 	}
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+	if arch.Modes[0] == &quot;hy&quot; || arch.Modes[0] == &quot;vn&quot; {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		ramAddr = &quot; (vn_state == FETCH | vn_state == WAIT) ? _pc : &quot; + ramAddr
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	}
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+
+</a> 	if arch.OnlyOne(op.Op_get_name(), []string{&quot;r2mri&quot;, &quot;r2m&quot;, &quot;m2r&quot;, &quot;m2rri&quot;}) {
+ 		result += &quot;\tassign ram_addr = &quot; + ramAddr + &quot;;\n&quot;
+ 	}
+</pre>
+</div>
+</body>
+</html>

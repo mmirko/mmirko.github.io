@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minor fix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7d83d8363015743c0a5294d3f0d1c7218caf677a.html">7d83d8363015743c0a5294d3f0d1c7218caf677a</a>
+<b>parent</b> <a href="../commit/15d62c3f5b02c047179e3089fa863f07468b4c9c.html">15d62c3f5b02c047179e3089fa863f07468b4c9c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  1 Mar 2024 12:45:07 +0100
+
+Minor fix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -228,11 +228,19 @@ func main() {
+</a> 		}
+ 
+ 		if *emitBMAPIMaps {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			if fileData, err := sim.EmitBMAPIMaps(); err != nil {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				bld.Alert(err)
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-				return
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			if startBuilding &amp;&amp; *hardwareFlavor != &quot;&quot; {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				if _, ok := bmqsim.HardwareFlavors[*hardwareFlavor]; ok {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+					if fileData, err := sim.EmitBMAPIMaps(*hardwareFlavor); err != nil {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+						bld.Alert(err)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+						return
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+					} else {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+						os.WriteFile(*bmAPIMapsFile, []byte(fileData), 0644)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+					}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+				} else {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+					bld.Alert(&quot;Hardware flavor not found&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+				}
+</a> 			} else {
+<a href="#h0-0-18" id="h0-0-18" class="d">-				os.WriteFile(*bmAPIMapsFile, []byte(fileData), 0644)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+				bld.Alert(&quot;No quantum circuit to build the BM API maps&quot;)
+</a> 			}
+ 		}
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -362,9 +362,15 @@ func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrix
+</a> 	return nil, nil
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-func (sim *BmQSimulator) EmitBMAPIMaps() (string, error) {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func (sim *BmQSimulator) EmitBMAPIMaps(hwflavor string) (string, error) {
+</a> 	if sim != nil &amp;&amp; sim.qbits != nil {
+<a href="#h1-0-6" id="h1-0-6" class="d">-		ioNum := int(math.Pow(float64(2), float64(len(sim.qbits))))
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		var ioNum int
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		switch hwflavor {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		case &quot;seq_hardcoded_real&quot;:
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			ioNum = int(math.Pow(float64(2), float64(len(sim.qbits))))
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		case &quot;seq_hardcoded_complex&quot;:
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+			ioNum = int(math.Pow(float64(2), float64(len(sim.qbits)))) * 2
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		}
+</a> 		newMap := new(IOmap)
+ 		newMap.Assoc = make(map[string]string)
+ 		for i := 0; i &lt; ioNum; i++ {
+</pre>
+</div>
+</body>
+</html>

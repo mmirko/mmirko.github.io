@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>newline.basm - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> newline.basm (2098B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> ; Ths function go to a new line
+<a href="#l2" class="line" id="l2">      2</a> ; r0: pointer to the memory start (0 for vtm0) 
+<a href="#l3" class="line" id="l3">      3</a> ; r2: x position within the memory (video textual memory vtm0 or similar)
+<a href="#l4" class="line" id="l4">      4</a> %fragment newline default_out:vtm0 default_height:16 default_width:16
+<a href="#l5" class="line" id="l5">      5</a>         mov     r1, {{ .Params.height }}
+<a href="#l6" class="line" id="l6">      6</a>         dec     r1
+<a href="#l7" class="line" id="l7">      7</a>         mov     r3, {{ .Params.width }}
+<a href="#l8" class="line" id="l8">      8</a>         mult    r1, r3 ; this is the start cell of the last line
+<a href="#l9" class="line" id="l9">      9</a>         mov     r3, r2
+<a href="#l10" class="line" id="l10">     10</a>         sub     r3, r0 ; this is the current cell (offset from the start)
+<a href="#l11" class="line" id="l11">     11</a>         cmprlt  r3, r1 ; if the current cell is less than the start of the last line don&#39;t scroll
+<a href="#l12" class="line" id="l12">     12</a>         jcmp    dontscroll ; at this point r3 is the offset from the start of the memory, r1 is the current cell (no offset)
+<a href="#l13" class="line" id="l13">     13</a> scroll:
+<a href="#l14" class="line" id="l14">     14</a>         mov     r4, r0
+<a href="#l15" class="line" id="l15">     15</a>         mov     r5, {{ .Params.width }}
+<a href="#l16" class="line" id="l16">     16</a>         add     r4, r5 ; This is the source
+<a href="#l17" class="line" id="l17">     17</a>         mov     r5, r0 ; This is the destination
+<a href="#l18" class="line" id="l18">     18</a> scrollloop:
+<a href="#l19" class="line" id="l19">     19</a>         mov     r6, {{ .Params.out }}:[r4]
+<a href="#l20" class="line" id="l20">     20</a>         mov     {{ .Params.out }}:[r5], r6
+<a href="#l21" class="line" id="l21">     21</a>         inc     r5
+<a href="#l22" class="line" id="l22">     22</a>         inc     r4
+<a href="#l23" class="line" id="l23">     23</a>         cmpr    r4, r2
+<a href="#l24" class="line" id="l24">     24</a>         jcmp    scrollloopdone
+<a href="#l25" class="line" id="l25">     25</a>         j       scrollloop
+<a href="#l26" class="line" id="l26">     26</a> scrollloopdone:
+<a href="#l27" class="line" id="l27">     27</a>         mov     r5, {{ .Params.width }}
+<a href="#l28" class="line" id="l28">     28</a>         sub     r2, r5
+<a href="#l29" class="line" id="l29">     29</a>         sub     r3, r5
+<a href="#l30" class="line" id="l30">     30</a> dontscroll:
+<a href="#l31" class="line" id="l31">     31</a>         ; find out the next line position
+<a href="#l32" class="line" id="l32">     32</a>         mov     r1, 0
+<a href="#l33" class="line" id="l33">     33</a>         mov     r4, {{ .Params.width }}
+<a href="#l34" class="line" id="l34">     34</a> findnextline:
+<a href="#l35" class="line" id="l35">     35</a>         inc     r1
+<a href="#l36" class="line" id="l36">     36</a>         mov     r5, r1
+<a href="#l37" class="line" id="l37">     37</a>         mult    r5, r4
+<a href="#l38" class="line" id="l38">     38</a>         cmprlt  r5, r3
+<a href="#l39" class="line" id="l39">     39</a>         jcmp    findnextline
+<a href="#l40" class="line" id="l40">     40</a>         mov     r1, 0x00
+<a href="#l41" class="line" id="l41">     41</a> fillblank:
+<a href="#l42" class="line" id="l42">     42</a>         cmpr    r5, r3
+<a href="#l43" class="line" id="l43">     43</a>         jcmp    fillblank2prep
+<a href="#l44" class="line" id="l44">     44</a>         mov     r6, r3
+<a href="#l45" class="line" id="l45">     45</a>         add     r6, r0
+<a href="#l46" class="line" id="l46">     46</a>         mov     {{ .Params.out }}:[r6], r1
+<a href="#l47" class="line" id="l47">     47</a>         inc     r3
+<a href="#l48" class="line" id="l48">     48</a>         j       fillblank
+<a href="#l49" class="line" id="l49">     49</a> fillblank2prep:
+<a href="#l50" class="line" id="l50">     50</a>         mov     r5, {{ .Params.width }}
+<a href="#l51" class="line" id="l51">     51</a>         mov     r4, {{ .Params.height }}
+<a href="#l52" class="line" id="l52">     52</a>         mult    r4, r5
+<a href="#l53" class="line" id="l53">     53</a>         dec     r4
+<a href="#l54" class="line" id="l54">     54</a>         mov     r5, r3
+<a href="#l55" class="line" id="l55">     55</a> fillblank2:
+<a href="#l56" class="line" id="l56">     56</a>         cmpr    r5, r4
+<a href="#l57" class="line" id="l57">     57</a>         jcmp    end
+<a href="#l58" class="line" id="l58">     58</a>         mov     r7, r5
+<a href="#l59" class="line" id="l59">     59</a>         add     r7, r0
+<a href="#l60" class="line" id="l60">     60</a>         mov     {{ .Params.out }}:[r7], r1
+<a href="#l61" class="line" id="l61">     61</a>         inc     r5
+<a href="#l62" class="line" id="l62">     62</a>         j       fillblank2
+<a href="#l63" class="line" id="l63">     63</a> end:
+<a href="#l64" class="line" id="l64">     64</a>         inc     r6
+<a href="#l65" class="line" id="l65">     65</a>         mov     r2, r6
+<a href="#l66" class="line" id="l66">     66</a>         mov     r4, r3
+<a href="#l67" class="line" id="l67">     67</a> %endfragment
+</pre>
+</div>
+</body>
+</html>

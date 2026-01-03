@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>serializer - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b2f34254bcc48ea7b62e5c8ba05f69aaf0997b0b.html">b2f34254bcc48ea7b62e5c8ba05f69aaf0997b0b</a>
+<b>parent</b> <a href="../commit/18e9b4de2967bcd826f01fb22d1c774ddfa0937a.html">18e9b4de2967bcd826f01fb22d1c774ddfa0937a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 27 Feb 2023 14:34:28 +0100
+
+serializer
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmserialize/bmserialize.go</a></td><td> | </td><td class="num">256</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmserialize/bmserialize_test.go</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmserialize/serializefiles.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>3 files changed, 145 insertions(+), 155 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmserialize/bmserialize.go.html">pkg/bmserialize/bmserialize.go</a> b/<a href="../file/pkg/bmserialize/bmserialize.go.html">pkg/bmserialize/bmserialize.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,21 +3,19 @@ package bmserialize
+</a> import (
+ 	&quot;bytes&quot;
+ 	&quot;errors&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;sort&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	&quot;strconv&quot;
+</a> 	&quot;text/template&quot;
+ )
+ 
+<a href="#h0-0-8" id="h0-0-8" class="d">-type Push struct {
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	Agent string
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	Tick  uint64
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	Value string
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+// type Push struct {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+// 	Agent string
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+// 	Tick  uint64
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+// 	Value string
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+// }
+</a> 
+<a href="#h0-0-19" id="h0-0-19" class="d">-type Pop struct {
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-	Agent string
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-	Tick  uint64
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-}
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+// type Pop struct {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+// 	Agent string
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+// 	Tick  uint64
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+// }
+</a> 
+ type BmSerialize struct {
+ 	ModuleName       string
+<a href="#h0-1" id="h0-1" class="h">@@ -26,24 +24,16 @@ type BmSerialize struct {
+</a> 	Model            string // &quot;ready-impulse&quot; or &quot;valid-ack&quot;
+ 	TerminalDataSize int
+ 	SerialDataSize   int
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	Depth     int
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	Senders   []string
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	Receivers []string
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	MemType   string
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	funcMap template.FuncMap
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	funcMap          template.FuncMap
+</a> 
+ 	// TestBench data
+<a href="#h0-1-13" id="h0-1-13" class="d">-	Pops         []Pop
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-	Pushes       []Push
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-	TestSequence []string // Pushes and pops in order
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	// Pops         []Pop
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	// Pushes       []Push
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	// TestSequence []string // Pushes and pops in order
+</a> }
+ 
+ func CreateBasicSerializer() *BmSerialize {
+ 	result := new(BmSerialize)
+<a href="#h0-1-23" id="h0-1-23" class="d">-	//result.Rsize = bmach.Rsize
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-	//result.Buswidth = &quot;[&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0]&quot;
+</a> 	funcMap := template.FuncMap{
+ 		&quot;inc&quot;: func(i int) int {
+ 			return i + 1
+<a href="#h0-2" id="h0-2" class="h">@@ -105,116 +95,116 @@ func (s *BmSerialize) WriteHDL() (string, error) {
+</a> 
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-func (s *BmSerialize) WriteTestBench() (string, error) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	var f bytes.Buffer
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	// Sort the pushes and pops by tick
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-	sort.Slice(s.Pushes, func(i, j int) bool {
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		return s.Pushes[i].Tick &lt; s.Pushes[j].Tick
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	})
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-	sort.Slice(s.Pops, func(i, j int) bool {
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-		return s.Pops[i].Tick &lt; s.Pops[j].Tick
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-	})
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-	s.TestSequence = make([]string, 0)
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-	var subSeq []string
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-	var absTick uint64
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-	var oldAbsTick uint64
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-	for i, j := 0, 0; i &lt; len(s.Pushes) || j &lt; len(s.Pops); {
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-		if i == len(s.Pushes) {
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-			absTick = s.Pops[j].Tick
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-			if absTick != oldAbsTick {
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-				relTick := absTick - oldAbsTick
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-				s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-				s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-				s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-				subSeq = make([]string, 0)
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-				oldAbsTick += relTick
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-			}
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-			agent := s.Pops[j].Agent
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-			tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-34" id="h0-2-34" class="d">-			subSeq = append(subSeq, &quot;// Pop agent &quot;+agent+&quot; at tick &quot;+tick)
+</a><a href="#h0-2-35" id="h0-2-35" class="d">-			subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-36" id="h0-2-36" class="d">-			subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-37" id="h0-2-37" class="d">-			subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-38" id="h0-2-38" class="d">-			j++
+</a><a href="#h0-2-39" id="h0-2-39" class="d">-		} else if j == len(s.Pops) {
+</a><a href="#h0-2-40" id="h0-2-40" class="d">-			absTick = s.Pushes[i].Tick
+</a><a href="#h0-2-41" id="h0-2-41" class="d">-			if absTick != oldAbsTick {
+</a><a href="#h0-2-42" id="h0-2-42" class="d">-				relTick := absTick - oldAbsTick
+</a><a href="#h0-2-43" id="h0-2-43" class="d">-				s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-44" id="h0-2-44" class="d">-				s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-45" id="h0-2-45" class="d">-				s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-46" id="h0-2-46" class="d">-				subSeq = make([]string, 0)
+</a><a href="#h0-2-47" id="h0-2-47" class="d">-				oldAbsTick += relTick
+</a><a href="#h0-2-48" id="h0-2-48" class="d">-			}
+</a><a href="#h0-2-49" id="h0-2-49" class="d">-			agent := s.Pushes[i].Agent
+</a><a href="#h0-2-50" id="h0-2-50" class="d">-			value := s.Pushes[i].Value
+</a><a href="#h0-2-51" id="h0-2-51" class="d">-			tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-52" id="h0-2-52" class="d">-			subSeq = append(subSeq, &quot;// Push agent &quot;+agent+&quot; at tick &quot;+tick+&quot; with value &quot;+value)
+</a><a href="#h0-2-53" id="h0-2-53" class="d">-			subSeq = append(subSeq, agent+&quot;Data=&quot;+value+&quot;;&quot;)
+</a><a href="#h0-2-54" id="h0-2-54" class="d">-			subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-55" id="h0-2-55" class="d">-			subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-56" id="h0-2-56" class="d">-			subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-57" id="h0-2-57" class="d">-			i++
+</a><a href="#h0-2-58" id="h0-2-58" class="d">-		} else {
+</a><a href="#h0-2-59" id="h0-2-59" class="d">-			if s.Pushes[i].Tick &lt;= s.Pops[j].Tick {
+</a><a href="#h0-2-60" id="h0-2-60" class="d">-				absTick = s.Pushes[i].Tick
+</a><a href="#h0-2-61" id="h0-2-61" class="d">-				if absTick != oldAbsTick {
+</a><a href="#h0-2-62" id="h0-2-62" class="d">-					relTick := absTick - oldAbsTick
+</a><a href="#h0-2-63" id="h0-2-63" class="d">-					s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-64" id="h0-2-64" class="d">-					s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-65" id="h0-2-65" class="d">-					s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-66" id="h0-2-66" class="d">-					subSeq = make([]string, 0)
+</a><a href="#h0-2-67" id="h0-2-67" class="d">-					oldAbsTick += relTick
+</a><a href="#h0-2-68" id="h0-2-68" class="d">-				}
+</a><a href="#h0-2-69" id="h0-2-69" class="d">-				agent := s.Pushes[i].Agent
+</a><a href="#h0-2-70" id="h0-2-70" class="d">-				value := s.Pushes[i].Value
+</a><a href="#h0-2-71" id="h0-2-71" class="d">-				tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-72" id="h0-2-72" class="d">-				subSeq = append(subSeq, &quot;// Push agent &quot;+agent+&quot; at tick &quot;+tick+&quot; with value &quot;+value)
+</a><a href="#h0-2-73" id="h0-2-73" class="d">-				subSeq = append(subSeq, agent+&quot;Data=&quot;+value+&quot;;&quot;)
+</a><a href="#h0-2-74" id="h0-2-74" class="d">-				subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-75" id="h0-2-75" class="d">-				subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-76" id="h0-2-76" class="d">-				subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-77" id="h0-2-77" class="d">-				i++
+</a><a href="#h0-2-78" id="h0-2-78" class="d">-			} else {
+</a><a href="#h0-2-79" id="h0-2-79" class="d">-				absTick = s.Pops[j].Tick
+</a><a href="#h0-2-80" id="h0-2-80" class="d">-				if absTick != oldAbsTick {
+</a><a href="#h0-2-81" id="h0-2-81" class="d">-					relTick := absTick - oldAbsTick
+</a><a href="#h0-2-82" id="h0-2-82" class="d">-					s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-83" id="h0-2-83" class="d">-					s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-84" id="h0-2-84" class="d">-					s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-85" id="h0-2-85" class="d">-					subSeq = make([]string, 0)
+</a><a href="#h0-2-86" id="h0-2-86" class="d">-					oldAbsTick += relTick
+</a><a href="#h0-2-87" id="h0-2-87" class="d">-				}
+</a><a href="#h0-2-88" id="h0-2-88" class="d">-				agent := s.Pops[j].Agent
+</a><a href="#h0-2-89" id="h0-2-89" class="d">-				tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-90" id="h0-2-90" class="d">-				subSeq = append(subSeq, &quot;// Pop agent &quot;+agent+&quot; at tick &quot;+tick)
+</a><a href="#h0-2-91" id="h0-2-91" class="d">-				subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-92" id="h0-2-92" class="d">-				subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-93" id="h0-2-93" class="d">-				subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-94" id="h0-2-94" class="d">-				j++
+</a><a href="#h0-2-95" id="h0-2-95" class="d">-			}
+</a><a href="#h0-2-96" id="h0-2-96" class="d">-		}
+</a><a href="#h0-2-97" id="h0-2-97" class="d">-	}
+</a><a href="#h0-2-98" id="h0-2-98" class="d">-	s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-99" id="h0-2-99" class="d">-
+</a><a href="#h0-2-100" id="h0-2-100" class="d">-	t, err := template.New(&quot;testbench&quot;).Funcs(s.funcMap).Parse(testbench)
+</a><a href="#h0-2-101" id="h0-2-101" class="d">-	if err != nil {
+</a><a href="#h0-2-102" id="h0-2-102" class="d">-		return &quot;&quot;, err
+</a><a href="#h0-2-103" id="h0-2-103" class="d">-	}
+</a><a href="#h0-2-104" id="h0-2-104" class="d">-
+</a><a href="#h0-2-105" id="h0-2-105" class="d">-	err = t.Execute(&amp;f, *s)
+</a><a href="#h0-2-106" id="h0-2-106" class="d">-	if err != nil {
+</a><a href="#h0-2-107" id="h0-2-107" class="d">-		return &quot;&quot;, err
+</a><a href="#h0-2-108" id="h0-2-108" class="d">-	}
+</a><a href="#h0-2-109" id="h0-2-109" class="d">-
+</a><a href="#h0-2-110" id="h0-2-110" class="d">-	return f.String(), nil
+</a><a href="#h0-2-111" id="h0-2-111" class="d">-
+</a><a href="#h0-2-112" id="h0-2-112" class="d">-}
+</a><a href="#h0-2-113" id="h0-2-113" class="i">+// func (s *BmSerialize) WriteTestBench() (string, error) {
+</a><a href="#h0-2-114" id="h0-2-114" class="i">+
+</a><a href="#h0-2-115" id="h0-2-115" class="i">+// var f bytes.Buffer
+</a><a href="#h0-2-116" id="h0-2-116" class="i">+
+</a><a href="#h0-2-117" id="h0-2-117" class="i">+// // Sort the pushes and pops by tick
+</a><a href="#h0-2-118" id="h0-2-118" class="i">+// sort.Slice(s.Pushes, func(i, j int) bool {
+</a><a href="#h0-2-119" id="h0-2-119" class="i">+// 	return s.Pushes[i].Tick &lt; s.Pushes[j].Tick
+</a><a href="#h0-2-120" id="h0-2-120" class="i">+// })
+</a><a href="#h0-2-121" id="h0-2-121" class="i">+// sort.Slice(s.Pops, func(i, j int) bool {
+</a><a href="#h0-2-122" id="h0-2-122" class="i">+// 	return s.Pops[i].Tick &lt; s.Pops[j].Tick
+</a><a href="#h0-2-123" id="h0-2-123" class="i">+// })
+</a><a href="#h0-2-124" id="h0-2-124" class="i">+
+</a><a href="#h0-2-125" id="h0-2-125" class="i">+// s.TestSequence = make([]string, 0)
+</a><a href="#h0-2-126" id="h0-2-126" class="i">+
+</a><a href="#h0-2-127" id="h0-2-127" class="i">+// var subSeq []string
+</a><a href="#h0-2-128" id="h0-2-128" class="i">+// var absTick uint64
+</a><a href="#h0-2-129" id="h0-2-129" class="i">+// var oldAbsTick uint64
+</a><a href="#h0-2-130" id="h0-2-130" class="i">+
+</a><a href="#h0-2-131" id="h0-2-131" class="i">+// for i, j := 0, 0; i &lt; len(s.Pushes) || j &lt; len(s.Pops); {
+</a><a href="#h0-2-132" id="h0-2-132" class="i">+// 	if i == len(s.Pushes) {
+</a><a href="#h0-2-133" id="h0-2-133" class="i">+// 		absTick = s.Pops[j].Tick
+</a><a href="#h0-2-134" id="h0-2-134" class="i">+// 		if absTick != oldAbsTick {
+</a><a href="#h0-2-135" id="h0-2-135" class="i">+// 			relTick := absTick - oldAbsTick
+</a><a href="#h0-2-136" id="h0-2-136" class="i">+// 			s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-137" id="h0-2-137" class="i">+// 			s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-138" id="h0-2-138" class="i">+// 			s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-139" id="h0-2-139" class="i">+// 			subSeq = make([]string, 0)
+</a><a href="#h0-2-140" id="h0-2-140" class="i">+// 			oldAbsTick += relTick
+</a><a href="#h0-2-141" id="h0-2-141" class="i">+// 		}
+</a><a href="#h0-2-142" id="h0-2-142" class="i">+// 		agent := s.Pops[j].Agent
+</a><a href="#h0-2-143" id="h0-2-143" class="i">+// 		tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-144" id="h0-2-144" class="i">+// 		subSeq = append(subSeq, &quot;// Pop agent &quot;+agent+&quot; at tick &quot;+tick)
+</a><a href="#h0-2-145" id="h0-2-145" class="i">+// 		subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-146" id="h0-2-146" class="i">+// 		subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-147" id="h0-2-147" class="i">+// 		subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-148" id="h0-2-148" class="i">+// 		j++
+</a><a href="#h0-2-149" id="h0-2-149" class="i">+// 	} else if j == len(s.Pops) {
+</a><a href="#h0-2-150" id="h0-2-150" class="i">+// 		absTick = s.Pushes[i].Tick
+</a><a href="#h0-2-151" id="h0-2-151" class="i">+// 		if absTick != oldAbsTick {
+</a><a href="#h0-2-152" id="h0-2-152" class="i">+// 			relTick := absTick - oldAbsTick
+</a><a href="#h0-2-153" id="h0-2-153" class="i">+// 			s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-154" id="h0-2-154" class="i">+// 			s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-155" id="h0-2-155" class="i">+// 			s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-156" id="h0-2-156" class="i">+// 			subSeq = make([]string, 0)
+</a><a href="#h0-2-157" id="h0-2-157" class="i">+// 			oldAbsTick += relTick
+</a><a href="#h0-2-158" id="h0-2-158" class="i">+// 		}
+</a><a href="#h0-2-159" id="h0-2-159" class="i">+// 		agent := s.Pushes[i].Agent
+</a><a href="#h0-2-160" id="h0-2-160" class="i">+// 		value := s.Pushes[i].Value
+</a><a href="#h0-2-161" id="h0-2-161" class="i">+// 		tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-162" id="h0-2-162" class="i">+// 		subSeq = append(subSeq, &quot;// Push agent &quot;+agent+&quot; at tick &quot;+tick+&quot; with value &quot;+value)
+</a><a href="#h0-2-163" id="h0-2-163" class="i">+// 		subSeq = append(subSeq, agent+&quot;Data=&quot;+value+&quot;;&quot;)
+</a><a href="#h0-2-164" id="h0-2-164" class="i">+// 		subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-165" id="h0-2-165" class="i">+// 		subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-166" id="h0-2-166" class="i">+// 		subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-167" id="h0-2-167" class="i">+// 		i++
+</a><a href="#h0-2-168" id="h0-2-168" class="i">+// 	} else {
+</a><a href="#h0-2-169" id="h0-2-169" class="i">+// 		if s.Pushes[i].Tick &lt;= s.Pops[j].Tick {
+</a><a href="#h0-2-170" id="h0-2-170" class="i">+// 			absTick = s.Pushes[i].Tick
+</a><a href="#h0-2-171" id="h0-2-171" class="i">+// 			if absTick != oldAbsTick {
+</a><a href="#h0-2-172" id="h0-2-172" class="i">+// 				relTick := absTick - oldAbsTick
+</a><a href="#h0-2-173" id="h0-2-173" class="i">+// 				s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-174" id="h0-2-174" class="i">+// 				s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-175" id="h0-2-175" class="i">+// 				s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-176" id="h0-2-176" class="i">+// 				subSeq = make([]string, 0)
+</a><a href="#h0-2-177" id="h0-2-177" class="i">+// 				oldAbsTick += relTick
+</a><a href="#h0-2-178" id="h0-2-178" class="i">+// 			}
+</a><a href="#h0-2-179" id="h0-2-179" class="i">+// 			agent := s.Pushes[i].Agent
+</a><a href="#h0-2-180" id="h0-2-180" class="i">+// 			value := s.Pushes[i].Value
+</a><a href="#h0-2-181" id="h0-2-181" class="i">+// 			tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-182" id="h0-2-182" class="i">+// 			subSeq = append(subSeq, &quot;// Push agent &quot;+agent+&quot; at tick &quot;+tick+&quot; with value &quot;+value)
+</a><a href="#h0-2-183" id="h0-2-183" class="i">+// 			subSeq = append(subSeq, agent+&quot;Data=&quot;+value+&quot;;&quot;)
+</a><a href="#h0-2-184" id="h0-2-184" class="i">+// 			subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-185" id="h0-2-185" class="i">+// 			subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-186" id="h0-2-186" class="i">+// 			subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-187" id="h0-2-187" class="i">+// 			i++
+</a><a href="#h0-2-188" id="h0-2-188" class="i">+// 		} else {
+</a><a href="#h0-2-189" id="h0-2-189" class="i">+// 			absTick = s.Pops[j].Tick
+</a><a href="#h0-2-190" id="h0-2-190" class="i">+// 			if absTick != oldAbsTick {
+</a><a href="#h0-2-191" id="h0-2-191" class="i">+// 				relTick := absTick - oldAbsTick
+</a><a href="#h0-2-192" id="h0-2-192" class="i">+// 				s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-193" id="h0-2-193" class="i">+// 				s.TestSequence = append(s.TestSequence, &quot;&quot;)
+</a><a href="#h0-2-194" id="h0-2-194" class="i">+// 				s.TestSequence = append(s.TestSequence, &quot;#&quot;+strconv.Itoa(int(relTick))+&quot;;&quot;)
+</a><a href="#h0-2-195" id="h0-2-195" class="i">+// 				subSeq = make([]string, 0)
+</a><a href="#h0-2-196" id="h0-2-196" class="i">+// 				oldAbsTick += relTick
+</a><a href="#h0-2-197" id="h0-2-197" class="i">+// 			}
+</a><a href="#h0-2-198" id="h0-2-198" class="i">+// 			agent := s.Pops[j].Agent
+</a><a href="#h0-2-199" id="h0-2-199" class="i">+// 			tick := strconv.Itoa(int(absTick))
+</a><a href="#h0-2-200" id="h0-2-200" class="i">+// 			subSeq = append(subSeq, &quot;// Pop agent &quot;+agent+&quot; at tick &quot;+tick)
+</a><a href="#h0-2-201" id="h0-2-201" class="i">+// 			subSeq = append(subSeq, agent+&quot;Impulse=1;&quot;)
+</a><a href="#h0-2-202" id="h0-2-202" class="i">+// 			subSeq = append(subSeq, &quot;#5;&quot;)
+</a><a href="#h0-2-203" id="h0-2-203" class="i">+// 			subSeq = append(subSeq, agent+&quot;Impulse=0;&quot;)
+</a><a href="#h0-2-204" id="h0-2-204" class="i">+// 			j++
+</a><a href="#h0-2-205" id="h0-2-205" class="i">+// 		}
+</a><a href="#h0-2-206" id="h0-2-206" class="i">+// 	}
+</a><a href="#h0-2-207" id="h0-2-207" class="i">+// }
+</a><a href="#h0-2-208" id="h0-2-208" class="i">+// s.TestSequence = append(s.TestSequence, subSeq...)
+</a><a href="#h0-2-209" id="h0-2-209" class="i">+
+</a><a href="#h0-2-210" id="h0-2-210" class="i">+// t, err := template.New(&quot;testbench&quot;).Funcs(s.funcMap).Parse(testbench)
+</a><a href="#h0-2-211" id="h0-2-211" class="i">+// if err != nil {
+</a><a href="#h0-2-212" id="h0-2-212" class="i">+// 	return &quot;&quot;, err
+</a><a href="#h0-2-213" id="h0-2-213" class="i">+// }
+</a><a href="#h0-2-214" id="h0-2-214" class="i">+
+</a><a href="#h0-2-215" id="h0-2-215" class="i">+// err = t.Execute(&amp;f, *s)
+</a><a href="#h0-2-216" id="h0-2-216" class="i">+// if err != nil {
+</a><a href="#h0-2-217" id="h0-2-217" class="i">+// 	return &quot;&quot;, err
+</a><a href="#h0-2-218" id="h0-2-218" class="i">+// }
+</a><a href="#h0-2-219" id="h0-2-219" class="i">+
+</a><a href="#h0-2-220" id="h0-2-220" class="i">+// return f.String(), nil
+</a><a href="#h0-2-221" id="h0-2-221" class="i">+
+</a><a href="#h0-2-222" id="h0-2-222" class="i">+// }
+</a> 
+ func NeededBits(num int) int {
+ 	if num &gt; 0 {
+<b>diff --git a/<a id="h1" href="../file/pkg/bmserialize/bmserialize_test.go.html">pkg/bmserialize/bmserialize_test.go</a> b/<a href="../file/pkg/bmserialize/bmserialize_test.go.html">pkg/bmserialize/bmserialize_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -11,9 +11,8 @@ func TestStack(t *testing.T) {
+</a> 	s.SerialDataSize = 32
+ 	s.Terminals = 2
+ 	s.Direction = &quot;serialize&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	s.Depth = 8
+</a> 
+<a href="#h1-0-5" id="h1-0-5" class="d">-	f, err := os.Create(&quot;stack.v&quot;)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	f, err := os.Create(&quot;serialize.v&quot;)
+</a> 	if err != nil {
+ 		t.Error(err)
+ 	}
+<a href="#h1-1" id="h1-1" class="h">@@ -24,14 +23,14 @@ func TestStack(t *testing.T) {
+</a> 		f.WriteString(r)
+ 	}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	tb, err := os.Create(&quot;stack_tb.v&quot;)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	if err != nil {
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-		t.Error(err)
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	}
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-	defer tb.Close()
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-	if r, err := s.WriteTestBench(); err != nil {
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-		t.Error(err)
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-	} else {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-		tb.WriteString(r)
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-	}
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	// tb, err := os.Create(&quot;serialize_tb.v&quot;)
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	// if err != nil {
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	// 	t.Error(err)
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	// }
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	// defer tb.Close()
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	// if r, err := s.WriteTestBench(); err != nil {
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	// 	t.Error(err)
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	// } else {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	// 	tb.WriteString(r)
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	// }
+</a> }
+<b>diff --git a/<a id="h2" href="../file/pkg/bmserialize/serializefiles.go.html">pkg/bmserialize/serializefiles.go</a> b/<a href="../file/pkg/bmserialize/serializefiles.go.html">pkg/bmserialize/serializefiles.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -23,7 +23,7 @@ reg [{{ dec .SerialDataSize }}:0] localdata;
+</a> wire [{{ bits .Terminals }}:0] valids;
+ reg [{{ bits .Terminals }}:0] recvs;
+     
+<a href="#h2-0-3" id="h2-0-3" class="d">-wire [{{ dec .SerialDataSize }}:0] outputs;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+wire [{{ dec .SerialDataSize }}:0] outputs[{{ bits .Terminals }}:0];
+</a>     
+ localparam SMIDLE=2&#39;b00,
+         SMRES=2&#39;b01,
+<a href="#h2-1" id="h2-1" class="h">@@ -32,16 +32,16 @@ localparam SMIDLE=2&#39;b00,
+</a> always @( posedge clk) begin
+ 	if (reset) begin
+ 		ready &lt;= 1&#39;b0;
+<a href="#h2-1-3" id="h2-1-3" class="d">-		output_index &lt;= {{ inc bits .Terminals }}&#39;b00;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		output_index &lt;= {{ inc (bits .Terminals) }}&#39;d0;
+</a> 		SM&lt;=SMIDLE;
+<a href="#h2-1-6" id="h2-1-6" class="d">-		recvs[{{ bits .Terminals }}:0] &lt;= {{ inc bits .Terminals }}&#39;b00;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+		recvs[{{ bits .Terminals }}:0] &lt;= {{ inc (bits .Terminals) }}&#39;d0;
+</a> 	end 
+ 	else begin
+ 		case (SM)
+ 		SMIDLE: begin
+ 			if (valids[output_index]) begin
+ 				ready &lt;= 1&#39;b1;
+<a href="#h2-1-14" id="h2-1-14" class="d">-				localdata[31:0] &lt;= outputs[31:0];
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+				localdata[{{ dec .SerialDataSize }}:0] &lt;= outputs[output_index][{{ dec .SerialDataSize }}:0];
+</a> 				SM&lt;=SMRES;
+ 			end
+ 			else begin
+<a href="#h2-2" id="h2-2" class="h">@@ -56,7 +56,7 @@ always @( posedge clk) begin
+</a> 	       	end
+ 		SMBM: begin
+ 			if (!valids[output_index]) begin
+<a href="#h2-2-3" id="h2-2-3" class="d">-				if (output_index + 1 == 2&#39;d1) begin
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+				if (output_index + 1 == {{ inc (bits .Terminals) }}&#39;d{{ .Terminals }}) begin
+</a> 					output_index &lt;= 0;
+ 				end
+ 				else begin
+<a href="#h2-3" id="h2-3" class="h">@@ -73,11 +73,12 @@ always @( posedge clk) begin
+</a> 	end
+ end
+ 	
+<a href="#h2-3-3" id="h2-3-3" class="d">-assign data[31:0] = localdata[31:0];
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-assign outputs={o0[31:0]};
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-assign o0_recv=recvs[0];
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-assign valids[0] = o0_valid;	
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+assign data[{{ dec .SerialDataSize }}:0] = localdata[{{ dec .SerialDataSize }}:0];
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+{{- range $y := intRange 0 .Terminals }}
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+assign outputs[{{ $y }}]=o{{ $y }}[{{ dec $.SerialDataSize }}:0];
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+assign o{{ $y }}_recv=recvs[{{ $y }}];
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+assign valids[{{ $y }}] = o{{ $y }}_valid;
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+{{- end }}
+</a> 	
+ endmodule 
+ `
+</pre>
+</div>
+</body>
+</html>

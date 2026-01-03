@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Better templates handling - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e1db5fbae393e34e894020444779e2da446a8d20.html">e1db5fbae393e34e894020444779e2da446a8d20</a>
+<b>parent</b> <a href="../commit/b4a90620ae49150c7ec867004d241b640a86e474.html">b4a90620ae49150c7ec867004d241b640a86e474</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 29 Sep 2023 14:02:15 +0200
+
+Better templates handling
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">go.mod</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">go.sum</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/fragments/comparestring.basm</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">library/fragments/putstring.basm</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h4">library/fragments/putstringram.basm</a></td><td> | </td><td class="num">15</td><td><span class="i"></span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/basm.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/basm/callresolver.go</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/basm/templatefinalizer.go</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/basm/templateresolver.go</a></td><td> | </td><td class="num">98</td><td><span class="i">+++++++++++</span><span class="d">--------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h9">pkg/basm/templates.go</a></td><td> | </td><td class="num">176</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/basm/utils.go</a></td><td> | </td><td class="num">16</td><td><span class="i"></span><span class="d">----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/bmline/utils.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>12 files changed, 245 insertions(+), 170 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/go.mod.html">go.mod</a> b/<a href="../file/go.mod.html">go.mod</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,10 +4,12 @@ go 1.20
+</a> 
+ require (
+ 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
+<a href="#h0-0-3" id="h0-0-3" class="d">-	github.com/golang/protobuf v1.5.2
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	github.com/llir/llvm v0.3.6
+</a> 	github.com/mdlayher/raw v0.1.0
+ 	github.com/mmirko/mel v0.0.0-20230406165510-6f1fee2b3f2b
+ 	github.com/tfriedel6/canvas v0.12.1
+<a href="#h0-0-8" id="h0-0-8" class="i">+	github.com/x448/float16 v0.8.4
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+</a> 	google.golang.org/protobuf v1.30.0
+ )
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -15,21 +17,16 @@ require (
+</a> 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
+ 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+ 	github.com/josharian/native v1.1.0 // indirect
+<a href="#h0-1-3" id="h0-1-3" class="d">-	github.com/kr/pretty v0.3.1 // indirect
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	github.com/kr/text v0.2.0 // indirect
+</a> 	github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c // indirect
+<a href="#h0-1-6" id="h0-1-6" class="d">-	github.com/llir/llvm v0.3.6 // indirect
+</a> 	github.com/mdlayher/packet v1.1.1 // indirect
+ 	github.com/mdlayher/socket v0.4.0 // indirect
+ 	github.com/mewmew/float v0.0.0-20201204173432-505706aa38fa // indirect
+ 	github.com/pkg/errors v0.9.1 // indirect
+<a href="#h0-1-11" id="h0-1-11" class="d">-	github.com/rogpeppe/go-internal v1.9.0 // indirect
+</a> 	github.com/veandco/go-sdl2 v0.4.33 // indirect
+<a href="#h0-1-13" id="h0-1-13" class="d">-	github.com/x448/float16 v0.8.4 // indirect
+</a> 	golang.org/x/image v0.6.0 // indirect
+<a href="#h0-1-15" id="h0-1-15" class="d">-	golang.org/x/mod v0.8.0 // indirect
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	golang.org/x/net v0.8.0 // indirect
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-	golang.org/x/sync v0.1.0 // indirect
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	golang.org/x/sys v0.7.0 // indirect
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-	golang.org/x/tools v0.6.0 // indirect
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	golang.org/x/mod v0.12.0 // indirect
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	golang.org/x/net v0.15.0 // indirect
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	golang.org/x/sync v0.3.0 // indirect
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	golang.org/x/sys v0.12.0 // indirect
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	golang.org/x/tools v0.13.0 // indirect
+</a> )
+<b>diff --git a/<a id="h1" href="../file/go.sum.html">go.sum</a> b/<a href="../file/go.sum.html">go.sum</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,19 +8,14 @@ github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2
+</a> github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 h1:DACJavvAHhabrF08vX0COfcOBJRhZ8lUbR+ZWIs0Y5g=
+ github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0/go.mod h1:E/TSTwGwJL78qG/PmXZO1EjYhfJinVAhrmmHX6Z8B9k=
+ github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
+<a href="#h1-0-3" id="h1-0-3" class="d">-github.com/golang/protobuf v1.5.2 h1:ROPKBNFfQgOUMifHyP+KYbvpjbdoFNs+aK7DXlji0Tw=
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-github.com/golang/protobuf v1.5.2/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
+</a> github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
+ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
+ github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
+ github.com/josharian/native v1.1.0 h1:uuaP0hAbW7Y4l0ZRQ6C9zfb7Mg1mbFKry/xzDAfmtLA=
+ github.com/josharian/native v1.1.0/go.mod h1:7X/raswPFr05uY3HiLlYeyQntB6OO7E/d2Cu7qoaN2w=
+ github.com/kr/pretty v0.2.0/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
+<a href="#h1-0-11" id="h1-0-11" class="d">-github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
+</a> github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
+ github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+<a href="#h1-0-15" id="h1-0-15" class="d">-github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+</a> github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+ github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c h1:UwtWiaR7Zg/IItv2hEN1EATTY/Hv69llULknaeMgxWo=
+ github.com/llir/ll v0.0.0-20220802044011-65001c0fb73c/go.mod h1:2F+W9dmrXLYy3UZXnii5UM7QDRiVsz4QkMpC0vaBU7M=
+<a href="#h1-1" id="h1-1" class="h">@@ -34,15 +29,10 @@ github.com/mdlayher/socket v0.4.0 h1:280wsy40IC9M9q1uPGcLBwXpcTQDtoGwVt+BNoITxIw
+</a> github.com/mdlayher/socket v0.4.0/go.mod h1:xxFqz5GRCUN3UEOm9CZqEJsAbe1C8OwSK46NlmWuVoc=
+ github.com/mewmew/float v0.0.0-20201204173432-505706aa38fa h1:R27wrYHe8Zik4z/EV8xxfoH3cwMJw3qI4xsI3yYkGDQ=
+ github.com/mewmew/float v0.0.0-20201204173432-505706aa38fa/go.mod h1:O+xb+8ycBNHzJicFVs7GRWtruD4tVZI0huVnw5TM01E=
+<a href="#h1-1-3" id="h1-1-3" class="d">-github.com/mmirko/mel v0.0.0-20230404214048-7308a9f0bd4f h1:rT7HOuqfMOcEJ90WSkLsTCgwJwNpPsjsvPvSHBhcxwM=
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-github.com/mmirko/mel v0.0.0-20230404214048-7308a9f0bd4f/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+</a> github.com/mmirko/mel v0.0.0-20230406165510-6f1fee2b3f2b h1:+X2s+wzFexAJXb6BiR88Qs/1/dc1MFzkCMUPQUKXft8=
+ github.com/mmirko/mel v0.0.0-20230406165510-6f1fee2b3f2b/go.mod h1:43+9/DJGmQl0Ry7BvCfRiaqo9HCOc5AkdZw7mFLkxlc=
+<a href="#h1-1-7" id="h1-1-7" class="d">-github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
+</a> github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+<a href="#h1-1-10" id="h1-1-10" class="d">-github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
+</a> github.com/tfriedel6/canvas v0.12.1 h1:Oc4gww+cOtix69IaYo8TmRbwpbTl6D1jza2mBM4ZOPo=
+ github.com/tfriedel6/canvas v0.12.1/go.mod h1:WIe1YgsQiKA1awmU6tSs8e5DkceDHC5MHgV5vQQZr/0=
+ github.com/veandco/go-sdl2 v0.4.0/go.mod h1:FB+kTpX9YTE+urhYiClnRzpOXbiWgaU3+5F2AB78DPg=
+<a href="#h1-2" id="h1-2" class="h">@@ -56,27 +46,31 @@ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACk
+</a> golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+ golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
+ golang.org/x/exp v0.0.0-20181106170214-d68db9428509/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
+<a href="#h1-2-3" id="h1-2-3" class="i">+golang.org/x/exp v0.0.0-20230905200255-921286631fa9 h1:GoHiUyI/Tp2nVkLI2mCxVkOjsbSXD66ic0XW0js0R9g=
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+golang.org/x/exp v0.0.0-20230905200255-921286631fa9/go.mod h1:S2oDrQGGwySpoQPVqRShND87VCbxmc6bL1Yd2oYrm6k=
+</a> golang.org/x/image v0.0.0-20200119044424-58c23975cae1/go.mod h1:FeLwcggjj3mMvU+oOTbSwawSJRM1uh48EjtB4UJZlP0=
+ golang.org/x/image v0.6.0 h1:bR8b5okrPI3g/gyZakLZHeWxAR8Dn5CyxXv1hLH5g/4=
+ golang.org/x/image v0.6.0/go.mod h1:MXLdDR43H7cDJq5GEGXEVeeNhPgi+YYEQ2pC1byI1x0=
+ golang.org/x/mobile v0.0.0-20181026062114-a27dd33d354d/go.mod h1:z+o9i4GpDbdi3rU15maQ/Ox0txvL9dWGYEHz965HBQE=
+ golang.org/x/mod v0.4.2/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
+ golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
+<a href="#h1-2-11" id="h1-2-11" class="d">-golang.org/x/mod v0.8.0 h1:LUYupSeNrTNCGzR/hVBk2NHZO4hXcVaW1k4Qx7rjPx8=
+</a> golang.org/x/mod v0.8.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
+<a href="#h1-2-13" id="h1-2-13" class="i">+golang.org/x/mod v0.12.0 h1:rmsUpXtvNzj340zd98LZ4KntptpfRHwpFOHG188oHXc=
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+golang.org/x/mod v0.12.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
+</a> golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
+ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
+ golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4/go.mod h1:p54w0d4576C0XHj96bSt6lcn1PtDYWL6XObtHCRCNQM=
+ golang.org/x/net v0.0.0-20220722155237-a158d28d115b/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
+ golang.org/x/net v0.6.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
+<a href="#h1-2-21" id="h1-2-21" class="d">-golang.org/x/net v0.8.0 h1:Zrh2ngAOFYneWTAIAPethzeaQLuHwhuBkuV6ZiRnUaQ=
+</a><a href="#h1-2-22" id="h1-2-22" class="d">-golang.org/x/net v0.8.0/go.mod h1:QVkue5JL9kW//ek3r6jTKnTFis1tRmNAW2P1shuFdJc=
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+golang.org/x/net v0.15.0 h1:ugBLEUaxABaB5AJqW9enI0ACdci2RUd4eP51NTBvuJ8=
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+golang.org/x/net v0.15.0/go.mod h1:idbUs1IY1+zTqbi8yxTbhexhEEk5ur9LInksu6HrEpk=
+</a> golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20210220032951-036812b2e83c/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+<a href="#h1-2-28" id="h1-2-28" class="d">-golang.org/x/sync v0.1.0 h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=
+</a> golang.org/x/sync v0.1.0/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+<a href="#h1-2-30" id="h1-2-30" class="i">+golang.org/x/sync v0.3.0 h1:ftCYgMx6zT/asHUrPw8BLLscYtGznsLAnjq5RH9P66E=
+</a><a href="#h1-2-31" id="h1-2-31" class="i">+golang.org/x/sync v0.3.0/go.mod h1:FU7BRWz2tNW+3quACPkgCx/L+uEAv1htQ0V83Z9Rj+Y=
+</a> golang.org/x/sys v0.0.0-20181128092732-4ed8d59d0b35/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
+ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+<a href="#h1-3" id="h1-3" class="h">@@ -87,8 +81,8 @@ golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBc
+</a> golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+ golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+ golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+<a href="#h1-3-3" id="h1-3-3" class="d">-golang.org/x/sys v0.7.0 h1:3jlCCIQZPdOYu1h8BkNvLz8Kgwtae2cagcG/VamtZRU=
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-golang.org/x/sys v0.7.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+golang.org/x/sys v0.12.0 h1:CM0HF96J0hcLAwsHPJZjfdNzs0gftsLfgKt57wWHJ0o=
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+golang.org/x/sys v0.12.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+</a> golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+ golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
+ golang.org/x/term v0.5.0/go.mod h1:jMB1sMXY+tzblOD4FWmEbocvup2/aLOaQEp7JmGp78k=
+<a href="#h1-4" id="h1-4" class="h">@@ -101,13 +95,13 @@ golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGm
+</a> golang.org/x/tools v0.0.0-20191119224855-298f0cb1881e/go.mod h1:b+2E5dAYhXwXZwtnZ6UAqBI28+e2cm9otk0dWdXHAEo=
+ golang.org/x/tools v0.1.4/go.mod h1:o0xws9oXOQQZyjljx8fwUC0k7L1pTE6eaCbjGeHmOkk=
+ golang.org/x/tools v0.1.12/go.mod h1:hNGJHUnrk76NpqgfD5Aqm5Crs+Hm0VOH/i9J2+nxYbc=
+<a href="#h1-4-3" id="h1-4-3" class="d">-golang.org/x/tools v0.6.0 h1:BOw41kyTf3PuCW1pVQf8+Cyg8pMlkYB1oo9iJ6D/lKM=
+</a> golang.org/x/tools v0.6.0/go.mod h1:Xwgl3UAJ/d3gWutnCtw505GrjyAbvKui8lOU390QaIU=
+<a href="#h1-4-5" id="h1-4-5" class="i">+golang.org/x/tools v0.13.0 h1:Iey4qkscZuv0VvIt8E0neZjtPVQFSc870HQ448QgEmQ=
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+golang.org/x/tools v0.13.0/go.mod h1:HvlwmtVNQAhOuCjW7xxvovg8wbNq7LwfXh/k7wXUl58=
+</a> golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
+ google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
+<a href="#h1-4-12" id="h1-4-12" class="d">-google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
+</a> google.golang.org/protobuf v1.30.0 h1:kPPoIgf3TsEvrm0PFe15JQ+570QVxYzEvvHqChK+cng=
+ google.golang.org/protobuf v1.30.0/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
+<b>diff --git a/<a id="h2" href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a> b/<a href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,11 +2,11 @@
+</a> ; r0 pointer to the buffer beginning (es: mov r0, ram:buff)
+ ; r1 pointer to the ROM string
+ ; r2 is the lenght
+<a href="#h2-0-3" id="h2-0-3" class="d">-%fragment comparestring
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+%fragment comparestring default_mem1:ram default_mem2:rom
+</a> 	nop
+ cmpchar:
+<a href="#h2-0-7" id="h2-0-7" class="d">-	mov	r3, ram:[r0]
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	mov	r4, rom:[r1]
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	mov	r3, {{ .Params.mem1 }}:[r0]
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	mov	r4, {{ .Params.mem2 }}:[r1]
+</a> 	cmpr	r3, r4
+ 	dec	r2
+ 	jz	r2, end
+<b>diff --git a/<a id="h3" href="../file/library/fragments/putstring.basm.html">library/fragments/putstring.basm</a> b/<a href="../file/library/fragments/putstring.basm.html">library/fragments/putstring.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,12 +1,12 @@
+</a> ; Ths function writes a string to the screen
+ ; r0: pointer to the null terminated string (es: mov r0, rom:message)
+ ; r1: x position within the screen (video textual memory vtm0)
+<a href="#h3-0-3" id="h3-0-3" class="d">-%fragment putstring
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+%fragment putstring default_mem:rom default_out:vtm0
+</a>         nop
+ putchar:
+<a href="#h3-0-7" id="h3-0-7" class="d">-        mov     r2, rom:[r0]
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+        mov     r2, {{ .Params.mem }}:[r0]
+</a>         jz      r2, end
+<a href="#h3-0-10" id="h3-0-10" class="d">-        mov     vtm0:[r1], r2
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+        mov     {{ .Params.out }}:[r1], r2
+</a>         inc     r0
+         inc     r1
+         j putchar
+<b>diff --git a/<a id="h4" href="../file/library/fragments/putstringram.basm.html">library/fragments/putstringram.basm</a> b/<a href="../file/library/fragments/putstringram.basm.html">library/fragments/putstringram.basm</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,15 +0,0 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="d">-; Ths function writes a string to the screen
+</a><a href="#h4-0-1" id="h4-0-1" class="d">-; r0: pointer to the null terminated string (es: mov r0, ram:message)
+</a><a href="#h4-0-2" id="h4-0-2" class="d">-; r1: x position within the screen (video textual memory vtm0)
+</a><a href="#h4-0-3" id="h4-0-3" class="d">-%fragment putstringram
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-        nop
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-putchar:
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-        mov     r2, ram:[r0]
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-        jz      r2, end
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-        mov     vtm0:[r1], r2
+</a><a href="#h4-0-9" id="h4-0-9" class="d">-        inc     r0
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-        inc     r1
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-        j putchar
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-end:
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-        nop
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-%endfragment
+</a><b>diff --git a/<a id="h5" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -121,7 +121,8 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		passSectionCleaner |
+ 		passCallResolver |
+ 		passMacroResolver |
+<a href="#h5-0-3" id="h5-0-3" class="d">-		passTemplateFinalizer
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		// passTemplateFinalizer |
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+		0
+</a> 
+ 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.dynMatchers = make([]*bmline.BasmLine, 0)
+<b>diff --git a/<a id="h6" href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a> b/<a href="../file/pkg/basm/callresolver.go.html">pkg/basm/callresolver.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;regexp&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;golang.org/x/exp/maps&quot;
+</a> )
+ 
+ // section entry points detection, the pass detects the symbol used as entry point of the section and sign it as metadata.
+<a href="#h6-1" id="h6-1" class="h">@@ -60,13 +61,28 @@ func callResolver(bi *BasmInstance) error {
+</a> 
+ 					// Check if the arg is a fragment
+ 					if _, ok := bi.fragments[arg.GetValue()]; ok {
+<a href="#h6-1-3" id="h6-1-3" class="i">+						fragName := arg.GetValue()
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+						// TODO  handle start and end metadata
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+
+</a><a href="#h6-1-7" id="h6-1-7" class="i">+						// Make a copy of the fragment body
+</a><a href="#h6-1-8" id="h6-1-8" class="i">+						fBody := bi.fragments[fragName].fragmentBody.Copy()
+</a><a href="#h6-1-9" id="h6-1-9" class="i">+
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+						if isTemplate(fBody.Flat()) {
+</a><a href="#h6-1-11" id="h6-1-11" class="i">+							params := make(map[string]string)
+</a><a href="#h6-1-12" id="h6-1-12" class="i">+							maps.Copy(params, section.sectionBody.LoopMeta())
+</a><a href="#h6-1-13" id="h6-1-13" class="i">+							maps.Copy(params, line.LoopMeta())
+</a><a href="#h6-1-14" id="h6-1-14" class="i">+							if err := bodyTemplateResolver(fBody, params); err != nil {
+</a><a href="#h6-1-15" id="h6-1-15" class="i">+								return err
+</a><a href="#h6-1-16" id="h6-1-16" class="i">+							}
+</a><a href="#h6-1-17" id="h6-1-17" class="i">+						}
+</a> 						// Rewrite the call to a jump to the fragment
+ 						section.sectionBody.Lines[i].Operation.SetValue(&quot;call&quot; + mod + stack)
+ 						arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;symbol&quot;)
+<a href="#h6-1-21" id="h6-1-21" class="d">-						fragName := arg.GetValue()
+</a><a href="#h6-1-22" id="h6-1-22" class="d">-						// It has to be a new symbol, otherwise it would have been caught by the previous check
+</a><a href="#h6-1-23" id="h6-1-23" class="i">+
+</a><a href="#h6-1-24" id="h6-1-24" class="i">+						// It has to be a new symbol, otherwise it would have been caught by the previous checks
+</a> 						// Append the fragment to the newcode
+<a href="#h6-1-26" id="h6-1-26" class="d">-						for j, appLine := range bi.fragments[fragName].fragmentBody.Lines {
+</a><a href="#h6-1-27" id="h6-1-27" class="i">+						for j, appLine := range fBody.Lines {
+</a> 							newLine := appLine.Copy()
+ 							if j == 0 {
+ 								newLine.BasmMeta = newLine.SetMeta(&quot;symbol&quot;, fragName)
+<b>diff --git a/<a id="h7" href="../file/pkg/basm/templatefinalizer.go.html">pkg/basm/templatefinalizer.go</a> b/<a href="../file/pkg/basm/templatefinalizer.go.html">pkg/basm/templatefinalizer.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,6 +1,8 @@
+</a> package basm
+ 
+<a href="#h7-0-2" id="h7-0-2" class="d">-import &quot;fmt&quot;
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+import (
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+)
+</a> 
+ func templateFinalizer(bi *BasmInstance) error {
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -22,20 +24,12 @@ func templateFinalizer(bi *BasmInstance) error {
+</a> 				continue
+ 			}
+ 
+<a href="#h7-1-3" id="h7-1-3" class="d">-			// TODO: Implement this
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-
+</a><a href="#h7-1-5" id="h7-1-5" class="d">-			// body := section.sectionBody
+</a><a href="#h7-1-6" id="h7-1-6" class="d">-
+</a><a href="#h7-1-7" id="h7-1-7" class="d">-			// for _, line := range body.Lines {
+</a><a href="#h7-1-8" id="h7-1-8" class="d">-
+</a><a href="#h7-1-9" id="h7-1-9" class="d">-			// 	operation := line.Operation
+</a><a href="#h7-1-10" id="h7-1-10" class="d">-
+</a><a href="#h7-1-11" id="h7-1-11" class="d">-			// 	for _, arg := range line.Elements {
+</a><a href="#h7-1-12" id="h7-1-12" class="d">-
+</a><a href="#h7-1-13" id="h7-1-13" class="d">-			// 	}
+</a><a href="#h7-1-14" id="h7-1-14" class="d">-
+</a><a href="#h7-1-15" id="h7-1-15" class="d">-			// }
+</a><a href="#h7-1-16" id="h7-1-16" class="i">+			body := section.sectionBody
+</a><a href="#h7-1-17" id="h7-1-17" class="i">+			params := make(map[string]string)
+</a> 
+<a href="#h7-1-19" id="h7-1-19" class="i">+			if err := bodyTemplateResolver(body, params); err != nil {
+</a><a href="#h7-1-20" id="h7-1-20" class="i">+				return err
+</a><a href="#h7-1-21" id="h7-1-21" class="i">+			}
+</a> 		}
+ 	}
+ 	return nil
+<b>diff --git a/<a id="h8" href="../file/pkg/basm/templateresolver.go.html">pkg/basm/templateresolver.go</a> b/<a href="../file/pkg/basm/templateresolver.go.html">pkg/basm/templateresolver.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -5,84 +5,11 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+ 	&quot;sort&quot;
+<a href="#h8-0-3" id="h8-0-3" class="d">-	&quot;strconv&quot;
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ )
+ 
+<a href="#h8-0-9" id="h8-0-9" class="d">-type templateData struct {
+</a><a href="#h8-0-10" id="h8-0-10" class="d">-	Params  map[string]string
+</a><a href="#h8-0-11" id="h8-0-11" class="d">-	funcMap template.FuncMap
+</a><a href="#h8-0-12" id="h8-0-12" class="d">-}
+</a><a href="#h8-0-13" id="h8-0-13" class="d">-
+</a><a href="#h8-0-14" id="h8-0-14" class="d">-func createBasicTemplateData() *templateData {
+</a><a href="#h8-0-15" id="h8-0-15" class="d">-	result := new(templateData)
+</a><a href="#h8-0-16" id="h8-0-16" class="d">-	result.Params = make(map[string]string)
+</a><a href="#h8-0-17" id="h8-0-17" class="d">-	funcMap := template.FuncMap{
+</a><a href="#h8-0-18" id="h8-0-18" class="d">-		&quot;inc&quot;: func(i int) int {
+</a><a href="#h8-0-19" id="h8-0-19" class="d">-			return i + 1
+</a><a href="#h8-0-20" id="h8-0-20" class="d">-		},
+</a><a href="#h8-0-21" id="h8-0-21" class="d">-		&quot;incs&quot;: func(i string) string {
+</a><a href="#h8-0-22" id="h8-0-22" class="d">-			j, _ := strconv.Atoi(i)
+</a><a href="#h8-0-23" id="h8-0-23" class="d">-			return strconv.Itoa(j + 1)
+</a><a href="#h8-0-24" id="h8-0-24" class="d">-		},
+</a><a href="#h8-0-25" id="h8-0-25" class="d">-		&quot;dec&quot;: func(i int) int {
+</a><a href="#h8-0-26" id="h8-0-26" class="d">-			return i - 1
+</a><a href="#h8-0-27" id="h8-0-27" class="d">-		},
+</a><a href="#h8-0-28" id="h8-0-28" class="d">-		&quot;decs&quot;: func(i string) string {
+</a><a href="#h8-0-29" id="h8-0-29" class="d">-			j, _ := strconv.Atoi(i)
+</a><a href="#h8-0-30" id="h8-0-30" class="d">-			return strconv.Itoa(j - 1)
+</a><a href="#h8-0-31" id="h8-0-31" class="d">-		},
+</a><a href="#h8-0-32" id="h8-0-32" class="d">-		&quot;add&quot;: func(i, j int) int {
+</a><a href="#h8-0-33" id="h8-0-33" class="d">-			return i + j
+</a><a href="#h8-0-34" id="h8-0-34" class="d">-		},
+</a><a href="#h8-0-35" id="h8-0-35" class="d">-		&quot;adds&quot;: func(i, j string) string {
+</a><a href="#h8-0-36" id="h8-0-36" class="d">-			k, _ := strconv.Atoi(i)
+</a><a href="#h8-0-37" id="h8-0-37" class="d">-			l, _ := strconv.Atoi(j)
+</a><a href="#h8-0-38" id="h8-0-38" class="d">-			return strconv.Itoa(k + l)
+</a><a href="#h8-0-39" id="h8-0-39" class="d">-		},
+</a><a href="#h8-0-40" id="h8-0-40" class="d">-		&quot;intRange&quot;: func(startS, endS string) []int {
+</a><a href="#h8-0-41" id="h8-0-41" class="d">-			start, _ := strconv.Atoi(startS)
+</a><a href="#h8-0-42" id="h8-0-42" class="d">-			end, _ := strconv.Atoi(endS)
+</a><a href="#h8-0-43" id="h8-0-43" class="d">-
+</a><a href="#h8-0-44" id="h8-0-44" class="d">-			n := end - start
+</a><a href="#h8-0-45" id="h8-0-45" class="d">-			result := make([]int, n)
+</a><a href="#h8-0-46" id="h8-0-46" class="d">-			for i := 0; i &lt; n; i++ {
+</a><a href="#h8-0-47" id="h8-0-47" class="d">-				result[i] = start + i
+</a><a href="#h8-0-48" id="h8-0-48" class="d">-			}
+</a><a href="#h8-0-49" id="h8-0-49" class="d">-			return result
+</a><a href="#h8-0-50" id="h8-0-50" class="d">-		},
+</a><a href="#h8-0-51" id="h8-0-51" class="d">-		&quot;atoi&quot;: func(s string) int {
+</a><a href="#h8-0-52" id="h8-0-52" class="d">-			i, _ := strconv.Atoi(s)
+</a><a href="#h8-0-53" id="h8-0-53" class="d">-			return i
+</a><a href="#h8-0-54" id="h8-0-54" class="d">-		},
+</a><a href="#h8-0-55" id="h8-0-55" class="d">-	}
+</a><a href="#h8-0-56" id="h8-0-56" class="d">-
+</a><a href="#h8-0-57" id="h8-0-57" class="d">-	result.funcMap = funcMap
+</a><a href="#h8-0-58" id="h8-0-58" class="d">-	return result
+</a><a href="#h8-0-59" id="h8-0-59" class="d">-}
+</a><a href="#h8-0-60" id="h8-0-60" class="d">-
+</a><a href="#h8-0-61" id="h8-0-61" class="d">-func (bi *BasmInstance) templateAutoMark() error {
+</a><a href="#h8-0-62" id="h8-0-62" class="d">-	// Set the template meta to true for all the sections and fragments that contains the template mark
+</a><a href="#h8-0-63" id="h8-0-63" class="d">-	for _, section := range bi.sections {
+</a><a href="#h8-0-64" id="h8-0-64" class="d">-		if section.isTemplate() {
+</a><a href="#h8-0-65" id="h8-0-65" class="d">-			section.sectionBody.BasmMeta = section.sectionBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+</a><a href="#h8-0-66" id="h8-0-66" class="d">-		} else {
+</a><a href="#h8-0-67" id="h8-0-67" class="d">-			section.sectionBody.BasmMeta = section.sectionBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+</a><a href="#h8-0-68" id="h8-0-68" class="d">-		}
+</a><a href="#h8-0-69" id="h8-0-69" class="d">-	}
+</a><a href="#h8-0-70" id="h8-0-70" class="d">-
+</a><a href="#h8-0-71" id="h8-0-71" class="d">-	for _, fragment := range bi.fragments {
+</a><a href="#h8-0-72" id="h8-0-72" class="d">-		if fragment.isTemplate() {
+</a><a href="#h8-0-73" id="h8-0-73" class="d">-			fragment.fragmentBody.BasmMeta = fragment.fragmentBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+</a><a href="#h8-0-74" id="h8-0-74" class="d">-		} else {
+</a><a href="#h8-0-75" id="h8-0-75" class="d">-			fragment.fragmentBody.BasmMeta = fragment.fragmentBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+</a><a href="#h8-0-76" id="h8-0-76" class="d">-		}
+</a><a href="#h8-0-77" id="h8-0-77" class="d">-	}
+</a><a href="#h8-0-78" id="h8-0-78" class="d">-	return nil
+</a><a href="#h8-0-79" id="h8-0-79" class="d">-}
+</a><a href="#h8-0-80" id="h8-0-80" class="d">-
+</a> func templateResolver(bi *BasmInstance) error {
+ 
+ 	if err := bi.templateAutoMark(); err != nil {
+<a href="#h8-1" id="h8-1" class="h">@@ -92,6 +19,9 @@ func templateResolver(bi *BasmInstance) error {
+</a> 	// Computing which CP needs a templated version of the code
+ 	sort.Sort(bmline.ByName(bi.cps))
+ 
+<a href="#h8-1-3" id="h8-1-3" class="i">+	sectionRem := make(map[string]struct{})
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+	fragmentRem := make(map[string]struct{})
+</a><a href="#h8-1-5" id="h8-1-5" class="i">+
+</a> 	for _, cp := range bi.cps {
+ 
+ 		if cp.GetMeta(&quot;templated&quot;) == &quot;true&quot; {
+<a href="#h8-2" id="h8-2" class="h">@@ -152,6 +82,7 @@ func templateResolver(bi *BasmInstance) error {
+</a> 				bi.sections[guessedName].sectionBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+ 			} else {
+ 				bi.sections[guessedName].sectionBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+<a href="#h8-2-3" id="h8-2-3" class="i">+				sectionRem[romCode] = struct{}{}
+</a> 			}
+ 
+ 			cp.SetMeta(&quot;romcode&quot;, guessedName)
+<a href="#h8-3" id="h8-3" class="h">@@ -228,6 +159,7 @@ func templateResolver(bi *BasmInstance) error {
+</a> 				bi.fragments[guessedName].fragmentBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+ 			} else {
+ 				bi.fragments[guessedName].fragmentBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+<a href="#h8-3-3" id="h8-3-3" class="i">+				fragmentRem[fragCode] = struct{}{}
+</a> 			}
+ 
+ 			fi.SetMeta(&quot;fragment&quot;, guessedName)
+<a href="#h8-4" id="h8-4" class="h">@@ -244,18 +176,14 @@ func templateResolver(bi *BasmInstance) error {
+</a> 	}
+ 
+ 	// Remove all the templated sections
+<a href="#h8-4-3" id="h8-4-3" class="d">-	// for sectionName, section := range bi.sections {
+</a><a href="#h8-4-4" id="h8-4-4" class="d">-	// 	if section.sectionBody.GetMeta(&quot;template&quot;) == &quot;true&quot; {
+</a><a href="#h8-4-5" id="h8-4-5" class="d">-	// 		delete(bi.sections, sectionName)
+</a><a href="#h8-4-6" id="h8-4-6" class="d">-	// 	}
+</a><a href="#h8-4-7" id="h8-4-7" class="d">-	// }
+</a><a href="#h8-4-8" id="h8-4-8" class="d">-
+</a><a href="#h8-4-9" id="h8-4-9" class="d">-	// // Remove all the templated fragments
+</a><a href="#h8-4-10" id="h8-4-10" class="d">-	// for fragmentName, fragment := range bi.fragments {
+</a><a href="#h8-4-11" id="h8-4-11" class="d">-	// 	if fragment.fragmentBody.GetMeta(&quot;template&quot;) == &quot;true&quot; {
+</a><a href="#h8-4-12" id="h8-4-12" class="d">-	// 		delete(bi.fragments, fragmentName)
+</a><a href="#h8-4-13" id="h8-4-13" class="d">-	// 	}
+</a><a href="#h8-4-14" id="h8-4-14" class="d">-	// }
+</a><a href="#h8-4-15" id="h8-4-15" class="i">+	for sectionName := range sectionRem {
+</a><a href="#h8-4-16" id="h8-4-16" class="i">+		delete(bi.sections, sectionName)
+</a><a href="#h8-4-17" id="h8-4-17" class="i">+	}
+</a><a href="#h8-4-18" id="h8-4-18" class="i">+
+</a><a href="#h8-4-19" id="h8-4-19" class="i">+	// Remove all the templated fragments
+</a><a href="#h8-4-20" id="h8-4-20" class="i">+	for fragmentName := range fragmentRem {
+</a><a href="#h8-4-21" id="h8-4-21" class="i">+		delete(bi.fragments, fragmentName)
+</a><a href="#h8-4-22" id="h8-4-22" class="i">+	}
+</a> 
+ 	return nil
+ }
+<b>diff --git a/<a id="h9" href="../file/pkg/basm/templates.go.html">pkg/basm/templates.go</a> b/<a href="../file/pkg/basm/templates.go.html">pkg/basm/templates.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -0,0 +1,176 @@
+</a><a href="#h9-0-0" id="h9-0-0" class="i">+package basm
+</a><a href="#h9-0-1" id="h9-0-1" class="i">+
+</a><a href="#h9-0-2" id="h9-0-2" class="i">+import (
+</a><a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;bytes&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h9-0-5" id="h9-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h9-0-6" id="h9-0-6" class="i">+	&quot;strconv&quot;
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+	&quot;strings&quot;
+</a><a href="#h9-0-8" id="h9-0-8" class="i">+	&quot;text/template&quot;
+</a><a href="#h9-0-9" id="h9-0-9" class="i">+
+</a><a href="#h9-0-10" id="h9-0-10" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h9-0-11" id="h9-0-11" class="i">+	&quot;golang.org/x/exp/maps&quot;
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+)
+</a><a href="#h9-0-13" id="h9-0-13" class="i">+
+</a><a href="#h9-0-14" id="h9-0-14" class="i">+type templateData struct {
+</a><a href="#h9-0-15" id="h9-0-15" class="i">+	Params  map[string]string
+</a><a href="#h9-0-16" id="h9-0-16" class="i">+	funcMap template.FuncMap
+</a><a href="#h9-0-17" id="h9-0-17" class="i">+}
+</a><a href="#h9-0-18" id="h9-0-18" class="i">+
+</a><a href="#h9-0-19" id="h9-0-19" class="i">+func createBasicTemplateData() *templateData {
+</a><a href="#h9-0-20" id="h9-0-20" class="i">+	result := new(templateData)
+</a><a href="#h9-0-21" id="h9-0-21" class="i">+	result.Params = make(map[string]string)
+</a><a href="#h9-0-22" id="h9-0-22" class="i">+	funcMap := template.FuncMap{
+</a><a href="#h9-0-23" id="h9-0-23" class="i">+		&quot;inc&quot;: func(i int) int {
+</a><a href="#h9-0-24" id="h9-0-24" class="i">+			return i + 1
+</a><a href="#h9-0-25" id="h9-0-25" class="i">+		},
+</a><a href="#h9-0-26" id="h9-0-26" class="i">+		&quot;incs&quot;: func(i string) string {
+</a><a href="#h9-0-27" id="h9-0-27" class="i">+			j, _ := strconv.Atoi(i)
+</a><a href="#h9-0-28" id="h9-0-28" class="i">+			return strconv.Itoa(j + 1)
+</a><a href="#h9-0-29" id="h9-0-29" class="i">+		},
+</a><a href="#h9-0-30" id="h9-0-30" class="i">+		&quot;dec&quot;: func(i int) int {
+</a><a href="#h9-0-31" id="h9-0-31" class="i">+			return i - 1
+</a><a href="#h9-0-32" id="h9-0-32" class="i">+		},
+</a><a href="#h9-0-33" id="h9-0-33" class="i">+		&quot;decs&quot;: func(i string) string {
+</a><a href="#h9-0-34" id="h9-0-34" class="i">+			j, _ := strconv.Atoi(i)
+</a><a href="#h9-0-35" id="h9-0-35" class="i">+			return strconv.Itoa(j - 1)
+</a><a href="#h9-0-36" id="h9-0-36" class="i">+		},
+</a><a href="#h9-0-37" id="h9-0-37" class="i">+		&quot;add&quot;: func(i, j int) int {
+</a><a href="#h9-0-38" id="h9-0-38" class="i">+			return i + j
+</a><a href="#h9-0-39" id="h9-0-39" class="i">+		},
+</a><a href="#h9-0-40" id="h9-0-40" class="i">+		&quot;adds&quot;: func(i, j string) string {
+</a><a href="#h9-0-41" id="h9-0-41" class="i">+			k, _ := strconv.Atoi(i)
+</a><a href="#h9-0-42" id="h9-0-42" class="i">+			l, _ := strconv.Atoi(j)
+</a><a href="#h9-0-43" id="h9-0-43" class="i">+			return strconv.Itoa(k + l)
+</a><a href="#h9-0-44" id="h9-0-44" class="i">+		},
+</a><a href="#h9-0-45" id="h9-0-45" class="i">+		&quot;intRange&quot;: func(startS, endS string) []int {
+</a><a href="#h9-0-46" id="h9-0-46" class="i">+			start, _ := strconv.Atoi(startS)
+</a><a href="#h9-0-47" id="h9-0-47" class="i">+			end, _ := strconv.Atoi(endS)
+</a><a href="#h9-0-48" id="h9-0-48" class="i">+
+</a><a href="#h9-0-49" id="h9-0-49" class="i">+			n := end - start
+</a><a href="#h9-0-50" id="h9-0-50" class="i">+			result := make([]int, n)
+</a><a href="#h9-0-51" id="h9-0-51" class="i">+			for i := 0; i &lt; n; i++ {
+</a><a href="#h9-0-52" id="h9-0-52" class="i">+				result[i] = start + i
+</a><a href="#h9-0-53" id="h9-0-53" class="i">+			}
+</a><a href="#h9-0-54" id="h9-0-54" class="i">+			return result
+</a><a href="#h9-0-55" id="h9-0-55" class="i">+		},
+</a><a href="#h9-0-56" id="h9-0-56" class="i">+		&quot;atoi&quot;: func(s string) int {
+</a><a href="#h9-0-57" id="h9-0-57" class="i">+			i, _ := strconv.Atoi(s)
+</a><a href="#h9-0-58" id="h9-0-58" class="i">+			return i
+</a><a href="#h9-0-59" id="h9-0-59" class="i">+		},
+</a><a href="#h9-0-60" id="h9-0-60" class="i">+	}
+</a><a href="#h9-0-61" id="h9-0-61" class="i">+
+</a><a href="#h9-0-62" id="h9-0-62" class="i">+	result.funcMap = funcMap
+</a><a href="#h9-0-63" id="h9-0-63" class="i">+	return result
+</a><a href="#h9-0-64" id="h9-0-64" class="i">+}
+</a><a href="#h9-0-65" id="h9-0-65" class="i">+
+</a><a href="#h9-0-66" id="h9-0-66" class="i">+func (bi *BasmInstance) templateAutoMark() error {
+</a><a href="#h9-0-67" id="h9-0-67" class="i">+	// Set the template meta to true for all the sections and fragments that contains the template mark
+</a><a href="#h9-0-68" id="h9-0-68" class="i">+	for _, section := range bi.sections {
+</a><a href="#h9-0-69" id="h9-0-69" class="i">+		if section.isTemplate() {
+</a><a href="#h9-0-70" id="h9-0-70" class="i">+			section.sectionBody.BasmMeta = section.sectionBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+</a><a href="#h9-0-71" id="h9-0-71" class="i">+		} else {
+</a><a href="#h9-0-72" id="h9-0-72" class="i">+			section.sectionBody.BasmMeta = section.sectionBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+</a><a href="#h9-0-73" id="h9-0-73" class="i">+		}
+</a><a href="#h9-0-74" id="h9-0-74" class="i">+	}
+</a><a href="#h9-0-75" id="h9-0-75" class="i">+
+</a><a href="#h9-0-76" id="h9-0-76" class="i">+	for _, fragment := range bi.fragments {
+</a><a href="#h9-0-77" id="h9-0-77" class="i">+		if fragment.isTemplate() {
+</a><a href="#h9-0-78" id="h9-0-78" class="i">+			fragment.fragmentBody.BasmMeta = fragment.fragmentBody.SetMeta(&quot;template&quot;, &quot;true&quot;)
+</a><a href="#h9-0-79" id="h9-0-79" class="i">+		} else {
+</a><a href="#h9-0-80" id="h9-0-80" class="i">+			fragment.fragmentBody.BasmMeta = fragment.fragmentBody.SetMeta(&quot;template&quot;, &quot;false&quot;)
+</a><a href="#h9-0-81" id="h9-0-81" class="i">+		}
+</a><a href="#h9-0-82" id="h9-0-82" class="i">+	}
+</a><a href="#h9-0-83" id="h9-0-83" class="i">+	return nil
+</a><a href="#h9-0-84" id="h9-0-84" class="i">+}
+</a><a href="#h9-0-85" id="h9-0-85" class="i">+
+</a><a href="#h9-0-86" id="h9-0-86" class="i">+func isTemplate(s string) bool {
+</a><a href="#h9-0-87" id="h9-0-87" class="i">+	pattern := `{{[^{}]*}}`
+</a><a href="#h9-0-88" id="h9-0-88" class="i">+	regex := regexp.MustCompile(pattern)
+</a><a href="#h9-0-89" id="h9-0-89" class="i">+	matches := regex.FindAllString(s, -1)
+</a><a href="#h9-0-90" id="h9-0-90" class="i">+	return len(matches) &gt; 0
+</a><a href="#h9-0-91" id="h9-0-91" class="i">+}
+</a><a href="#h9-0-92" id="h9-0-92" class="i">+
+</a><a href="#h9-0-93" id="h9-0-93" class="i">+func (f *BasmFragment) isTemplate() bool {
+</a><a href="#h9-0-94" id="h9-0-94" class="i">+	return isTemplate(f.fragmentBody.Flat())
+</a><a href="#h9-0-95" id="h9-0-95" class="i">+}
+</a><a href="#h9-0-96" id="h9-0-96" class="i">+
+</a><a href="#h9-0-97" id="h9-0-97" class="i">+func (s *BasmSection) isTemplate() bool {
+</a><a href="#h9-0-98" id="h9-0-98" class="i">+	return isTemplate(s.sectionBody.Flat())
+</a><a href="#h9-0-99" id="h9-0-99" class="i">+}
+</a><a href="#h9-0-100" id="h9-0-100" class="i">+
+</a><a href="#h9-0-101" id="h9-0-101" class="i">+func applyTemplate(e *bmline.BasmElement, params map[string]string) error {
+</a><a href="#h9-0-102" id="h9-0-102" class="i">+	// Search for default values
+</a><a href="#h9-0-103" id="h9-0-103" class="i">+	for k, v := range params {
+</a><a href="#h9-0-104" id="h9-0-104" class="i">+		if strings.HasPrefix(k, &quot;default_&quot;) {
+</a><a href="#h9-0-105" id="h9-0-105" class="i">+			key := strings.TrimPrefix(k, &quot;default_&quot;)
+</a><a href="#h9-0-106" id="h9-0-106" class="i">+			if _, ok := params[key]; !ok {
+</a><a href="#h9-0-107" id="h9-0-107" class="i">+				params[key] = v
+</a><a href="#h9-0-108" id="h9-0-108" class="i">+			}
+</a><a href="#h9-0-109" id="h9-0-109" class="i">+		}
+</a><a href="#h9-0-110" id="h9-0-110" class="i">+	}
+</a><a href="#h9-0-111" id="h9-0-111" class="i">+
+</a><a href="#h9-0-112" id="h9-0-112" class="i">+	td := createBasicTemplateData()
+</a><a href="#h9-0-113" id="h9-0-113" class="i">+
+</a><a href="#h9-0-114" id="h9-0-114" class="i">+	for key, value := range params {
+</a><a href="#h9-0-115" id="h9-0-115" class="i">+		td.Params[key] = value
+</a><a href="#h9-0-116" id="h9-0-116" class="i">+	}
+</a><a href="#h9-0-117" id="h9-0-117" class="i">+
+</a><a href="#h9-0-118" id="h9-0-118" class="i">+	var f bytes.Buffer
+</a><a href="#h9-0-119" id="h9-0-119" class="i">+
+</a><a href="#h9-0-120" id="h9-0-120" class="i">+	t, err := template.New(&quot;template&quot;).Funcs(td.funcMap).Parse(e.GetValue())
+</a><a href="#h9-0-121" id="h9-0-121" class="i">+	if err != nil {
+</a><a href="#h9-0-122" id="h9-0-122" class="i">+		return err
+</a><a href="#h9-0-123" id="h9-0-123" class="i">+	}
+</a><a href="#h9-0-124" id="h9-0-124" class="i">+
+</a><a href="#h9-0-125" id="h9-0-125" class="i">+	err = t.Execute(&amp;f, *td)
+</a><a href="#h9-0-126" id="h9-0-126" class="i">+	if err != nil {
+</a><a href="#h9-0-127" id="h9-0-127" class="i">+		return err
+</a><a href="#h9-0-128" id="h9-0-128" class="i">+	}
+</a><a href="#h9-0-129" id="h9-0-129" class="i">+
+</a><a href="#h9-0-130" id="h9-0-130" class="i">+	e.SetValue(f.String())
+</a><a href="#h9-0-131" id="h9-0-131" class="i">+
+</a><a href="#h9-0-132" id="h9-0-132" class="i">+	fmt.Println(params)
+</a><a href="#h9-0-133" id="h9-0-133" class="i">+
+</a><a href="#h9-0-134" id="h9-0-134" class="i">+	return nil
+</a><a href="#h9-0-135" id="h9-0-135" class="i">+}
+</a><a href="#h9-0-136" id="h9-0-136" class="i">+
+</a><a href="#h9-0-137" id="h9-0-137" class="i">+func bodyTemplateResolver(body *bmline.BasmBody, params map[string]string) error {
+</a><a href="#h9-0-138" id="h9-0-138" class="i">+
+</a><a href="#h9-0-139" id="h9-0-139" class="i">+	// TODO The parsing with {{ end }} construct is not working. It should be fixed
+</a><a href="#h9-0-140" id="h9-0-140" class="i">+
+</a><a href="#h9-0-141" id="h9-0-141" class="i">+	bodyParams := make(map[string]string)
+</a><a href="#h9-0-142" id="h9-0-142" class="i">+	maps.Copy(bodyParams, params)
+</a><a href="#h9-0-143" id="h9-0-143" class="i">+	maps.Copy(bodyParams, body.LoopMeta())
+</a><a href="#h9-0-144" id="h9-0-144" class="i">+
+</a><a href="#h9-0-145" id="h9-0-145" class="i">+	for _, line := range body.Lines {
+</a><a href="#h9-0-146" id="h9-0-146" class="i">+
+</a><a href="#h9-0-147" id="h9-0-147" class="i">+		if isTemplate(line.Flat()) {
+</a><a href="#h9-0-148" id="h9-0-148" class="i">+			lineParams := make(map[string]string)
+</a><a href="#h9-0-149" id="h9-0-149" class="i">+			maps.Copy(lineParams, bodyParams)
+</a><a href="#h9-0-150" id="h9-0-150" class="i">+			maps.Copy(lineParams, line.LoopMeta())
+</a><a href="#h9-0-151" id="h9-0-151" class="i">+
+</a><a href="#h9-0-152" id="h9-0-152" class="i">+			operation := line.Operation
+</a><a href="#h9-0-153" id="h9-0-153" class="i">+			operationParams := make(map[string]string)
+</a><a href="#h9-0-154" id="h9-0-154" class="i">+			maps.Copy(operationParams, lineParams)
+</a><a href="#h9-0-155" id="h9-0-155" class="i">+			maps.Copy(operationParams, operation.LoopMeta())
+</a><a href="#h9-0-156" id="h9-0-156" class="i">+			if isTemplate(operation.Flat()) {
+</a><a href="#h9-0-157" id="h9-0-157" class="i">+				if err := applyTemplate(operation, operationParams); err != nil {
+</a><a href="#h9-0-158" id="h9-0-158" class="i">+					return err
+</a><a href="#h9-0-159" id="h9-0-159" class="i">+				}
+</a><a href="#h9-0-160" id="h9-0-160" class="i">+			}
+</a><a href="#h9-0-161" id="h9-0-161" class="i">+
+</a><a href="#h9-0-162" id="h9-0-162" class="i">+			for _, arg := range line.Elements {
+</a><a href="#h9-0-163" id="h9-0-163" class="i">+				argParams := make(map[string]string)
+</a><a href="#h9-0-164" id="h9-0-164" class="i">+				maps.Copy(argParams, operationParams)
+</a><a href="#h9-0-165" id="h9-0-165" class="i">+				maps.Copy(argParams, arg.LoopMeta())
+</a><a href="#h9-0-166" id="h9-0-166" class="i">+				if isTemplate(arg.Flat()) {
+</a><a href="#h9-0-167" id="h9-0-167" class="i">+					if err := applyTemplate(arg, argParams); err != nil {
+</a><a href="#h9-0-168" id="h9-0-168" class="i">+						return err
+</a><a href="#h9-0-169" id="h9-0-169" class="i">+					}
+</a><a href="#h9-0-170" id="h9-0-170" class="i">+				}
+</a><a href="#h9-0-171" id="h9-0-171" class="i">+			}
+</a><a href="#h9-0-172" id="h9-0-172" class="i">+		}
+</a><a href="#h9-0-173" id="h9-0-173" class="i">+	}
+</a><a href="#h9-0-174" id="h9-0-174" class="i">+	return nil
+</a><a href="#h9-0-175" id="h9-0-175" class="i">+}
+</a><b>diff --git a/<a id="h10" href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a> b/<a href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -4,7 +4,6 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+ 	&quot;log&quot;
+<a href="#h10-0-3" id="h10-0-3" class="d">-	&quot;regexp&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+ 
+<a href="#h10-1" id="h10-1" class="h">@@ -215,18 +214,3 @@ func extractNumber(str string) (int, error) {
+</a> 	// Otherwise, return the last token as an integer
+ 	return strconv.Atoi(tokens[len(tokens)-1])
+ }
+<a href="#h10-1-3" id="h10-1-3" class="d">-
+</a><a href="#h10-1-4" id="h10-1-4" class="d">-func isTemplate(s string) bool {
+</a><a href="#h10-1-5" id="h10-1-5" class="d">-	pattern := `{{[^{}]*}}`
+</a><a href="#h10-1-6" id="h10-1-6" class="d">-	regex := regexp.MustCompile(pattern)
+</a><a href="#h10-1-7" id="h10-1-7" class="d">-	matches := regex.FindAllString(s, -1)
+</a><a href="#h10-1-8" id="h10-1-8" class="d">-	return len(matches) &gt; 0
+</a><a href="#h10-1-9" id="h10-1-9" class="d">-}
+</a><a href="#h10-1-10" id="h10-1-10" class="d">-
+</a><a href="#h10-1-11" id="h10-1-11" class="d">-func (f *BasmFragment) isTemplate() bool {
+</a><a href="#h10-1-12" id="h10-1-12" class="d">-	return isTemplate(f.fragmentBody.Flat())
+</a><a href="#h10-1-13" id="h10-1-13" class="d">-}
+</a><a href="#h10-1-14" id="h10-1-14" class="d">-
+</a><a href="#h10-1-15" id="h10-1-15" class="d">-func (s *BasmSection) isTemplate() bool {
+</a><a href="#h10-1-16" id="h10-1-16" class="d">-	return isTemplate(s.sectionBody.Flat())
+</a><a href="#h10-1-17" id="h10-1-17" class="d">-}
+</a><b>diff --git a/<a id="h11" href="../file/pkg/bmline/utils.go.html">pkg/bmline/utils.go</a> b/<a href="../file/pkg/bmline/utils.go.html">pkg/bmline/utils.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -46,7 +46,7 @@ func (line *BasmLine) String() string {
+</a> 
+ func (line *BasmLine) Flat() string {
+ 	result := &quot;&quot;
+<a href="#h11-0-3" id="h11-0-3" class="d">-	if line == nil {
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+	if line != nil {
+</a> 		result = line.Operation.GetValue() + &quot; &quot;
+ 		for _, arg := range line.Elements {
+ 			result += arg.GetValue() + &quot; &quot;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fragmente analizer - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ce7dcb367b261f716d2771c5d4f0428d1300af03.html">ce7dcb367b261f716d2771c5d4f0428d1300af03</a>
+<b>parent</b> <a href="../commit/536f9688c5baa21a8fb4ed0526e7813f24454e2b.html">536f9688c5baa21a8fb4ed0526e7813f24454e2b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  5 Jul 2023 14:32:41 +0200
+
+Fragmente analizer
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/fragmentanalyzer.go</a></td><td> | </td><td class="num">75</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmmeta/metadata.go</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bmmeta/utils.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 109 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a> b/<a href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,15 +9,88 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+ )
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+const (
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	FIRSTLINE = -2
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	LASTLINE  = -3
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	NULLLINE  = -1
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a> func (bi *BasmInstance) fragmentResUsage(body *bmline.BasmBody, circular bool) error {
+ 	//TODO finish this
+ 	fmt.Println(&quot;fragmentResUsage&quot;, body, circular)
+ 
+<a href="#h0-0-13" id="h0-0-13" class="i">+	// Get all resources used by the fragment
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	resUsed := body.GetMeta(&quot;resused&quot;)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	resIn := body.GetMeta(&quot;resin&quot;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	resOut := body.GetMeta(&quot;resout&quot;)
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	resInUse := strings.Split(resIn, &quot;:&quot;)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	resOutUse := strings.Split(resOut, &quot;:&quot;)
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	_ = resInUse
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	resStart := make(map[string]int)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	resEnd := make(map[string]int)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	for _, res := range strings.Split(resUsed, &quot;:&quot;) {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+		if stringInSlice(res, resInUse) {
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			resStart[res] = FIRSTLINE
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		} else {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			resStart[res] = NULLLINE
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		}
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		if stringInSlice(res, resOutUse) {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			resEnd[res] = LASTLINE
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		} else {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			resEnd[res] = NULLLINE
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		}
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	}
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+
+</a> 	if circular {
+ 	} else {
+<a href="#h0-0-39" id="h0-0-39" class="i">+		for line := len(body.Lines) - 1; line &gt;= 0; line-- {
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			// get defined resources in this line and remove them from the resUsed map
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			for _, cd := range strings.Split(body.Lines[line].GetMeta(&quot;inv&quot;), &quot;:&quot;) {
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				if resEnd[cd] != NULLLINE {
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+					if resEnd[cd] == LASTLINE {
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+						for d := line; d &lt; len(body.Lines); d++ {
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+							// Insert the metadata
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+							body.Lines[d].BasmMeta = body.Lines[d].AddMeta(&quot;inuse&quot;, cd)
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+						}
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+					} else {
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+						for d := line; d &lt;= resEnd[cd]; d++ {
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+							// Insert the metadata
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+							body.Lines[d].BasmMeta = body.Lines[d].AddMeta(&quot;inuse&quot;, cd)
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+						}
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+					}
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+					resEnd[cd] = NULLLINE
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+				}
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+			}
+</a> 
+<a href="#h0-0-58" id="h0-0-58" class="i">+			// get used resources in this line and add them to the resUsed map
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+			for _, cu := range strings.Split(body.Lines[line].GetMeta(&quot;use&quot;), &quot;:&quot;) {
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+				if resEnd[cu] == NULLLINE {
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+					resEnd[cu] = line
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+				}
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+			}
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+		}
+</a> 	}
+ 
+<a href="#h0-0-67" id="h0-0-67" class="i">+	for cd, line := range resStart {
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+		if line != NULLLINE &amp;&amp; resEnd[cd] != NULLLINE {
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+			if resEnd[cd] == LASTLINE {
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+				for d := 0; d &lt; len(body.Lines); d++ {
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+					// Insert the metadata
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+					body.Lines[d].BasmMeta = body.Lines[d].AddMeta(&quot;inuse&quot;, cd)
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+				}
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+			} else {
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+				for d := 0; d &lt;= resEnd[cd]; d++ {
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+					// Insert the metadata
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+					body.Lines[d].BasmMeta = body.Lines[d].AddMeta(&quot;inuse&quot;, cd)
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+				}
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+			}
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+		}
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	}
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+	fmt.Println(body)
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+
+</a> 	return nil
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -217,6 +290,6 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 
+ 		// Union of the copies
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	// panic(&quot;fragmentAnalyzer not finished&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	panic(&quot;fragmentAnalyzer not finished&quot;)
+</a> 	return nil
+ }
+<b>diff --git a/<a id="h1" href="../file/pkg/bmmeta/metadata.go.html">pkg/bmmeta/metadata.go</a> b/<a href="../file/pkg/bmmeta/metadata.go.html">pkg/bmmeta/metadata.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,6 +1,9 @@
+</a> package bmmeta
+ 
+<a href="#h1-0-2" id="h1-0-2" class="d">-import &quot;sort&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+import (
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;sort&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+)
+</a> 
+ // Metadata
+ type BasmMeta struct {
+<a href="#h1-1" id="h1-1" class="h">@@ -65,3 +68,24 @@ func (bm *BasmMeta) SetMeta(meta string, value string) *BasmMeta {
+</a> 	return bm
+ 
+ }
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+func (bm *BasmMeta) AddMeta(meta string, value string) *BasmMeta {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	if bm == nil {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		newbm := new(BasmMeta)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+		newbm.metaData = make(map[string]string)
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+		newbm.metaData[meta] = value
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		return newbm
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	if _, ok := bm.metaData[meta]; ok {
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		splitted := strings.Split(bm.metaData[meta], &quot;:&quot;)
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		if !stringInSlice(value, splitted) {
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+			splitted = append(splitted, value)
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+			sort.Strings(splitted)
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+			bm.metaData[meta] = strings.Join(splitted, &quot;:&quot;)
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	} else {
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		bm.metaData[meta] = value
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	}
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	return bm
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmmeta/utils.go.html">pkg/bmmeta/utils.go</a> b/<a href="../file/pkg/bmmeta/utils.go.html">pkg/bmmeta/utils.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,10 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmmeta
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+func stringInSlice(a string, list []string) bool {
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	for _, b := range list {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		if b == a {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+			return true
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		}
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	}
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	return false
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

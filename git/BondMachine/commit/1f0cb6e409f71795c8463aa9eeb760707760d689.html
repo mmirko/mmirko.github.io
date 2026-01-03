@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>basm outputs - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f0cb6e409f71795c8463aa9eeb760707760d689.html">1f0cb6e409f71795c8463aa9eeb760707760d689</a>
+<b>parent</b> <a href="../commit/6f72f8c7da484826b1092779a207e7c106d22f39.html">6f72f8c7da484826b1092779a207e7c106d22f39</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  4 Aug 2023 17:28:29 +0200
+
+basm outputs
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -23,8 +23,9 @@ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+</a> // BondMachine targets
+ 
+ var bondmachineFile = flag.String(&quot;bondmachine&quot;, &quot;&quot;, &quot;Load a bondmachine JSON file&quot;)
+<a href="#h0-0-3" id="h0-0-3" class="d">-var outFile = flag.String(&quot;o&quot;, &quot;&quot;, &quot;Output file&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-var target = flag.String(&quot;target&quot;, &quot;bondmachine&quot;, &quot;Choose the assembler target among: bondmachine, bcof (BondMachineClusteredObjectFormat) &quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+var outFile = flag.String(&quot;o&quot;, &quot;&quot;, &quot;Output file or prefix (in case of multiple output files)&quot;)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+var sections = flag.String(&quot;sections&quot;, &quot;&quot;, &quot;JSON file containing a map of which section compile against a specific CP (for ex: { \&quot;code1\&quot;: 0, \&quot;code2\&quot;: 1})&quot;)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+var target = flag.String(&quot;target&quot;, &quot;bondmachine&quot;, &quot;Choose the assembler target among: bondmachine, mem, bcof (BondMachineClusteredObjectFormat) &quot;)
+</a> 
+ // Utils
+ var getMeta = flag.String(&quot;getmeta&quot;, &quot;&quot;, &quot;Get the metadata of an internal parameter of the BondMachine&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -261,6 +262,11 @@ func main() {
+</a> 			}
+ 		}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	case &quot;mem&quot;:
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		if err := bi.Assembler2MEM(); err != nil {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			bi.Alert(&quot;Error in creating a Mem file&quot;, err)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			return
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		}
+</a> 	case &quot;bcof&quot;:
+ 		if err := bi.Assembler2BCOF(); err != nil {
+ 			bi.Alert(&quot;Error in creating a BCOF file&quot;, err)
+</pre>
+</div>
+</body>
+</html>

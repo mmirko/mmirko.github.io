@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ps2 changes - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a822f3856341e2bba13aa10d5d1a3e08bb2f5615.html">a822f3856341e2bba13aa10d5d1a3e08bb2f5615</a>
+<b>parent</b> <a href="../commit/6cbca839a29737c65ef07deb62e897779dd7595b.html">6cbca839a29737c65ef07deb62e897779dd7595b</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 14 Sep 2023 14:38:29 +0200
+
+ps2 changes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bondmachine/bondmachine.go</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">pkg/bondmachine/exmod_ps2keyboard.go</a></td><td> | </td><td class="num">579</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bondmachine/exmod_ps2keyboardio.go</a></td><td> | </td><td class="num">579</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 586 insertions(+), 584 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a> b/<a href="../file/cmd/bondmachine/bondmachine.go.html">cmd/bondmachine/bondmachine.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -168,8 +168,10 @@ var vgatextFlavor = flag.String(&quot;vgatext-flavor&quot;, &quot;800x600&quot;, &quot;VGA Textual flavor
+</a> var vgatextFonts = flag.String(&quot;vgatext-fonts&quot;, &quot;&quot;, &quot;VGA Textual fonts file&quot;)
+ var vgatextHeader = flag.String(&quot;vgatext-header&quot;, &quot;&quot;, &quot;VGA Textual header rom file&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var ps2keyboard = flag.Bool(&quot;ps2-keyboard&quot;, false, &quot;PS2 Keyboard support&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-var ps2keyboardMap = flag.String(&quot;ps2-keyboard-map&quot;, &quot;&quot;, &quot;PS2 Keyboard mappings&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+var ps2keyboardIo = flag.Bool(&quot;ps2-keyboard-io&quot;, false, &quot;PS2 Keyboard support via IO&quot;)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+var ps2keyboardIoMap = flag.String(&quot;ps2-keyboard-io-map&quot;, &quot;&quot;, &quot;PS2 Keyboard via IO mappings&quot;)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+var ps2keyboard = flag.Bool(&quot;ps2-keyboard&quot;, false, &quot;PS2 Keyboard support via SO&quot;)
+</a> 
+ var attach_benchmark_core string_slice
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -608,9 +610,9 @@ func main() {
+</a> 			}
+ 
+ 			// Inclusion of PS2 keyboard extra module
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if *ps2keyboard {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-				ps2 := new(bondmachine.Ps2KeyboardExtra)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-				ps2.MappedInput = *ps2keyboardMap
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			if *ps2keyboardIo {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				ps2 := new(bondmachine.Ps2KeyboardIoExtra)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				ps2.MappedInput = *ps2keyboardIoMap
+</a> 				extramodules = append(extramodules, ps2)
+ 			}
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bondmachine/exmod_ps2keyboard.go.html">pkg/bondmachine/exmod_ps2keyboard.go</a> b/<a href="../file/pkg/bondmachine/exmod_ps2keyboard.go.html">pkg/bondmachine/exmod_ps2keyboard.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,579 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-package bondmachine
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-import (
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;encoding/json&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	&quot;errors&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-)
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-type Ps2KeyboardExtra struct {
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	MappedInput string
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-}
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-func (sl *Ps2KeyboardExtra) Get_Name() string {
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	return &quot;ps2keyboard&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-}
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-func (sl *Ps2KeyboardExtra) Get_Params() *ExtraParams {
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-	result := new(ExtraParams)
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-	result.Params = map[string]string{&quot;mapped_input&quot;: sl.MappedInput}
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-	return result
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-}
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-func (sl *Ps2KeyboardExtra) Import(inp string) error {
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-	if err := json.Unmarshal([]byte(inp), sl); err != nil {
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-		return errors.New(&quot;Unmarshalling failed&quot;)
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-	}
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-	return nil
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-}
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-func (sl *Ps2KeyboardExtra) Export() string {
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-	b, _ := json.Marshal(sl)
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-	return string(b)
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-}
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-func (sl *Ps2KeyboardExtra) Check(bmach *Bondmachine) error {
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-	return nil
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-}
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-func (sl *Ps2KeyboardExtra) Verilog_headers() string {
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-	return &quot;&quot;
+</a><a href="#h1-0-39" id="h1-0-39" class="d">-}
+</a><a href="#h1-0-40" id="h1-0-40" class="d">-
+</a><a href="#h1-0-41" id="h1-0-41" class="d">-func (sl *Ps2KeyboardExtra) StaticVerilog() string {
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-	result := &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-	result += `
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-module debouncer(
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-    input clk,
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-    input I,
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-    output reg O
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-    );
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-    parameter COUNT_MAX=255, COUNT_WIDTH=8;
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-    reg [COUNT_WIDTH-1:0] count;
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-    reg Iv=0;
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-    always@(posedge clk)
+</a><a href="#h1-0-53" id="h1-0-53" class="d">-        if (I == Iv) begin
+</a><a href="#h1-0-54" id="h1-0-54" class="d">-            if (count == COUNT_MAX)
+</a><a href="#h1-0-55" id="h1-0-55" class="d">-                O &lt;= I;
+</a><a href="#h1-0-56" id="h1-0-56" class="d">-            else
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-                count &lt;= count + 1&#39;b1;
+</a><a href="#h1-0-58" id="h1-0-58" class="d">-        end else begin
+</a><a href="#h1-0-59" id="h1-0-59" class="d">-            count &lt;= &#39;b0;
+</a><a href="#h1-0-60" id="h1-0-60" class="d">-            Iv &lt;= I;
+</a><a href="#h1-0-61" id="h1-0-61" class="d">-        end
+</a><a href="#h1-0-62" id="h1-0-62" class="d">-endmodule
+</a><a href="#h1-0-63" id="h1-0-63" class="d">-	`
+</a><a href="#h1-0-64" id="h1-0-64" class="d">-
+</a><a href="#h1-0-65" id="h1-0-65" class="d">-	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h1-0-66" id="h1-0-66" class="d">-	result += `
+</a><a href="#h1-0-67" id="h1-0-67" class="d">-module PS2Receiver(
+</a><a href="#h1-0-68" id="h1-0-68" class="d">-	input clk,
+</a><a href="#h1-0-69" id="h1-0-69" class="d">-	input kclk,
+</a><a href="#h1-0-70" id="h1-0-70" class="d">-	input kdata,
+</a><a href="#h1-0-71" id="h1-0-71" class="d">-	output reg [15:0] keycode=0,
+</a><a href="#h1-0-72" id="h1-0-72" class="d">-	output reg oflag
+</a><a href="#h1-0-73" id="h1-0-73" class="d">-	);
+</a><a href="#h1-0-74" id="h1-0-74" class="d">-		
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-	wire kclkf, kdataf;
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-	reg [7:0]datacur=0;
+</a><a href="#h1-0-77" id="h1-0-77" class="d">-	reg [7:0]dataprev=0;
+</a><a href="#h1-0-78" id="h1-0-78" class="d">-	reg [3:0]cnt=0;
+</a><a href="#h1-0-79" id="h1-0-79" class="d">-	reg flag=0;
+</a><a href="#h1-0-80" id="h1-0-80" class="d">-		
+</a><a href="#h1-0-81" id="h1-0-81" class="d">-	debouncer #(
+</a><a href="#h1-0-82" id="h1-0-82" class="d">-		.COUNT_MAX(19),
+</a><a href="#h1-0-83" id="h1-0-83" class="d">-		.COUNT_WIDTH(5)
+</a><a href="#h1-0-84" id="h1-0-84" class="d">-	) db_clk(
+</a><a href="#h1-0-85" id="h1-0-85" class="d">-		.clk(clk),
+</a><a href="#h1-0-86" id="h1-0-86" class="d">-		.I(kclk),
+</a><a href="#h1-0-87" id="h1-0-87" class="d">-		.O(kclkf)
+</a><a href="#h1-0-88" id="h1-0-88" class="d">-	);
+</a><a href="#h1-0-89" id="h1-0-89" class="d">-	debouncer #(
+</a><a href="#h1-0-90" id="h1-0-90" class="d">-	   .COUNT_MAX(19),
+</a><a href="#h1-0-91" id="h1-0-91" class="d">-	   .COUNT_WIDTH(5)
+</a><a href="#h1-0-92" id="h1-0-92" class="d">-	) db_data(
+</a><a href="#h1-0-93" id="h1-0-93" class="d">-		.clk(clk),
+</a><a href="#h1-0-94" id="h1-0-94" class="d">-		.I(kdata),
+</a><a href="#h1-0-95" id="h1-0-95" class="d">-		.O(kdataf)
+</a><a href="#h1-0-96" id="h1-0-96" class="d">-	);
+</a><a href="#h1-0-97" id="h1-0-97" class="d">-		
+</a><a href="#h1-0-98" id="h1-0-98" class="d">-	always@(negedge(kclkf))begin
+</a><a href="#h1-0-99" id="h1-0-99" class="d">-		case(cnt)
+</a><a href="#h1-0-100" id="h1-0-100" class="d">-		0:;//Start bit
+</a><a href="#h1-0-101" id="h1-0-101" class="d">-		1:datacur[0]&lt;=kdataf;
+</a><a href="#h1-0-102" id="h1-0-102" class="d">-		2:datacur[1]&lt;=kdataf;
+</a><a href="#h1-0-103" id="h1-0-103" class="d">-		3:datacur[2]&lt;=kdataf;
+</a><a href="#h1-0-104" id="h1-0-104" class="d">-		4:datacur[3]&lt;=kdataf;
+</a><a href="#h1-0-105" id="h1-0-105" class="d">-		5:datacur[4]&lt;=kdataf;
+</a><a href="#h1-0-106" id="h1-0-106" class="d">-		6:datacur[5]&lt;=kdataf;
+</a><a href="#h1-0-107" id="h1-0-107" class="d">-		7:datacur[6]&lt;=kdataf;
+</a><a href="#h1-0-108" id="h1-0-108" class="d">-		8:datacur[7]&lt;=kdataf;
+</a><a href="#h1-0-109" id="h1-0-109" class="d">-		9:flag&lt;=1&#39;b1;
+</a><a href="#h1-0-110" id="h1-0-110" class="d">-		10:flag&lt;=1&#39;b0;
+</a><a href="#h1-0-111" id="h1-0-111" class="d">-		
+</a><a href="#h1-0-112" id="h1-0-112" class="d">-		endcase
+</a><a href="#h1-0-113" id="h1-0-113" class="d">-			if(cnt&lt;=9) cnt&lt;=cnt+1;
+</a><a href="#h1-0-114" id="h1-0-114" class="d">-			else if(cnt==10) cnt&lt;=0;
+</a><a href="#h1-0-115" id="h1-0-115" class="d">-	end
+</a><a href="#h1-0-116" id="h1-0-116" class="d">-	
+</a><a href="#h1-0-117" id="h1-0-117" class="d">-	reg pflag;
+</a><a href="#h1-0-118" id="h1-0-118" class="d">-	always@(posedge clk) begin
+</a><a href="#h1-0-119" id="h1-0-119" class="d">-		if (flag == 1&#39;b1 &amp;&amp; pflag == 1&#39;b0) begin
+</a><a href="#h1-0-120" id="h1-0-120" class="d">-			keycode &lt;= {dataprev, datacur};
+</a><a href="#h1-0-121" id="h1-0-121" class="d">-			oflag &lt;= 1&#39;b1;
+</a><a href="#h1-0-122" id="h1-0-122" class="d">-			dataprev &lt;= datacur;
+</a><a href="#h1-0-123" id="h1-0-123" class="d">-		end else
+</a><a href="#h1-0-124" id="h1-0-124" class="d">-			oflag &lt;= &#39;b0;
+</a><a href="#h1-0-125" id="h1-0-125" class="d">-		pflag &lt;= flag;
+</a><a href="#h1-0-126" id="h1-0-126" class="d">-	end
+</a><a href="#h1-0-127" id="h1-0-127" class="d">-	
+</a><a href="#h1-0-128" id="h1-0-128" class="d">-endmodule
+</a><a href="#h1-0-129" id="h1-0-129" class="d">-	`
+</a><a href="#h1-0-130" id="h1-0-130" class="d">-
+</a><a href="#h1-0-131" id="h1-0-131" class="d">-	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h1-0-132" id="h1-0-132" class="d">-	result += `
+</a><a href="#h1-0-133" id="h1-0-133" class="d">-	module bondkeydrv(
+</a><a href="#h1-0-134" id="h1-0-134" class="d">-		input       clk,
+</a><a href="#h1-0-135" id="h1-0-135" class="d">-		input       PS2Data,
+</a><a href="#h1-0-136" id="h1-0-136" class="d">-		input       PS2Clk,
+</a><a href="#h1-0-137" id="h1-0-137" class="d">-		output reg  [15:0] key,
+</a><a href="#h1-0-138" id="h1-0-138" class="d">-		output reg  keycode_valid,
+</a><a href="#h1-0-139" id="h1-0-139" class="d">-		input       keycode_recv
+</a><a href="#h1-0-140" id="h1-0-140" class="d">-	);
+</a><a href="#h1-0-141" id="h1-0-141" class="d">-	
+</a><a href="#h1-0-142" id="h1-0-142" class="d">-		reg         start=0;
+</a><a href="#h1-0-143" id="h1-0-143" class="d">-		reg         CLK50MHZ=0;
+</a><a href="#h1-0-144" id="h1-0-144" class="d">-		wire [15:0] keycode;
+</a><a href="#h1-0-145" id="h1-0-145" class="d">-		reg [15:0] keycodev;
+</a><a href="#h1-0-146" id="h1-0-146" class="d">-		wire        flag;
+</a><a href="#h1-0-147" id="h1-0-147" class="d">-		reg         cn=0;
+</a><a href="#h1-0-148" id="h1-0-148" class="d">-	
+</a><a href="#h1-0-149" id="h1-0-149" class="d">-		reg [5:0]	mods; // 0 Shift - 1 Ctrl - 3 Alt
+</a><a href="#h1-0-150" id="h1-0-150" class="d">-
+</a><a href="#h1-0-151" id="h1-0-151" class="d">-		always @(posedge(clk))begin
+</a><a href="#h1-0-152" id="h1-0-152" class="d">-			CLK50MHZ&lt;=~CLK50MHZ;
+</a><a href="#h1-0-153" id="h1-0-153" class="d">-		end
+</a><a href="#h1-0-154" id="h1-0-154" class="d">-		
+</a><a href="#h1-0-155" id="h1-0-155" class="d">-		PS2Receiver uut (
+</a><a href="#h1-0-156" id="h1-0-156" class="d">-			.clk(CLK50MHZ),
+</a><a href="#h1-0-157" id="h1-0-157" class="d">-			.kclk(PS2Clk),
+</a><a href="#h1-0-158" id="h1-0-158" class="d">-			.kdata(PS2Data),
+</a><a href="#h1-0-159" id="h1-0-159" class="d">-			.keycode(keycode),
+</a><a href="#h1-0-160" id="h1-0-160" class="d">-			.oflag(flag)
+</a><a href="#h1-0-161" id="h1-0-161" class="d">-		);
+</a><a href="#h1-0-162" id="h1-0-162" class="d">-		
+</a><a href="#h1-0-163" id="h1-0-163" class="d">-		always@(keycode)
+</a><a href="#h1-0-164" id="h1-0-164" class="d">-			if (keycode[7:0] == 8&#39;hf0) begin
+</a><a href="#h1-0-165" id="h1-0-165" class="d">-				cn &lt;= 1&#39;b0;
+</a><a href="#h1-0-166" id="h1-0-166" class="d">-			end else if (keycode[15:8] == 8&#39;hf0) begin
+</a><a href="#h1-0-167" id="h1-0-167" class="d">-				cn &lt;= keycode != keycodev;
+</a><a href="#h1-0-168" id="h1-0-168" class="d">-			end else begin
+</a><a href="#h1-0-169" id="h1-0-169" class="d">-				cn &lt;= keycode[7:0] != keycodev[7:0] || keycodev[15:8] == 8&#39;hf0;
+</a><a href="#h1-0-170" id="h1-0-170" class="d">-			end
+</a><a href="#h1-0-171" id="h1-0-171" class="d">-		
+</a><a href="#h1-0-172" id="h1-0-172" class="d">-		always @(posedge clk)
+</a><a href="#h1-0-173" id="h1-0-173" class="d">-			if (flag == 1&#39;b1 &amp;&amp; cn == 1&#39;b1) begin
+</a><a href="#h1-0-174" id="h1-0-174" class="d">-				keycodev &lt;= keycode;
+</a><a href="#h1-0-175" id="h1-0-175" class="d">-				case (keycode[15:8])
+</a><a href="#h1-0-176" id="h1-0-176" class="d">-					8&#39;hf0: // Break Codes
+</a><a href="#h1-0-177" id="h1-0-177" class="d">-						case (keycode[7:0])
+</a><a href="#h1-0-178" id="h1-0-178" class="d">-							// Modificators
+</a><a href="#h1-0-179" id="h1-0-179" class="d">-							8&#39;h12 : begin // Left Shift
+</a><a href="#h1-0-180" id="h1-0-180" class="d">-									mods[0] &lt;= 1&#39;b0;
+</a><a href="#h1-0-181" id="h1-0-181" class="d">-									start &lt;= 1&#39;b0;
+</a><a href="#h1-0-182" id="h1-0-182" class="d">-								end
+</a><a href="#h1-0-183" id="h1-0-183" class="d">-							8&#39;h59 : begin // Right Shift
+</a><a href="#h1-0-184" id="h1-0-184" class="d">-									mods[0] &lt;= 1&#39;b0;
+</a><a href="#h1-0-185" id="h1-0-185" class="d">-									start &lt;= 1&#39;b0;
+</a><a href="#h1-0-186" id="h1-0-186" class="d">-								end
+</a><a href="#h1-0-187" id="h1-0-187" class="d">-							default:
+</a><a href="#h1-0-188" id="h1-0-188" class="d">-								start &lt;= 1&#39;b0;
+</a><a href="#h1-0-189" id="h1-0-189" class="d">-						endcase
+</a><a href="#h1-0-190" id="h1-0-190" class="d">-					default: // Make Codes
+</a><a href="#h1-0-191" id="h1-0-191" class="d">-						case (keycode[7:0])
+</a><a href="#h1-0-192" id="h1-0-192" class="d">-							// Modificators
+</a><a href="#h1-0-193" id="h1-0-193" class="d">-							8&#39;h12 : begin // Left Shift
+</a><a href="#h1-0-194" id="h1-0-194" class="d">-									mods[0] &lt;= 1&#39;b1;
+</a><a href="#h1-0-195" id="h1-0-195" class="d">-									start &lt;= 1&#39;b0;
+</a><a href="#h1-0-196" id="h1-0-196" class="d">-								end
+</a><a href="#h1-0-197" id="h1-0-197" class="d">-							8&#39;h59 : begin // Right Shift
+</a><a href="#h1-0-198" id="h1-0-198" class="d">-									mods[0] &lt;= 1&#39;b1;
+</a><a href="#h1-0-199" id="h1-0-199" class="d">-									start &lt;= 1&#39;b0;
+</a><a href="#h1-0-200" id="h1-0-200" class="d">-								end
+</a><a href="#h1-0-201" id="h1-0-201" class="d">-							// Special
+</a><a href="#h1-0-202" id="h1-0-202" class="d">-							8&#39;h29 : begin
+</a><a href="#h1-0-203" id="h1-0-203" class="d">-									key &lt;= 16&#39;h0020;  // Space
+</a><a href="#h1-0-204" id="h1-0-204" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-205" id="h1-0-205" class="d">-								end
+</a><a href="#h1-0-206" id="h1-0-206" class="d">-							8&#39;h5a : begin
+</a><a href="#h1-0-207" id="h1-0-207" class="d">-									key &lt;= 16&#39;h000d;  // Enter
+</a><a href="#h1-0-208" id="h1-0-208" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-209" id="h1-0-209" class="d">-								end
+</a><a href="#h1-0-210" id="h1-0-210" class="d">-							8&#39;h76 : begin
+</a><a href="#h1-0-211" id="h1-0-211" class="d">-									key &lt;= 16&#39;h001b;  // Escape
+</a><a href="#h1-0-212" id="h1-0-212" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-213" id="h1-0-213" class="d">-								end
+</a><a href="#h1-0-214" id="h1-0-214" class="d">-							8&#39;h66 : begin
+</a><a href="#h1-0-215" id="h1-0-215" class="d">-									key &lt;= 16&#39;h0008;  // Backspace
+</a><a href="#h1-0-216" id="h1-0-216" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-217" id="h1-0-217" class="d">-								end
+</a><a href="#h1-0-218" id="h1-0-218" class="d">-							8&#39;h0d : begin
+</a><a href="#h1-0-219" id="h1-0-219" class="d">-									key &lt;= 16&#39;h000b;  // Tab
+</a><a href="#h1-0-220" id="h1-0-220" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-221" id="h1-0-221" class="d">-								end
+</a><a href="#h1-0-222" id="h1-0-222" class="d">-							8&#39;h52 : begin
+</a><a href="#h1-0-223" id="h1-0-223" class="d">-									if (mods[0])
+</a><a href="#h1-0-224" id="h1-0-224" class="d">-										key &lt;= 16&#39;h0022;  // &quot;
+</a><a href="#h1-0-225" id="h1-0-225" class="d">-									else
+</a><a href="#h1-0-226" id="h1-0-226" class="d">-										key &lt;= 16&#39;h0027;  // &#39;
+</a><a href="#h1-0-227" id="h1-0-227" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-228" id="h1-0-228" class="d">-								end
+</a><a href="#h1-0-229" id="h1-0-229" class="d">-							8&#39;h4c : begin
+</a><a href="#h1-0-230" id="h1-0-230" class="d">-									if (mods[0])
+</a><a href="#h1-0-231" id="h1-0-231" class="d">-										key &lt;= 16&#39;h003a;  // :
+</a><a href="#h1-0-232" id="h1-0-232" class="d">-									else
+</a><a href="#h1-0-233" id="h1-0-233" class="d">-										key &lt;= 16&#39;h003b;  // ;
+</a><a href="#h1-0-234" id="h1-0-234" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-235" id="h1-0-235" class="d">-								end
+</a><a href="#h1-0-236" id="h1-0-236" class="d">-							8&#39;h54 : begin
+</a><a href="#h1-0-237" id="h1-0-237" class="d">-									if (mods[0])
+</a><a href="#h1-0-238" id="h1-0-238" class="d">-										key &lt;= 16&#39;h007b;  // {
+</a><a href="#h1-0-239" id="h1-0-239" class="d">-									else
+</a><a href="#h1-0-240" id="h1-0-240" class="d">-										key &lt;= 16&#39;h005b;  // [
+</a><a href="#h1-0-241" id="h1-0-241" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-242" id="h1-0-242" class="d">-								end
+</a><a href="#h1-0-243" id="h1-0-243" class="d">-							8&#39;h5b : begin
+</a><a href="#h1-0-244" id="h1-0-244" class="d">-									if (mods[0])
+</a><a href="#h1-0-245" id="h1-0-245" class="d">-										key &lt;= 16&#39;h007d;  // }
+</a><a href="#h1-0-246" id="h1-0-246" class="d">-									else
+</a><a href="#h1-0-247" id="h1-0-247" class="d">-										key &lt;= 16&#39;h005d;  // ]
+</a><a href="#h1-0-248" id="h1-0-248" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-249" id="h1-0-249" class="d">-								end
+</a><a href="#h1-0-250" id="h1-0-250" class="d">-							8&#39;h0e : begin
+</a><a href="#h1-0-251" id="h1-0-251" class="d">-									if (mods[0])
+</a><a href="#h1-0-252" id="h1-0-252" class="d">-										key &lt;= 16&#39;h007e;  // ~
+</a><a href="#h1-0-253" id="h1-0-253" class="d">-									else
+</a><a href="#h1-0-254" id="h1-0-254" class="d">-										key &lt;= 16&#39;h0060;  // reverse &#39;
+</a><a href="#h1-0-255" id="h1-0-255" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-256" id="h1-0-256" class="d">-								end
+</a><a href="#h1-0-257" id="h1-0-257" class="d">-							8&#39;h5d : begin
+</a><a href="#h1-0-258" id="h1-0-258" class="d">-									if (mods[0])
+</a><a href="#h1-0-259" id="h1-0-259" class="d">-										key &lt;= 16&#39;h007c;  // |
+</a><a href="#h1-0-260" id="h1-0-260" class="d">-									else
+</a><a href="#h1-0-261" id="h1-0-261" class="d">-										key &lt;= 16&#39;h005c;  // \
+</a><a href="#h1-0-262" id="h1-0-262" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-263" id="h1-0-263" class="d">-								end
+</a><a href="#h1-0-264" id="h1-0-264" class="d">-							8&#39;h4e : begin
+</a><a href="#h1-0-265" id="h1-0-265" class="d">-									if (mods[0])
+</a><a href="#h1-0-266" id="h1-0-266" class="d">-										key &lt;= 16&#39;h005f;  // _
+</a><a href="#h1-0-267" id="h1-0-267" class="d">-									else
+</a><a href="#h1-0-268" id="h1-0-268" class="d">-										key &lt;= 16&#39;h002d;  // -
+</a><a href="#h1-0-269" id="h1-0-269" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-270" id="h1-0-270" class="d">-								end
+</a><a href="#h1-0-271" id="h1-0-271" class="d">-							8&#39;h55 : begin
+</a><a href="#h1-0-272" id="h1-0-272" class="d">-									if (mods[0])
+</a><a href="#h1-0-273" id="h1-0-273" class="d">-										key &lt;= 16&#39;h002b;  // +
+</a><a href="#h1-0-274" id="h1-0-274" class="d">-									else
+</a><a href="#h1-0-275" id="h1-0-275" class="d">-										key &lt;= 16&#39;h003d;  // =
+</a><a href="#h1-0-276" id="h1-0-276" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-277" id="h1-0-277" class="d">-								end
+</a><a href="#h1-0-278" id="h1-0-278" class="d">-							8&#39;h4a : begin
+</a><a href="#h1-0-279" id="h1-0-279" class="d">-									if (mods[0])
+</a><a href="#h1-0-280" id="h1-0-280" class="d">-										key &lt;= 16&#39;h003f;  // ?
+</a><a href="#h1-0-281" id="h1-0-281" class="d">-									else
+</a><a href="#h1-0-282" id="h1-0-282" class="d">-										key &lt;= 16&#39;h002f;  // /
+</a><a href="#h1-0-283" id="h1-0-283" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-284" id="h1-0-284" class="d">-								end
+</a><a href="#h1-0-285" id="h1-0-285" class="d">-							8&#39;h41 : begin
+</a><a href="#h1-0-286" id="h1-0-286" class="d">-									if (mods[0])
+</a><a href="#h1-0-287" id="h1-0-287" class="d">-										key &lt;= 16&#39;h003c;  // &lt;
+</a><a href="#h1-0-288" id="h1-0-288" class="d">-									else
+</a><a href="#h1-0-289" id="h1-0-289" class="d">-										key &lt;= 16&#39;h002c;  // ,
+</a><a href="#h1-0-290" id="h1-0-290" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-291" id="h1-0-291" class="d">-								end
+</a><a href="#h1-0-292" id="h1-0-292" class="d">-							8&#39;h49 : begin
+</a><a href="#h1-0-293" id="h1-0-293" class="d">-									if (mods[0])
+</a><a href="#h1-0-294" id="h1-0-294" class="d">-										key &lt;= 16&#39;h003e;  // &gt;
+</a><a href="#h1-0-295" id="h1-0-295" class="d">-									else
+</a><a href="#h1-0-296" id="h1-0-296" class="d">-										key &lt;= 16&#39;h002e;  // .
+</a><a href="#h1-0-297" id="h1-0-297" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-298" id="h1-0-298" class="d">-								end
+</a><a href="#h1-0-299" id="h1-0-299" class="d">-							// Numbers 0-9
+</a><a href="#h1-0-300" id="h1-0-300" class="d">-							8&#39;h45 : begin
+</a><a href="#h1-0-301" id="h1-0-301" class="d">-									if (mods[0])
+</a><a href="#h1-0-302" id="h1-0-302" class="d">-										key &lt;= 16&#39;h0029;  // )
+</a><a href="#h1-0-303" id="h1-0-303" class="d">-									else
+</a><a href="#h1-0-304" id="h1-0-304" class="d">-										key &lt;= 16&#39;h0030;  // 0
+</a><a href="#h1-0-305" id="h1-0-305" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-306" id="h1-0-306" class="d">-								end
+</a><a href="#h1-0-307" id="h1-0-307" class="d">-							8&#39;h16 : begin
+</a><a href="#h1-0-308" id="h1-0-308" class="d">-									if (mods[0])
+</a><a href="#h1-0-309" id="h1-0-309" class="d">-										key &lt;= 16&#39;h0021;  // !
+</a><a href="#h1-0-310" id="h1-0-310" class="d">-									else
+</a><a href="#h1-0-311" id="h1-0-311" class="d">-										key &lt;= 16&#39;h0031;  // 1
+</a><a href="#h1-0-312" id="h1-0-312" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-313" id="h1-0-313" class="d">-								end
+</a><a href="#h1-0-314" id="h1-0-314" class="d">-							8&#39;h1e : begin
+</a><a href="#h1-0-315" id="h1-0-315" class="d">-									if (mods[0])
+</a><a href="#h1-0-316" id="h1-0-316" class="d">-										key &lt;= 16&#39;h0040;  // @
+</a><a href="#h1-0-317" id="h1-0-317" class="d">-									else
+</a><a href="#h1-0-318" id="h1-0-318" class="d">-										key &lt;= 16&#39;h0032;  // 2
+</a><a href="#h1-0-319" id="h1-0-319" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-320" id="h1-0-320" class="d">-								end
+</a><a href="#h1-0-321" id="h1-0-321" class="d">-							8&#39;h26 : begin
+</a><a href="#h1-0-322" id="h1-0-322" class="d">-									if (mods[0])
+</a><a href="#h1-0-323" id="h1-0-323" class="d">-										key &lt;= 16&#39;h0023;  // #
+</a><a href="#h1-0-324" id="h1-0-324" class="d">-									else
+</a><a href="#h1-0-325" id="h1-0-325" class="d">-										key &lt;= 16&#39;h0033;  // 3
+</a><a href="#h1-0-326" id="h1-0-326" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-327" id="h1-0-327" class="d">-								end
+</a><a href="#h1-0-328" id="h1-0-328" class="d">-							8&#39;h25 : begin
+</a><a href="#h1-0-329" id="h1-0-329" class="d">-									if (mods[0])
+</a><a href="#h1-0-330" id="h1-0-330" class="d">-										key &lt;= 16&#39;h0024;  // $
+</a><a href="#h1-0-331" id="h1-0-331" class="d">-									else
+</a><a href="#h1-0-332" id="h1-0-332" class="d">-										key &lt;= 16&#39;h0034;  // 4
+</a><a href="#h1-0-333" id="h1-0-333" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-334" id="h1-0-334" class="d">-								end
+</a><a href="#h1-0-335" id="h1-0-335" class="d">-							8&#39;h2e : begin
+</a><a href="#h1-0-336" id="h1-0-336" class="d">-									if (mods[0])
+</a><a href="#h1-0-337" id="h1-0-337" class="d">-										key &lt;= 16&#39;h0025;  // %
+</a><a href="#h1-0-338" id="h1-0-338" class="d">-									else
+</a><a href="#h1-0-339" id="h1-0-339" class="d">-										key &lt;= 16&#39;h0035;  // 5
+</a><a href="#h1-0-340" id="h1-0-340" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-341" id="h1-0-341" class="d">-								end
+</a><a href="#h1-0-342" id="h1-0-342" class="d">-							8&#39;h36 : begin
+</a><a href="#h1-0-343" id="h1-0-343" class="d">-									if (mods[0])
+</a><a href="#h1-0-344" id="h1-0-344" class="d">-										key &lt;= 16&#39;h005e;  // ^
+</a><a href="#h1-0-345" id="h1-0-345" class="d">-									else
+</a><a href="#h1-0-346" id="h1-0-346" class="d">-										key &lt;= 16&#39;h0036;  // 6
+</a><a href="#h1-0-347" id="h1-0-347" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-348" id="h1-0-348" class="d">-								end
+</a><a href="#h1-0-349" id="h1-0-349" class="d">-							8&#39;h3d : begin
+</a><a href="#h1-0-350" id="h1-0-350" class="d">-									if (mods[0])
+</a><a href="#h1-0-351" id="h1-0-351" class="d">-										key &lt;= 16&#39;h0026;  // &amp;
+</a><a href="#h1-0-352" id="h1-0-352" class="d">-									else
+</a><a href="#h1-0-353" id="h1-0-353" class="d">-										key &lt;= 16&#39;h0037;  // 7
+</a><a href="#h1-0-354" id="h1-0-354" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-355" id="h1-0-355" class="d">-								end
+</a><a href="#h1-0-356" id="h1-0-356" class="d">-							8&#39;h3e : begin
+</a><a href="#h1-0-357" id="h1-0-357" class="d">-									if (mods[0])
+</a><a href="#h1-0-358" id="h1-0-358" class="d">-										key &lt;= 16&#39;h002a;  // *
+</a><a href="#h1-0-359" id="h1-0-359" class="d">-									else
+</a><a href="#h1-0-360" id="h1-0-360" class="d">-										key &lt;= 16&#39;h0038;  // 8
+</a><a href="#h1-0-361" id="h1-0-361" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-362" id="h1-0-362" class="d">-								end
+</a><a href="#h1-0-363" id="h1-0-363" class="d">-							8&#39;h46 : begin
+</a><a href="#h1-0-364" id="h1-0-364" class="d">-									if (mods[0])
+</a><a href="#h1-0-365" id="h1-0-365" class="d">-										key &lt;= 16&#39;h0028;  // (
+</a><a href="#h1-0-366" id="h1-0-366" class="d">-									else
+</a><a href="#h1-0-367" id="h1-0-367" class="d">-										key &lt;= 16&#39;h0039;  // 9
+</a><a href="#h1-0-368" id="h1-0-368" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-369" id="h1-0-369" class="d">-								end
+</a><a href="#h1-0-370" id="h1-0-370" class="d">-							// Characters
+</a><a href="#h1-0-371" id="h1-0-371" class="d">-							8&#39;h15 : begin
+</a><a href="#h1-0-372" id="h1-0-372" class="d">-									if (mods[0])
+</a><a href="#h1-0-373" id="h1-0-373" class="d">-										key &lt;= 16&#39;h0051;  // Q
+</a><a href="#h1-0-374" id="h1-0-374" class="d">-									else
+</a><a href="#h1-0-375" id="h1-0-375" class="d">-										key &lt;= 16&#39;h0071;  // q 
+</a><a href="#h1-0-376" id="h1-0-376" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-377" id="h1-0-377" class="d">-								end
+</a><a href="#h1-0-378" id="h1-0-378" class="d">-							8&#39;h1d : begin
+</a><a href="#h1-0-379" id="h1-0-379" class="d">-									if (mods[0])
+</a><a href="#h1-0-380" id="h1-0-380" class="d">-										key &lt;= 16&#39;h0057;  // W
+</a><a href="#h1-0-381" id="h1-0-381" class="d">-									else
+</a><a href="#h1-0-382" id="h1-0-382" class="d">-										key &lt;= 16&#39;h0077;  // w
+</a><a href="#h1-0-383" id="h1-0-383" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-384" id="h1-0-384" class="d">-								end
+</a><a href="#h1-0-385" id="h1-0-385" class="d">-							8&#39;h24 : begin
+</a><a href="#h1-0-386" id="h1-0-386" class="d">-									if (mods[0])
+</a><a href="#h1-0-387" id="h1-0-387" class="d">-										key &lt;= 16&#39;h0045;  // E
+</a><a href="#h1-0-388" id="h1-0-388" class="d">-									else
+</a><a href="#h1-0-389" id="h1-0-389" class="d">-										key &lt;= 16&#39;h0065;  // e
+</a><a href="#h1-0-390" id="h1-0-390" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-391" id="h1-0-391" class="d">-								end
+</a><a href="#h1-0-392" id="h1-0-392" class="d">-							8&#39;h2d : begin
+</a><a href="#h1-0-393" id="h1-0-393" class="d">-									if (mods[0])
+</a><a href="#h1-0-394" id="h1-0-394" class="d">-										key &lt;= 16&#39;h0052;  // R
+</a><a href="#h1-0-395" id="h1-0-395" class="d">-									else
+</a><a href="#h1-0-396" id="h1-0-396" class="d">-										key &lt;= 16&#39;h0072;  // r
+</a><a href="#h1-0-397" id="h1-0-397" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-398" id="h1-0-398" class="d">-								end
+</a><a href="#h1-0-399" id="h1-0-399" class="d">-							8&#39;h2c : begin
+</a><a href="#h1-0-400" id="h1-0-400" class="d">-									if (mods[0])
+</a><a href="#h1-0-401" id="h1-0-401" class="d">-										key &lt;= 16&#39;h0054;  // T
+</a><a href="#h1-0-402" id="h1-0-402" class="d">-									else
+</a><a href="#h1-0-403" id="h1-0-403" class="d">-										key &lt;= 16&#39;h0074;  // t
+</a><a href="#h1-0-404" id="h1-0-404" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-405" id="h1-0-405" class="d">-								end
+</a><a href="#h1-0-406" id="h1-0-406" class="d">-							8&#39;h35 : begin
+</a><a href="#h1-0-407" id="h1-0-407" class="d">-									if (mods[0])
+</a><a href="#h1-0-408" id="h1-0-408" class="d">-										key &lt;= 16&#39;h0059;  // Y
+</a><a href="#h1-0-409" id="h1-0-409" class="d">-									else
+</a><a href="#h1-0-410" id="h1-0-410" class="d">-										key &lt;= 16&#39;h0079;  // y
+</a><a href="#h1-0-411" id="h1-0-411" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-412" id="h1-0-412" class="d">-								end
+</a><a href="#h1-0-413" id="h1-0-413" class="d">-							8&#39;h3c : begin
+</a><a href="#h1-0-414" id="h1-0-414" class="d">-									if (mods[0])
+</a><a href="#h1-0-415" id="h1-0-415" class="d">-										key &lt;= 16&#39;h0055;  // U
+</a><a href="#h1-0-416" id="h1-0-416" class="d">-									else
+</a><a href="#h1-0-417" id="h1-0-417" class="d">-										key &lt;= 16&#39;h0075;  // u
+</a><a href="#h1-0-418" id="h1-0-418" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-419" id="h1-0-419" class="d">-								end
+</a><a href="#h1-0-420" id="h1-0-420" class="d">-							8&#39;h43 : begin
+</a><a href="#h1-0-421" id="h1-0-421" class="d">-									if (mods[0])
+</a><a href="#h1-0-422" id="h1-0-422" class="d">-										key &lt;= 16&#39;h0049;  // I
+</a><a href="#h1-0-423" id="h1-0-423" class="d">-									else
+</a><a href="#h1-0-424" id="h1-0-424" class="d">-										key &lt;= 16&#39;h0069;  // i
+</a><a href="#h1-0-425" id="h1-0-425" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-426" id="h1-0-426" class="d">-								end
+</a><a href="#h1-0-427" id="h1-0-427" class="d">-							8&#39;h44 : begin
+</a><a href="#h1-0-428" id="h1-0-428" class="d">-									if (mods[0])
+</a><a href="#h1-0-429" id="h1-0-429" class="d">-										key &lt;= 16&#39;h004f;  // O
+</a><a href="#h1-0-430" id="h1-0-430" class="d">-									else
+</a><a href="#h1-0-431" id="h1-0-431" class="d">-										key &lt;= 16&#39;h006f;  // o
+</a><a href="#h1-0-432" id="h1-0-432" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-433" id="h1-0-433" class="d">-								end
+</a><a href="#h1-0-434" id="h1-0-434" class="d">-							8&#39;h4d : begin
+</a><a href="#h1-0-435" id="h1-0-435" class="d">-									if (mods[0])
+</a><a href="#h1-0-436" id="h1-0-436" class="d">-										key &lt;= 16&#39;h0050;  // P
+</a><a href="#h1-0-437" id="h1-0-437" class="d">-									else
+</a><a href="#h1-0-438" id="h1-0-438" class="d">-										key &lt;= 16&#39;h0070;  // p
+</a><a href="#h1-0-439" id="h1-0-439" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-440" id="h1-0-440" class="d">-								end
+</a><a href="#h1-0-441" id="h1-0-441" class="d">-							8&#39;h1c : begin
+</a><a href="#h1-0-442" id="h1-0-442" class="d">-									if (mods[0])
+</a><a href="#h1-0-443" id="h1-0-443" class="d">-										key &lt;= 16&#39;h0041;  // A
+</a><a href="#h1-0-444" id="h1-0-444" class="d">-									else
+</a><a href="#h1-0-445" id="h1-0-445" class="d">-										key &lt;= 16&#39;h0061;  // a
+</a><a href="#h1-0-446" id="h1-0-446" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-447" id="h1-0-447" class="d">-								end
+</a><a href="#h1-0-448" id="h1-0-448" class="d">-							8&#39;h1b : begin
+</a><a href="#h1-0-449" id="h1-0-449" class="d">-									if (mods[0])
+</a><a href="#h1-0-450" id="h1-0-450" class="d">-										key &lt;= 16&#39;h0053;  // S
+</a><a href="#h1-0-451" id="h1-0-451" class="d">-									else
+</a><a href="#h1-0-452" id="h1-0-452" class="d">-										key &lt;= 16&#39;h0073;  // s
+</a><a href="#h1-0-453" id="h1-0-453" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-454" id="h1-0-454" class="d">-								end
+</a><a href="#h1-0-455" id="h1-0-455" class="d">-							8&#39;h23 : begin
+</a><a href="#h1-0-456" id="h1-0-456" class="d">-									if (mods[0])
+</a><a href="#h1-0-457" id="h1-0-457" class="d">-										key &lt;= 16&#39;h0044;  // D
+</a><a href="#h1-0-458" id="h1-0-458" class="d">-									else
+</a><a href="#h1-0-459" id="h1-0-459" class="d">-										key &lt;= 16&#39;h0064;  // d
+</a><a href="#h1-0-460" id="h1-0-460" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-461" id="h1-0-461" class="d">-								end
+</a><a href="#h1-0-462" id="h1-0-462" class="d">-							8&#39;h2b : begin
+</a><a href="#h1-0-463" id="h1-0-463" class="d">-									if (mods[0])
+</a><a href="#h1-0-464" id="h1-0-464" class="d">-										key &lt;= 16&#39;h0046;  // F
+</a><a href="#h1-0-465" id="h1-0-465" class="d">-									else
+</a><a href="#h1-0-466" id="h1-0-466" class="d">-										key &lt;= 16&#39;h0066;  // f
+</a><a href="#h1-0-467" id="h1-0-467" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-468" id="h1-0-468" class="d">-								end
+</a><a href="#h1-0-469" id="h1-0-469" class="d">-							8&#39;h34 : begin
+</a><a href="#h1-0-470" id="h1-0-470" class="d">-									if (mods[0])
+</a><a href="#h1-0-471" id="h1-0-471" class="d">-										key &lt;= 16&#39;h0047;  // G
+</a><a href="#h1-0-472" id="h1-0-472" class="d">-									else
+</a><a href="#h1-0-473" id="h1-0-473" class="d">-										key &lt;= 16&#39;h0067;  // g
+</a><a href="#h1-0-474" id="h1-0-474" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-475" id="h1-0-475" class="d">-								end
+</a><a href="#h1-0-476" id="h1-0-476" class="d">-							8&#39;h33 : begin
+</a><a href="#h1-0-477" id="h1-0-477" class="d">-									if (mods[0])
+</a><a href="#h1-0-478" id="h1-0-478" class="d">-										key &lt;= 16&#39;h0048;  // H
+</a><a href="#h1-0-479" id="h1-0-479" class="d">-									else
+</a><a href="#h1-0-480" id="h1-0-480" class="d">-										key &lt;= 16&#39;h0068;  // h 
+</a><a href="#h1-0-481" id="h1-0-481" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-482" id="h1-0-482" class="d">-								end
+</a><a href="#h1-0-483" id="h1-0-483" class="d">-							8&#39;h3b : begin
+</a><a href="#h1-0-484" id="h1-0-484" class="d">-									if (mods[0])
+</a><a href="#h1-0-485" id="h1-0-485" class="d">-										key &lt;= 16&#39;h004a;  // J
+</a><a href="#h1-0-486" id="h1-0-486" class="d">-									else
+</a><a href="#h1-0-487" id="h1-0-487" class="d">-										key &lt;= 16&#39;h006a;  // j
+</a><a href="#h1-0-488" id="h1-0-488" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-489" id="h1-0-489" class="d">-								end
+</a><a href="#h1-0-490" id="h1-0-490" class="d">-							8&#39;h42 : begin
+</a><a href="#h1-0-491" id="h1-0-491" class="d">-									if (mods[0])
+</a><a href="#h1-0-492" id="h1-0-492" class="d">-										key &lt;= 16&#39;h004b;  // K
+</a><a href="#h1-0-493" id="h1-0-493" class="d">-									else
+</a><a href="#h1-0-494" id="h1-0-494" class="d">-										key &lt;= 16&#39;h006b;  // k
+</a><a href="#h1-0-495" id="h1-0-495" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-496" id="h1-0-496" class="d">-								end
+</a><a href="#h1-0-497" id="h1-0-497" class="d">-							8&#39;h4b : begin
+</a><a href="#h1-0-498" id="h1-0-498" class="d">-									if (mods[0])
+</a><a href="#h1-0-499" id="h1-0-499" class="d">-										key &lt;= 16&#39;h004c;  // L
+</a><a href="#h1-0-500" id="h1-0-500" class="d">-									else
+</a><a href="#h1-0-501" id="h1-0-501" class="d">-										key &lt;= 16&#39;h006c;  // l
+</a><a href="#h1-0-502" id="h1-0-502" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-503" id="h1-0-503" class="d">-								end
+</a><a href="#h1-0-504" id="h1-0-504" class="d">-							8&#39;h1a : begin
+</a><a href="#h1-0-505" id="h1-0-505" class="d">-									if (mods[0])
+</a><a href="#h1-0-506" id="h1-0-506" class="d">-										key &lt;= 16&#39;h005a;  // Z
+</a><a href="#h1-0-507" id="h1-0-507" class="d">-									else
+</a><a href="#h1-0-508" id="h1-0-508" class="d">-										key &lt;= 16&#39;h007a;  // z
+</a><a href="#h1-0-509" id="h1-0-509" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-510" id="h1-0-510" class="d">-								end
+</a><a href="#h1-0-511" id="h1-0-511" class="d">-							8&#39;h22 : begin
+</a><a href="#h1-0-512" id="h1-0-512" class="d">-									if (mods[0])
+</a><a href="#h1-0-513" id="h1-0-513" class="d">-										key &lt;= 16&#39;h0058;  // X
+</a><a href="#h1-0-514" id="h1-0-514" class="d">-									else
+</a><a href="#h1-0-515" id="h1-0-515" class="d">-										key &lt;= 16&#39;h0078;  // x
+</a><a href="#h1-0-516" id="h1-0-516" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-517" id="h1-0-517" class="d">-								end
+</a><a href="#h1-0-518" id="h1-0-518" class="d">-							8&#39;h21 : begin
+</a><a href="#h1-0-519" id="h1-0-519" class="d">-									if (mods[0])
+</a><a href="#h1-0-520" id="h1-0-520" class="d">-										key &lt;= 16&#39;h0043;  // C
+</a><a href="#h1-0-521" id="h1-0-521" class="d">-									else
+</a><a href="#h1-0-522" id="h1-0-522" class="d">-										key &lt;= 16&#39;h0063;  // c
+</a><a href="#h1-0-523" id="h1-0-523" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-524" id="h1-0-524" class="d">-								end
+</a><a href="#h1-0-525" id="h1-0-525" class="d">-							8&#39;h2a : begin
+</a><a href="#h1-0-526" id="h1-0-526" class="d">-									if (mods[0])
+</a><a href="#h1-0-527" id="h1-0-527" class="d">-										key &lt;= 16&#39;h0056;  // V
+</a><a href="#h1-0-528" id="h1-0-528" class="d">-									else
+</a><a href="#h1-0-529" id="h1-0-529" class="d">-										key &lt;= 16&#39;h0076;  // v
+</a><a href="#h1-0-530" id="h1-0-530" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-531" id="h1-0-531" class="d">-								end
+</a><a href="#h1-0-532" id="h1-0-532" class="d">-							8&#39;h32 : begin
+</a><a href="#h1-0-533" id="h1-0-533" class="d">-									if (mods[0])
+</a><a href="#h1-0-534" id="h1-0-534" class="d">-										key &lt;= 16&#39;h0042;  // B
+</a><a href="#h1-0-535" id="h1-0-535" class="d">-									else
+</a><a href="#h1-0-536" id="h1-0-536" class="d">-										key &lt;= 16&#39;h0062;  // b
+</a><a href="#h1-0-537" id="h1-0-537" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-538" id="h1-0-538" class="d">-								end
+</a><a href="#h1-0-539" id="h1-0-539" class="d">-							8&#39;h31 : begin
+</a><a href="#h1-0-540" id="h1-0-540" class="d">-									if (mods[0])
+</a><a href="#h1-0-541" id="h1-0-541" class="d">-										key &lt;= 16&#39;h004e;  // N
+</a><a href="#h1-0-542" id="h1-0-542" class="d">-									else
+</a><a href="#h1-0-543" id="h1-0-543" class="d">-										key &lt;= 16&#39;h006e;  // n
+</a><a href="#h1-0-544" id="h1-0-544" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-545" id="h1-0-545" class="d">-								end
+</a><a href="#h1-0-546" id="h1-0-546" class="d">-							8&#39;h3a : begin
+</a><a href="#h1-0-547" id="h1-0-547" class="d">-									if (mods[0])
+</a><a href="#h1-0-548" id="h1-0-548" class="d">-										key &lt;= 16&#39;h004d;  // M
+</a><a href="#h1-0-549" id="h1-0-549" class="d">-									else
+</a><a href="#h1-0-550" id="h1-0-550" class="d">-										key &lt;= 16&#39;h006d;  // m
+</a><a href="#h1-0-551" id="h1-0-551" class="d">-									start &lt;= 1&#39;b1;
+</a><a href="#h1-0-552" id="h1-0-552" class="d">-								end
+</a><a href="#h1-0-553" id="h1-0-553" class="d">-							default:
+</a><a href="#h1-0-554" id="h1-0-554" class="d">-								start &lt;= 1&#39;b0;
+</a><a href="#h1-0-555" id="h1-0-555" class="d">-						endcase
+</a><a href="#h1-0-556" id="h1-0-556" class="d">-				endcase
+</a><a href="#h1-0-557" id="h1-0-557" class="d">-			end else
+</a><a href="#h1-0-558" id="h1-0-558" class="d">-				start &lt;= 1&#39;b0;
+</a><a href="#h1-0-559" id="h1-0-559" class="d">-	 
+</a><a href="#h1-0-560" id="h1-0-560" class="d">-		always @(posedge clk) begin
+</a><a href="#h1-0-561" id="h1-0-561" class="d">-			if (start == 1&#39;b1) begin
+</a><a href="#h1-0-562" id="h1-0-562" class="d">-				keycode_valid &lt;= 1&#39;b1;
+</a><a href="#h1-0-563" id="h1-0-563" class="d">-			end
+</a><a href="#h1-0-564" id="h1-0-564" class="d">-			else begin 
+</a><a href="#h1-0-565" id="h1-0-565" class="d">-				if (keycode_recv == 1&#39;b1) begin
+</a><a href="#h1-0-566" id="h1-0-566" class="d">-					keycode_valid &lt;= 1&#39;b0;
+</a><a href="#h1-0-567" id="h1-0-567" class="d">-				end
+</a><a href="#h1-0-568" id="h1-0-568" class="d">-			end
+</a><a href="#h1-0-569" id="h1-0-569" class="d">-		end
+</a><a href="#h1-0-570" id="h1-0-570" class="d">-		
+</a><a href="#h1-0-571" id="h1-0-571" class="d">-	endmodule
+</a><a href="#h1-0-572" id="h1-0-572" class="d">-	`
+</a><a href="#h1-0-573" id="h1-0-573" class="d">-	return result
+</a><a href="#h1-0-574" id="h1-0-574" class="d">-}
+</a><a href="#h1-0-575" id="h1-0-575" class="d">-
+</a><a href="#h1-0-576" id="h1-0-576" class="d">-func (sl *Ps2KeyboardExtra) ExtraFiles() ([]string, []string) {
+</a><a href="#h1-0-577" id="h1-0-577" class="d">-	return []string{}, []string{}
+</a><a href="#h1-0-578" id="h1-0-578" class="d">-}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bondmachine/exmod_ps2keyboardio.go.html">pkg/bondmachine/exmod_ps2keyboardio.go</a> b/<a href="../file/pkg/bondmachine/exmod_ps2keyboardio.go.html">pkg/bondmachine/exmod_ps2keyboardio.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,579 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bondmachine
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;encoding/json&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;errors&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+type Ps2KeyboardIoExtra struct {
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	MappedInput string
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+}
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+func (sl *Ps2KeyboardIoExtra) Get_Name() string {
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	return &quot;ps2keyboard&quot;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+}
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+func (sl *Ps2KeyboardIoExtra) Get_Params() *ExtraParams {
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	result := new(ExtraParams)
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	result.Params = map[string]string{&quot;mapped_input&quot;: sl.MappedInput}
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	return result
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+}
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+func (sl *Ps2KeyboardIoExtra) Import(inp string) error {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	if err := json.Unmarshal([]byte(inp), sl); err != nil {
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+		return errors.New(&quot;Unmarshalling failed&quot;)
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	}
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	return nil
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+}
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+func (sl *Ps2KeyboardIoExtra) Export() string {
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	b, _ := json.Marshal(sl)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	return string(b)
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+}
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+func (sl *Ps2KeyboardIoExtra) Check(bmach *Bondmachine) error {
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	return nil
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+}
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+func (sl *Ps2KeyboardIoExtra) Verilog_headers() string {
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+}
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+func (sl *Ps2KeyboardIoExtra) StaticVerilog() string {
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+	result := &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	result += `
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+module debouncer(
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+    input clk,
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+    input I,
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+    output reg O
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+    );
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+    parameter COUNT_MAX=255, COUNT_WIDTH=8;
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+    reg [COUNT_WIDTH-1:0] count;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+    reg Iv=0;
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+    always@(posedge clk)
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+        if (I == Iv) begin
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+            if (count == COUNT_MAX)
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+                O &lt;= I;
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+            else
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+                count &lt;= count + 1&#39;b1;
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+        end else begin
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+            count &lt;= &#39;b0;
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+            Iv &lt;= I;
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+        end
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+endmodule
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+	`
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+	result += `
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+module PS2Receiver(
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+	input clk,
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	input kclk,
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+	input kdata,
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+	output reg [15:0] keycode=0,
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+	output reg oflag
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+	);
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+		
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+	wire kclkf, kdataf;
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+	reg [7:0]datacur=0;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+	reg [7:0]dataprev=0;
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+	reg [3:0]cnt=0;
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+	reg flag=0;
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+		
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+	debouncer #(
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+		.COUNT_MAX(19),
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+		.COUNT_WIDTH(5)
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+	) db_clk(
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+		.clk(clk),
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+		.I(kclk),
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+		.O(kclkf)
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	);
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	debouncer #(
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+	   .COUNT_MAX(19),
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+	   .COUNT_WIDTH(5)
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+	) db_data(
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+		.clk(clk),
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+		.I(kdata),
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+		.O(kdataf)
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+	);
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+		
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+	always@(negedge(kclkf))begin
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+		case(cnt)
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+		0:;//Start bit
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+		1:datacur[0]&lt;=kdataf;
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+		2:datacur[1]&lt;=kdataf;
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+		3:datacur[2]&lt;=kdataf;
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+		4:datacur[3]&lt;=kdataf;
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+		5:datacur[4]&lt;=kdataf;
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+		6:datacur[5]&lt;=kdataf;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+		7:datacur[6]&lt;=kdataf;
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+		8:datacur[7]&lt;=kdataf;
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+		9:flag&lt;=1&#39;b1;
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+		10:flag&lt;=1&#39;b0;
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+		
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+		endcase
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+			if(cnt&lt;=9) cnt&lt;=cnt+1;
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+			else if(cnt==10) cnt&lt;=0;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+	end
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+	
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+	reg pflag;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+	always@(posedge clk) begin
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+		if (flag == 1&#39;b1 &amp;&amp; pflag == 1&#39;b0) begin
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+			keycode &lt;= {dataprev, datacur};
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+			oflag &lt;= 1&#39;b1;
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+			dataprev &lt;= datacur;
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+		end else
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+			oflag &lt;= &#39;b0;
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+		pflag &lt;= flag;
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+	end
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+	
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+endmodule
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+	`
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+	result += &quot;\n`timescale 1ns / 1ps\n&quot;
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+	result += `
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+	module bondkeydrv(
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+		input       clk,
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+		input       PS2Data,
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+		input       PS2Clk,
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+		output reg  [15:0] key,
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+		output reg  keycode_valid,
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+		input       keycode_recv
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+	);
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+	
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+		reg         start=0;
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+		reg         CLK50MHZ=0;
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+		wire [15:0] keycode;
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+		reg [15:0] keycodev;
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+		wire        flag;
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+		reg         cn=0;
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+	
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+		reg [5:0]	mods; // 0 Shift - 1 Ctrl - 3 Alt
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+		always @(posedge(clk))begin
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+			CLK50MHZ&lt;=~CLK50MHZ;
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+		end
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+		
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+		PS2Receiver uut (
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+			.clk(CLK50MHZ),
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+			.kclk(PS2Clk),
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+			.kdata(PS2Data),
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+			.keycode(keycode),
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+			.oflag(flag)
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+		);
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+		
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+		always@(keycode)
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+			if (keycode[7:0] == 8&#39;hf0) begin
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+				cn &lt;= 1&#39;b0;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+			end else if (keycode[15:8] == 8&#39;hf0) begin
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+				cn &lt;= keycode != keycodev;
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+			end else begin
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+				cn &lt;= keycode[7:0] != keycodev[7:0] || keycodev[15:8] == 8&#39;hf0;
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+			end
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+		
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+		always @(posedge clk)
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+			if (flag == 1&#39;b1 &amp;&amp; cn == 1&#39;b1) begin
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+				keycodev &lt;= keycode;
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+				case (keycode[15:8])
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+					8&#39;hf0: // Break Codes
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+						case (keycode[7:0])
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+							// Modificators
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+							8&#39;h12 : begin // Left Shift
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+									mods[0] &lt;= 1&#39;b0;
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+									start &lt;= 1&#39;b0;
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+								end
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+							8&#39;h59 : begin // Right Shift
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+									mods[0] &lt;= 1&#39;b0;
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+									start &lt;= 1&#39;b0;
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+								end
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+							default:
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+								start &lt;= 1&#39;b0;
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+						endcase
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+					default: // Make Codes
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+						case (keycode[7:0])
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+							// Modificators
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+							8&#39;h12 : begin // Left Shift
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+									mods[0] &lt;= 1&#39;b1;
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+									start &lt;= 1&#39;b0;
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+								end
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+							8&#39;h59 : begin // Right Shift
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+									mods[0] &lt;= 1&#39;b1;
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+									start &lt;= 1&#39;b0;
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+								end
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+							// Special
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+							8&#39;h29 : begin
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+									key &lt;= 16&#39;h0020;  // Space
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+								end
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+							8&#39;h5a : begin
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+									key &lt;= 16&#39;h000d;  // Enter
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+								end
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+							8&#39;h76 : begin
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+									key &lt;= 16&#39;h001b;  // Escape
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+								end
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+							8&#39;h66 : begin
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+									key &lt;= 16&#39;h0008;  // Backspace
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+								end
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+							8&#39;h0d : begin
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+									key &lt;= 16&#39;h000b;  // Tab
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+								end
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+							8&#39;h52 : begin
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+									if (mods[0])
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+										key &lt;= 16&#39;h0022;  // &quot;
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+									else
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+										key &lt;= 16&#39;h0027;  // &#39;
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+								end
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+							8&#39;h4c : begin
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+									if (mods[0])
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+										key &lt;= 16&#39;h003a;  // :
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+									else
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+										key &lt;= 16&#39;h003b;  // ;
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+								end
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+							8&#39;h54 : begin
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+									if (mods[0])
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+										key &lt;= 16&#39;h007b;  // {
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+									else
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+										key &lt;= 16&#39;h005b;  // [
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+								end
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+							8&#39;h5b : begin
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+									if (mods[0])
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+										key &lt;= 16&#39;h007d;  // }
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+									else
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+										key &lt;= 16&#39;h005d;  // ]
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+								end
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+							8&#39;h0e : begin
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+									if (mods[0])
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+										key &lt;= 16&#39;h007e;  // ~
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+									else
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+										key &lt;= 16&#39;h0060;  // reverse &#39;
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+								end
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+							8&#39;h5d : begin
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+									if (mods[0])
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+										key &lt;= 16&#39;h007c;  // |
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+									else
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+										key &lt;= 16&#39;h005c;  // \
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+								end
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+							8&#39;h4e : begin
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+									if (mods[0])
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+										key &lt;= 16&#39;h005f;  // _
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+									else
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+										key &lt;= 16&#39;h002d;  // -
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+								end
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+							8&#39;h55 : begin
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+									if (mods[0])
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+										key &lt;= 16&#39;h002b;  // +
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+									else
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+										key &lt;= 16&#39;h003d;  // =
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+								end
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+							8&#39;h4a : begin
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+									if (mods[0])
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+										key &lt;= 16&#39;h003f;  // ?
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+									else
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+										key &lt;= 16&#39;h002f;  // /
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+								end
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+							8&#39;h41 : begin
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+									if (mods[0])
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+										key &lt;= 16&#39;h003c;  // &lt;
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+									else
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+										key &lt;= 16&#39;h002c;  // ,
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+								end
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+							8&#39;h49 : begin
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+									if (mods[0])
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+										key &lt;= 16&#39;h003e;  // &gt;
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+									else
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+										key &lt;= 16&#39;h002e;  // .
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+								end
+</a><a href="#h2-0-299" id="h2-0-299" class="i">+							// Numbers 0-9
+</a><a href="#h2-0-300" id="h2-0-300" class="i">+							8&#39;h45 : begin
+</a><a href="#h2-0-301" id="h2-0-301" class="i">+									if (mods[0])
+</a><a href="#h2-0-302" id="h2-0-302" class="i">+										key &lt;= 16&#39;h0029;  // )
+</a><a href="#h2-0-303" id="h2-0-303" class="i">+									else
+</a><a href="#h2-0-304" id="h2-0-304" class="i">+										key &lt;= 16&#39;h0030;  // 0
+</a><a href="#h2-0-305" id="h2-0-305" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-306" id="h2-0-306" class="i">+								end
+</a><a href="#h2-0-307" id="h2-0-307" class="i">+							8&#39;h16 : begin
+</a><a href="#h2-0-308" id="h2-0-308" class="i">+									if (mods[0])
+</a><a href="#h2-0-309" id="h2-0-309" class="i">+										key &lt;= 16&#39;h0021;  // !
+</a><a href="#h2-0-310" id="h2-0-310" class="i">+									else
+</a><a href="#h2-0-311" id="h2-0-311" class="i">+										key &lt;= 16&#39;h0031;  // 1
+</a><a href="#h2-0-312" id="h2-0-312" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-313" id="h2-0-313" class="i">+								end
+</a><a href="#h2-0-314" id="h2-0-314" class="i">+							8&#39;h1e : begin
+</a><a href="#h2-0-315" id="h2-0-315" class="i">+									if (mods[0])
+</a><a href="#h2-0-316" id="h2-0-316" class="i">+										key &lt;= 16&#39;h0040;  // @
+</a><a href="#h2-0-317" id="h2-0-317" class="i">+									else
+</a><a href="#h2-0-318" id="h2-0-318" class="i">+										key &lt;= 16&#39;h0032;  // 2
+</a><a href="#h2-0-319" id="h2-0-319" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-320" id="h2-0-320" class="i">+								end
+</a><a href="#h2-0-321" id="h2-0-321" class="i">+							8&#39;h26 : begin
+</a><a href="#h2-0-322" id="h2-0-322" class="i">+									if (mods[0])
+</a><a href="#h2-0-323" id="h2-0-323" class="i">+										key &lt;= 16&#39;h0023;  // #
+</a><a href="#h2-0-324" id="h2-0-324" class="i">+									else
+</a><a href="#h2-0-325" id="h2-0-325" class="i">+										key &lt;= 16&#39;h0033;  // 3
+</a><a href="#h2-0-326" id="h2-0-326" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-327" id="h2-0-327" class="i">+								end
+</a><a href="#h2-0-328" id="h2-0-328" class="i">+							8&#39;h25 : begin
+</a><a href="#h2-0-329" id="h2-0-329" class="i">+									if (mods[0])
+</a><a href="#h2-0-330" id="h2-0-330" class="i">+										key &lt;= 16&#39;h0024;  // $
+</a><a href="#h2-0-331" id="h2-0-331" class="i">+									else
+</a><a href="#h2-0-332" id="h2-0-332" class="i">+										key &lt;= 16&#39;h0034;  // 4
+</a><a href="#h2-0-333" id="h2-0-333" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-334" id="h2-0-334" class="i">+								end
+</a><a href="#h2-0-335" id="h2-0-335" class="i">+							8&#39;h2e : begin
+</a><a href="#h2-0-336" id="h2-0-336" class="i">+									if (mods[0])
+</a><a href="#h2-0-337" id="h2-0-337" class="i">+										key &lt;= 16&#39;h0025;  // %
+</a><a href="#h2-0-338" id="h2-0-338" class="i">+									else
+</a><a href="#h2-0-339" id="h2-0-339" class="i">+										key &lt;= 16&#39;h0035;  // 5
+</a><a href="#h2-0-340" id="h2-0-340" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-341" id="h2-0-341" class="i">+								end
+</a><a href="#h2-0-342" id="h2-0-342" class="i">+							8&#39;h36 : begin
+</a><a href="#h2-0-343" id="h2-0-343" class="i">+									if (mods[0])
+</a><a href="#h2-0-344" id="h2-0-344" class="i">+										key &lt;= 16&#39;h005e;  // ^
+</a><a href="#h2-0-345" id="h2-0-345" class="i">+									else
+</a><a href="#h2-0-346" id="h2-0-346" class="i">+										key &lt;= 16&#39;h0036;  // 6
+</a><a href="#h2-0-347" id="h2-0-347" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-348" id="h2-0-348" class="i">+								end
+</a><a href="#h2-0-349" id="h2-0-349" class="i">+							8&#39;h3d : begin
+</a><a href="#h2-0-350" id="h2-0-350" class="i">+									if (mods[0])
+</a><a href="#h2-0-351" id="h2-0-351" class="i">+										key &lt;= 16&#39;h0026;  // &amp;
+</a><a href="#h2-0-352" id="h2-0-352" class="i">+									else
+</a><a href="#h2-0-353" id="h2-0-353" class="i">+										key &lt;= 16&#39;h0037;  // 7
+</a><a href="#h2-0-354" id="h2-0-354" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-355" id="h2-0-355" class="i">+								end
+</a><a href="#h2-0-356" id="h2-0-356" class="i">+							8&#39;h3e : begin
+</a><a href="#h2-0-357" id="h2-0-357" class="i">+									if (mods[0])
+</a><a href="#h2-0-358" id="h2-0-358" class="i">+										key &lt;= 16&#39;h002a;  // *
+</a><a href="#h2-0-359" id="h2-0-359" class="i">+									else
+</a><a href="#h2-0-360" id="h2-0-360" class="i">+										key &lt;= 16&#39;h0038;  // 8
+</a><a href="#h2-0-361" id="h2-0-361" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-362" id="h2-0-362" class="i">+								end
+</a><a href="#h2-0-363" id="h2-0-363" class="i">+							8&#39;h46 : begin
+</a><a href="#h2-0-364" id="h2-0-364" class="i">+									if (mods[0])
+</a><a href="#h2-0-365" id="h2-0-365" class="i">+										key &lt;= 16&#39;h0028;  // (
+</a><a href="#h2-0-366" id="h2-0-366" class="i">+									else
+</a><a href="#h2-0-367" id="h2-0-367" class="i">+										key &lt;= 16&#39;h0039;  // 9
+</a><a href="#h2-0-368" id="h2-0-368" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-369" id="h2-0-369" class="i">+								end
+</a><a href="#h2-0-370" id="h2-0-370" class="i">+							// Characters
+</a><a href="#h2-0-371" id="h2-0-371" class="i">+							8&#39;h15 : begin
+</a><a href="#h2-0-372" id="h2-0-372" class="i">+									if (mods[0])
+</a><a href="#h2-0-373" id="h2-0-373" class="i">+										key &lt;= 16&#39;h0051;  // Q
+</a><a href="#h2-0-374" id="h2-0-374" class="i">+									else
+</a><a href="#h2-0-375" id="h2-0-375" class="i">+										key &lt;= 16&#39;h0071;  // q 
+</a><a href="#h2-0-376" id="h2-0-376" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-377" id="h2-0-377" class="i">+								end
+</a><a href="#h2-0-378" id="h2-0-378" class="i">+							8&#39;h1d : begin
+</a><a href="#h2-0-379" id="h2-0-379" class="i">+									if (mods[0])
+</a><a href="#h2-0-380" id="h2-0-380" class="i">+										key &lt;= 16&#39;h0057;  // W
+</a><a href="#h2-0-381" id="h2-0-381" class="i">+									else
+</a><a href="#h2-0-382" id="h2-0-382" class="i">+										key &lt;= 16&#39;h0077;  // w
+</a><a href="#h2-0-383" id="h2-0-383" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-384" id="h2-0-384" class="i">+								end
+</a><a href="#h2-0-385" id="h2-0-385" class="i">+							8&#39;h24 : begin
+</a><a href="#h2-0-386" id="h2-0-386" class="i">+									if (mods[0])
+</a><a href="#h2-0-387" id="h2-0-387" class="i">+										key &lt;= 16&#39;h0045;  // E
+</a><a href="#h2-0-388" id="h2-0-388" class="i">+									else
+</a><a href="#h2-0-389" id="h2-0-389" class="i">+										key &lt;= 16&#39;h0065;  // e
+</a><a href="#h2-0-390" id="h2-0-390" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-391" id="h2-0-391" class="i">+								end
+</a><a href="#h2-0-392" id="h2-0-392" class="i">+							8&#39;h2d : begin
+</a><a href="#h2-0-393" id="h2-0-393" class="i">+									if (mods[0])
+</a><a href="#h2-0-394" id="h2-0-394" class="i">+										key &lt;= 16&#39;h0052;  // R
+</a><a href="#h2-0-395" id="h2-0-395" class="i">+									else
+</a><a href="#h2-0-396" id="h2-0-396" class="i">+										key &lt;= 16&#39;h0072;  // r
+</a><a href="#h2-0-397" id="h2-0-397" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-398" id="h2-0-398" class="i">+								end
+</a><a href="#h2-0-399" id="h2-0-399" class="i">+							8&#39;h2c : begin
+</a><a href="#h2-0-400" id="h2-0-400" class="i">+									if (mods[0])
+</a><a href="#h2-0-401" id="h2-0-401" class="i">+										key &lt;= 16&#39;h0054;  // T
+</a><a href="#h2-0-402" id="h2-0-402" class="i">+									else
+</a><a href="#h2-0-403" id="h2-0-403" class="i">+										key &lt;= 16&#39;h0074;  // t
+</a><a href="#h2-0-404" id="h2-0-404" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-405" id="h2-0-405" class="i">+								end
+</a><a href="#h2-0-406" id="h2-0-406" class="i">+							8&#39;h35 : begin
+</a><a href="#h2-0-407" id="h2-0-407" class="i">+									if (mods[0])
+</a><a href="#h2-0-408" id="h2-0-408" class="i">+										key &lt;= 16&#39;h0059;  // Y
+</a><a href="#h2-0-409" id="h2-0-409" class="i">+									else
+</a><a href="#h2-0-410" id="h2-0-410" class="i">+										key &lt;= 16&#39;h0079;  // y
+</a><a href="#h2-0-411" id="h2-0-411" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-412" id="h2-0-412" class="i">+								end
+</a><a href="#h2-0-413" id="h2-0-413" class="i">+							8&#39;h3c : begin
+</a><a href="#h2-0-414" id="h2-0-414" class="i">+									if (mods[0])
+</a><a href="#h2-0-415" id="h2-0-415" class="i">+										key &lt;= 16&#39;h0055;  // U
+</a><a href="#h2-0-416" id="h2-0-416" class="i">+									else
+</a><a href="#h2-0-417" id="h2-0-417" class="i">+										key &lt;= 16&#39;h0075;  // u
+</a><a href="#h2-0-418" id="h2-0-418" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-419" id="h2-0-419" class="i">+								end
+</a><a href="#h2-0-420" id="h2-0-420" class="i">+							8&#39;h43 : begin
+</a><a href="#h2-0-421" id="h2-0-421" class="i">+									if (mods[0])
+</a><a href="#h2-0-422" id="h2-0-422" class="i">+										key &lt;= 16&#39;h0049;  // I
+</a><a href="#h2-0-423" id="h2-0-423" class="i">+									else
+</a><a href="#h2-0-424" id="h2-0-424" class="i">+										key &lt;= 16&#39;h0069;  // i
+</a><a href="#h2-0-425" id="h2-0-425" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-426" id="h2-0-426" class="i">+								end
+</a><a href="#h2-0-427" id="h2-0-427" class="i">+							8&#39;h44 : begin
+</a><a href="#h2-0-428" id="h2-0-428" class="i">+									if (mods[0])
+</a><a href="#h2-0-429" id="h2-0-429" class="i">+										key &lt;= 16&#39;h004f;  // O
+</a><a href="#h2-0-430" id="h2-0-430" class="i">+									else
+</a><a href="#h2-0-431" id="h2-0-431" class="i">+										key &lt;= 16&#39;h006f;  // o
+</a><a href="#h2-0-432" id="h2-0-432" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-433" id="h2-0-433" class="i">+								end
+</a><a href="#h2-0-434" id="h2-0-434" class="i">+							8&#39;h4d : begin
+</a><a href="#h2-0-435" id="h2-0-435" class="i">+									if (mods[0])
+</a><a href="#h2-0-436" id="h2-0-436" class="i">+										key &lt;= 16&#39;h0050;  // P
+</a><a href="#h2-0-437" id="h2-0-437" class="i">+									else
+</a><a href="#h2-0-438" id="h2-0-438" class="i">+										key &lt;= 16&#39;h0070;  // p
+</a><a href="#h2-0-439" id="h2-0-439" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-440" id="h2-0-440" class="i">+								end
+</a><a href="#h2-0-441" id="h2-0-441" class="i">+							8&#39;h1c : begin
+</a><a href="#h2-0-442" id="h2-0-442" class="i">+									if (mods[0])
+</a><a href="#h2-0-443" id="h2-0-443" class="i">+										key &lt;= 16&#39;h0041;  // A
+</a><a href="#h2-0-444" id="h2-0-444" class="i">+									else
+</a><a href="#h2-0-445" id="h2-0-445" class="i">+										key &lt;= 16&#39;h0061;  // a
+</a><a href="#h2-0-446" id="h2-0-446" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-447" id="h2-0-447" class="i">+								end
+</a><a href="#h2-0-448" id="h2-0-448" class="i">+							8&#39;h1b : begin
+</a><a href="#h2-0-449" id="h2-0-449" class="i">+									if (mods[0])
+</a><a href="#h2-0-450" id="h2-0-450" class="i">+										key &lt;= 16&#39;h0053;  // S
+</a><a href="#h2-0-451" id="h2-0-451" class="i">+									else
+</a><a href="#h2-0-452" id="h2-0-452" class="i">+										key &lt;= 16&#39;h0073;  // s
+</a><a href="#h2-0-453" id="h2-0-453" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-454" id="h2-0-454" class="i">+								end
+</a><a href="#h2-0-455" id="h2-0-455" class="i">+							8&#39;h23 : begin
+</a><a href="#h2-0-456" id="h2-0-456" class="i">+									if (mods[0])
+</a><a href="#h2-0-457" id="h2-0-457" class="i">+										key &lt;= 16&#39;h0044;  // D
+</a><a href="#h2-0-458" id="h2-0-458" class="i">+									else
+</a><a href="#h2-0-459" id="h2-0-459" class="i">+										key &lt;= 16&#39;h0064;  // d
+</a><a href="#h2-0-460" id="h2-0-460" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-461" id="h2-0-461" class="i">+								end
+</a><a href="#h2-0-462" id="h2-0-462" class="i">+							8&#39;h2b : begin
+</a><a href="#h2-0-463" id="h2-0-463" class="i">+									if (mods[0])
+</a><a href="#h2-0-464" id="h2-0-464" class="i">+										key &lt;= 16&#39;h0046;  // F
+</a><a href="#h2-0-465" id="h2-0-465" class="i">+									else
+</a><a href="#h2-0-466" id="h2-0-466" class="i">+										key &lt;= 16&#39;h0066;  // f
+</a><a href="#h2-0-467" id="h2-0-467" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-468" id="h2-0-468" class="i">+								end
+</a><a href="#h2-0-469" id="h2-0-469" class="i">+							8&#39;h34 : begin
+</a><a href="#h2-0-470" id="h2-0-470" class="i">+									if (mods[0])
+</a><a href="#h2-0-471" id="h2-0-471" class="i">+										key &lt;= 16&#39;h0047;  // G
+</a><a href="#h2-0-472" id="h2-0-472" class="i">+									else
+</a><a href="#h2-0-473" id="h2-0-473" class="i">+										key &lt;= 16&#39;h0067;  // g
+</a><a href="#h2-0-474" id="h2-0-474" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-475" id="h2-0-475" class="i">+								end
+</a><a href="#h2-0-476" id="h2-0-476" class="i">+							8&#39;h33 : begin
+</a><a href="#h2-0-477" id="h2-0-477" class="i">+									if (mods[0])
+</a><a href="#h2-0-478" id="h2-0-478" class="i">+										key &lt;= 16&#39;h0048;  // H
+</a><a href="#h2-0-479" id="h2-0-479" class="i">+									else
+</a><a href="#h2-0-480" id="h2-0-480" class="i">+										key &lt;= 16&#39;h0068;  // h 
+</a><a href="#h2-0-481" id="h2-0-481" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-482" id="h2-0-482" class="i">+								end
+</a><a href="#h2-0-483" id="h2-0-483" class="i">+							8&#39;h3b : begin
+</a><a href="#h2-0-484" id="h2-0-484" class="i">+									if (mods[0])
+</a><a href="#h2-0-485" id="h2-0-485" class="i">+										key &lt;= 16&#39;h004a;  // J
+</a><a href="#h2-0-486" id="h2-0-486" class="i">+									else
+</a><a href="#h2-0-487" id="h2-0-487" class="i">+										key &lt;= 16&#39;h006a;  // j
+</a><a href="#h2-0-488" id="h2-0-488" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-489" id="h2-0-489" class="i">+								end
+</a><a href="#h2-0-490" id="h2-0-490" class="i">+							8&#39;h42 : begin
+</a><a href="#h2-0-491" id="h2-0-491" class="i">+									if (mods[0])
+</a><a href="#h2-0-492" id="h2-0-492" class="i">+										key &lt;= 16&#39;h004b;  // K
+</a><a href="#h2-0-493" id="h2-0-493" class="i">+									else
+</a><a href="#h2-0-494" id="h2-0-494" class="i">+										key &lt;= 16&#39;h006b;  // k
+</a><a href="#h2-0-495" id="h2-0-495" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-496" id="h2-0-496" class="i">+								end
+</a><a href="#h2-0-497" id="h2-0-497" class="i">+							8&#39;h4b : begin
+</a><a href="#h2-0-498" id="h2-0-498" class="i">+									if (mods[0])
+</a><a href="#h2-0-499" id="h2-0-499" class="i">+										key &lt;= 16&#39;h004c;  // L
+</a><a href="#h2-0-500" id="h2-0-500" class="i">+									else
+</a><a href="#h2-0-501" id="h2-0-501" class="i">+										key &lt;= 16&#39;h006c;  // l
+</a><a href="#h2-0-502" id="h2-0-502" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-503" id="h2-0-503" class="i">+								end
+</a><a href="#h2-0-504" id="h2-0-504" class="i">+							8&#39;h1a : begin
+</a><a href="#h2-0-505" id="h2-0-505" class="i">+									if (mods[0])
+</a><a href="#h2-0-506" id="h2-0-506" class="i">+										key &lt;= 16&#39;h005a;  // Z
+</a><a href="#h2-0-507" id="h2-0-507" class="i">+									else
+</a><a href="#h2-0-508" id="h2-0-508" class="i">+										key &lt;= 16&#39;h007a;  // z
+</a><a href="#h2-0-509" id="h2-0-509" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-510" id="h2-0-510" class="i">+								end
+</a><a href="#h2-0-511" id="h2-0-511" class="i">+							8&#39;h22 : begin
+</a><a href="#h2-0-512" id="h2-0-512" class="i">+									if (mods[0])
+</a><a href="#h2-0-513" id="h2-0-513" class="i">+										key &lt;= 16&#39;h0058;  // X
+</a><a href="#h2-0-514" id="h2-0-514" class="i">+									else
+</a><a href="#h2-0-515" id="h2-0-515" class="i">+										key &lt;= 16&#39;h0078;  // x
+</a><a href="#h2-0-516" id="h2-0-516" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-517" id="h2-0-517" class="i">+								end
+</a><a href="#h2-0-518" id="h2-0-518" class="i">+							8&#39;h21 : begin
+</a><a href="#h2-0-519" id="h2-0-519" class="i">+									if (mods[0])
+</a><a href="#h2-0-520" id="h2-0-520" class="i">+										key &lt;= 16&#39;h0043;  // C
+</a><a href="#h2-0-521" id="h2-0-521" class="i">+									else
+</a><a href="#h2-0-522" id="h2-0-522" class="i">+										key &lt;= 16&#39;h0063;  // c
+</a><a href="#h2-0-523" id="h2-0-523" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-524" id="h2-0-524" class="i">+								end
+</a><a href="#h2-0-525" id="h2-0-525" class="i">+							8&#39;h2a : begin
+</a><a href="#h2-0-526" id="h2-0-526" class="i">+									if (mods[0])
+</a><a href="#h2-0-527" id="h2-0-527" class="i">+										key &lt;= 16&#39;h0056;  // V
+</a><a href="#h2-0-528" id="h2-0-528" class="i">+									else
+</a><a href="#h2-0-529" id="h2-0-529" class="i">+										key &lt;= 16&#39;h0076;  // v
+</a><a href="#h2-0-530" id="h2-0-530" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-531" id="h2-0-531" class="i">+								end
+</a><a href="#h2-0-532" id="h2-0-532" class="i">+							8&#39;h32 : begin
+</a><a href="#h2-0-533" id="h2-0-533" class="i">+									if (mods[0])
+</a><a href="#h2-0-534" id="h2-0-534" class="i">+										key &lt;= 16&#39;h0042;  // B
+</a><a href="#h2-0-535" id="h2-0-535" class="i">+									else
+</a><a href="#h2-0-536" id="h2-0-536" class="i">+										key &lt;= 16&#39;h0062;  // b
+</a><a href="#h2-0-537" id="h2-0-537" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-538" id="h2-0-538" class="i">+								end
+</a><a href="#h2-0-539" id="h2-0-539" class="i">+							8&#39;h31 : begin
+</a><a href="#h2-0-540" id="h2-0-540" class="i">+									if (mods[0])
+</a><a href="#h2-0-541" id="h2-0-541" class="i">+										key &lt;= 16&#39;h004e;  // N
+</a><a href="#h2-0-542" id="h2-0-542" class="i">+									else
+</a><a href="#h2-0-543" id="h2-0-543" class="i">+										key &lt;= 16&#39;h006e;  // n
+</a><a href="#h2-0-544" id="h2-0-544" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-545" id="h2-0-545" class="i">+								end
+</a><a href="#h2-0-546" id="h2-0-546" class="i">+							8&#39;h3a : begin
+</a><a href="#h2-0-547" id="h2-0-547" class="i">+									if (mods[0])
+</a><a href="#h2-0-548" id="h2-0-548" class="i">+										key &lt;= 16&#39;h004d;  // M
+</a><a href="#h2-0-549" id="h2-0-549" class="i">+									else
+</a><a href="#h2-0-550" id="h2-0-550" class="i">+										key &lt;= 16&#39;h006d;  // m
+</a><a href="#h2-0-551" id="h2-0-551" class="i">+									start &lt;= 1&#39;b1;
+</a><a href="#h2-0-552" id="h2-0-552" class="i">+								end
+</a><a href="#h2-0-553" id="h2-0-553" class="i">+							default:
+</a><a href="#h2-0-554" id="h2-0-554" class="i">+								start &lt;= 1&#39;b0;
+</a><a href="#h2-0-555" id="h2-0-555" class="i">+						endcase
+</a><a href="#h2-0-556" id="h2-0-556" class="i">+				endcase
+</a><a href="#h2-0-557" id="h2-0-557" class="i">+			end else
+</a><a href="#h2-0-558" id="h2-0-558" class="i">+				start &lt;= 1&#39;b0;
+</a><a href="#h2-0-559" id="h2-0-559" class="i">+	 
+</a><a href="#h2-0-560" id="h2-0-560" class="i">+		always @(posedge clk) begin
+</a><a href="#h2-0-561" id="h2-0-561" class="i">+			if (start == 1&#39;b1) begin
+</a><a href="#h2-0-562" id="h2-0-562" class="i">+				keycode_valid &lt;= 1&#39;b1;
+</a><a href="#h2-0-563" id="h2-0-563" class="i">+			end
+</a><a href="#h2-0-564" id="h2-0-564" class="i">+			else begin 
+</a><a href="#h2-0-565" id="h2-0-565" class="i">+				if (keycode_recv == 1&#39;b1) begin
+</a><a href="#h2-0-566" id="h2-0-566" class="i">+					keycode_valid &lt;= 1&#39;b0;
+</a><a href="#h2-0-567" id="h2-0-567" class="i">+				end
+</a><a href="#h2-0-568" id="h2-0-568" class="i">+			end
+</a><a href="#h2-0-569" id="h2-0-569" class="i">+		end
+</a><a href="#h2-0-570" id="h2-0-570" class="i">+		
+</a><a href="#h2-0-571" id="h2-0-571" class="i">+	endmodule
+</a><a href="#h2-0-572" id="h2-0-572" class="i">+	`
+</a><a href="#h2-0-573" id="h2-0-573" class="i">+	return result
+</a><a href="#h2-0-574" id="h2-0-574" class="i">+}
+</a><a href="#h2-0-575" id="h2-0-575" class="i">+
+</a><a href="#h2-0-576" id="h2-0-576" class="i">+func (sl *Ps2KeyboardIoExtra) ExtraFiles() ([]string, []string) {
+</a><a href="#h2-0-577" id="h2-0-577" class="i">+	return []string{}, []string{}
+</a><a href="#h2-0-578" id="h2-0-578" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

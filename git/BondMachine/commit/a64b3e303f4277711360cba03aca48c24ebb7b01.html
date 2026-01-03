@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>brvga improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a64b3e303f4277711360cba03aca48c24ebb7b01.html">a64b3e303f4277711360cba03aca48c24ebb7b01</a>
+<b>parent</b> <a href="../commit/e7de370735dec03a1da7f92787657b8b0c0c7290.html">e7de370735dec03a1da7f92787657b8b0c0c7290</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  7 Sep 2022 19:40:08 +0200
+
+brvga improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">brvga/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">66</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 61 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a> b/<a href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,6 +3,8 @@ package brvgasdl
+</a> import (
+ 	&quot;bufio&quot;
+ 	&quot;encoding/hex&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;image&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;image/color&quot;
+</a> 	&quot;os&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -16,7 +18,7 @@ type Header struct {
+</a> 
+ type Fonts struct {
+ 	fonts  []byte
+<a href="#h0-1-3" id="h0-1-3" class="d">-	images map[byte]canvas.Image
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	images map[byte]*image.RGBA
+</a> }
+ 
+ type BrvgaSdl struct {
+<a href="#h0-2" id="h0-2" class="h">@@ -49,6 +51,29 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 	result.Fonts = new(Fonts)
+ 	result.Fonts.fonts = make([]byte, 0)
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	// Allocate the header array
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	result.Header = new(Header)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	result.Header.header = make([]byte, 0)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	// Read the header
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	headerFile, err := os.Open(headerPath)
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	if err != nil {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		return nil, err
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	defer headerFile.Close()
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	headerReader := bufio.NewScanner(headerFile)
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	for headerReader.Scan() {
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		if line := headerReader.Text(); len(line) &gt; 0 {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+			if line[:2] == &quot;0x&quot; {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+				hexString := line[2:]
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+				if decoded, err := hex.DecodeString(hexString); err == nil {
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+					result.header = append(result.header, decoded...)
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				}
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+			}
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		}
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+	}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+
+</a> 	// Read the fonts file
+ 	fontsFile, err := os.Open(fontsPath)
+ 	if err != nil {
+<a href="#h0-3" id="h0-3" class="h">@@ -56,9 +81,9 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 	}
+ 	defer fontsFile.Close()
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	scanner := bufio.NewScanner(fontsFile)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	for scanner.Scan() {
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		if line := scanner.Text(); len(line) &gt; 0 {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	fontsReader := bufio.NewScanner(fontsFile)
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	for fontsReader.Scan() {
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		if line := fontsReader.Text(); len(line) &gt; 0 {
+</a> 
+ 			if line[:2] == &quot;0x&quot; {
+ 				hexString := line[2:]
+<a href="#h0-4" id="h0-4" class="h">@@ -69,11 +94,26 @@ func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, 
+</a> 		}
+ 	}
+ 
+<a href="#h0-4-3" id="h0-4-3" class="i">+	result.images = make(map[byte]*image.RGBA)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+
+</a> 	// Load 8x8 fonts
+ 	for c := 0; c &lt; 128; c++ {
+<a href="#h0-4-7" id="h0-4-7" class="i">+
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		newChar := image.NewRGBA(image.Rectangle{Max: image.Point{X: 8, Y: 8}})
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+
+</a> 		for i := 0; i &lt; 8; i++ {
+<a href="#h0-4-11" id="h0-4-11" class="d">-			// charLine := result.Fonts.fonts[c*8+i]
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+			charLine := result.Fonts.fonts[c*8+i]
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+			for j := 0; j &lt; 8; j++ {
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+				if charLine&amp;byte((1&lt;&lt;j)) &gt; 0 {
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+					newChar.Set(j, i, color.White)
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+				} else {
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+					newChar.Set(j, i, color.Black)
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+				}
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+			}
+</a> 		}
+<a href="#h0-4-22" id="h0-4-22" class="i">+
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+		result.Fonts.images[byte(c)] = newChar
+</a> 	}
+ 
+ 	return result, nil
+<a href="#h0-5" id="h0-5" class="h">@@ -87,6 +127,22 @@ func (b *BrvgaSdl) Run() {
+</a> 		cv.SetFillStyle(&quot;#000000&quot;)
+ 		cv.FillRect(0, 0, w, h)
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+		for i := 0; i &lt; len(b.header); i++ {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			cv.DrawImage(b.Fonts.images[b.header[i]], 1+float64(i*8), 1)
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		}
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		for i, cp := range b.BrvgaTextMemory.Cps {
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+			switch i % 3 {
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+			case 0:
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+				cv.SetStrokeStyle(&quot;#ff0000&quot;)
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+			case 1:
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+				cv.SetStrokeStyle(&quot;#00ff00&quot;)
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+			case 2:
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+				cv.SetStrokeStyle(&quot;#0000ff&quot;)
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+			}
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+			cv.StrokeRect(8*float64(cp.LeftPos), 8*float64(cp.TopPos), 8*float64(cp.Width), 8*float64(cp.Height))
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+		}
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+
+</a> 		// for r := 0.0; r &lt; math.Pi*2; r += math.Pi * 0.1 {
+ 		// 	cv.SetFillStyle(int(r*10), int(r*20), int(r*40))
+ 		// 	cv.BeginPath()
+</pre>
+</div>
+</body>
+</html>

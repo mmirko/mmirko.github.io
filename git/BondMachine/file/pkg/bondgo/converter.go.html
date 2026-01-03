@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>converter.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> converter.go (22132B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondgo
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;errors&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;fmt&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;sort&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strconv&quot;
+<a href="#l8" class="line" id="l8">      8</a> 	&quot;strings&quot;
+<a href="#l9" class="line" id="l9">      9</a> 
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bondmachine&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/etherbond&quot;
+<a href="#l12" class="line" id="l12">     12</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+<a href="#l13" class="line" id="l13">     13</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/udpbond&quot;
+<a href="#l14" class="line" id="l14">     14</a> )
+<a href="#l15" class="line" id="l15">     15</a> 
+<a href="#l16" class="line" id="l16">     16</a> func (bg *BondgoCheck) Create_Connecting_Processor(rsize int, procid int) (*procbuilder.Machine, bool) {
+<a href="#l17" class="line" id="l17">     17</a> 	mymachine := new(procbuilder.Machine)
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a> 	myarch := &amp;mymachine.Arch
+<a href="#l20" class="line" id="l20">     20</a> 
+<a href="#l21" class="line" id="l21">     21</a> 	myarch.Rsize = uint8(rsize)
+<a href="#l22" class="line" id="l22">     22</a> 
+<a href="#l23" class="line" id="l23">     23</a> 	myarch.Modes = make([]string, 1)
+<a href="#l24" class="line" id="l24">     24</a> 	myarch.Modes[0] = &quot;ha&quot;
+<a href="#l25" class="line" id="l25">     25</a> 
+<a href="#l26" class="line" id="l26">     26</a> 	preq := bg.Procr[procid]
+<a href="#l27" class="line" id="l27">     27</a> 
+<a href="#l28" class="line" id="l28">     28</a> 	opcodes := make([]procbuilder.Opcode, 0)
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> 	for _, op := range procbuilder.Allopcodes {
+<a href="#l31" class="line" id="l31">     31</a> 		for _, opn := range preq.Opcodes {
+<a href="#l32" class="line" id="l32">     32</a> 			if opn == op.Op_get_name() {
+<a href="#l33" class="line" id="l33">     33</a> 				opcodes = append(opcodes, op)
+<a href="#l34" class="line" id="l34">     34</a> 				break
+<a href="#l35" class="line" id="l35">     35</a> 			}
+<a href="#l36" class="line" id="l36">     36</a> 		}
+<a href="#l37" class="line" id="l37">     37</a> 	}
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> 	sort.Sort(procbuilder.ByName(opcodes))
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a> 	myarch.Op = opcodes
+<a href="#l42" class="line" id="l42">     42</a> 
+<a href="#l43" class="line" id="l43">     43</a> 	myarch.R = uint8(Needed_bits(preq.Registersize))
+<a href="#l44" class="line" id="l44">     44</a> 	myarch.L = uint8(Needed_bits(preq.Ramsize))
+<a href="#l45" class="line" id="l45">     45</a> 	myarch.N = uint8(preq.Inputs)
+<a href="#l46" class="line" id="l46">     46</a> 	myarch.M = uint8(preq.Outputs)
+<a href="#l47" class="line" id="l47">     47</a> 	myarch.O = uint8(Needed_bits(preq.Romsize))
+<a href="#l48" class="line" id="l48">     48</a> 	myarch.Shared_constraints = strings.Join(preq.SharedObjects, &quot;,&quot;)
+<a href="#l49" class="line" id="l49">     49</a> 
+<a href="#l50" class="line" id="l50">     50</a> 	prog := bg.Write_assembly(procid)
+<a href="#l51" class="line" id="l51">     51</a> 
+<a href="#l52" class="line" id="l52">     52</a> 	//fmt.Println(prog)
+<a href="#l53" class="line" id="l53">     53</a> 
+<a href="#l54" class="line" id="l54">     54</a> 	if prog, err := myarch.Assembler([]byte(prog)); err == nil {
+<a href="#l55" class="line" id="l55">     55</a> 		mymachine.Program = prog
+<a href="#l56" class="line" id="l56">     56</a> 	} else {
+<a href="#l57" class="line" id="l57">     57</a> 		fmt.Println(err)
+<a href="#l58" class="line" id="l58">     58</a> 	}
+<a href="#l59" class="line" id="l59">     59</a> 
+<a href="#l60" class="line" id="l60">     60</a> 	return mymachine, true
+<a href="#l61" class="line" id="l61">     61</a> }
+<a href="#l62" class="line" id="l62">     62</a> 
+<a href="#l63" class="line" id="l63">     63</a> func (bg *BondgoCheck) Create_Bondmachine(rsize int, filter string) (*bondmachine.Bondmachine, *bondmachine.Residual, error) {
+<a href="#l64" class="line" id="l64">     64</a> 	bmach := new(bondmachine.Bondmachine)
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 	bmach.Rsize = uint8(rsize)
+<a href="#l67" class="line" id="l67">     67</a> 
+<a href="#l68" class="line" id="l68">     68</a> 	bmach.Init()
+<a href="#l69" class="line" id="l69">     69</a> 
+<a href="#l70" class="line" id="l70">     70</a> 	if bg.Cascading_io {
+<a href="#l71" class="line" id="l71">     71</a> 		if _, ok := bmach.Add_input(); ok != nil {
+<a href="#l72" class="line" id="l72">     72</a> 			return nil, nil, errors.New(&quot;Input add failed&quot;)
+<a href="#l73" class="line" id="l73">     73</a> 		}
+<a href="#l74" class="line" id="l74">     74</a> 		if _, ok := bmach.Add_output(); ok != nil {
+<a href="#l75" class="line" id="l75">     75</a> 			fmt.Println(&quot;Output add failed&quot;)
+<a href="#l76" class="line" id="l76">     76</a> 			return nil, nil, errors.New(&quot;Output add failed&quot;)
+<a href="#l77" class="line" id="l77">     77</a> 		}
+<a href="#l78" class="line" id="l78">     78</a> 	}
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> 	// TODO Remove the fucking len with something smarter
+<a href="#l81" class="line" id="l81">     81</a> 	proc_id := 0
+<a href="#l82" class="line" id="l82">     82</a> 	rel_procids := make(map[int]int)
+<a href="#l83" class="line" id="l83">     83</a> 
+<a href="#l84" class="line" id="l84">     84</a> 	for i := 0; i &lt; len(bg.Program); i++ {
+<a href="#l85" class="line" id="l85">     85</a> 		if bg.Procr[i].Device == filter {
+<a href="#l86" class="line" id="l86">     86</a> 			if mymachine, ok := bg.Create_Connecting_Processor(rsize, i); ok {
+<a href="#l87" class="line" id="l87">     87</a> 				bmach.Domains = append(bmach.Domains, mymachine)
+<a href="#l88" class="line" id="l88">     88</a> 				if _, ok := bmach.Add_processor(proc_id); ok != nil {
+<a href="#l89" class="line" id="l89">     89</a> 					return nil, nil, errors.New(&quot;Attach processor failed&quot;)
+<a href="#l90" class="line" id="l90">     90</a> 				}
+<a href="#l91" class="line" id="l91">     91</a> 				rel_procids[i] = proc_id
+<a href="#l92" class="line" id="l92">     92</a> 				if bg.Cascading_io {
+<a href="#l93" class="line" id="l93">     93</a> 					if i == 0 {
+<a href="#l94" class="line" id="l94">     94</a> 						bmach.Add_bond([]string{&quot;i0&quot;, &quot;p0i0&quot;})
+<a href="#l95" class="line" id="l95">     95</a> 					} else if i == len(bg.Program)-1 {
+<a href="#l96" class="line" id="l96">     96</a> 						bmach.Add_bond([]string{&quot;p&quot; + strconv.Itoa(i) + &quot;i0&quot;, &quot;p&quot; + strconv.Itoa(i-1) + &quot;o0&quot;})
+<a href="#l97" class="line" id="l97">     97</a> 						bmach.Add_bond([]string{&quot;o0&quot;, &quot;p&quot; + strconv.Itoa(i) + &quot;o0&quot;})
+<a href="#l98" class="line" id="l98">     98</a> 					} else {
+<a href="#l99" class="line" id="l99">     99</a> 						bmach.Add_bond([]string{&quot;p&quot; + strconv.Itoa(i) + &quot;i0&quot;, &quot;p&quot; + strconv.Itoa(i-1) + &quot;o0&quot;})
+<a href="#l100" class="line" id="l100">    100</a> 					}
+<a href="#l101" class="line" id="l101">    101</a> 				}
+<a href="#l102" class="line" id="l102">    102</a> 				proc_id += 1
+<a href="#l103" class="line" id="l103">    103</a> 			} else {
+<a href="#l104" class="line" id="l104">    104</a> 				return nil, nil, errors.New(&quot;Creating processor failed&quot;)
+<a href="#l105" class="line" id="l105">    105</a> 			}
+<a href="#l106" class="line" id="l106">    106</a> 		}
+<a href="#l107" class="line" id="l107">    107</a> 	}
+<a href="#l108" class="line" id="l108">    108</a> 
+<a href="#l109" class="line" id="l109">    109</a> 	// Creation of the IO topology
+<a href="#l110" class="line" id="l110">    110</a> 
+<a href="#l111" class="line" id="l111">    111</a> 	unconnected_inputs := make(map[int]bool)
+<a href="#l112" class="line" id="l112">    112</a> 
+<a href="#l113" class="line" id="l113">    113</a> 	ext_input := make(map[int]string)
+<a href="#l114" class="line" id="l114">    114</a> 	ext_input_keys := make([]int, 0)
+<a href="#l115" class="line" id="l115">    115</a> 	ext_output := make(map[int]string)
+<a href="#l116" class="line" id="l116">    116</a> 	ext_output_keys := make([]int, 0)
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a> 	for i, ioref := range bg.IOr {
+<a href="#l119" class="line" id="l119">    119</a> 		if bg.Procr[i].Device == filter {
+<a href="#l120" class="line" id="l120">    120</a> 			for _, in_id := range ioref.Inputs_ids {
+<a href="#l121" class="line" id="l121">    121</a> 				if _, ok := unconnected_inputs[in_id]; !ok {
+<a href="#l122" class="line" id="l122">    122</a> 					unconnected_inputs[in_id] = true
+<a href="#l123" class="line" id="l123">    123</a> 				}
+<a href="#l124" class="line" id="l124">    124</a> 			}
+<a href="#l125" class="line" id="l125">    125</a> 		}
+<a href="#l126" class="line" id="l126">    126</a> 	}
+<a href="#l127" class="line" id="l127">    127</a> 
+<a href="#l128" class="line" id="l128">    128</a> 	for proc1_id, ioref1 := range bg.IOr {
+<a href="#l129" class="line" id="l129">    129</a> 		if bg.Procr[proc1_id].Device == filter {
+<a href="#l130" class="line" id="l130">    130</a> 			for out_ord, out_id := range ioref1.Outputs_ids {
+<a href="#l131" class="line" id="l131">    131</a> 				connected := false
+<a href="#l132" class="line" id="l132">    132</a> 				for proc2_id, ioref2 := range bg.IOr {
+<a href="#l133" class="line" id="l133">    133</a> 					if bg.Procr[proc2_id].Device == filter {
+<a href="#l134" class="line" id="l134">    134</a> 						for in_ord, in_id := range ioref2.Inputs_ids {
+<a href="#l135" class="line" id="l135">    135</a> 							if out_id == in_id {
+<a href="#l136" class="line" id="l136">    136</a> 								unconnected_inputs[in_id] = false
+<a href="#l137" class="line" id="l137">    137</a> 								connected = true
+<a href="#l138" class="line" id="l138">    138</a> 								bmach.Add_bond([]string{&quot;p&quot; + strconv.Itoa(rel_procids[proc2_id]) + &quot;i&quot; + strconv.Itoa(in_ord), &quot;p&quot; + strconv.Itoa(rel_procids[proc1_id]) + &quot;o&quot; + strconv.Itoa(out_ord)})
+<a href="#l139" class="line" id="l139">    139</a> 								//fmt.Println([]string{&quot;p&quot; + strconv.Itoa(proc2_id) + &quot;i&quot; + strconv.Itoa(in_ord), &quot;p&quot; + strconv.Itoa(proc1_id) + &quot;o&quot; + strconv.Itoa(out_ord)})
+<a href="#l140" class="line" id="l140">    140</a> 							}
+<a href="#l141" class="line" id="l141">    141</a> 						}
+<a href="#l142" class="line" id="l142">    142</a> 					}
+<a href="#l143" class="line" id="l143">    143</a> 				}
+<a href="#l144" class="line" id="l144">    144</a> 				if !connected {
+<a href="#l145" class="line" id="l145">    145</a> 					ext_output[out_id] = &quot;p&quot; + strconv.Itoa(rel_procids[proc1_id]) + &quot;o&quot; + strconv.Itoa(out_ord)
+<a href="#l146" class="line" id="l146">    146</a> 					ext_output_keys = append(ext_output_keys, out_id)
+<a href="#l147" class="line" id="l147">    147</a> 				}
+<a href="#l148" class="line" id="l148">    148</a> 			}
+<a href="#l149" class="line" id="l149">    149</a> 		}
+<a href="#l150" class="line" id="l150">    150</a> 	}
+<a href="#l151" class="line" id="l151">    151</a> 
+<a href="#l152" class="line" id="l152">    152</a> 	for in_id, id_unconn := range unconnected_inputs {
+<a href="#l153" class="line" id="l153">    153</a> 		if id_unconn {
+<a href="#l154" class="line" id="l154">    154</a> 			for proc_id, ioref := range bg.IOr {
+<a href="#l155" class="line" id="l155">    155</a> 				for in_ord, in_idc := range ioref.Inputs_ids {
+<a href="#l156" class="line" id="l156">    156</a> 					if in_id == in_idc {
+<a href="#l157" class="line" id="l157">    157</a> 						ext_input[in_id] = &quot;p&quot; + strconv.Itoa(rel_procids[proc_id]) + &quot;i&quot; + strconv.Itoa(in_ord)
+<a href="#l158" class="line" id="l158">    158</a> 						ext_input_keys = append(ext_input_keys, in_id)
+<a href="#l159" class="line" id="l159">    159</a> 						//bmach.Add_bond([]string{&quot;p&quot; + strconv.Itoa(proc_id) + &quot;i&quot; + strconv.Itoa(in_ord), &quot;i&quot; + strconv.Itoa(bmach.Inputs-1)})
+<a href="#l160" class="line" id="l160">    160</a> 					}
+<a href="#l161" class="line" id="l161">    161</a> 				}
+<a href="#l162" class="line" id="l162">    162</a> 			}
+<a href="#l163" class="line" id="l163">    163</a> 		}
+<a href="#l164" class="line" id="l164">    164</a> 	}
+<a href="#l165" class="line" id="l165">    165</a> 
+<a href="#l166" class="line" id="l166">    166</a> 	residual := new(bondmachine.Residual)
+<a href="#l167" class="line" id="l167">    167</a> 	residual.Map.Assoc = make(map[string]string)
+<a href="#l168" class="line" id="l168">    168</a> 
+<a href="#l169" class="line" id="l169">    169</a> 	sort.Ints(ext_input_keys)
+<a href="#l170" class="line" id="l170">    170</a> 	sort.Ints(ext_output_keys)
+<a href="#l171" class="line" id="l171">    171</a> 	//fmt.Println(ext_input_keys, ext_output_keys)
+<a href="#l172" class="line" id="l172">    172</a> 	for _, inp := range ext_input_keys {
+<a href="#l173" class="line" id="l173">    173</a> 		inps := ext_input[inp]
+<a href="#l174" class="line" id="l174">    174</a> 		if _, ok := bmach.Add_input(); ok != nil {
+<a href="#l175" class="line" id="l175">    175</a> 			return nil, nil, errors.New(&quot;Input add failed&quot;)
+<a href="#l176" class="line" id="l176">    176</a> 		} else {
+<a href="#l177" class="line" id="l177">    177</a> 			bmach.Add_bond([]string{inps, &quot;i&quot; + strconv.Itoa(bmach.Inputs-1)})
+<a href="#l178" class="line" id="l178">    178</a> 			residual.Map.Assoc[&quot;i&quot;+strconv.Itoa(bmach.Inputs-1)] = strconv.Itoa(inp)
+<a href="#l179" class="line" id="l179">    179</a> 		}
+<a href="#l180" class="line" id="l180">    180</a> 	}
+<a href="#l181" class="line" id="l181">    181</a> 
+<a href="#l182" class="line" id="l182">    182</a> 	for _, out := range ext_output_keys {
+<a href="#l183" class="line" id="l183">    183</a> 		outs := ext_output[out]
+<a href="#l184" class="line" id="l184">    184</a> 		if _, ok := bmach.Add_output(); ok != nil {
+<a href="#l185" class="line" id="l185">    185</a> 			return nil, nil, errors.New(&quot;Output add failed&quot;)
+<a href="#l186" class="line" id="l186">    186</a> 		} else {
+<a href="#l187" class="line" id="l187">    187</a> 			bmach.Add_bond([]string{outs, &quot;o&quot; + strconv.Itoa(bmach.Outputs-1)})
+<a href="#l188" class="line" id="l188">    188</a> 			residual.Map.Assoc[&quot;o&quot;+strconv.Itoa(bmach.Outputs-1)] = strconv.Itoa(out)
+<a href="#l189" class="line" id="l189">    189</a> 		}
+<a href="#l190" class="line" id="l190">    190</a> 	}
+<a href="#l191" class="line" id="l191">    191</a> 
+<a href="#l192" class="line" id="l192">    192</a> 	// TODO Only channels here, include the others
+<a href="#l193" class="line" id="l193">    193</a> 	creqs := bg.Chanr
+<a href="#l194" class="line" id="l194">    194</a> 
+<a href="#l195" class="line" id="l195">    195</a> 	for _, _ = range creqs {
+<a href="#l196" class="line" id="l196">    196</a> 		bmach.Add_shared_objects([]string{&quot;channel:&quot;})
+<a href="#l197" class="line" id="l197">    197</a> 	}
+<a href="#l198" class="line" id="l198">    198</a> 	for chanid, creq := range creqs {
+<a href="#l199" class="line" id="l199">    199</a> 		for _, proc_id := range creq.Connected {
+<a href="#l200" class="line" id="l200">    200</a> 			endpoints := make([]string, 2)
+<a href="#l201" class="line" id="l201">    201</a> 			endpoints[0] = strconv.Itoa(proc_id)
+<a href="#l202" class="line" id="l202">    202</a> 			endpoints[1] = strconv.Itoa(chanid)
+<a href="#l203" class="line" id="l203">    203</a> 			bmach.Connect_processor_shared_object(endpoints)
+<a href="#l204" class="line" id="l204">    204</a> 		}
+<a href="#l205" class="line" id="l205">    205</a> 	}
+<a href="#l206" class="line" id="l206">    206</a> 
+<a href="#l207" class="line" id="l207">    207</a> 	return bmach, residual, nil
+<a href="#l208" class="line" id="l208">    208</a> }
+<a href="#l209" class="line" id="l209">    209</a> 
+<a href="#l210" class="line" id="l210">    210</a> func (bg *BondgoRequirements) Abstract_assembler(rsize int, asmcode []string, used chan UsageNotify) error {
+<a href="#l211" class="line" id="l211">    211</a> 	for _, line := range asmcode {
+<a href="#l212" class="line" id="l212">    212</a> 		words := make([]string, 0)
+<a href="#l213" class="line" id="l213">    213</a> 		for _, word := range strings.Split(line, &quot; &quot;) {
+<a href="#l214" class="line" id="l214">    214</a> 			if word != &quot;&quot; {
+<a href="#l215" class="line" id="l215">    215</a> 				words = append(words, strings.TrimSpace(word))
+<a href="#l216" class="line" id="l216">    216</a> 			}
+<a href="#l217" class="line" id="l217">    217</a> 		}
+<a href="#l218" class="line" id="l218">    218</a> 		if len(words) != 0 {
+<a href="#l219" class="line" id="l219">    219</a> 			if words[0][0] != &#39;#&#39; {
+<a href="#l220" class="line" id="l220">    220</a> 				for _, op := range procbuilder.Allopcodes {
+<a href="#l221" class="line" id="l221">    221</a> 					if op.Op_get_name() == words[0] {
+<a href="#l222" class="line" id="l222">    222</a> 						if results, err := op.AbstractAssembler(nil, words[1:]); err == nil {
+<a href="#l223" class="line" id="l223">    223</a> 							for _, result := range results {
+<a href="#l224" class="line" id="l224">    224</a> 								if result.ComponentType == C_OUTPUT {
+<a href="#l225" class="line" id="l225">    225</a> 									// TODO Very temporary code
+<a href="#l226" class="line" id="l226">    226</a> 									result.Componenti += 100
+<a href="#l227" class="line" id="l227">    227</a> 								}
+<a href="#l228" class="line" id="l228">    228</a> 								used &lt;- UsageNotify{TR_PROC, 0, result.ComponentType, result.Components, result.Componenti}
+<a href="#l229" class="line" id="l229">    229</a> 							}
+<a href="#l230" class="line" id="l230">    230</a> 						} else {
+<a href="#l231" class="line" id="l231">    231</a> 							return errors.New(err.Error() + &quot;, error processing &quot; + op.Op_get_name())
+<a href="#l232" class="line" id="l232">    232</a> 						}
+<a href="#l233" class="line" id="l233">    233</a> 					}
+<a href="#l234" class="line" id="l234">    234</a> 				}
+<a href="#l235" class="line" id="l235">    235</a> 			} else {
+<a href="#l236" class="line" id="l236">    236</a> 				if words[0] == &quot;#archinclude&quot; {
+<a href="#l237" class="line" id="l237">    237</a> 					// TODO Finish
+<a href="#l238" class="line" id="l238">    238</a> 					if len(words) &gt; 1 {
+<a href="#l239" class="line" id="l239">    239</a> 						for _, word := range words[1:len(words)] {
+<a href="#l240" class="line" id="l240">    240</a> 							seq0, types0 := Sequence_to_0(word)
+<a href="#l241" class="line" id="l241">    241</a> 
+<a href="#l242" class="line" id="l242">    242</a> 							switch types0 {
+<a href="#l243" class="line" id="l243">    243</a> 							case C_INPUT:
+<a href="#l244" class="line" id="l244">    244</a> 
+<a href="#l245" class="line" id="l245">    245</a> 								for i, _ := range seq0 {
+<a href="#l246" class="line" id="l246">    246</a> 									used &lt;- UsageNotify{TR_PROC, 0, C_INPUT, S_NIL, i + 1}
+<a href="#l247" class="line" id="l247">    247</a> 								}
+<a href="#l248" class="line" id="l248">    248</a> 							}
+<a href="#l249" class="line" id="l249">    249</a> 						}
+<a href="#l250" class="line" id="l250">    250</a> 					}
+<a href="#l251" class="line" id="l251">    251</a> 				}
+<a href="#l252" class="line" id="l252">    252</a> 			}
+<a href="#l253" class="line" id="l253">    253</a> 		} else {
+<a href="#l254" class="line" id="l254">    254</a> 			return nil
+<a href="#l255" class="line" id="l255">    255</a> 		}
+<a href="#l256" class="line" id="l256">    256</a> 	}
+<a href="#l257" class="line" id="l257">    257</a> 	return nil
+<a href="#l258" class="line" id="l258">    258</a> }
+<a href="#l259" class="line" id="l259">    259</a> 
+<a href="#l260" class="line" id="l260">    260</a> func (bg *BondgoCheck) Create_Etherbond_Cluster(rsize int, extc *etherbond.Cluster) (*etherbond.Cluster, []uint32, []*bondmachine.Bondmachine, []*bondmachine.IOmap, []*bondmachine.Residual, error) {
+<a href="#l261" class="line" id="l261">    261</a> 	devlist := make([]string, 0)
+<a href="#l262" class="line" id="l262">    262</a> 
+<a href="#l263" class="line" id="l263">    263</a> 	resultbond := make([]*bondmachine.Bondmachine, 0)
+<a href="#l264" class="line" id="l264">    264</a> 	resultpeerids := make([]uint32, 0)
+<a href="#l265" class="line" id="l265">    265</a> 	resultio := make([]*bondmachine.IOmap, 0)
+<a href="#l266" class="line" id="l266">    266</a> 	resultresi := make([]*bondmachine.Residual, 0)
+<a href="#l267" class="line" id="l267">    267</a> 
+<a href="#l268" class="line" id="l268">    268</a> 	partialio := make([]*bondmachine.Residual, 0)
+<a href="#l269" class="line" id="l269">    269</a> 
+<a href="#l270" class="line" id="l270">    270</a> 	for i := 0; i &lt; len(bg.Program); i++ {
+<a href="#l271" class="line" id="l271">    271</a> 		check := false
+<a href="#l272" class="line" id="l272">    272</a> 		currdev := bg.Procr[i].Device
+<a href="#l273" class="line" id="l273">    273</a> 		for _, idev := range devlist {
+<a href="#l274" class="line" id="l274">    274</a> 			if idev == currdev {
+<a href="#l275" class="line" id="l275">    275</a> 				check = true
+<a href="#l276" class="line" id="l276">    276</a> 				break
+<a href="#l277" class="line" id="l277">    277</a> 			}
+<a href="#l278" class="line" id="l278">    278</a> 		}
+<a href="#l279" class="line" id="l279">    279</a> 		if !check {
+<a href="#l280" class="line" id="l280">    280</a> 			devlist = append(devlist, bg.Procr[i].Device)
+<a href="#l281" class="line" id="l281">    281</a> 		}
+<a href="#l282" class="line" id="l282">    282</a> 	}
+<a href="#l283" class="line" id="l283">    283</a> 
+<a href="#l284" class="line" id="l284">    284</a> 	for _, device := range devlist {
+<a href="#l285" class="line" id="l285">    285</a> 		if bmach, residual, err := bg.Create_Bondmachine(rsize, device); err == nil {
+<a href="#l286" class="line" id="l286">    286</a> 			resultbond = append(resultbond, bmach)
+<a href="#l287" class="line" id="l287">    287</a> 			partialio = append(partialio, residual)
+<a href="#l288" class="line" id="l288">    288</a> 		} else {
+<a href="#l289" class="line" id="l289">    289</a> 			return nil, nil, nil, nil, nil, errors.New(&quot;BondMachine creation failed&quot;)
+<a href="#l290" class="line" id="l290">    290</a> 		}
+<a href="#l291" class="line" id="l291">    291</a> 	}
+<a href="#l292" class="line" id="l292">    292</a> 
+<a href="#l293" class="line" id="l293">    293</a> 	for _, _ = range resultbond {
+<a href="#l294" class="line" id="l294">    294</a> 		// Find a free peerid
+<a href="#l295" class="line" id="l295">    295</a> 	nextpid:
+<a href="#l296" class="line" id="l296">    296</a> 		for nexpid := uint32(1); nexpid &lt; MAXPEERID; nexpid++ {
+<a href="#l297" class="line" id="l297">    297</a> 			if extc != nil {
+<a href="#l298" class="line" id="l298">    298</a> 				for _, peer := range extc.Peers {
+<a href="#l299" class="line" id="l299">    299</a> 					if peer.PeerId == nexpid {
+<a href="#l300" class="line" id="l300">    300</a> 						continue nextpid
+<a href="#l301" class="line" id="l301">    301</a> 					}
+<a href="#l302" class="line" id="l302">    302</a> 				}
+<a href="#l303" class="line" id="l303">    303</a> 			}
+<a href="#l304" class="line" id="l304">    304</a> 
+<a href="#l305" class="line" id="l305">    305</a> 			for _, i := range resultpeerids {
+<a href="#l306" class="line" id="l306">    306</a> 				if i == nexpid {
+<a href="#l307" class="line" id="l307">    307</a> 					continue nextpid
+<a href="#l308" class="line" id="l308">    308</a> 				}
+<a href="#l309" class="line" id="l309">    309</a> 			}
+<a href="#l310" class="line" id="l310">    310</a> 
+<a href="#l311" class="line" id="l311">    311</a> 			resultpeerids = append(resultpeerids, nexpid)
+<a href="#l312" class="line" id="l312">    312</a> 
+<a href="#l313" class="line" id="l313">    313</a> 			break
+<a href="#l314" class="line" id="l314">    314</a> 		}
+<a href="#l315" class="line" id="l315">    315</a> 	}
+<a href="#l316" class="line" id="l316">    316</a> 
+<a href="#l317" class="line" id="l317">    317</a> 	resultcluster := new(etherbond.Cluster)
+<a href="#l318" class="line" id="l318">    318</a> 	resultcluster.ClusterId = uint32(0)
+<a href="#l319" class="line" id="l319">    319</a> 	resultcluster.Peers = make([]etherbond.Peer, 0)
+<a href="#l320" class="line" id="l320">    320</a> 
+<a href="#l321" class="line" id="l321">    321</a> 	if extc != nil {
+<a href="#l322" class="line" id="l322">    322</a> 
+<a href="#l323" class="line" id="l323">    323</a> 		// Precess every peer of the extra cluster, its peers connot be residual
+<a href="#l324" class="line" id="l324">    324</a> 		for _, peer := range extc.Peers {
+<a href="#l325" class="line" id="l325">    325</a> 			newinputs := make([]uint32, 0)
+<a href="#l326" class="line" id="l326">    326</a> 			newoutputs := make([]uint32, 0)
+<a href="#l327" class="line" id="l327">    327</a> 			newchannels := make([]uint32, 0)
+<a href="#l328" class="line" id="l328">    328</a> 
+<a href="#l329" class="line" id="l329">    329</a> 			// TODO Include the channels whenever their implementation will be ready
+<a href="#l330" class="line" id="l330">    330</a> 
+<a href="#l331" class="line" id="l331">    331</a> 			for _, inp := range peer.Inputs {
+<a href="#l332" class="line" id="l332">    332</a> 				// TODO For now the external cluater will be considered checked, in the future a real check will be desiderable
+<a href="#l333" class="line" id="l333">    333</a> 				newinputs = append(newinputs, inp)
+<a href="#l334" class="line" id="l334">    334</a> 			}
+<a href="#l335" class="line" id="l335">    335</a> 
+<a href="#l336" class="line" id="l336">    336</a> 			for _, outp := range peer.Outputs {
+<a href="#l337" class="line" id="l337">    337</a> 				newoutputs = append(newoutputs, outp)
+<a href="#l338" class="line" id="l338">    338</a> 			}
+<a href="#l339" class="line" id="l339">    339</a> 			newpeer := etherbond.Peer{peer.PeerId, newchannels, newinputs, newoutputs}
+<a href="#l340" class="line" id="l340">    340</a> 			resultcluster.Peers = append(resultcluster.Peers, newpeer)
+<a href="#l341" class="line" id="l341">    341</a> 		}
+<a href="#l342" class="line" id="l342">    342</a> 	}
+<a href="#l343" class="line" id="l343">    343</a> 
+<a href="#l344" class="line" id="l344">    344</a> 	// Process the created bondmachines
+<a href="#l345" class="line" id="l345">    345</a> 	for myid, res := range partialio {
+<a href="#l346" class="line" id="l346">    346</a> 		newio := new(bondmachine.IOmap)
+<a href="#l347" class="line" id="l347">    347</a> 		newio.Assoc = make(map[string]string)
+<a href="#l348" class="line" id="l348">    348</a> 		newresidual := new(bondmachine.Residual)
+<a href="#l349" class="line" id="l349">    349</a> 		newresidual.Map.Assoc = make(map[string]string)
+<a href="#l350" class="line" id="l350">    350</a> 
+<a href="#l351" class="line" id="l351">    351</a> 		newinputs := make([]uint32, 0)
+<a href="#l352" class="line" id="l352">    352</a> 		newoutputs := make([]uint32, 0)
+<a href="#l353" class="line" id="l353">    353</a> 		newchannels := make([]uint32, 0)
+<a href="#l354" class="line" id="l354">    354</a> 
+<a href="#l355" class="line" id="l355">    355</a> 		for bio, ioid := range res.Map.Assoc {
+<a href="#l356" class="line" id="l356">    356</a> 			if bio[0] == &#39;i&#39; {
+<a href="#l357" class="line" id="l357">    357</a> 				connected := false
+<a href="#l358" class="line" id="l358">    358</a> 				multi := false
+<a href="#l359" class="line" id="l359">    359</a> 
+<a href="#l360" class="line" id="l360">    360</a> 				// Search the input among ext cluster outputs
+<a href="#l361" class="line" id="l361">    361</a> 				if extc != nil {
+<a href="#l362" class="line" id="l362">    362</a> 				extloop:
+<a href="#l363" class="line" id="l363">    363</a> 					for _, peer := range extc.Peers {
+<a href="#l364" class="line" id="l364">    364</a> 						for _, outp := range peer.Outputs {
+<a href="#l365" class="line" id="l365">    365</a> 							if strconv.Itoa(int(outp)) == ioid {
+<a href="#l366" class="line" id="l366">    366</a> 								if connected {
+<a href="#l367" class="line" id="l367">    367</a> 									multi = true
+<a href="#l368" class="line" id="l368">    368</a> 									break extloop
+<a href="#l369" class="line" id="l369">    369</a> 								} else {
+<a href="#l370" class="line" id="l370">    370</a> 									connected = true
+<a href="#l371" class="line" id="l371">    371</a> 								}
+<a href="#l372" class="line" id="l372">    372</a> 							}
+<a href="#l373" class="line" id="l373">    373</a> 						}
+<a href="#l374" class="line" id="l374">    374</a> 					}
+<a href="#l375" class="line" id="l375">    375</a> 				}
+<a href="#l376" class="line" id="l376">    376</a> 				// Search the input among other bondmachines
+<a href="#l377" class="line" id="l377">    377</a> 			bmloop:
+<a href="#l378" class="line" id="l378">    378</a> 				for otherid, otherres := range partialio {
+<a href="#l379" class="line" id="l379">    379</a> 					// Not searching on the same BM
+<a href="#l380" class="line" id="l380">    380</a> 					if otherid != myid {
+<a href="#l381" class="line" id="l381">    381</a> 						for otherbio, otherioid := range otherres.Map.Assoc {
+<a href="#l382" class="line" id="l382">    382</a> 							if ioid == otherioid {
+<a href="#l383" class="line" id="l383">    383</a> 								if otherbio[0] == &#39;i&#39; {
+<a href="#l384" class="line" id="l384">    384</a> 									// That&#39;s ok to have other inputs connected to the same output
+<a href="#l385" class="line" id="l385">    385</a> 								} else if otherbio[0] == &#39;o&#39; {
+<a href="#l386" class="line" id="l386">    386</a> 									if connected {
+<a href="#l387" class="line" id="l387">    387</a> 										multi = true
+<a href="#l388" class="line" id="l388">    388</a> 										break bmloop
+<a href="#l389" class="line" id="l389">    389</a> 									} else {
+<a href="#l390" class="line" id="l390">    390</a> 										connected = true
+<a href="#l391" class="line" id="l391">    391</a> 									}
+<a href="#l392" class="line" id="l392">    392</a> 
+<a href="#l393" class="line" id="l393">    393</a> 								}
+<a href="#l394" class="line" id="l394">    394</a> 							}
+<a href="#l395" class="line" id="l395">    395</a> 						}
+<a href="#l396" class="line" id="l396">    396</a> 					}
+<a href="#l397" class="line" id="l397">    397</a> 				}
+<a href="#l398" class="line" id="l398">    398</a> 
+<a href="#l399" class="line" id="l399">    399</a> 				if multi {
+<a href="#l400" class="line" id="l400">    400</a> 					return nil, nil, nil, nil, nil, errors.New(&quot;Input connected to multiple outputs&quot;)
+<a href="#l401" class="line" id="l401">    401</a> 				}
+<a href="#l402" class="line" id="l402">    402</a> 
+<a href="#l403" class="line" id="l403">    403</a> 				if connected {
+<a href="#l404" class="line" id="l404">    404</a> 					// The Input is within the cluster
+<a href="#l405" class="line" id="l405">    405</a> 					newio.Assoc[bio] = ioid
+<a href="#l406" class="line" id="l406">    406</a> 					ioid_n, _ := strconv.Atoi(ioid)
+<a href="#l407" class="line" id="l407">    407</a> 					newinputs = append(newinputs, uint32(ioid_n))
+<a href="#l408" class="line" id="l408">    408</a> 				} else {
+<a href="#l409" class="line" id="l409">    409</a> 					// Its residual
+<a href="#l410" class="line" id="l410">    410</a> 					newresidual.Map.Assoc[bio] = ioid
+<a href="#l411" class="line" id="l411">    411</a> 				}
+<a href="#l412" class="line" id="l412">    412</a> 
+<a href="#l413" class="line" id="l413">    413</a> 			} else if bio[0] == &#39;o&#39; {
+<a href="#l414" class="line" id="l414">    414</a> 				connected := false
+<a href="#l415" class="line" id="l415">    415</a> 				multioutput := false
+<a href="#l416" class="line" id="l416">    416</a> 
+<a href="#l417" class="line" id="l417">    417</a> 				// Search the output among ext cluster inputs
+<a href="#l418" class="line" id="l418">    418</a> 				if extc != nil {
+<a href="#l419" class="line" id="l419">    419</a> 					for _, peer := range extc.Peers {
+<a href="#l420" class="line" id="l420">    420</a> 						for _, inp := range peer.Inputs {
+<a href="#l421" class="line" id="l421">    421</a> 							if strconv.Itoa(int(inp)) == ioid {
+<a href="#l422" class="line" id="l422">    422</a> 								connected = true
+<a href="#l423" class="line" id="l423">    423</a> 								break
+<a href="#l424" class="line" id="l424">    424</a> 							}
+<a href="#l425" class="line" id="l425">    425</a> 						}
+<a href="#l426" class="line" id="l426">    426</a> 
+<a href="#l427" class="line" id="l427">    427</a> 						for _, outp := range peer.Outputs {
+<a href="#l428" class="line" id="l428">    428</a> 							if strconv.Itoa(int(outp)) == ioid {
+<a href="#l429" class="line" id="l429">    429</a> 								multioutput = true
+<a href="#l430" class="line" id="l430">    430</a> 								break
+<a href="#l431" class="line" id="l431">    431</a> 							}
+<a href="#l432" class="line" id="l432">    432</a> 						}
+<a href="#l433" class="line" id="l433">    433</a> 					}
+<a href="#l434" class="line" id="l434">    434</a> 				}
+<a href="#l435" class="line" id="l435">    435</a> 
+<a href="#l436" class="line" id="l436">    436</a> 				for otherid, otherres := range partialio {
+<a href="#l437" class="line" id="l437">    437</a> 					// Not searching on the same BM
+<a href="#l438" class="line" id="l438">    438</a> 					if otherid != myid {
+<a href="#l439" class="line" id="l439">    439</a> 						for otherbio, otherioid := range otherres.Map.Assoc {
+<a href="#l440" class="line" id="l440">    440</a> 							if ioid == otherioid {
+<a href="#l441" class="line" id="l441">    441</a> 								if otherbio[0] == &#39;o&#39; {
+<a href="#l442" class="line" id="l442">    442</a> 									multioutput = true
+<a href="#l443" class="line" id="l443">    443</a> 								} else if otherbio[0] == &#39;i&#39; {
+<a href="#l444" class="line" id="l444">    444</a> 									connected = true
+<a href="#l445" class="line" id="l445">    445</a> 								}
+<a href="#l446" class="line" id="l446">    446</a> 							}
+<a href="#l447" class="line" id="l447">    447</a> 						}
+<a href="#l448" class="line" id="l448">    448</a> 					}
+<a href="#l449" class="line" id="l449">    449</a> 				}
+<a href="#l450" class="line" id="l450">    450</a> 
+<a href="#l451" class="line" id="l451">    451</a> 				if multioutput {
+<a href="#l452" class="line" id="l452">    452</a> 					return nil, nil, nil, nil, nil, errors.New(&quot;Multiple outputs have the same id&quot;)
+<a href="#l453" class="line" id="l453">    453</a> 				}
+<a href="#l454" class="line" id="l454">    454</a> 
+<a href="#l455" class="line" id="l455">    455</a> 				if connected {
+<a href="#l456" class="line" id="l456">    456</a> 					// The Output is within the cluster
+<a href="#l457" class="line" id="l457">    457</a> 					newio.Assoc[bio] = ioid
+<a href="#l458" class="line" id="l458">    458</a> 					ioid_n, _ := strconv.Atoi(ioid)
+<a href="#l459" class="line" id="l459">    459</a> 					newoutputs = append(newoutputs, uint32(ioid_n))
+<a href="#l460" class="line" id="l460">    460</a> 				} else {
+<a href="#l461" class="line" id="l461">    461</a> 					// Its residual
+<a href="#l462" class="line" id="l462">    462</a> 					newresidual.Map.Assoc[bio] = ioid
+<a href="#l463" class="line" id="l463">    463</a> 				}
+<a href="#l464" class="line" id="l464">    464</a> 
+<a href="#l465" class="line" id="l465">    465</a> 			}
+<a href="#l466" class="line" id="l466">    466</a> 		}
+<a href="#l467" class="line" id="l467">    467</a> 
+<a href="#l468" class="line" id="l468">    468</a> 		resultio = append(resultio, newio)
+<a href="#l469" class="line" id="l469">    469</a> 		resultresi = append(resultresi, newresidual)
+<a href="#l470" class="line" id="l470">    470</a> 
+<a href="#l471" class="line" id="l471">    471</a> 		newpeer := etherbond.Peer{resultpeerids[myid], newchannels, newinputs, newoutputs}
+<a href="#l472" class="line" id="l472">    472</a> 		resultcluster.Peers = append(resultcluster.Peers, newpeer)
+<a href="#l473" class="line" id="l473">    473</a> 
+<a href="#l474" class="line" id="l474">    474</a> 	}
+<a href="#l475" class="line" id="l475">    475</a> 
+<a href="#l476" class="line" id="l476">    476</a> 	return resultcluster, resultpeerids, resultbond, resultio, resultresi, nil
+<a href="#l477" class="line" id="l477">    477</a> }
+<a href="#l478" class="line" id="l478">    478</a> 
+<a href="#l479" class="line" id="l479">    479</a> func (bg *BondgoCheck) Create_Udpbond_Cluster(rsize int, extc *udpbond.Cluster) (*udpbond.Cluster, []uint32, []*bondmachine.Bondmachine, []*bondmachine.IOmap, []*bondmachine.Residual, error) {
+<a href="#l480" class="line" id="l480">    480</a> 	devlist := make([]string, 0)
+<a href="#l481" class="line" id="l481">    481</a> 
+<a href="#l482" class="line" id="l482">    482</a> 	resultbond := make([]*bondmachine.Bondmachine, 0)
+<a href="#l483" class="line" id="l483">    483</a> 	resultpeerids := make([]uint32, 0)
+<a href="#l484" class="line" id="l484">    484</a> 	resultio := make([]*bondmachine.IOmap, 0)
+<a href="#l485" class="line" id="l485">    485</a> 	resultresi := make([]*bondmachine.Residual, 0)
+<a href="#l486" class="line" id="l486">    486</a> 
+<a href="#l487" class="line" id="l487">    487</a> 	partialio := make([]*bondmachine.Residual, 0)
+<a href="#l488" class="line" id="l488">    488</a> 
+<a href="#l489" class="line" id="l489">    489</a> 	for i := 0; i &lt; len(bg.Program); i++ {
+<a href="#l490" class="line" id="l490">    490</a> 		check := false
+<a href="#l491" class="line" id="l491">    491</a> 		currdev := bg.Procr[i].Device
+<a href="#l492" class="line" id="l492">    492</a> 		for _, idev := range devlist {
+<a href="#l493" class="line" id="l493">    493</a> 			if idev == currdev {
+<a href="#l494" class="line" id="l494">    494</a> 				check = true
+<a href="#l495" class="line" id="l495">    495</a> 				break
+<a href="#l496" class="line" id="l496">    496</a> 			}
+<a href="#l497" class="line" id="l497">    497</a> 		}
+<a href="#l498" class="line" id="l498">    498</a> 		if !check {
+<a href="#l499" class="line" id="l499">    499</a> 			devlist = append(devlist, bg.Procr[i].Device)
+<a href="#l500" class="line" id="l500">    500</a> 		}
+<a href="#l501" class="line" id="l501">    501</a> 	}
+<a href="#l502" class="line" id="l502">    502</a> 
+<a href="#l503" class="line" id="l503">    503</a> 	for _, device := range devlist {
+<a href="#l504" class="line" id="l504">    504</a> 		if bmach, residual, err := bg.Create_Bondmachine(rsize, device); err == nil {
+<a href="#l505" class="line" id="l505">    505</a> 			resultbond = append(resultbond, bmach)
+<a href="#l506" class="line" id="l506">    506</a> 			partialio = append(partialio, residual)
+<a href="#l507" class="line" id="l507">    507</a> 		} else {
+<a href="#l508" class="line" id="l508">    508</a> 			return nil, nil, nil, nil, nil, errors.New(&quot;BondMachine creation failed&quot;)
+<a href="#l509" class="line" id="l509">    509</a> 		}
+<a href="#l510" class="line" id="l510">    510</a> 	}
+<a href="#l511" class="line" id="l511">    511</a> 
+<a href="#l512" class="line" id="l512">    512</a> 	for _, _ = range resultbond {
+<a href="#l513" class="line" id="l513">    513</a> 		// Find a free peerid
+<a href="#l514" class="line" id="l514">    514</a> 	nextpid:
+<a href="#l515" class="line" id="l515">    515</a> 		for nexpid := uint32(1); nexpid &lt; MAXPEERID; nexpid++ {
+<a href="#l516" class="line" id="l516">    516</a> 			if extc != nil {
+<a href="#l517" class="line" id="l517">    517</a> 				for _, peer := range extc.Peers {
+<a href="#l518" class="line" id="l518">    518</a> 					if peer.PeerId == nexpid {
+<a href="#l519" class="line" id="l519">    519</a> 						continue nextpid
+<a href="#l520" class="line" id="l520">    520</a> 					}
+<a href="#l521" class="line" id="l521">    521</a> 				}
+<a href="#l522" class="line" id="l522">    522</a> 			}
+<a href="#l523" class="line" id="l523">    523</a> 
+<a href="#l524" class="line" id="l524">    524</a> 			for _, i := range resultpeerids {
+<a href="#l525" class="line" id="l525">    525</a> 				if i == nexpid {
+<a href="#l526" class="line" id="l526">    526</a> 					continue nextpid
+<a href="#l527" class="line" id="l527">    527</a> 				}
+<a href="#l528" class="line" id="l528">    528</a> 			}
+<a href="#l529" class="line" id="l529">    529</a> 
+<a href="#l530" class="line" id="l530">    530</a> 			resultpeerids = append(resultpeerids, nexpid)
+<a href="#l531" class="line" id="l531">    531</a> 
+<a href="#l532" class="line" id="l532">    532</a> 			break
+<a href="#l533" class="line" id="l533">    533</a> 		}
+<a href="#l534" class="line" id="l534">    534</a> 	}
+<a href="#l535" class="line" id="l535">    535</a> 
+<a href="#l536" class="line" id="l536">    536</a> 	resultcluster := new(udpbond.Cluster)
+<a href="#l537" class="line" id="l537">    537</a> 	resultcluster.ClusterId = uint32(0)
+<a href="#l538" class="line" id="l538">    538</a> 	resultcluster.Peers = make([]udpbond.Peer, 0)
+<a href="#l539" class="line" id="l539">    539</a> 
+<a href="#l540" class="line" id="l540">    540</a> 	if extc != nil {
+<a href="#l541" class="line" id="l541">    541</a> 
+<a href="#l542" class="line" id="l542">    542</a> 		// Precess every peer of the extra cluster, its peers connot be residual
+<a href="#l543" class="line" id="l543">    543</a> 		for _, peer := range extc.Peers {
+<a href="#l544" class="line" id="l544">    544</a> 			newinputs := make([]uint32, 0)
+<a href="#l545" class="line" id="l545">    545</a> 			newoutputs := make([]uint32, 0)
+<a href="#l546" class="line" id="l546">    546</a> 			newchannels := make([]uint32, 0)
+<a href="#l547" class="line" id="l547">    547</a> 
+<a href="#l548" class="line" id="l548">    548</a> 			// TODO Include the channels whenever their implementation will be ready
+<a href="#l549" class="line" id="l549">    549</a> 
+<a href="#l550" class="line" id="l550">    550</a> 			for _, inp := range peer.Inputs {
+<a href="#l551" class="line" id="l551">    551</a> 				// TODO For now the external cluater will be considered checked, in the future a real check will be desiderable
+<a href="#l552" class="line" id="l552">    552</a> 				newinputs = append(newinputs, inp)
+<a href="#l553" class="line" id="l553">    553</a> 			}
+<a href="#l554" class="line" id="l554">    554</a> 
+<a href="#l555" class="line" id="l555">    555</a> 			for _, outp := range peer.Outputs {
+<a href="#l556" class="line" id="l556">    556</a> 				newoutputs = append(newoutputs, outp)
+<a href="#l557" class="line" id="l557">    557</a> 			}
+<a href="#l558" class="line" id="l558">    558</a> 			newpeer := udpbond.Peer{peer.PeerId, newchannels, newinputs, newoutputs}
+<a href="#l559" class="line" id="l559">    559</a> 			resultcluster.Peers = append(resultcluster.Peers, newpeer)
+<a href="#l560" class="line" id="l560">    560</a> 		}
+<a href="#l561" class="line" id="l561">    561</a> 	}
+<a href="#l562" class="line" id="l562">    562</a> 
+<a href="#l563" class="line" id="l563">    563</a> 	// Process the created bondmachines
+<a href="#l564" class="line" id="l564">    564</a> 	for myid, res := range partialio {
+<a href="#l565" class="line" id="l565">    565</a> 		newio := new(bondmachine.IOmap)
+<a href="#l566" class="line" id="l566">    566</a> 		newio.Assoc = make(map[string]string)
+<a href="#l567" class="line" id="l567">    567</a> 		newresidual := new(bondmachine.Residual)
+<a href="#l568" class="line" id="l568">    568</a> 		newresidual.Map.Assoc = make(map[string]string)
+<a href="#l569" class="line" id="l569">    569</a> 
+<a href="#l570" class="line" id="l570">    570</a> 		newinputs := make([]uint32, 0)
+<a href="#l571" class="line" id="l571">    571</a> 		newoutputs := make([]uint32, 0)
+<a href="#l572" class="line" id="l572">    572</a> 		newchannels := make([]uint32, 0)
+<a href="#l573" class="line" id="l573">    573</a> 
+<a href="#l574" class="line" id="l574">    574</a> 		for bio, ioid := range res.Map.Assoc {
+<a href="#l575" class="line" id="l575">    575</a> 			if bio[0] == &#39;i&#39; {
+<a href="#l576" class="line" id="l576">    576</a> 				connected := false
+<a href="#l577" class="line" id="l577">    577</a> 				multi := false
+<a href="#l578" class="line" id="l578">    578</a> 
+<a href="#l579" class="line" id="l579">    579</a> 				// Search the input among ext cluster outputs
+<a href="#l580" class="line" id="l580">    580</a> 				if extc != nil {
+<a href="#l581" class="line" id="l581">    581</a> 				extloop:
+<a href="#l582" class="line" id="l582">    582</a> 					for _, peer := range extc.Peers {
+<a href="#l583" class="line" id="l583">    583</a> 						for _, outp := range peer.Outputs {
+<a href="#l584" class="line" id="l584">    584</a> 							if strconv.Itoa(int(outp)) == ioid {
+<a href="#l585" class="line" id="l585">    585</a> 								if connected {
+<a href="#l586" class="line" id="l586">    586</a> 									multi = true
+<a href="#l587" class="line" id="l587">    587</a> 									break extloop
+<a href="#l588" class="line" id="l588">    588</a> 								} else {
+<a href="#l589" class="line" id="l589">    589</a> 									connected = true
+<a href="#l590" class="line" id="l590">    590</a> 								}
+<a href="#l591" class="line" id="l591">    591</a> 							}
+<a href="#l592" class="line" id="l592">    592</a> 						}
+<a href="#l593" class="line" id="l593">    593</a> 					}
+<a href="#l594" class="line" id="l594">    594</a> 				}
+<a href="#l595" class="line" id="l595">    595</a> 				// Search the input among other bondmachines
+<a href="#l596" class="line" id="l596">    596</a> 			bmloop:
+<a href="#l597" class="line" id="l597">    597</a> 				for otherid, otherres := range partialio {
+<a href="#l598" class="line" id="l598">    598</a> 					// Not searching on the same BM
+<a href="#l599" class="line" id="l599">    599</a> 					if otherid != myid {
+<a href="#l600" class="line" id="l600">    600</a> 						for otherbio, otherioid := range otherres.Map.Assoc {
+<a href="#l601" class="line" id="l601">    601</a> 							if ioid == otherioid {
+<a href="#l602" class="line" id="l602">    602</a> 								if otherbio[0] == &#39;i&#39; {
+<a href="#l603" class="line" id="l603">    603</a> 									// That&#39;s ok to have other inputs connected to the same output
+<a href="#l604" class="line" id="l604">    604</a> 								} else if otherbio[0] == &#39;o&#39; {
+<a href="#l605" class="line" id="l605">    605</a> 									if connected {
+<a href="#l606" class="line" id="l606">    606</a> 										multi = true
+<a href="#l607" class="line" id="l607">    607</a> 										break bmloop
+<a href="#l608" class="line" id="l608">    608</a> 									} else {
+<a href="#l609" class="line" id="l609">    609</a> 										connected = true
+<a href="#l610" class="line" id="l610">    610</a> 									}
+<a href="#l611" class="line" id="l611">    611</a> 
+<a href="#l612" class="line" id="l612">    612</a> 								}
+<a href="#l613" class="line" id="l613">    613</a> 							}
+<a href="#l614" class="line" id="l614">    614</a> 						}
+<a href="#l615" class="line" id="l615">    615</a> 					}
+<a href="#l616" class="line" id="l616">    616</a> 				}
+<a href="#l617" class="line" id="l617">    617</a> 
+<a href="#l618" class="line" id="l618">    618</a> 				if multi {
+<a href="#l619" class="line" id="l619">    619</a> 					return nil, nil, nil, nil, nil, errors.New(&quot;Input connected to multiple outputs&quot;)
+<a href="#l620" class="line" id="l620">    620</a> 				}
+<a href="#l621" class="line" id="l621">    621</a> 
+<a href="#l622" class="line" id="l622">    622</a> 				if connected {
+<a href="#l623" class="line" id="l623">    623</a> 					// The Input is within the cluster
+<a href="#l624" class="line" id="l624">    624</a> 					newio.Assoc[bio] = ioid
+<a href="#l625" class="line" id="l625">    625</a> 					ioid_n, _ := strconv.Atoi(ioid)
+<a href="#l626" class="line" id="l626">    626</a> 					newinputs = append(newinputs, uint32(ioid_n))
+<a href="#l627" class="line" id="l627">    627</a> 				} else {
+<a href="#l628" class="line" id="l628">    628</a> 					// Its residual
+<a href="#l629" class="line" id="l629">    629</a> 					newresidual.Map.Assoc[bio] = ioid
+<a href="#l630" class="line" id="l630">    630</a> 				}
+<a href="#l631" class="line" id="l631">    631</a> 
+<a href="#l632" class="line" id="l632">    632</a> 			} else if bio[0] == &#39;o&#39; {
+<a href="#l633" class="line" id="l633">    633</a> 				connected := false
+<a href="#l634" class="line" id="l634">    634</a> 				multioutput := false
+<a href="#l635" class="line" id="l635">    635</a> 
+<a href="#l636" class="line" id="l636">    636</a> 				// Search the output among ext cluster inputs
+<a href="#l637" class="line" id="l637">    637</a> 				if extc != nil {
+<a href="#l638" class="line" id="l638">    638</a> 					for _, peer := range extc.Peers {
+<a href="#l639" class="line" id="l639">    639</a> 						for _, inp := range peer.Inputs {
+<a href="#l640" class="line" id="l640">    640</a> 							if strconv.Itoa(int(inp)) == ioid {
+<a href="#l641" class="line" id="l641">    641</a> 								connected = true
+<a href="#l642" class="line" id="l642">    642</a> 								break
+<a href="#l643" class="line" id="l643">    643</a> 							}
+<a href="#l644" class="line" id="l644">    644</a> 						}
+<a href="#l645" class="line" id="l645">    645</a> 
+<a href="#l646" class="line" id="l646">    646</a> 						for _, outp := range peer.Outputs {
+<a href="#l647" class="line" id="l647">    647</a> 							if strconv.Itoa(int(outp)) == ioid {
+<a href="#l648" class="line" id="l648">    648</a> 								multioutput = true
+<a href="#l649" class="line" id="l649">    649</a> 								break
+<a href="#l650" class="line" id="l650">    650</a> 							}
+<a href="#l651" class="line" id="l651">    651</a> 						}
+<a href="#l652" class="line" id="l652">    652</a> 					}
+<a href="#l653" class="line" id="l653">    653</a> 				}
+<a href="#l654" class="line" id="l654">    654</a> 
+<a href="#l655" class="line" id="l655">    655</a> 				for otherid, otherres := range partialio {
+<a href="#l656" class="line" id="l656">    656</a> 					// Not searching on the same BM
+<a href="#l657" class="line" id="l657">    657</a> 					if otherid != myid {
+<a href="#l658" class="line" id="l658">    658</a> 						for otherbio, otherioid := range otherres.Map.Assoc {
+<a href="#l659" class="line" id="l659">    659</a> 							if ioid == otherioid {
+<a href="#l660" class="line" id="l660">    660</a> 								if otherbio[0] == &#39;o&#39; {
+<a href="#l661" class="line" id="l661">    661</a> 									multioutput = true
+<a href="#l662" class="line" id="l662">    662</a> 								} else if otherbio[0] == &#39;i&#39; {
+<a href="#l663" class="line" id="l663">    663</a> 									connected = true
+<a href="#l664" class="line" id="l664">    664</a> 								}
+<a href="#l665" class="line" id="l665">    665</a> 							}
+<a href="#l666" class="line" id="l666">    666</a> 						}
+<a href="#l667" class="line" id="l667">    667</a> 					}
+<a href="#l668" class="line" id="l668">    668</a> 				}
+<a href="#l669" class="line" id="l669">    669</a> 
+<a href="#l670" class="line" id="l670">    670</a> 				if multioutput {
+<a href="#l671" class="line" id="l671">    671</a> 					return nil, nil, nil, nil, nil, errors.New(&quot;Multiple outputs have the same id&quot;)
+<a href="#l672" class="line" id="l672">    672</a> 				}
+<a href="#l673" class="line" id="l673">    673</a> 
+<a href="#l674" class="line" id="l674">    674</a> 				if connected {
+<a href="#l675" class="line" id="l675">    675</a> 					// The Output is within the cluster
+<a href="#l676" class="line" id="l676">    676</a> 					newio.Assoc[bio] = ioid
+<a href="#l677" class="line" id="l677">    677</a> 					ioid_n, _ := strconv.Atoi(ioid)
+<a href="#l678" class="line" id="l678">    678</a> 					newoutputs = append(newoutputs, uint32(ioid_n))
+<a href="#l679" class="line" id="l679">    679</a> 				} else {
+<a href="#l680" class="line" id="l680">    680</a> 					// Its residual
+<a href="#l681" class="line" id="l681">    681</a> 					newresidual.Map.Assoc[bio] = ioid
+<a href="#l682" class="line" id="l682">    682</a> 				}
+<a href="#l683" class="line" id="l683">    683</a> 
+<a href="#l684" class="line" id="l684">    684</a> 			}
+<a href="#l685" class="line" id="l685">    685</a> 		}
+<a href="#l686" class="line" id="l686">    686</a> 
+<a href="#l687" class="line" id="l687">    687</a> 		resultio = append(resultio, newio)
+<a href="#l688" class="line" id="l688">    688</a> 		resultresi = append(resultresi, newresidual)
+<a href="#l689" class="line" id="l689">    689</a> 
+<a href="#l690" class="line" id="l690">    690</a> 		newpeer := udpbond.Peer{resultpeerids[myid], newchannels, newinputs, newoutputs}
+<a href="#l691" class="line" id="l691">    691</a> 		resultcluster.Peers = append(resultcluster.Peers, newpeer)
+<a href="#l692" class="line" id="l692">    692</a> 
+<a href="#l693" class="line" id="l693">    693</a> 	}
+<a href="#l694" class="line" id="l694">    694</a> 
+<a href="#l695" class="line" id="l695">    695</a> 	return resultcluster, resultpeerids, resultbond, resultio, resultresi, nil
+<a href="#l696" class="line" id="l696">    696</a> }
+<a href="#l697" class="line" id="l697">    697</a> 
+<a href="#l698" class="line" id="l698">    698</a> func Assembly_2_Processor(rsize int, asmcode []string) (*procbuilder.Machine, error) {
+<a href="#l699" class="line" id="l699">    699</a> 
+<a href="#l700" class="line" id="l700">    700</a> 	config := new(BondgoConfig)
+<a href="#l701" class="line" id="l701">    701</a> 	config.Debug = false
+<a href="#l702" class="line" id="l702">    702</a> 	config.Verbose = false
+<a href="#l703" class="line" id="l703">    703</a> 	config.Mpm = false
+<a href="#l704" class="line" id="l704">    704</a> 	config.Cascading_io = false
+<a href="#l705" class="line" id="l705">    705</a> 
+<a href="#l706" class="line" id="l706">    706</a> 	switch rsize {
+<a href="#l707" class="line" id="l707">    707</a> 	case 8:
+<a href="#l708" class="line" id="l708">    708</a> 		config.Rsize = uint8(8)
+<a href="#l709" class="line" id="l709">    709</a> 		config.Basic_type = &quot;uint8&quot;
+<a href="#l710" class="line" id="l710">    710</a> 		config.Basic_chantype = &quot;chan uint8&quot;
+<a href="#l711" class="line" id="l711">    711</a> 	case 16:
+<a href="#l712" class="line" id="l712">    712</a> 		config.Rsize = uint8(16)
+<a href="#l713" class="line" id="l713">    713</a> 		config.Basic_type = &quot;uint16&quot;
+<a href="#l714" class="line" id="l714">    714</a> 		config.Basic_chantype = &quot;chan uint16&quot;
+<a href="#l715" class="line" id="l715">    715</a> 	case 32:
+<a href="#l716" class="line" id="l716">    716</a> 		config.Rsize = uint8(32)
+<a href="#l717" class="line" id="l717">    717</a> 		config.Basic_type = &quot;uint32&quot;
+<a href="#l718" class="line" id="l718">    718</a> 		config.Basic_chantype = &quot;chan uint32&quot;
+<a href="#l719" class="line" id="l719">    719</a> 	case 64:
+<a href="#l720" class="line" id="l720">    720</a> 		config.Rsize = uint8(64)
+<a href="#l721" class="line" id="l721">    721</a> 		config.Basic_type = &quot;uint64&quot;
+<a href="#l722" class="line" id="l722">    722</a> 		config.Basic_chantype = &quot;chan uint64&quot;
+<a href="#l723" class="line" id="l723">    723</a> 	default:
+<a href="#l724" class="line" id="l724">    724</a> 		config.Rsize = uint8(8)
+<a href="#l725" class="line" id="l725">    725</a> 		config.Basic_type = &quot;uint8&quot;
+<a href="#l726" class="line" id="l726">    726</a> 		config.Basic_chantype = &quot;chan uint8&quot;
+<a href="#l727" class="line" id="l727">    727</a> 	}
+<a href="#l728" class="line" id="l728">    728</a> 
+<a href="#l729" class="line" id="l729">    729</a> 	usagedone := make(chan bool)
+<a href="#l730" class="line" id="l730">    730</a> 
+<a href="#l731" class="line" id="l731">    731</a> 	results := new(BondgoResults) // Results go in here
+<a href="#l732" class="line" id="l732">    732</a> 	results.Init_Results(config)
+<a href="#l733" class="line" id="l733">    733</a> 
+<a href="#l734" class="line" id="l734">    734</a> 	messages := new(BondgoMessages) // Compiler logs and errors
+<a href="#l735" class="line" id="l735">    735</a> 	messages.Init_Messages(config)
+<a href="#l736" class="line" id="l736">    736</a> 
+<a href="#l737" class="line" id="l737">    737</a> 	reqmnts := new(BondgoRequirements) // The pointer to the requirements struct
+<a href="#l738" class="line" id="l738">    738</a> 	reqmnts.Init_Requirements(config)
+<a href="#l739" class="line" id="l739">    739</a> 
+<a href="#l740" class="line" id="l740">    740</a> 	usagenotify := make(chan UsageNotify) // Used to notify the used resource
+<a href="#l741" class="line" id="l741">    741</a> 
+<a href="#l742" class="line" id="l742">    742</a> 	go reqmnts.Usage_Monitor(usagenotify, usagedone) // Spawn the usage monitor
+<a href="#l743" class="line" id="l743">    743</a> 
+<a href="#l744" class="line" id="l744">    744</a> 	run := new(BondgoRuninfo) // Running data
+<a href="#l745" class="line" id="l745">    745</a> 	run.Init_Runinfo(config)
+<a href="#l746" class="line" id="l746">    746</a> 
+<a href="#l747" class="line" id="l747">    747</a> 	varreq := make(chan VarReq) // Variable request
+<a href="#l748" class="line" id="l748">    748</a> 	varans := make(chan VarAns) // Variable response
+<a href="#l749" class="line" id="l749">    749</a> 
+<a href="#l750" class="line" id="l750">    750</a> 	functs := new(BondgoFunctions) // Functions
+<a href="#l751" class="line" id="l751">    751</a> 	functs.Init_Functions(config, messages)
+<a href="#l752" class="line" id="l752">    752</a> 
+<a href="#l753" class="line" id="l753">    753</a> 	vars := make(map[string]VarCell)
+<a href="#l754" class="line" id="l754">    754</a> 	returns := make([]VarCell, 0)
+<a href="#l755" class="line" id="l755">    755</a> 
+<a href="#l756" class="line" id="l756">    756</a> 	bgmain := &amp;BondgoCheck{results, config, reqmnts, run, messages, functs, usagenotify, varreq, varans, nil, nil, vars, returns, &quot;&quot;, &quot;&quot;, &quot;device_0&quot;, 0}
+<a href="#l757" class="line" id="l757">    757</a> 
+<a href="#l758" class="line" id="l758">    758</a> 	bgmain.Used &lt;- UsageNotify{TR_PROC, 0, C_DEVICE, bgmain.CurrentDevice, I_NIL}
+<a href="#l759" class="line" id="l759">    759</a> 
+<a href="#l760" class="line" id="l760">    760</a> 	bgmain.Abstract_assembler(rsize, asmcode, usagenotify)
+<a href="#l761" class="line" id="l761">    761</a> 
+<a href="#l762" class="line" id="l762">    762</a> 	for _, currline := range asmcode {
+<a href="#l763" class="line" id="l763">    763</a> 		bgmain.WriteLine(0, currline)
+<a href="#l764" class="line" id="l764">    764</a> 	}
+<a href="#l765" class="line" id="l765">    765</a> 
+<a href="#l766" class="line" id="l766">    766</a> 	for procid, rout := range bgmain.Program {
+<a href="#l767" class="line" id="l767">    767</a> 		// TODO Recheck
+<a href="#l768" class="line" id="l768">    768</a> 		linesn := len(rout.Lines)
+<a href="#l769" class="line" id="l769">    769</a> 		bgmain.Used &lt;- UsageNotify{TR_PROC, procid, C_ROMSIZE, S_NIL, linesn}
+<a href="#l770" class="line" id="l770">    770</a> 	}
+<a href="#l771" class="line" id="l771">    771</a> 
+<a href="#l772" class="line" id="l772">    772</a> 	bgmain.Used &lt;- UsageNotify{TR_EXIT, 0, 0, S_NIL, I_NIL}
+<a href="#l773" class="line" id="l773">    773</a> 	&lt;-usagedone
+<a href="#l774" class="line" id="l774">    774</a> 
+<a href="#l775" class="line" id="l775">    775</a> 	if mymachine, ok := bgmain.Create_Connecting_Processor(rsize, 0); ok {
+<a href="#l776" class="line" id="l776">    776</a> 		return mymachine, nil
+<a href="#l777" class="line" id="l777">    777</a> 	} else {
+<a href="#l778" class="line" id="l778">    778</a> 		return nil, errors.New(&quot;Creating processor failed&quot;)
+<a href="#l779" class="line" id="l779">    779</a> 	}
+<a href="#l780" class="line" id="l780">    780</a> 
+<a href="#l781" class="line" id="l781">    781</a> 	return nil, nil
+<a href="#l782" class="line" id="l782">    782</a> }
+<a href="#l783" class="line" id="l783">    783</a> 
+<a href="#l784" class="line" id="l784">    784</a> func MultiAsm2BondMachine(rsize int, aafile *Abs_assembly) (*bondmachine.Bondmachine, error) {
+<a href="#l785" class="line" id="l785">    785</a> 	bmach := new(bondmachine.Bondmachine)
+<a href="#l786" class="line" id="l786">    786</a> 	bmach.Rsize = uint8(rsize)
+<a href="#l787" class="line" id="l787">    787</a> 	bmach.Init()
+<a href="#l788" class="line" id="l788">    788</a> 
+<a href="#l789" class="line" id="l789">    789</a> 	for i, proc_prog := range aafile.ProcProgs {
+<a href="#l790" class="line" id="l790">    790</a> 		if mach, err := Assembly_2_Processor(rsize, strings.Split(proc_prog, &quot;\n&quot;)); err == nil {
+<a href="#l791" class="line" id="l791">    791</a> 			bmach.Domains = append(bmach.Domains, mach)
+<a href="#l792" class="line" id="l792">    792</a> 			if _, ok := bmach.Add_processor(i); ok != nil {
+<a href="#l793" class="line" id="l793">    793</a> 				return nil, errors.New(&quot;Attach processor failed&quot;)
+<a href="#l794" class="line" id="l794">    794</a> 			}
+<a href="#l795" class="line" id="l795">    795</a> 
+<a href="#l796" class="line" id="l796">    796</a> 		} else {
+<a href="#l797" class="line" id="l797">    797</a> 			return nil, errors.New(&quot;Creating processor failed&quot;)
+<a href="#l798" class="line" id="l798">    798</a> 		}
+<a href="#l799" class="line" id="l799">    799</a> 	}
+<a href="#l800" class="line" id="l800">    800</a> 
+<a href="#l801" class="line" id="l801">    801</a> 	for _, bond := range aafile.Bonds {
+<a href="#l802" class="line" id="l802">    802</a> 		endpoints := strings.Split(bond, &quot;,&quot;)
+<a href="#l803" class="line" id="l803">    803</a> 		if endpoints[0][0] == &#39;i&#39; {
+<a href="#l804" class="line" id="l804">    804</a> 			for {
+<a href="#l805" class="line" id="l805">    805</a> 				max := &quot;i&quot; + strconv.Itoa(bmach.Inputs)
+<a href="#l806" class="line" id="l806">    806</a> 				if max &lt;= endpoints[0] {
+<a href="#l807" class="line" id="l807">    807</a> 					bmach.Add_input()
+<a href="#l808" class="line" id="l808">    808</a> 				} else {
+<a href="#l809" class="line" id="l809">    809</a> 					break
+<a href="#l810" class="line" id="l810">    810</a> 				}
+<a href="#l811" class="line" id="l811">    811</a> 			}
+<a href="#l812" class="line" id="l812">    812</a> 		}
+<a href="#l813" class="line" id="l813">    813</a> 		if endpoints[0][0] == &#39;o&#39; {
+<a href="#l814" class="line" id="l814">    814</a> 			for {
+<a href="#l815" class="line" id="l815">    815</a> 				max := &quot;o&quot; + strconv.Itoa(bmach.Outputs)
+<a href="#l816" class="line" id="l816">    816</a> 				if max &lt;= endpoints[0] {
+<a href="#l817" class="line" id="l817">    817</a> 					bmach.Add_output()
+<a href="#l818" class="line" id="l818">    818</a> 				} else {
+<a href="#l819" class="line" id="l819">    819</a> 					break
+<a href="#l820" class="line" id="l820">    820</a> 				}
+<a href="#l821" class="line" id="l821">    821</a> 			}
+<a href="#l822" class="line" id="l822">    822</a> 		}
+<a href="#l823" class="line" id="l823">    823</a> 
+<a href="#l824" class="line" id="l824">    824</a> 		if endpoints[1][0] == &#39;i&#39; {
+<a href="#l825" class="line" id="l825">    825</a> 			for {
+<a href="#l826" class="line" id="l826">    826</a> 				max := &quot;i&quot; + strconv.Itoa(bmach.Inputs)
+<a href="#l827" class="line" id="l827">    827</a> 				if max &lt;= endpoints[1] {
+<a href="#l828" class="line" id="l828">    828</a> 					bmach.Add_input()
+<a href="#l829" class="line" id="l829">    829</a> 				} else {
+<a href="#l830" class="line" id="l830">    830</a> 					break
+<a href="#l831" class="line" id="l831">    831</a> 				}
+<a href="#l832" class="line" id="l832">    832</a> 			}
+<a href="#l833" class="line" id="l833">    833</a> 		}
+<a href="#l834" class="line" id="l834">    834</a> 		if endpoints[1][0] == &#39;o&#39; {
+<a href="#l835" class="line" id="l835">    835</a> 			for {
+<a href="#l836" class="line" id="l836">    836</a> 				max := &quot;o&quot; + strconv.Itoa(bmach.Outputs)
+<a href="#l837" class="line" id="l837">    837</a> 				if max &lt;= endpoints[1] {
+<a href="#l838" class="line" id="l838">    838</a> 					bmach.Add_output()
+<a href="#l839" class="line" id="l839">    839</a> 				} else {
+<a href="#l840" class="line" id="l840">    840</a> 					break
+<a href="#l841" class="line" id="l841">    841</a> 				}
+<a href="#l842" class="line" id="l842">    842</a> 			}
+<a href="#l843" class="line" id="l843">    843</a> 		}
+<a href="#l844" class="line" id="l844">    844</a> 
+<a href="#l845" class="line" id="l845">    845</a> 		bmach.Add_bond(endpoints)
+<a href="#l846" class="line" id="l846">    846</a> 
+<a href="#l847" class="line" id="l847">    847</a> 	}
+<a href="#l848" class="line" id="l848">    848</a> 
+<a href="#l849" class="line" id="l849">    849</a> 	return bmach, nil
+<a href="#l850" class="line" id="l850">    850</a> }
+</pre>
+</div>
+</body>
+</html>

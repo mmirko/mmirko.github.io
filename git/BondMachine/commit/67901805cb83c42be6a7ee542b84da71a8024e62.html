@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UNIX sock receiver and sender - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/67901805cb83c42be6a7ee542b84da71a8024e62.html">67901805cb83c42be6a7ee542b84da71a8024e62</a>
+<b>parent</b> <a href="../commit/1398e08620d13b1b503bdeefbd3680c22d48e278.html">1398e08620d13b1b503bdeefbd3680c22d48e278</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  7 Sep 2022 10:44:39 +0200
+
+UNIX sock receiver and sender
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">brvga/brvga.go</a></td><td> | </td><td class="num">71</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">brvga/unixsockreceiver_test.go</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">brvga/unixsocksender_test.go</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 128 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvga.go.html">brvga/brvga.go</a> b/<a href="../file/brvga/brvga.go.html">brvga/brvga.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,10 +1,14 @@
+</a> package brvga
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;context&quot;
+</a> 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;net&quot;
+</a> 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	&quot;google.golang.org/protobuf/proto&quot;
+</a> )
+ 
+ type cpTextMemory struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -88,3 +92,70 @@ func (b *BrvgaTextMemory) Dump() string {
+</a> 	}
+ 	return result
+ }
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+func (b *BrvgaTextMemory) UNIXSockReceiver(ctx context.Context, path string) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// Create the socket
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	sock, err := net.Listen(&quot;unix&quot;, path)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	if err != nil {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		panic(err)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	}
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	// Wait for a connection
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	for {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		select {
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		case &lt;-ctx.Done():
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			return
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		default:
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			conn, err := sock.Accept()
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			if err != nil {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				panic(err)
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+			}
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+			go b.handleConnection(ctx, conn)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		}
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	}
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+}
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+func (b *BrvgaTextMemory) handleConnection(ctx context.Context, conn net.Conn) {
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	defer conn.Close()
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	for {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		select {
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+		case &lt;-ctx.Done():
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+			return
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+		default:
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+			buf := make([]byte, 1024)
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+			n, err := conn.Read(buf)
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+			if err != nil {
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+				return
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+			}
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+			b.handleMessage(ctx, buf[:n])
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+		}
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+	}
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+}
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+func (b *BrvgaTextMemory) handleMessage(ctx context.Context, buf []byte) {
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+	recv := &amp;Textmemupdate{}
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+	proto.Unmarshal(buf, recv)
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+	fmt.Println(recv)
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+}
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+func (b *BrvgaTextMemory) UNIXSockSender(ctx context.Context, path string, buf *Textmemupdate) error {
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+	// Marshal the message into a buffer
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+	out, err := proto.Marshal(buf)
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+	if err != nil {
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+		return err
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+	}
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+	// Connect to the socket
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+	conn, err := net.Dial(&quot;unix&quot;, path)
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+	if err != nil {
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+		return err
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+	}
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+	defer conn.Close()
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+	// Send the message
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+	_, err = conn.Write(out)
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+	return err
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/brvga/unixsockreceiver_test.go.html">brvga/unixsockreceiver_test.go</a> b/<a href="../file/brvga/unixsockreceiver_test.go.html">brvga/unixsockreceiver_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,32 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package brvga
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;os&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;os/exec&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	&quot;testing&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;time&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	&quot;context&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+func TestUnixSocketReceiver(t *testing.T) {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	vga, err := NewBrvgaTextMemory(&quot;textvga:1:1:1:16:16&quot;)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	if err != nil {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+		t.Fatal(err)
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	ctx, _ := context.WithCancel(context.Background())
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	go vga.UNIXSockReceiver(ctx, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	for {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		time.Sleep(1 * time.Second)
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		cmd := exec.Command(&quot;clear&quot;)
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		cmd.Stdout = os.Stdout
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		cmd.Run()
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+		fmt.Println(vga.Dump())
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	}
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/brvga/unixsocksender_test.go.html">brvga/unixsocksender_test.go</a> b/<a href="../file/brvga/unixsocksender_test.go.html">brvga/unixsocksender_test.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,25 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package brvga
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;testing&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;time&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;context&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+)
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+func TestUnixSocketSender(t *testing.T) {
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	vga, _ := NewBrvgaTextMemory(&quot;1:0:0:80:25&quot;)
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	ctx, _ := context.WithCancel(context.Background())
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	// Create a new protobuf message
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	msg := &amp;Textmemupdate{
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+		Cpid: 1,
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 1, Payload: []byte(&quot;Hello&quot;)}},
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	}
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	vga.UNIXSockSender(ctx, &quot;/tmp/brvga.sock&quot;, msg)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	time.Sleep(10 * time.Second)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

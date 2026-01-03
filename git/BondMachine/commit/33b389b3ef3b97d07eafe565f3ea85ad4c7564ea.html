@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ro2rri simulation - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/33b389b3ef3b97d07eafe565f3ea85ad4c7564ea.html">33b389b3ef3b97d07eafe565f3ea85ad4c7564ea</a>
+<b>parent</b> <a href="../commit/4e5d4ff4ab7226333a1695992466fb9133bde087.html">4e5d4ff4ab7226333a1695992466fb9133bde087</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 17 Jun 2023 15:42:32 +0200
+
+ro2rri simulation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">34</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 30 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -161,11 +161,37 @@ func (op Ro2rri) Simulate(vm *VM, instr string) error {
+</a> 	reg_bits := vm.Mach.R
+ 	regDest := get_id(instr[:reg_bits])
+ 	regSrc := get_id(instr[reg_bits : reg_bits*2])
+<a href="#h0-0-3" id="h0-0-3" class="d">-	loc := int(vm.Registers[regSrc].(uint8))
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc]))
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	if vm.Mach.Rsize &lt;= 8 {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		loc := int(vm.Registers[regSrc].(uint8))
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc]))
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		} else {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)]))
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	} else if vm.Mach.Rsize &lt;= 16 {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		loc := int(vm.Registers[regSrc].(uint16))
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Program.Slocs[loc]))
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		} else {
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)]))
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		}
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	} else if vm.Mach.Rsize &lt;= 32 {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		loc := int(vm.Registers[regSrc].(uint32))
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Program.Slocs[loc]))
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+		} else {
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)]))
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		}
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	} else if vm.Mach.Rsize &lt;= 64 {
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		loc := int(vm.Registers[regSrc].(uint64))
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Program.Slocs[loc]))
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		} else {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)]))
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		}
+</a> 	} else {
+<a href="#h0-0-36" id="h0-0-36" class="d">-		vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)]))
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a> 	}
+ 
+ 	vm.Pc = vm.Pc + 1
+</pre>
+</div>
+</body>
+</html>

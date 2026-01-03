@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Call - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/fc416b28cf7790c1b904e2397a6b7dd6ba36d518.html">fc416b28cf7790c1b904e2397a6b7dd6ba36d518</a>
+<b>parent</b> <a href="../commit/30b3b8833d31bb07e1483b2f57b2e4d2a5747986.html">30b3b8833d31bb07e1483b2f57b2e4d2a5747986</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  1 Sep 2023 15:41:04 +0200
+
+Call
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/dynop_call.go</a></td><td> | </td><td class="num">150</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 139 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/dynop_call.go.html">pkg/procbuilder/dynop_call.go</a> b/<a href="../file/pkg/procbuilder/dynop_call.go.html">pkg/procbuilder/dynop_call.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,10 +4,12 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;math/rand&quot;
+ 	&quot;strconv&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;strings&quot;
+</a> 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmstack&quot;
+</a> )
+ 
+ type Call struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -61,7 +63,61 @@ func (op Call) Op_get_instruction_len(arch *Arch) int {
+</a> }
+ 
+ func (op Call) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	return &quot;&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	result := &quot;&quot;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// Size of the return stack
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	dataSize := 0
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	switch arch.Modes[0] {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	case &quot;ha&quot;:
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		dataSize = int(arch.O)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	case &quot;vn&quot;:
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		dataSize = int(arch.L)
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	case &quot;hy&quot;:
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		// +1 because the stack memorizes the origin of the return (ROM or RAM)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		if arch.O &gt; arch.L {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			dataSize = int(arch.O) + 1
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		} else {
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			dataSize = int(arch.L) + 1
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	}
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	stackName := &quot;restack&quot; + arch.Tag + &quot;_&quot; + strconv.Itoa(op.s) + op.sn
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	// Connect the return stack only once
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	suffix := strconv.Itoa(op.s) + op.sn
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;callo&quot; + suffix, &quot;calla&quot; + suffix, &quot;ret&quot; + suffix}) {
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		result += &quot;	reg [1:0] &quot; + stackName + &quot;SM;\n&quot;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		result += &quot;	localparam	CALL1 = 2&#39;b00,\n&quot;
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		result += &quot;			CALL2 = 2&#39;b01,\n&quot;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		result += &quot;			CALL3 = 2&#39;b10,\n&quot;
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		result += &quot;			CALL4 = 2&#39;b11;\n&quot;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+		result += &quot;\treg [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + stackName + &quot;senderData;\n&quot;
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+		result += &quot;\treg &quot; + stackName + &quot;senderWrite;\n&quot;
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+		result += &quot;\twire &quot; + stackName + &quot;senderAck;\n&quot;
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+		result += &quot;\twire [&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &quot; + stackName + &quot;receiverData;\n&quot;
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+		result += &quot;\treg &quot; + stackName + &quot;receiverRead;\n&quot;
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+		result += &quot;\twire &quot; + stackName + &quot;receiverAck;\n&quot;
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+		result += &quot;\twire &quot; + stackName + &quot;empty;\n&quot;
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+		result += &quot;\twire &quot; + stackName + &quot;full;\n&quot;
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+		result += &quot;\n&quot;
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+		result += &quot;\t&quot; + stackName + &quot; &quot; + stackName + &quot;_inst (\n&quot;
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+		result += &quot;\t\t.clk(clk),\n&quot;
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+		result += &quot;\t\t.reset(reset),\n&quot;
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+		result += &quot;\t\t.senderData(&quot; + stackName + &quot;senderData),\n&quot;
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+		result += &quot;\t\t.senderWrite(&quot; + stackName + &quot;senderWrite),\n&quot;
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+		result += &quot;\t\t.senderAck(&quot; + stackName + &quot;senderAck),\n&quot;
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+		result += &quot;\t\t.receiverData(&quot; + stackName + &quot;receiverData),\n&quot;
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+		result += &quot;\t\t.receiverRead(&quot; + stackName + &quot;receiverRead),\n&quot;
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+		result += &quot;\t\t.receiverAck(&quot; + stackName + &quot;receiverAck),\n&quot;
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+		result += &quot;\t\t.empty(&quot; + stackName + &quot;empty),\n&quot;
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+		result += &quot;\t\t.full(&quot; + stackName + &quot;full)\n&quot;
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+		result += &quot;\t);\n&quot;
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+	}
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+	return result
+</a> }
+ 
+ func (op Call) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+<a href="#h0-2" id="h0-2" class="h">@@ -77,34 +133,78 @@ func (op Call) Op_instruction_verilog_default_state(arch *Arch, flavor string) s
+</a> }
+ 
+ func (op Call) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	rom_word := arch.Max_word()
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	opbits := arch.Opcodes_bits()
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	romWord := arch.Max_word()
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	stackName := &quot;restack&quot; + arch.Tag + &quot;_&quot; + strconv.Itoa(op.s) + op.sn
+</a> 	locationBits := arch.O
+ 
+<a href="#h0-2-11" id="h0-2-11" class="i">+	dataSize := 0
+</a> 	switch arch.Modes[0] {
+ 	case &quot;ha&quot;:
+ 		locationBits = arch.O
+<a href="#h0-2-15" id="h0-2-15" class="i">+		dataSize = int(arch.O)
+</a> 	case &quot;vn&quot;:
+ 		locationBits = arch.L
+<a href="#h0-2-18" id="h0-2-18" class="i">+		dataSize = int(arch.L)
+</a> 	case &quot;hy&quot;:
+ 		if arch.O &gt; arch.L {
+ 			locationBits = arch.O
+<a href="#h0-2-22" id="h0-2-22" class="i">+			dataSize = int(arch.O) + 1
+</a> 		} else {
+ 			locationBits = arch.L
+<a href="#h0-2-25" id="h0-2-25" class="i">+			dataSize = int(arch.L) + 1
+</a> 		}
+ 	}
+ 
+ 	result := &quot;&quot;
+<a href="#h0-2-30" id="h0-2-30" class="d">-	result += &quot;					J: begin\n&quot;
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-	if locationBits == 1 {
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;]&quot;)
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;]);\n&quot;
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	if op.opType == OP_CALLA || op.opType == OP_CALLO {
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+		result += &quot;					&quot; + strings.ToUpper(op.callName) + &quot;: begin\n&quot;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+		result += &quot;						case (&quot; + stackName + &quot;SM)\n&quot;
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+		result += &quot;						CALL1: begin\n&quot;
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+		result += &quot;							if (!&quot; + stackName + &quot;senderAck) begin\n&quot;
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+		result += &quot;							     &quot; + stackName + &quot;senderData[&quot; + strconv.Itoa(dataSize-1) + &quot;:0] &lt;= #1 { exec_mode, _pc[&quot; + strconv.Itoa(int(locationBits)-1) + &quot;:0] + 1 };\n&quot;
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+		result += &quot;							     &quot; + stackName + &quot;senderWrite &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+		result += &quot;							     &quot; + stackName + &quot;SM &lt;= CALL2;\n&quot;
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+		result += &quot;							end\n&quot;
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+		result += &quot;						CALL2: begin\n&quot;
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+		result += &quot;							if (&quot; + stackName + &quot;senderAck) begin\n&quot;
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+		result += &quot;								&quot; + stackName + &quot;senderWrite &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+		if arch.Modes[0] == &quot;hy&quot; {
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+			if op.opType == OP_CALLO {
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+				result += &quot;								exec_mode &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+			} else {
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+				result += &quot;								exec_mode &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+			}
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+		}
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+		if locationBits == 1 {
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+			result += &quot;								_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;];\n&quot;
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+			result += &quot;								$display(\&quot;&quot; + strings.ToUpper(op.callName) + &quot; \&quot;, current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;]);\n&quot;
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+		} else {
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+			result += &quot;								_pc &lt;= #1 current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(locationBits)) + &quot;];\n&quot;
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+			result += &quot;								$display(\&quot;&quot; + strings.ToUpper(op.callName) + &quot; \&quot;, current_instruction[&quot; + strconv.Itoa(romWord-opBits-1) + &quot;:&quot; + strconv.Itoa(romWord-opBits-int(locationBits)) + &quot;]);\n&quot;
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+		}
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+		result += &quot;								&quot; + stackName + &quot;SM &lt;= CALL1;\n&quot;
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+		result += &quot;							end\n&quot;
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+		result += &quot;						endcase\n&quot;
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+		result += &quot;					end\n&quot;
+</a> 	} else {
+<a href="#h0-2-67" id="h0-2-67" class="d">-		result += NextInstruction(conf, arch, 6, &quot;current_instruction[&quot;+strconv.Itoa(rom_word-opbits-1)+&quot;:&quot;+strconv.Itoa(rom_word-opbits-int(locationBits))+&quot;]&quot;)
+</a><a href="#h0-2-68" id="h0-2-68" class="d">-		result += &quot;						$display(\&quot;J \&quot;, current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(locationBits)) + &quot;]);\n&quot;
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+		result += &quot;					&quot; + strings.ToUpper(op.callName) + &quot;: begin\n&quot;
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+		result += &quot;						if (&quot; + stackName + &quot;receiverAck &amp;&amp; &quot; + stackName + &quot;receiverRead) begin\n&quot;
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+		result += &quot;							&quot; + stackName + &quot;receiverRead &lt;= #1 1&#39;b0;\n&quot;
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+		result += &quot;							_pc[&quot; + strconv.Itoa(int(locationBits)-1) + &quot;:0] &lt;= #1 &quot; + stackName + &quot;receiverData[&quot; + strconv.Itoa(int(locationBits)-1) + &quot;:0];\n&quot;
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+		result += &quot;							exec_mode &lt;= #1 &quot; + stackName + &quot;receiverData[&quot; + strconv.Itoa(int(locationBits)) + &quot;];\n&quot;
+</a><a href="#h0-2-74" id="h0-2-74" class="i">+		if arch.Modes[0] == &quot;hy&quot; {
+</a><a href="#h0-2-75" id="h0-2-75" class="i">+			result += &quot;							vn_state &lt;= FETCH;\n&quot;
+</a><a href="#h0-2-76" id="h0-2-76" class="i">+		}
+</a><a href="#h0-2-77" id="h0-2-77" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h0-2-78" id="h0-2-78" class="i">+		result += &quot;						else begin\n&quot;
+</a><a href="#h0-2-79" id="h0-2-79" class="i">+		result += &quot;							&quot; + stackName + &quot;receiverRead &lt;= #1 1&#39;b1;\n&quot;
+</a><a href="#h0-2-80" id="h0-2-80" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+		result += &quot;					end\n&quot;
+</a> 	}
+<a href="#h0-2-83" id="h0-2-83" class="d">-	result += &quot;					end\n&quot;
+</a><a href="#h0-2-84" id="h0-2-84" class="i">+
+</a> 	return result
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -197,6 +297,34 @@ func (op Call) Forbidden_modes() (bool, []string) {
+</a> }
+ 
+ func (op Call) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+<a href="#h0-3-3" id="h0-3-3" class="i">+	suffix := strconv.Itoa(op.s) + op.sn
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if arch.OnlyOne(op.Op_get_name(), []string{&quot;callo&quot; + suffix, &quot;calla&quot; + suffix, &quot;ret&quot; + suffix}) {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		s := bmstack.CreateBasicStack()
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		s.ModuleName = &quot;restack&quot; + arch.Tag + &quot;_&quot; + suffix
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		switch arch.Modes[0] {
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		case &quot;ha&quot;:
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			s.DataSize = int(arch.O)
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		case &quot;vn&quot;:
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			s.DataSize = int(arch.L)
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+		case &quot;hy&quot;:
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+			// +1 because the stack memorizes the origin of the return (ROM or RAM)
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+			if arch.O &gt; arch.L {
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+				s.DataSize = int(arch.O) + 1
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+			} else {
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+				s.DataSize = int(arch.L) + 1
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+			}
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		}
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+		s.Depth = op.s
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		s.MemType = &quot;LIFO&quot;
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+		s.Senders = []string{&quot;sender&quot;}
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+		s.Receivers = []string{&quot;receiver&quot;}
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+		r, _ := s.WriteHDL()
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+		result := r
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+		return []string{s.ModuleName}, []string{result}
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+	}
+</a> 	return []string{}, []string{}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmstack docs - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/db87141f0bd5bfdaf1748319694d15a41475caf0.html">db87141f0bd5bfdaf1748319694d15a41475caf0</a>
+<b>parent</b> <a href="../commit/41ccf976f5b87d335da5da05f975a0ab49dda0ac.html">41ccf976f5b87d335da5da05f975a0ab49dda0ac</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu, 15 Jun 2023 10:05:28 +0200
+
+bmstack docs
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmstack/README.md</a></td><td> | </td><td class="num">87</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmstack/bmstack.go</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">pkg/bmstack/bmstack.png</a></td><td> | </td><td class="num">0</td><td><span class="i"></span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h3">pkg/bmstack/cli.png</a></td><td> | </td><td class="num">0</td><td><span class="i"></span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h4">pkg/bmstack/writehdl.png</a></td><td> | </td><td class="num">0</td><td><span class="i"></span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h5">pkg/bmstack/writetestbench.png</a></td><td> | </td><td class="num">0</td><td><span class="i"></span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 82 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmstack/README.md.html">pkg/bmstack/README.md</a> b/<a href="../file/pkg/bmstack/README.md.html">pkg/bmstack/README.md</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,33 +3,31 @@
+</a> bmstack is part of BondMachine project. Within the project It is used to create stacks and queues distributed among several BondMachine cores. due to its generality it can also be used as standalone tool to produce HDL shared stacks and queues to be used in other projects.
+ The HDL code is build using golang templates that creates the code starting from the following data structure. The comments describe the meaning of each field.
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-![BmStack](bmstack.png)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-
+</a> ```go
+ type Push struct {
+<a href="#h0-0-7" id="h0-0-7" class="d">-	Agent string
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	Tick  uint64
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	Value string
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	Agent string // The name of the agent that is pushing
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	Tick  uint64 // The tick at which the push occurs
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	Value string // The value that is pushed
+</a> }
+ 
+ type Pop struct {
+<a href="#h0-0-16" id="h0-0-16" class="d">-	Agent string
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	Tick  uint64
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	Agent string // The name of the agent that is popping
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	Tick  uint64 // The tick at which the pop occurs
+</a> }
+ 
+ type TestBenchData struct {
+<a href="#h0-0-23" id="h0-0-23" class="d">-	Pops         []Pop
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-	Pushes       []Push
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	Pops         []Pop    // List of pops
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	Pushes       []Push   // List of pushes
+</a> 	TestSequence []string // Pushes and pops in order
+ }
+ 
+ type BmStack struct {
+<a href="#h0-0-31" id="h0-0-31" class="d">-	ModuleName string
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	DataSize   int
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	Depth      int
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-	Senders    []string
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	Receivers  []string
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-	MemType    string
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	ModuleName string   // The name of the module
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	DataSize   int      // The size of the data bus
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	Depth      int      // The depth of the stack
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	Senders    []string // The names of the agents that can send data to the stack
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	Receivers  []string // The names of the agents that can receive data from the stack
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	MemType    string   // &quot;LIFO&quot; for a stack or &quot;FIFO&quot; for a queue
+</a> 	funcMap    template.FuncMap
+ 
+ 	// TestBench data
+<a href="#h0-1" id="h0-1" class="h">@@ -43,11 +41,39 @@ The library can be used in two ways.
+</a> The first one is from a go program. After creating a BmStack structure, the user can call the WriteHDL function to produce the HDL code.
+ An example on how the library can be used this way can be seen in the go test file (bmstack_test.go).
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-![WriteHDL](writehdl.png)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+```go
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+func TestWriteHDL(t *testing.T) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	// Create a new stack with 4 agents
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	stack := BmStack{
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		ModuleName: &quot;test&quot;,
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		DataSize:   32,
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		Depth:      8,
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		Senders:    []string{&quot;sender1&quot;, &quot;sender2&quot;},
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		Receivers:  []string{&quot;receiver1&quot;, &quot;receiver2&quot;},
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		MemType:    &quot;LIFO&quot;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	// write the HDL code
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	stack.WriteHDL()
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+```
+</a> 
+ The second part of the struct can be filled with test data. These data are used to produce a test bench for the stack. Using the test bench the user can verify the correctness of the stack. The test bench is produced by calling the WriteTestBench function.
+ 
+<a href="#h0-1-22" id="h0-1-22" class="d">-![WritetestBench](writetestbench.png)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+```go
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+func TestWriteTestBench(t *testing.T) {
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	stack := BmStack{
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	// ...
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		s.Pushes = []Push{
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+			Push{&quot;sender1&quot;, 200, &quot;32&#39;d1&quot;},
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		}
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		s.Pops = []Pop{
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+			Pop{&quot;receiver1&quot;, 60},
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+		}
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+	}
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+	// write the test bench
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+	stack.WriteTestBench()
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+}
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+```
+</a> 
+ The two functions (WriteHDL and WriteTestBench) return a string that contains the HDL code or an error if something went wrong (string, error).
+ The provided go test file (bmstack_test.go) shows how the library can be used in this way. When invoked (go test), it produces the two files (bmstack.v and bmstack_tb.v).
+<a href="#h0-2" id="h0-2" class="h">@@ -56,7 +82,32 @@ The provided go test file (bmstack_test.go) shows how the library can be used in
+</a> 
+ the library also came with a companion CLI executable called bmstack that provides the basic interface to the library. This is the second Possible way to use it.
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-![CLI](cli.png)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+```bash
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+$ bmstack -h
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+Usage of bmstack:
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+  -d    Verbose
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+  -data-width int
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+        Width of the data bus (default 32)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+  -depth int
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+        Depth of the stack/queue (default 8)
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+  -hdl-file string
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+        Name of the file to write the HDL to (default: stack.v, empty string to disable) (default &quot;stack.v&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+  -memory-type string
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+        Memory type, either stack or queue (default &quot;queue&quot;)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+  -random-stimulus int
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+        Generate random stimulus including N pushes and pops for every agent (default: 0, 0 to disable)
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+  -receivers string
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+        Comma separated list of names of signal tags that will receive data from the stack/queue
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+  -senders string
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+        Comma separated list of names of signal tags that will send data to the stack/queue
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+  -sim-length int
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+        Length of the simulation in clock cycles (default: 1000) (default 1000)
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+  -stimulus-file string
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+        Name of the JSON file to load the stimulus from (default: empty, empty string to disable)
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+  -tb-file string
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+        Name of the file to write the testbench to (default: empty, empty string to disable)
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+  -v    Verbose
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+```
+</a> 
+ Examples of usage:
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a> b/<a href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,29 +10,29 @@ import (
+</a> )
+ 
+ type Push struct {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	Agent string
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	Tick  uint64
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	Value string
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	Agent string // The name of the agent that is pushing
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	Tick  uint64 // The tick at which the push occurs
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	Value string // The value that is pushed
+</a> }
+ 
+ type Pop struct {
+<a href="#h1-0-12" id="h1-0-12" class="d">-	Agent string
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	Tick  uint64
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	Agent string // The name of the agent that is popping
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	Tick  uint64 // The tick at which the pop occurs
+</a> }
+ 
+ type TestBenchData struct {
+<a href="#h1-0-19" id="h1-0-19" class="d">-	Pops         []Pop
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-	Pushes       []Push
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	Pops         []Pop    // List of pops
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	Pushes       []Push   // List of pushes
+</a> 	TestSequence []string // Pushes and pops in order
+ }
+ 
+ type BmStack struct {
+<a href="#h1-0-27" id="h1-0-27" class="d">-	ModuleName string
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-	DataSize   int
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-	Depth      int
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-	Senders    []string
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-	Receivers  []string
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-	MemType    string
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	ModuleName string   // The name of the module
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	DataSize   int      // The size of the data bus
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	Depth      int      // The depth of the stack
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	Senders    []string // The names of the agents that can send data to the stack
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	Receivers  []string // The names of the agents that can receive data from the stack
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	MemType    string   // &quot;LIFO&quot; for a stack or &quot;FIFO&quot; for a queue
+</a> 	funcMap    template.FuncMap
+ 
+ 	// TestBench data
+<b>diff --git a/<a id="h2" href="../file/pkg/bmstack/bmstack.png.html">pkg/bmstack/bmstack.png</a> b/<a href="../file/pkg/bmstack/bmstack.png.html">pkg/bmstack/bmstack.png</a></b>
+Binary files differ.
+<b>diff --git a/<a id="h3" href="../file/pkg/bmstack/cli.png.html">pkg/bmstack/cli.png</a> b/<a href="../file/pkg/bmstack/cli.png.html">pkg/bmstack/cli.png</a></b>
+Binary files differ.
+<b>diff --git a/<a id="h4" href="../file/pkg/bmstack/writehdl.png.html">pkg/bmstack/writehdl.png</a> b/<a href="../file/pkg/bmstack/writehdl.png.html">pkg/bmstack/writehdl.png</a></b>
+Binary files differ.
+<b>diff --git a/<a id="h5" href="../file/pkg/bmstack/writetestbench.png.html">pkg/bmstack/writetestbench.png</a> b/<a href="../file/pkg/bmstack/writetestbench.png.html">pkg/bmstack/writetestbench.png</a></b>
+Binary files differ.
+</pre>
+</div>
+</body>
+</html>

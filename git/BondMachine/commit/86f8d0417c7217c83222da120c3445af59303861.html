@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Symbols - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/86f8d0417c7217c83222da120c3445af59303861.html">86f8d0417c7217c83222da120c3445af59303861</a>
+<b>parent</b> <a href="../commit/a623851ccb0381c0c907e68b3a848df4539b0b71.html">a623851ccb0381c0c907e68b3a848df4539b0b71</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 28 Aug 2023 21:53:01 +0200
+
+Symbols
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/entrypoints.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/fragmentcomposer.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/matcherresolver.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/passes.go</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bmreqs/engine.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>8 files changed, 55 insertions(+), 26 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -95,7 +95,22 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 	bi.fragments = make(map[string]*BasmFragment)
+ 	bi.chunks = make(map[string]*BasmChunk)
+ 	bi.symbols = make(map[string]int64)
+<a href="#h0-0-3" id="h0-0-3" class="d">-	bi.passes = uint64(16351)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	bi.passes = passTemplateResolver |
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		passDynamicalInstructions |
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		passSymbolTagger1 |
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		passSymbolTagger2 |
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		passDataSections2Bytes |
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		passMetadataInfer1 |
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		passMetadataInfer2 |
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		passEntryPoints |
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		passSymbolsResolver |
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		passMatcherResolver |
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		passFragmentAnalyzer |
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		passFragmentPruner |
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		passFragmentComposer |
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		passFragmentOptimizer1 |
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		passMemComposer
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a> 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.matchersOps = make([]procbuilder.Opcode, 0)
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a> b/<a href="../file/pkg/basm/entrypoints.go.html">pkg/basm/entrypoints.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,7 +3,6 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;strconv&quot;
+</a> )
+ 
+ // section entry points detection, the pass detects the symbol used as entry point of the section and sign it as metadata.
+<a href="#h1-1" id="h1-1" class="h">@@ -81,14 +80,17 @@ func entryPoints(bi *BasmInstance) error {
+</a> 			copy(body.Lines[checkLine:], body.Lines[checkLine+1:])
+ 			body.Lines[len(body.Lines)-1] = nil
+ 			body.Lines = body.Lines[:len(body.Lines)-1]
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			body.Lines[0].BasmMeta = body.Lines[0].SetMeta(&quot;symbol&quot;, checkSymbol)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a> 			// Removing the line means that symbols are shifted, so we need to correct the symbol correction
+<a href="#h1-1-7" id="h1-1-7" class="d">-			if body.GetMeta(&quot;symbcorrection&quot;) != &quot;&quot; {
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-				correction, _ := strconv.Atoi(body.GetMeta(&quot;symbcorrection&quot;))
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-				correction--
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-				body.BasmMeta = body.BasmMeta.SetMeta(&quot;symbcorrection&quot;, fmt.Sprintf(&quot;%d&quot;, correction))
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-			} else {
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-				body.BasmMeta = body.BasmMeta.SetMeta(&quot;symbcorrection&quot;, &quot;-1&quot;)
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-			}
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+			// if body.GetMeta(&quot;symbcorrection&quot;) != &quot;&quot; {
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+			// 	correction, _ := strconv.Atoi(body.GetMeta(&quot;symbcorrection&quot;))
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+			// 	correction--
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+			// 	body.BasmMeta = body.BasmMeta.SetMeta(&quot;symbcorrection&quot;, fmt.Sprintf(&quot;%d&quot;, correction))
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+			// } else {
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+			// 	body.BasmMeta = body.BasmMeta.SetMeta(&quot;symbcorrection&quot;, &quot;-1&quot;)
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+			// }
+</a> 
+ 			if checkPosition &lt; 0 {
+ 				for i, line := range body.Lines {
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a> b/<a href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -238,7 +238,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 						newLine := new(bmline.BasmLine)
+ 						if firstLine {
+ 							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;symbol&quot;, &quot;_start&quot;)
+<a href="#h2-0-3" id="h2-0-3" class="d">-							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 1
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 0
+</a> 							firstLine = false
+ 						}
+ 						newOperation := new(bmline.BasmElement)
+<a href="#h2-1" id="h2-1" class="h">@@ -262,7 +262,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 						newLine := new(bmline.BasmLine)
+ 						if firstLine {
+ 							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;symbol&quot;, &quot;_start&quot;)
+<a href="#h2-1-3" id="h2-1-3" class="d">-							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 1
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 0
+</a> 							firstLine = false
+ 						}
+ 						newOperation := new(bmline.BasmElement)
+<a href="#h2-2" id="h2-2" class="h">@@ -309,7 +309,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 						newLine := new(bmline.BasmLine)
+ 						if firstLine {
+ 							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;symbol&quot;, &quot;_start&quot;)
+<a href="#h2-2-3" id="h2-2-3" class="d">-							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 1
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 0
+</a> 							firstLine = false
+ 						}
+ 						newOperation := new(bmline.BasmElement)
+<a href="#h2-3" id="h2-3" class="h">@@ -333,7 +333,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 						newLine := new(bmline.BasmLine)
+ 						if firstLine {
+ 							newLine.BasmMeta = newLine.BasmMeta.SetMeta(&quot;symbol&quot;, &quot;_start&quot;)
+<a href="#h2-3-3" id="h2-3-3" class="d">-							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 1
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+							bi.symbols[&quot;rom.&quot;+newSection.sectionName+&quot;._start&quot;] = 0
+</a> 							firstLine = false
+ 						}
+ 						newOperation := new(bmline.BasmElement)
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a> b/<a href="../file/pkg/basm/matcherresolver.go.html">pkg/basm/matcherresolver.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -200,6 +200,9 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 							if bi.debug {
+ 								fmt.Println(green(&quot;\t\t\t\tNormalized line: &quot;) + normalized.String())
+ 							}
+<a href="#h3-0-3" id="h3-0-3" class="i">+							for k, v := range body.Lines[i].LoopMeta() {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+								normalized.BasmMeta = normalized.BasmMeta.SetMeta(k, v)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+							}
+</a> 							body.Lines[i] = normalized
+ 						}
+ 					} else {
+<a href="#h3-1" id="h3-1" class="h">@@ -209,6 +212,9 @@ func matcherResolver(bi *BasmInstance) error {
+</a> 							if bi.debug {
+ 								fmt.Println(green(&quot;\t\t\t\tNormalized line: &quot;) + normalized.String())
+ 							}
+<a href="#h3-1-3" id="h3-1-3" class="i">+							for k, v := range body.Lines[i].LoopMeta() {
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+								normalized.BasmMeta = normalized.BasmMeta.SetMeta(k, v)
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+							}
+</a> 							body.Lines[i] = normalized
+ 						}
+ 					}
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -5,7 +5,7 @@ import &quot;errors&quot;
+</a> const (
+ 	passTemplateResolver      = uint64(1)
+ 	passDynamicalInstructions = uint64(2)
+<a href="#h4-0-3" id="h4-0-3" class="d">-	passSymbolTagger          = uint64(4)
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	passSymbolTagger1         = uint64(4)
+</a> 	passDataSections2Bytes    = uint64(8)
+ 	passMetadataInfer1        = uint64(16)
+ 	passFragmentAnalyzer      = uint64(32)
+<a href="#h4-1" id="h4-1" class="h">@@ -15,16 +15,18 @@ const (
+</a> 	passMetadataInfer2        = uint64(512)
+ 	passEntryPoints           = uint64(1024)
+ 	passMatcherResolver       = uint64(2048)
+<a href="#h4-1-3" id="h4-1-3" class="d">-	passMemComposer           = uint64(4096)
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-	passSymbolsResolver       = uint64(8192)
+</a><a href="#h4-1-5" id="h4-1-5" class="d">-	LAST_PASS                 = uint64(8192)
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+	passSymbolTagger2         = uint64(4096)
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	passMemComposer           = uint64(8192)
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+	passSymbolsResolver       = uint64(16384)
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+	LAST_PASS                 = uint64(16384)
+</a> )
+ 
+ func getPassFunction() map[uint64]func(*BasmInstance) error {
+ 	return map[uint64]func(*BasmInstance) error{
+ 		passTemplateResolver:      templateResolver,
+ 		passDynamicalInstructions: dynamicalInstructions,
+<a href="#h4-1-16" id="h4-1-16" class="d">-		passSymbolTagger:          symbolTagger,
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+		passSymbolTagger1:         symbolTagger,
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+		passSymbolTagger2:         symbolTagger,
+</a> 		passDataSections2Bytes:    dataSections2Bytes,
+ 		passMetadataInfer1:        metadataInfer,
+ 		passMetadataInfer2:        metadataInfer,
+<a href="#h4-2" id="h4-2" class="h">@@ -43,7 +45,8 @@ func getPassFunctionName() map[uint64]string {
+</a> 	return map[uint64]string{
+ 		passTemplateResolver:      &quot;templateResolver&quot;,
+ 		passDynamicalInstructions: &quot;dynamicalInstructions&quot;,
+<a href="#h4-2-3" id="h4-2-3" class="d">-		passSymbolTagger:          &quot;symbolTagger&quot;,
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+		passSymbolTagger1:         &quot;symbolTagger (1)&quot;,
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+		passSymbolTagger2:         &quot;symbolTagger (2)&quot;,
+</a> 		passDataSections2Bytes:    &quot;datasections2bytes&quot;,
+ 		passMetadataInfer1:        &quot;metadataInfer (1)&quot;,
+ 		passMetadataInfer2:        &quot;metadataInfer (2)&quot;,
+<a href="#h4-3" id="h4-3" class="h">@@ -62,7 +65,8 @@ func IsOptionalPass() map[uint64]bool {
+</a> 	return map[uint64]bool{
+ 		passTemplateResolver:      false,
+ 		passDynamicalInstructions: false,
+<a href="#h4-3-3" id="h4-3-3" class="d">-		passSymbolTagger:          false,
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+		passSymbolTagger1:         false,
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+		passSymbolTagger2:         false,
+</a> 		passDataSections2Bytes:    false,
+ 		passMetadataInfer1:        false,
+ 		passMetadataInfer2:        false,
+<a href="#h4-4" id="h4-4" class="h">@@ -85,7 +89,8 @@ func GetPassMnemonic() map[uint64]string {
+</a> 	return map[uint64]string{
+ 		passTemplateResolver:      &quot;templateresolver&quot;,
+ 		passDynamicalInstructions: &quot;dynamicalinstructions&quot;,
+<a href="#h4-4-3" id="h4-4-3" class="d">-		passSymbolTagger:          &quot;symboltagger&quot;,
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+		passSymbolTagger1:         &quot;symboltagger1&quot;,
+</a><a href="#h4-4-5" id="h4-4-5" class="i">+		passSymbolTagger2:         &quot;symboltagger2&quot;,
+</a> 		passDataSections2Bytes:    &quot;datasections2bytes&quot;,
+ 		passMetadataInfer1:        &quot;metadatainfer1&quot;,
+ 		passMetadataInfer2:        &quot;metadatainfer2&quot;,
+<b>diff --git a/<a id="h5" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -59,10 +59,10 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 
+ 						if loc, ok := bi.symbols[localSymbol]; ok {
+ 							// Apply the correction if any
+<a href="#h5-0-3" id="h5-0-3" class="d">-							if body.GetMeta(&quot;symbcorrection&quot;) != &quot;&quot; {
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-								correction, _ := strconv.Atoi(body.GetMeta(&quot;symbcorrection&quot;))
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-								loc += int64(correction)
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-							}
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+							// if body.GetMeta(&quot;symbcorrection&quot;) != &quot;&quot; {
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+							// 	correction, _ := strconv.Atoi(body.GetMeta(&quot;symbcorrection&quot;))
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+							// 	loc += int64(correction)
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+							// }
+</a> 							arg.SetValue(strconv.Itoa(int(loc)))
+ 							arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+ 							continue
+<b>diff --git a/<a id="h6" href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a> b/<a href="../file/pkg/bmreqs/engine.go.html">pkg/bmreqs/engine.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -120,7 +120,7 @@ func (rg *ReqRoot) run() {
+</a> 					if reqSet, ok := node.getMap()[req.Name]; ok {
+ 						resp.Value = reqSet.getReqs()
+ 					} else {
+<a href="#h6-0-3" id="h6-0-3" class="d">-						resp.Error = errors.New(&quot;set of requirements not found&quot; + req.Name)
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+						resp.Error = errors.New(&quot;set of requirements not found \&quot;&quot; + req.Name + &quot;\&quot;&quot;)
+</a> 					}
+ 				} else {
+ 					resp.Error = errors.New(&quot;Node decoding failed: &quot; + fmt.Sprint(err))
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -198,6 +198,7 @@ func (Op Rset) HLAssemblerMatch(arch *Arch) []string {
+</a> 	result := make([]string, 0)
+ 	result = append(result, &quot;rset::*--type=reg::*--type=number&quot;)
+ 	result = append(result, &quot;mov::*--type=reg::*--type=number&quot;)
+<a href="#h7-0-3" id="h7-0-3" class="i">+	result = append(result, &quot;mov::*--type=reg::*--type=rom--romaddressing=symbol&quot;)
+</a> 	return result
+ }
+ func (Op Rset) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Symbols - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c1cdf4de8bc1ecda931bc2f1bcbb8ad25f92dfd4.html">c1cdf4de8bc1ecda931bc2f1bcbb8ad25f92dfd4</a>
+<b>parent</b> <a href="../commit/fc7bd91f03d88745572bafe428c847277d63c132.html">fc7bd91f03d88745572bafe428c847277d63c132</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 25 Aug 2023 10:15:29 +0200
+
+Symbols
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/datasects2bytes.go</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/fragmentcomposer.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/passes.go</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/symboltagger.go</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++</span><span class="d">------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_jgt0f.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>10 files changed, 47 insertions(+), 40 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -35,7 +35,7 @@ type BasmInstance struct {
+</a> 	sections         map[string]*BasmSection
+ 	fragments        map[string]*BasmFragment
+ 	chunks           map[string]*BasmChunk
+<a href="#h0-0-3" id="h0-0-3" class="d">-	symbols          map[string]uint64
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	symbols          map[string]int64 // -1 for undefined, &gt;=0 for defined and value
+</a> 	passes           uint64
+ 	optimizations    map[int]struct{}
+ 	matchers         []*bmline.BasmLine
+<a href="#h0-1" id="h0-1" class="h">@@ -94,7 +94,7 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 	bi.sections = make(map[string]*BasmSection)
+ 	bi.fragments = make(map[string]*BasmFragment)
+ 	bi.chunks = make(map[string]*BasmChunk)
+<a href="#h0-1-3" id="h0-1-3" class="d">-	bi.symbols = make(map[string]uint64)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	bi.symbols = make(map[string]int64)
+</a> 	bi.passes = uint64(16351)
+ 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.matchersOps = make([]procbuilder.Opcode, 0)
+<a href="#h0-2" id="h0-2" class="h">@@ -345,6 +345,16 @@ func (bi *BasmInstance) String() string {
+</a> 			result += &quot;\t\t&quot; + matcher.String() + &quot;\n&quot;
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+	if bi.symbols != nil {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		result += purple(&quot;\tSymbols&quot;) + &quot;:\n&quot;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		for symbol, value := range bi.symbols {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			if value == -1 {
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+				result += &quot;\t\t&quot; + symbol + &quot; = &quot; + red(&quot;undefined&quot;) + &quot;\n&quot;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			} else {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+				result += &quot;\t\t&quot; + symbol + &quot; = &quot; + strconv.FormatInt(int64(value), 10) + &quot;\n&quot;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			}
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a> 	return result
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a> b/<a href="../file/pkg/basm/datasects2bytes.go.html">pkg/basm/datasects2bytes.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,7 +10,7 @@ import (
+</a> func dataSections2Bytes(bi *BasmInstance) error {
+ 
+ 	for sectName, section := range bi.sections {
+<a href="#h1-0-3" id="h1-0-3" class="d">-		if section.sectionType == sectRomData {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		if section.sectionType == sectRomData || section.sectionType == sectRamData {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\tProcessing section: &quot; + sectName))
+ 			}
+<a href="#h1-1" id="h1-1" class="h">@@ -21,6 +21,13 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 			offset := 0
+ 			for _, line := range body.Lines {
+ 				varName := line.Operation.GetValue()
+<a href="#h1-1-3" id="h1-1-3" class="i">+				symbolName := &quot;&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+				if section.sectionType == sectRomData {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+					symbolName = &quot;romdata.&quot; + sectName + &quot;.&quot; + varName
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+				} else {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+					symbolName = &quot;ramdata.&quot; + sectName + &quot;.&quot; + varName
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+				}
+</a> 
+ 				if bi.debug {
+ 					fmt.Println(green(&quot;\t\tvar &quot; + varName))
+<a href="#h1-2" id="h1-2" class="h">@@ -30,6 +37,7 @@ func dataSections2Bytes(bi *BasmInstance) error {
+</a> 					return errors.New(&quot;Duplicate var &quot; + varName)
+ 				} else {
+ 					varCheck[varName] = struct{}{}
+<a href="#h1-2-3" id="h1-2-3" class="i">+					bi.symbols[symbolName] = -1
+</a> 				}
+ 
+ 				if len(line.Elements) != 2 {
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a> b/<a href="../file/pkg/basm/fragmentcomposer.go.html">pkg/basm/fragmentcomposer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -354,7 +354,7 @@ func fragmentComposer(bi *BasmInstance) error {
+</a> 			newOperation.SetValue(&quot;j&quot;)
+ 			newStart := new(bmline.BasmElement)
+ 			newStart.SetValue(&quot;_start&quot;)
+<a href="#h2-0-3" id="h2-0-3" class="d">-			newStart.BasmMeta = newStart.BasmMeta.SetMeta(&quot;type&quot;, &quot;lineno&quot;)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+			newStart.BasmMeta = newStart.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a> 			newLine.Operation = newOperation
+ 			newLine.Elements = make([]*bmline.BasmElement, 1)
+ 			newLine.Elements[0] = newStart
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -6,13 +6,13 @@ const (
+</a> 	passTemplateResolver      = uint64(1)
+ 	passDynamicalInstructions = uint64(2)
+ 	passSymbolTagger          = uint64(4)
+<a href="#h3-0-3" id="h3-0-3" class="d">-	passMetadataInfer1        = uint64(8)
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	passFragmentAnalyzer      = uint64(16)
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-	passFragmentOptimizer1    = uint64(32)
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-	passFragmentPruner        = uint64(64)
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-	passFragmentComposer      = uint64(128)
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-	passMetadataInfer2        = uint64(256)
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-	passDataSections2Bytes    = uint64(512)
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	passDataSections2Bytes    = uint64(8)
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	passMetadataInfer1        = uint64(16)
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	passFragmentAnalyzer      = uint64(32)
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	passFragmentOptimizer1    = uint64(64)
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	passFragmentPruner        = uint64(128)
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	passFragmentComposer      = uint64(256)
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	passMetadataInfer2        = uint64(512)
+</a> 	passEntryPoints           = uint64(1024)
+ 	passSymbolsResolver       = uint64(2048)
+ 	passRomComposer           = uint64(4096)
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -69,7 +69,7 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 						for _, arg := range line.Elements {
+ 							if lno, ok := symbols[arg.GetValue()]; ok {
+ 								arg.SetValue(strconv.Itoa(lno))
+<a href="#h4-0-3" id="h4-0-3" class="d">-								arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;lineno&quot;)
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+								arg.BasmMeta = arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a> 							}
+ 						}
+ 
+<b>diff --git a/<a id="h5" href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a> b/<a href="../file/pkg/basm/symboltagger.go.html">pkg/basm/symboltagger.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -3,32 +3,10 @@ package basm
+</a> import (
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h5-0-3" id="h5-0-3" class="d">-
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> )
+ 
+ func symbolTagger(bi *BasmInstance) error {
+ 
+<a href="#h5-0-9" id="h5-0-9" class="d">-	// Filter the matchers to select only the symbol based one
+</a><a href="#h5-0-10" id="h5-0-10" class="d">-	filteredMatchers := make([]*bmline.BasmLine, 0)
+</a><a href="#h5-0-11" id="h5-0-11" class="d">-
+</a><a href="#h5-0-12" id="h5-0-12" class="d">-	if bi.debug {
+</a><a href="#h5-0-13" id="h5-0-13" class="d">-		fmt.Println(green(&quot;\tFiltering matchers:&quot;))
+</a><a href="#h5-0-14" id="h5-0-14" class="d">-	}
+</a><a href="#h5-0-15" id="h5-0-15" class="d">-
+</a><a href="#h5-0-16" id="h5-0-16" class="d">-	for _, matcher := range bi.matchers {
+</a><a href="#h5-0-17" id="h5-0-17" class="d">-		if bmline.FilterMatcher(matcher, &quot;symbol&quot;) {
+</a><a href="#h5-0-18" id="h5-0-18" class="d">-			filteredMatchers = append(filteredMatchers, matcher)
+</a><a href="#h5-0-19" id="h5-0-19" class="d">-			if bi.debug {
+</a><a href="#h5-0-20" id="h5-0-20" class="d">-				fmt.Println(red(&quot;\t\tActive matcher:&quot;) + matcher.String())
+</a><a href="#h5-0-21" id="h5-0-21" class="d">-			}
+</a><a href="#h5-0-22" id="h5-0-22" class="d">-		} else {
+</a><a href="#h5-0-23" id="h5-0-23" class="d">-			if bi.debug {
+</a><a href="#h5-0-24" id="h5-0-24" class="d">-				fmt.Println(yellow(&quot;\t\tInactive matcher:&quot;) + matcher.String())
+</a><a href="#h5-0-25" id="h5-0-25" class="d">-			}
+</a><a href="#h5-0-26" id="h5-0-26" class="d">-		}
+</a><a href="#h5-0-27" id="h5-0-27" class="d">-	}
+</a><a href="#h5-0-28" id="h5-0-28" class="d">-
+</a> 	if bi.debug {
+ 		fmt.Println(green(&quot;\tProcessing sections:&quot;))
+ 	}
+<a href="#h5-1" id="h5-1" class="h">@@ -40,16 +18,24 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+ 
+<a href="#h5-1-3" id="h5-1-3" class="i">+			symbolPrefix := &quot;&quot;
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+			if section.sectionType == sectRomText {
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+				symbolPrefix = &quot;rom.&quot; + sectName + &quot;.&quot;
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+			} else {
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+				symbolPrefix = &quot;ram.&quot; + sectName + &quot;.&quot;
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+			}
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+
+</a> 			// Map all the symbols
+ 			symbols := make(map[string]struct{})
+ 
+ 			body := section.sectionBody
+<a href="#h5-1-14" id="h5-1-14" class="d">-			for _, line := range body.Lines {
+</a><a href="#h5-1-15" id="h5-1-15" class="i">+			for i, line := range body.Lines {
+</a> 				if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+ 					if _, exists := symbols[symbol]; exists {
+ 						return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+ 					} else {
+ 						symbols[symbol] = struct{}{}
+<a href="#h5-1-21" id="h5-1-21" class="i">+						bi.symbols[symbolPrefix+symbol] = int64(i)
+</a> 					}
+ 				}
+ 			}
+<a href="#h5-2" id="h5-2" class="h">@@ -75,16 +61,19 @@ func symbolTagger(bi *BasmInstance) error {
+</a> 			fmt.Println(green(&quot;\t\tFragment: &quot;) + fragName)
+ 		}
+ 
+<a href="#h5-2-3" id="h5-2-3" class="i">+		symbolPrefix := &quot;frag.&quot; + fragName + &quot;.&quot;
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+
+</a> 		// Map all the symbols
+ 		symbols := make(map[string]struct{})
+ 
+ 		body := fragment.fragmentBody
+<a href="#h5-2-9" id="h5-2-9" class="d">-		for _, line := range body.Lines {
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+		for i, line := range body.Lines {
+</a> 			if symbol := line.GetMeta(&quot;symbol&quot;); symbol != &quot;&quot; {
+ 				if _, exists := symbols[symbol]; exists {
+ 					return errors.New(&quot;symbol is specified multiple time: &quot; + symbol)
+ 				} else {
+ 					symbols[symbol] = struct{}{}
+<a href="#h5-2-16" id="h5-2-16" class="i">+					bi.symbols[symbolPrefix+symbol] = int64(i)
+</a> 				}
+ 			}
+ 		}
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -217,7 +217,7 @@ func (Op J) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level 
+</a> }
+ func (Op J) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 2)
+<a href="#h6-0-3" id="h6-0-3" class="d">-	result[0] = &quot;j::*--type=lineno&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	result[0] = &quot;j::*--type=number&quot;
+</a> 	result[1] = &quot;j::*--type=symbol&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a> b/<a href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -205,7 +205,7 @@ func (Op Jgt0f) Op_instruction_verilog_extra_block(arch *Arch, flavor string, le
+</a> }
+ func (Op Jgt0f) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 2)
+<a href="#h7-0-3" id="h7-0-3" class="d">-	result[0] = &quot;jgt0f::*--type=reg::*--type=lineno&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	result[0] = &quot;jgt0f::*--type=reg::*--type=number&quot;
+</a> 	result[1] = &quot;jgt0f::*--type=reg::*--type=symbol&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -219,7 +219,7 @@ func (Op Jz) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level
+</a> }
+ func (Op Jz) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 2)
+<a href="#h8-0-3" id="h8-0-3" class="d">-	result[0] = &quot;jz::*--type=reg::*--type=lineno&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	result[0] = &quot;jz::*--type=reg::*--type=number&quot;
+</a> 	result[1] = &quot;jz::*--type=reg::*--type=symbol&quot;
+ 	return result
+ }
+<b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -223,7 +223,7 @@ func (Op Saj) Op_instruction_verilog_extra_block(arch *Arch, flavor string, leve
+</a> }
+ func (Op Saj) HLAssemblerMatch(arch *Arch) []string {
+ 	result := make([]string, 2)
+<a href="#h9-0-3" id="h9-0-3" class="d">-	result[0] = &quot;saj::*--type=lineno&quot;
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+	result[0] = &quot;saj::*--type=number&quot;
+</a> 	result[0] = &quot;saj::*--type=number--numbertype=unsigned&quot;
+ 	result[1] = &quot;saj::*--type=symbol&quot;
+ 	return result
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>protobuf tests - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a7e3ce8aadc3e35ad997a7eea8434557a36b26b3.html">a7e3ce8aadc3e35ad997a7eea8434557a36b26b3</a>
+<b>parent</b> <a href="../commit/c8a109812576e38868d71d72edcc7d171c999872.html">c8a109812576e38868d71d72edcc7d171c999872</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  5 Sep 2022 11:18:56 +0200
+
+protobuf tests
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">brvga/proto_file_test.go</a></td><td> | </td><td class="num">54</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">brvga/proto_unixsock_test.go</a></td><td> | </td><td class="num">64</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">brvga/receiver_test.go</a></td><td> | </td><td class="num">86</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 118 insertions(+), 86 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/proto_file_test.go.html">brvga/proto_file_test.go</a> b/<a href="../file/brvga/proto_file_test.go.html">brvga/proto_file_test.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,54 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package brvga
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;log&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;os&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;testing&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;google.golang.org/protobuf/proto&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+func TestFile(t *testing.T) {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	// Create a new protobuf message
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	msg := &amp;Textmemupdate{
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		Cpid: 1,
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 1, Payload: []byte(&quot;Hello&quot;)}},
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	}
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	// Marshal the message into a buffer
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	out, err := proto.Marshal(msg)
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	if err != nil {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	// Create a file and write the buffer to it
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	f, err := os.Create(&quot;/tmp/brvga&quot;)
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	if err != nil {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	}
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	f.Write(out)
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	f.Close()
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	// Reopen the file and read the buffer from it
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	f, err = os.Open(&quot;/tmp/brvga&quot;)
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	if err != nil {
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	}
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	buf := make([]byte, 1024)
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	n, err := f.Read(buf)
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	if err != nil {
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+		log.Fatal(err)
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	}
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	// Create a new protobuf message and unmarshal the buffer into it
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	recv := &amp;Textmemupdate{}
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	proto.Unmarshal(buf, recv)
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+	fmt.Println(n, recv)
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/brvga/proto_unixsock_test.go.html">brvga/proto_unixsock_test.go</a> b/<a href="../file/brvga/proto_unixsock_test.go.html">brvga/proto_unixsock_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,64 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package brvga
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;log&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;net&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	&quot;testing&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;time&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	&quot;google.golang.org/protobuf/proto&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+)
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+func TestUnixSocket(t *testing.T) {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	go func() {
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		time.Sleep(1 * time.Second)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+		c, err := net.Dial(&quot;unix&quot;, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+		if err != nil {
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+			panic(err)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+		}
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+		defer c.Close()
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+		buf := make([]byte, 1024)
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		n, err := c.Read(buf)
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		if err != nil {
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+			log.Fatal(err)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		recv := &amp;Textmemupdate{}
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+		proto.Unmarshal(buf, recv)
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		fmt.Println(n, recv)
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	}()
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	// Create a new protobuf message
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	msg := &amp;Textmemupdate{
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+		Cpid: 1,
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 1, Payload: []byte(&quot;Hello&quot;)}},
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	}
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	l, err := net.Listen(&quot;unix&quot;, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	if err != nil {
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+		log.Fatal(&quot;listen error:&quot;, err)
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	}
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	// Marshal the message into a buffer
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	out, err := proto.Marshal(msg)
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	if err != nil {
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+		log.Fatal(err)
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	}
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+	fd, err := l.Accept()
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+	if err != nil {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+		log.Fatal(&quot;accept error:&quot;, err)
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+	}
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	_, err = fd.Write(out)
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	if err != nil {
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+		log.Fatal(&quot;Write: &quot;, err)
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+	}
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	time.Sleep(2 * time.Second)
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/brvga/receiver_test.go.html">brvga/receiver_test.go</a> b/<a href="../file/brvga/receiver_test.go.html">brvga/receiver_test.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,86 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-package brvga
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-// Test unit to read from a UNIX socket and decode the data
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-// into a protobuf message.
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-import (
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	&quot;fmt&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	&quot;log&quot;
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	&quot;net&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	&quot;testing&quot;
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	&quot;time&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	&quot;google.golang.org/protobuf/proto&quot;
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-)
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-// TestReceiver tests the receiver
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-func TestReceiver(t *testing.T) {
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	// Create a UNIX socket
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	socket, err := net.Listen(&quot;unix&quot;, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-	if err != nil {
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-		log.Fatal(err)
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-	}
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-	defer socket.Close()
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-	// Create a goroutine to accept the connection
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-	go func() {
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-		conn, err := socket.Accept()
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-		if err != nil {
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-			log.Fatal(err)
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-		}
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-		defer conn.Close()
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-		time.Sleep(1 * time.Second) // Wait for the client to connect
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-		// Create a buffer to read the data into
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-		buf := make([]byte, 1024)
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-		// Read the data
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-		_, err = conn.Read(buf)
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-		if err != nil {
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-			log.Fatal(err)
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-		}
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-		// Create a new protobuf message
+</a><a href="#h2-0-44" id="h2-0-44" class="d">-		msg := &amp;Textmemupdate{}
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-		// Read the data into the protobuf message
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-		err = proto.Unmarshal(buf, msg)
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-		if err != nil {
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-			log.Fatal(err)
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-		}
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-
+</a><a href="#h2-0-52" id="h2-0-52" class="d">-		// Print the message
+</a><a href="#h2-0-53" id="h2-0-53" class="d">-		fmt.Println(msg)
+</a><a href="#h2-0-54" id="h2-0-54" class="d">-	}()
+</a><a href="#h2-0-55" id="h2-0-55" class="d">-
+</a><a href="#h2-0-56" id="h2-0-56" class="d">-	// Create a new protobuf message
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-	msg := &amp;Textmemupdate{
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-		Cpid: 1,
+</a><a href="#h2-0-59" id="h2-0-59" class="d">-		Seq:  []*Textmemupdate_Byteseq{&amp;Textmemupdate_Byteseq{Pos: 1, Payload: []byte(&quot;Hello&quot;)}},
+</a><a href="#h2-0-60" id="h2-0-60" class="d">-	}
+</a><a href="#h2-0-61" id="h2-0-61" class="d">-
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-	// Write the data
+</a><a href="#h2-0-63" id="h2-0-63" class="d">-	out, err := proto.Marshal(msg)
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-	if err != nil {
+</a><a href="#h2-0-65" id="h2-0-65" class="d">-		log.Fatal(err)
+</a><a href="#h2-0-66" id="h2-0-66" class="d">-	}
+</a><a href="#h2-0-67" id="h2-0-67" class="d">-
+</a><a href="#h2-0-68" id="h2-0-68" class="d">-	time.Sleep(1 * time.Second)
+</a><a href="#h2-0-69" id="h2-0-69" class="d">-
+</a><a href="#h2-0-70" id="h2-0-70" class="d">-	// Create a connection to the UNIX socket
+</a><a href="#h2-0-71" id="h2-0-71" class="d">-	conn, err := net.Dial(&quot;unix&quot;, &quot;/tmp/brvga.sock&quot;)
+</a><a href="#h2-0-72" id="h2-0-72" class="d">-	if err != nil {
+</a><a href="#h2-0-73" id="h2-0-73" class="d">-		log.Fatal(err)
+</a><a href="#h2-0-74" id="h2-0-74" class="d">-	}
+</a><a href="#h2-0-75" id="h2-0-75" class="d">-	defer conn.Close()
+</a><a href="#h2-0-76" id="h2-0-76" class="d">-
+</a><a href="#h2-0-77" id="h2-0-77" class="d">-	// Write the data
+</a><a href="#h2-0-78" id="h2-0-78" class="d">-	_, err = conn.Write(out)
+</a><a href="#h2-0-79" id="h2-0-79" class="d">-	if err != nil {
+</a><a href="#h2-0-80" id="h2-0-80" class="d">-		log.Fatal(err)
+</a><a href="#h2-0-81" id="h2-0-81" class="d">-	}
+</a><a href="#h2-0-82" id="h2-0-82" class="d">-
+</a><a href="#h2-0-83" id="h2-0-83" class="d">-	time.Sleep(1 * time.Second)
+</a><a href="#h2-0-84" id="h2-0-84" class="d">-
+</a><a href="#h2-0-85" id="h2-0-85" class="d">-}
+</a></pre>
+</div>
+</body>
+</html>

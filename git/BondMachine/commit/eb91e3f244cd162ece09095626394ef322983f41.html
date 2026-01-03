@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>brvgasdl improvements - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/eb91e3f244cd162ece09095626394ef322983f41.html">eb91e3f244cd162ece09095626394ef322983f41</a>
+<b>parent</b> <a href="../commit/5cef80ee9eb255f6d8aa7255c17ab3eae2a0b5b4.html">5cef80ee9eb255f6d8aa7255c17ab3eae2a0b5b4</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  7 Sep 2022 13:09:06 +0200
+
+brvgasdl improvements
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">brvga/brvgasdl/brvgasdl.go</a></td><td> | </td><td class="num">63</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 61 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a> b/<a href="../file/brvga/brvgasdl/brvgasdl.go.html">brvga/brvgasdl/brvgasdl.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,17 +1,76 @@
+</a> package brvgasdl
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-import &quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+import (
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/brvga&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;github.com/tfriedel6/canvas&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;github.com/tfriedel6/canvas/sdlcanvas&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+type Header struct {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	header []byte
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+type Fonts struct {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	fonts []byte
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+}
+</a> 
+ type BrvgaSdl struct {
+ 	*brvga.BrvgaTextMemory
+<a href="#h0-0-19" id="h0-0-19" class="i">+	*sdlcanvas.Window
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	*canvas.Canvas
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	*Header
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	*Fonts
+</a> }
+ 
+<a href="#h0-0-25" id="h0-0-25" class="d">-func NewBrvgaSdl(constraint string) (*BrvgaSdl, error) {
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+func NewBrvgaSdlUnixSock(constraint string, sockPath string, headerPath string, fontsPath string) (*BrvgaSdl, error) {
+</a> 	result := new(BrvgaSdl)
+<a href="#h0-0-28" id="h0-0-28" class="i">+
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	// Create the brvga memory
+</a> 	textMem, err := brvga.NewBrvgaTextMemory(constraint)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	result.BrvgaTextMemory = textMem
+<a href="#h0-0-35" id="h0-0-35" class="i">+
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	// Create the canvas and window
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	wnd, canvas, err := sdlcanvas.CreateWindow(800, 600, &quot;BondMachine&quot;)
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	if err != nil {
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+		return nil, err
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	}
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	result.Window = wnd
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	result.Canvas = canvas
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	// TODO: Load the header and fonts
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+
+</a> 	return result, nil
+ }
+<a href="#h0-0-48" id="h0-0-48" class="i">+
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+func (b *BrvgaSdl) Run() {
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+	wnd := b.Window
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+	cv := b.Canvas
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+	wnd.MainLoop(func() {
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+		w, h := float64(cv.Width()), float64(cv.Height())
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+		cv.SetFillStyle(&quot;#000000&quot;)
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		cv.FillRect(0, 0, w, h)
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+		// for r := 0.0; r &lt; math.Pi*2; r += math.Pi * 0.1 {
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+		// 	cv.SetFillStyle(int(r*10), int(r*20), int(r*40))
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+		// 	cv.BeginPath()
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+		// 	cv.MoveTo(w*0.5, h*0.5)
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+		// 	cv.Arc(w*0.5, h*0.5, math.Min(w, h)*0.4, r, r+0.1*math.Pi, false)
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+		// 	cv.ClosePath()
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+		// 	cv.Fill()
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+		// }
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+		// cv.SetStrokeStyle(&quot;#FFF&quot;)
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+		// cv.SetLineWidth(10)
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+		// cv.BeginPath()
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+		// cv.Arc(w*0.5, h*0.5, math.Min(w, h)*0.4, 0, math.Pi*2, false)
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+		cv.Stroke()
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+	})
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+}
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+func (b *BrvgaSdl) Close() {
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	b.Window.Destroy()
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

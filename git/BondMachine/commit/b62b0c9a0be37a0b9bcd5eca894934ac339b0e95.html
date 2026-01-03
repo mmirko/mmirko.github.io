@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>templating AXI stream optimized - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b62b0c9a0be37a0b9bcd5eca894934ac339b0e95.html">b62b0c9a0be37a0b9bcd5eca894934ac339b0e95</a>
+<b>parent</b> <a href="../commit/4c517c89c5056a013dfa8097de0a20f7872f51f0.html">4c517c89c5056a013dfa8097de0a20f7872f51f0</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri, 24 Feb 2023 15:56:05 +0100
+
+templating AXI stream optimized
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bondmachine/files_axist_optimized.go</a></td><td> | </td><td class="num">222</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 99 insertions(+), 123 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bondmachine/files_axist_optimized.go.html">pkg/bondmachine/files_axist_optimized.go</a> b/<a href="../file/pkg/bondmachine/files_axist_optimized.go.html">pkg/bondmachine/files_axist_optimized.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -170,32 +170,31 @@ always @(posedge s00_axis_aclk) begin
+</a> 	end
+ end
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1));
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+assign axis_tready = (mst_exec_state == WRITE_FIFO);
+</a> 
+<a href="#h0-0-6" id="h0-0-6" class="i">+// AXI receiver to FIFO batch pointer
+</a> always@(posedge s00_axis_aclk) begin
+ 	if(!s00_axis_aresetn) begin
+ 		fifo2bm_batch_pointer &lt;= 0;
+ 		writes_done &lt;= 1&#39;b0;
+ 	end  
+ 	else begin
+<a href="#h0-0-13" id="h0-0-13" class="d">-		if (!writes_done &amp;&amp; fifo2bm_batch_pointer &lt;= BATCH_IN_ELEMENTS-1) begin
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			if (fifo_wren) begin
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-				fifo2bm_batch_pointer &lt;= fifo2bm_batch_pointer + 1;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-				writes_done &lt;= 1&#39;b0;
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-			end
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		if (!writes_done &amp;&amp; fifo_wren) begin
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+			fifo2bm_batch_pointer &lt;= fifo2bm_batch_pointer + 1;
+</a> 			if (fifo2bm_batch_pointer == BATCH_IN_ELEMENTS-1) begin
+ 				writes_done &lt;= 1&#39;b1;
+ 				fifo2bm_batch_pointer &lt;= 1&#39;b0;
+ 			end
+<a href="#h0-0-25" id="h0-0-25" class="i">+			else begin
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+				writes_done &lt;= 1&#39;b0;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+			end
+</a> 		end
+ 		else begin
+ 			writes_done &lt;= 1&#39;b0;
+ 		end
+ 	end
+ end 
+<a href="#h0-0-34" id="h0-0-34" class="d">-	       
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	       
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	         
+</a> assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+ 
+ // old value of fifo_wren	
+<a href="#h0-1" id="h0-1" class="h">@@ -204,115 +203,101 @@ always @( posedge s00_axis_aclk ) begin
+</a> end
+ 	
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-    always @( posedge s00_axis_aclk )
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-    begin
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-      if (fifo_wren)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-        begin
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-          stream_data_fifo[fifo2bm_write_pointer+fifo2bm_batch_pointer] &lt;= s00_axis_tdata[31:0];
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-        end  
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-    end      
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	               
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-    always @( posedge s00_axis_aclk )
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-    begin
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+// The actual FIFO write process
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+always @( posedge s00_axis_aclk ) begin
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	if (fifo_wren) begin
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		stream_data_fifo[fifo2bm_write_pointer+fifo2bm_batch_pointer] &lt;= s00_axis_tdata[31:0];
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	end  
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+end      
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+// Read,Write pointer update and element count update
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+always @( posedge s00_axis_aclk ) begin
+</a>         if (!fifo_wren &amp;&amp; fifo_wren_old) begin
+<a href="#h0-1-23" id="h0-1-23" class="d">-            fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-            if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS == TOT_IN_ELEMENTS) begin
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-                fifo2bm_write_pointer &lt;= 0;
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-                fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer;
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-            end
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-            else begin
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-                fifo2bm_write_pointer &lt;= fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-                if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS &gt; fifo2bm_read_pointer) begin
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-                    fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-                end
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-                else begin
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-                    fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-                end
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-            end
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+        	fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+		fifo2bm_count &lt;= fifo2bm_count + BATCH_IN_ELEMENTS;
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+        	if (fifo2bm_write_pointer+BATCH_IN_ELEMENTS == TOT_IN_ELEMENTS) begin
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+         		fifo2bm_write_pointer &lt;= 0;
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+            	end
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+        	else begin
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+			fifo2bm_write_pointer &lt;= fifo2bm_write_pointer + BATCH_IN_ELEMENTS;
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+		end
+</a>         end
+         else begin
+<a href="#h0-1-47" id="h0-1-47" class="d">-            if (fifo2bm_count &gt; 0) begin
+</a><a href="#h0-1-48" id="h0-1-48" class="d">-                if (fifo2bm_ready &amp;&amp; !fifo2bm_impulse) begin
+</a><a href="#h0-1-49" id="h0-1-49" class="d">-                    fifo2bm_impulse &lt;= 1&#39;b1;
+</a><a href="#h0-1-50" id="h0-1-50" class="d">-                    fifo2bm_data &lt;= stream_data_fifo[fifo2bm_read_pointer];
+</a><a href="#h0-1-51" id="h0-1-51" class="d">-                    
+</a><a href="#h0-1-52" id="h0-1-52" class="d">-                    if (fifo2bm_read_pointer+1 == TOT_IN_ELEMENTS) begin
+</a><a href="#h0-1-53" id="h0-1-53" class="d">-                        fifo2bm_read_pointer &lt;= 0;
+</a><a href="#h0-1-54" id="h0-1-54" class="d">-                        fifo2bm_count &lt;= fifo2bm_write_pointer;
+</a><a href="#h0-1-55" id="h0-1-55" class="d">-                    end
+</a><a href="#h0-1-56" id="h0-1-56" class="d">-                    else begin
+</a><a href="#h0-1-57" id="h0-1-57" class="d">-                        fifo2bm_read_pointer &lt;= fifo2bm_read_pointer +1;
+</a><a href="#h0-1-58" id="h0-1-58" class="d">-                        if (fifo2bm_write_pointer &lt; fifo2bm_read_pointer + 1) begin
+</a><a href="#h0-1-59" id="h0-1-59" class="d">-                            fifo2bm_count &lt;= TOT_IN_ELEMENTS - fifo2bm_read_pointer + fifo2bm_write_pointer - 1;
+</a><a href="#h0-1-60" id="h0-1-60" class="d">-                        end
+</a><a href="#h0-1-61" id="h0-1-61" class="d">-                        else begin
+</a><a href="#h0-1-62" id="h0-1-62" class="d">-                            fifo2bm_count &lt;= fifo2bm_write_pointer - fifo2bm_read_pointer - 1;
+</a><a href="#h0-1-63" id="h0-1-63" class="d">-                        end
+</a><a href="#h0-1-64" id="h0-1-64" class="d">-                    end
+</a><a href="#h0-1-65" id="h0-1-65" class="d">-                end
+</a><a href="#h0-1-66" id="h0-1-66" class="d">-                else begin
+</a><a href="#h0-1-67" id="h0-1-67" class="d">-                    fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-68" id="h0-1-68" class="d">-                end
+</a><a href="#h0-1-69" id="h0-1-69" class="d">-            end
+</a><a href="#h0-1-70" id="h0-1-70" class="d">-            else begin
+</a><a href="#h0-1-71" id="h0-1-71" class="d">-                fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-72" id="h0-1-72" class="d">-            end
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+        	if (fifo2bm_count &gt; 0) begin
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+			if (fifo2bm_ready &amp;&amp; !fifo2bm_impulse) begin
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+        			fifo2bm_impulse &lt;= 1&#39;b1;
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+                		fifo2bm_data &lt;= stream_data_fifo[fifo2bm_read_pointer];
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+				fifo2bm_count &lt;= fifo2bm_count - 1; 
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+                		if (fifo2bm_read_pointer+1 == TOT_IN_ELEMENTS) begin
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+                        		fifo2bm_read_pointer &lt;= 0;
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+                    		end
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+                    		else begin
+</a><a href="#h0-1-82" id="h0-1-82" class="i">+                        		fifo2bm_read_pointer &lt;= fifo2bm_read_pointer +1;
+</a><a href="#h0-1-83" id="h0-1-83" class="i">+                    		end
+</a><a href="#h0-1-84" id="h0-1-84" class="i">+                	end
+</a><a href="#h0-1-85" id="h0-1-85" class="i">+                	else begin
+</a><a href="#h0-1-86" id="h0-1-86" class="i">+                    		fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-87" id="h0-1-87" class="i">+                	end
+</a><a href="#h0-1-88" id="h0-1-88" class="i">+            	end
+</a><a href="#h0-1-89" id="h0-1-89" class="i">+            	else begin
+</a><a href="#h0-1-90" id="h0-1-90" class="i">+                	fifo2bm_impulse &lt;= 1&#39;b0;
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+            	end
+</a>         end
+<a href="#h0-1-93" id="h0-1-93" class="d">-    end
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+end
+</a>    
+     
+ bmdeserialize fifo2bm(.clk(m00_axis_aclk),
+ 	.impulse(fifo2bm_impulse),
+ 	.data(fifo2bm_data[31:0]),
+ 	.ready(fifo2bm_ready),
+<a href="#h0-1-101" id="h0-1-101" class="d">-    .reset(!m00_axis_aresetn),
+</a><a href="#h0-1-102" id="h0-1-102" class="d">-    .i0(i0),
+</a><a href="#h0-1-103" id="h0-1-103" class="d">-    .i0_valid(i0_valid),
+</a><a href="#h0-1-104" id="h0-1-104" class="d">-    .i0_recv(i0_received),
+</a><a href="#h0-1-105" id="h0-1-105" class="d">-    .i1(i1[31:0]),
+</a><a href="#h0-1-106" id="h0-1-106" class="d">-    .i1_valid(i1_valid),
+</a><a href="#h0-1-107" id="h0-1-107" class="d">-    .i1_recv(i1_received),
+</a><a href="#h0-1-108" id="h0-1-108" class="d">-    .i2(i2[31:0]),
+</a><a href="#h0-1-109" id="h0-1-109" class="d">-    .i2_valid(i2_valid),
+</a><a href="#h0-1-110" id="h0-1-110" class="d">-    .i2_recv(i2_received),
+</a><a href="#h0-1-111" id="h0-1-111" class="d">-    .i3(i3[31:0]),
+</a><a href="#h0-1-112" id="h0-1-112" class="d">-    .i3_valid(i3_valid),
+</a><a href="#h0-1-113" id="h0-1-113" class="d">-    .i3_recv(i3_received)
+</a><a href="#h0-1-114" id="h0-1-114" class="i">+	.reset(!m00_axis_aresetn),
+</a><a href="#h0-1-115" id="h0-1-115" class="i">+	.i0(i0),
+</a><a href="#h0-1-116" id="h0-1-116" class="i">+	.i0_valid(i0_valid),
+</a><a href="#h0-1-117" id="h0-1-117" class="i">+	.i0_recv(i0_received),
+</a><a href="#h0-1-118" id="h0-1-118" class="i">+	.i1(i1[31:0]),
+</a><a href="#h0-1-119" id="h0-1-119" class="i">+	.i1_valid(i1_valid),
+</a><a href="#h0-1-120" id="h0-1-120" class="i">+	.i1_recv(i1_received),
+</a><a href="#h0-1-121" id="h0-1-121" class="i">+	.i2(i2[31:0]),
+</a><a href="#h0-1-122" id="h0-1-122" class="i">+	.i2_valid(i2_valid),
+</a><a href="#h0-1-123" id="h0-1-123" class="i">+	.i2_recv(i2_received),
+</a><a href="#h0-1-124" id="h0-1-124" class="i">+	.i3(i3[31:0]),
+</a><a href="#h0-1-125" id="h0-1-125" class="i">+	.i3_valid(i3_valid),
+</a><a href="#h0-1-126" id="h0-1-126" class="i">+	.i3_recv(i3_received)
+</a> );
+ 
+ bondmachine bm(.clk(m00_axis_aclk),
+<a href="#h0-1-130" id="h0-1-130" class="d">-    .reset(!m00_axis_aresetn),
+</a><a href="#h0-1-131" id="h0-1-131" class="d">-    .i0(i0[31:0]),
+</a><a href="#h0-1-132" id="h0-1-132" class="d">-    .i0_valid(i0_valid),
+</a><a href="#h0-1-133" id="h0-1-133" class="d">-    .i0_received(i0_received),
+</a><a href="#h0-1-134" id="h0-1-134" class="d">-    .i1(i1[31:0]),
+</a><a href="#h0-1-135" id="h0-1-135" class="d">-    .i1_valid(i1_valid),
+</a><a href="#h0-1-136" id="h0-1-136" class="d">-    .i1_received(i1_received),
+</a><a href="#h0-1-137" id="h0-1-137" class="d">-    .i2(i2[31:0]),
+</a><a href="#h0-1-138" id="h0-1-138" class="d">-    .i2_valid(i2_valid),
+</a><a href="#h0-1-139" id="h0-1-139" class="d">-    .i2_received(i2_received),
+</a><a href="#h0-1-140" id="h0-1-140" class="d">-    .i3(i3[31:0]),
+</a><a href="#h0-1-141" id="h0-1-141" class="d">-    .i3_valid(i3_valid),
+</a><a href="#h0-1-142" id="h0-1-142" class="d">-    .i3_received(i3_received),
+</a><a href="#h0-1-143" id="h0-1-143" class="d">-    .o0(o0[31:0]),
+</a><a href="#h0-1-144" id="h0-1-144" class="d">-    .o0_valid(o0_valid),
+</a><a href="#h0-1-145" id="h0-1-145" class="d">-    .o0_received(o0_received)
+</a><a href="#h0-1-146" id="h0-1-146" class="d">-    );
+</a><a href="#h0-1-147" id="h0-1-147" class="i">+	.reset(!m00_axis_aresetn),
+</a><a href="#h0-1-148" id="h0-1-148" class="i">+	.i0(i0[31:0]),
+</a><a href="#h0-1-149" id="h0-1-149" class="i">+	.i0_valid(i0_valid),
+</a><a href="#h0-1-150" id="h0-1-150" class="i">+	.i0_received(i0_received),
+</a><a href="#h0-1-151" id="h0-1-151" class="i">+	.i1(i1[31:0]),
+</a><a href="#h0-1-152" id="h0-1-152" class="i">+	.i1_valid(i1_valid),
+</a><a href="#h0-1-153" id="h0-1-153" class="i">+	.i1_received(i1_received),
+</a><a href="#h0-1-154" id="h0-1-154" class="i">+	.i2(i2[31:0]),
+</a><a href="#h0-1-155" id="h0-1-155" class="i">+	.i2_valid(i2_valid),
+</a><a href="#h0-1-156" id="h0-1-156" class="i">+	.i2_received(i2_received),
+</a><a href="#h0-1-157" id="h0-1-157" class="i">+	.i3(i3[31:0]),
+</a><a href="#h0-1-158" id="h0-1-158" class="i">+	.i3_valid(i3_valid),
+</a><a href="#h0-1-159" id="h0-1-159" class="i">+	.i3_received(i3_received),
+</a><a href="#h0-1-160" id="h0-1-160" class="i">+	.o0(o0[31:0]),
+</a><a href="#h0-1-161" id="h0-1-161" class="i">+	.o0_valid(o0_valid),
+</a><a href="#h0-1-162" id="h0-1-162" class="i">+	.o0_received(o0_received)
+</a><a href="#h0-1-163" id="h0-1-163" class="i">+	);
+</a> 
+     
+ bmserialize bm2fifo(.clk(m00_axis_aclk),
+ 	.ack(bm2fifo_ack),
+ 	.data(bm2fifo_data[31:0]),
+ 	.ready(bm2fifo_ready),
+<a href="#h0-1-170" id="h0-1-170" class="d">-    .reset(!m00_axis_aresetn),
+</a><a href="#h0-1-171" id="h0-1-171" class="d">-    .o0(o0[31:0]),
+</a><a href="#h0-1-172" id="h0-1-172" class="d">-    .o0_valid(o0_valid),
+</a><a href="#h0-1-173" id="h0-1-173" class="d">-    .o0_recv(o0_received)
+</a><a href="#h0-1-174" id="h0-1-174" class="i">+	.reset(!m00_axis_aresetn),
+</a><a href="#h0-1-175" id="h0-1-175" class="i">+	.o0(o0[31:0]),
+</a><a href="#h0-1-176" id="h0-1-176" class="i">+	.o0_valid(o0_valid),
+</a><a href="#h0-1-177" id="h0-1-177" class="i">+	.o0_recv(o0_received)
+</a> );    
+       	               
+<a href="#h0-1-180" id="h0-1-180" class="d">-    /*
+</a><a href="#h0-1-181" id="h0-1-181" class="d">-        NOW START THE MASTER AXIS SECTION corrponfing to BM outputs
+</a><a href="#h0-1-182" id="h0-1-182" class="d">-    */
+</a><a href="#h0-1-183" id="h0-1-183" class="i">+/*
+</a><a href="#h0-1-184" id="h0-1-184" class="i">+	NOW START THE MASTER AXIS SECTION corresponding to BM outputs
+</a><a href="#h0-1-185" id="h0-1-185" class="i">+*/
+</a> 
+ 
+ 	always @(posedge m00_axis_aclk)                                             
+<a href="#h0-2" id="h0-2" class="h">@@ -422,40 +407,31 @@ bmserialize bm2fifo(.clk(m00_axis_aclk),
+</a> 	end 
+ 	end
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    always@(posedge m00_axis_aclk)                                               
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	begin     
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	  
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	  if (tx_done) begin
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	       bm2fifo_batch_pointer &lt;= 0;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-	       tx_done &lt;= 1&#39;b0;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-	  end
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	  else begin                                                      
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-          if(!m00_axis_aresetn)                                                            
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-          begin                                                                        
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	always@(posedge m00_axis_aclk)                                               
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	begin                                                        
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+          if(!m00_axis_aresetn) begin                                                                        
+</a>               bm2fifo_batch_pointer &lt;= 0;                                                         
+               tx_done &lt;= 1&#39;b0;                                                           
+           end                                                                          
+<a href="#h0-2-20" id="h0-2-20" class="d">-          else
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-          begin                                                                           
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-//            if (bm2fifo_batch_pointer &lt;= BATCH_OUT_ELEMENTS-1)                                
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-//            begin                                                                      
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-            if (tx_en)                                                                
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-              begin                                                                  
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+          else begin                                                                                                                                               
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+            if (tx_en &amp;&amp; !tx_done) begin                                                                  
+</a>                 bm2fifo_batch_pointer &lt;= bm2fifo_batch_pointer + 1;                                    
+<a href="#h0-2-29" id="h0-2-29" class="d">-                if (bm2fifo_batch_pointer + 1 == BATCH_OUT_ELEMENTS) 
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-                begin
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+                if (bm2fifo_batch_pointer == BATCH_OUT_ELEMENTS - 1) begin
+</a>                    tx_done &lt;= 1&#39;b1;
+<a href="#h0-2-33" id="h0-2-33" class="i">+                   bm2fifo_batch_pointer &lt;= 0;
+</a>                 end
+<a href="#h0-2-35" id="h0-2-35" class="d">-//                else
+</a><a href="#h0-2-36" id="h0-2-36" class="d">-//                begin
+</a><a href="#h0-2-37" id="h0-2-37" class="d">-//                   tx_done &lt;= 1&#39;b0;
+</a><a href="#h0-2-38" id="h0-2-38" class="d">-//                end                             
+</a><a href="#h0-2-39" id="h0-2-39" class="d">-              end                                                                       
+</a><a href="#h0-2-40" id="h0-2-40" class="d">-//            end 
+</a><a href="#h0-2-41" id="h0-2-41" class="d">-         end
+</a><a href="#h0-2-42" id="h0-2-42" class="d">-       end
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+                else begin
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+                   tx_done &lt;= 1&#39;b0;
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+                end
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+             end
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+             else begin
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+                tx_done &lt;= 1&#39;b0;
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+             end              
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+         end                                                                       
+</a>     end
+        
+<a href="#h0-2-53" id="h0-2-53" class="i">+       
+</a>     assign tx_en = m00_axis_tready &amp;&amp; axis_tvalid;   
+ 	                                                     
+ 	    always @( posedge m00_axis_aclk )                  
+</pre>
+</div>
+</body>
+</html>

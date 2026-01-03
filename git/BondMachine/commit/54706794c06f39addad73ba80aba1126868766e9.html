@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RAM execution - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/54706794c06f39addad73ba80aba1126868766e9.html">54706794c06f39addad73ba80aba1126868766e9</a>
+<b>parent</b> <a href="../commit/2041a8fd6f15c743d2b01a0db3e14388758ec697.html">2041a8fd6f15c743d2b01a0db3e14388758ec697</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  4 Aug 2023 14:55:38 +0200
+
+RAM execution
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">77</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_r2o.go</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 44 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -153,6 +153,32 @@ func NextInstruction(conf *Config, arch *Arch, tabs int, jumpTo string) string {
+</a> 	}
+ 	return result
+ }
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+func ExecutionCase(conf *Config, arch *Arch, tabs int, open bool) string {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	result := &quot;&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	tabS := &quot;&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	for i := 0; i &lt; tabs; i++ {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		tabS += &quot;\t&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	switch arch.Modes[0] {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	case &quot;ha&quot;:
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	case &quot;hy&quot;:
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		if open {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			result += tabS + &quot;if (exec_mode == 1&#39;b0 || vn_state == EXECUTE) begin\n&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		} else {
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			result += tabS + &quot;end\n&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		}
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	case &quot;vn&quot;:
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		if open {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			result += tabS + &quot;if (vn_state == EXECUTE) begin\n&quot;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		} else {
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+			result += tabS + &quot;end\n&quot;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		}
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	return result
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+}
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+
+</a> func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_name string, flavor string) string {
+ 	regsize := int(proc.Rsize)
+ 	rom_word := arch.Max_word()
+<a href="#h0-1" id="h0-1" class="h">@@ -345,23 +371,9 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+ 		result += &quot;	assign current_instruction= (exec_mode==1&#39;b0) rom_value : ram_instruction;\n&quot;
+ 		result += &quot;\n&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-		result += &quot;	always @(posedge clock_signal, posedge reset_signal)\n&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		result += &quot;	begin\n&quot;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		result += &quot;		case (vn_state)\n&quot;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		result += &quot;		FETCH: begin\n&quot;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		result += &quot;			vn_state &lt;= WAIT;\n&quot;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		result += &quot;		end\n&quot;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		result += &quot;		WAIT: begin\n&quot;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		result += &quot;			vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		result += &quot;			ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		result += &quot;		end\n&quot;
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-		result += &quot;		//EXECUTE: begin\n&quot;
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		result += &quot;		//end\n&quot;
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		result += &quot;		endcase\n&quot;
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		result += &quot;	end\n&quot;
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		result += &quot;\n&quot;
+</a> 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+ 			result += &quot;	assign ram_addr = _pc;\n&quot;
+<a href="#h0-1-20" id="h0-1-20" class="i">+			result += &quot;	assign ram_en = 1&#39;b1;\n&quot;
+</a> 		}
+ 	case &quot;vn&quot;:
+ 		result += &quot;\n&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -371,23 +383,9 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 		result += &quot;	localparam FETCH=1&#39;b00, WAIT=1&#39;b10, EXECUTE=1&#39;b01;\n&quot;
+ 		result += &quot;	assign current_instruction=ram_instruction;\n&quot;
+ 		result += &quot;\n&quot;
+<a href="#h0-2-3" id="h0-2-3" class="d">-		result += &quot;	always @(posedge clock_signal, posedge reset_signal)\n&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		result += &quot;	begin\n&quot;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-		result += &quot;		case (vn_state)\n&quot;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		result += &quot;		FETCH: begin\n&quot;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-		result += &quot;			vn_state &lt;= WAIT;\n&quot;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-		result += &quot;		end\n&quot;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		result += &quot;		WAIT: begin\n&quot;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-		result += &quot;			vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-		result += &quot;			ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-		result += &quot;		end\n&quot;
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-		result += &quot;		//EXECUTE: begin\n&quot;
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		result += &quot;		//end\n&quot;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-		result += &quot;		endcase\n&quot;
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-		result += &quot;	end\n&quot;
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		result += &quot;\n&quot;
+</a> 		if !arch.HasOp(&quot;r2m&quot;) &amp;&amp; !arch.HasOp(&quot;m2r&quot;) &amp;&amp; !arch.HasOp(&quot;r2mri&quot;) &amp;&amp; !arch.HasOp(&quot;m2rri&quot;) {
+ 			result += &quot;	assign ram_addr = _pc;\n&quot;
+<a href="#h0-2-20" id="h0-2-20" class="i">+			result += &quot;	assign ram_en = 1&#39;b1;\n&quot;
+</a> 		}
+ 	}
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -423,9 +421,17 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	case &quot;ha&quot;:
+ 		result += &quot;			// ha placeholder\n&quot;
+ 	case &quot;hy&quot;:
+<a href="#h0-3-3" id="h0-3-3" class="d">-		result += &quot;			if (exec_mode == 1&#39;b0 || vn_state == EXECUTE) begin\n&quot;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		result += &quot;			if (exec_mode == 1&#39;b1 &amp;&amp; vn_state == FETCH) begin\n&quot;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		result += &quot;			else begin\n&quot;
+</a> 	case &quot;vn&quot;:
+<a href="#h0-3-9" id="h0-3-9" class="d">-		result += &quot;			if (vn_state == EXECUTE) begin\n&quot;
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		result += &quot;			case (vn_state)\n&quot;
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		result += &quot;			FETCH: begin\n&quot;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+		result += &quot;			end\n&quot;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		result += &quot;			EXECUTE: begin\n&quot;
+</a> 	}
+ 
+ 	result += &quot;			$display(\&quot;Program Counter:%d\&quot;, _pc);\n&quot;
+<a href="#h0-4" id="h0-4" class="h">@@ -459,9 +465,9 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	}
+ 
+ 	if opbits == 1 {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		result += &quot;				case(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		result += &quot;				case(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+</a> 	} else {
+<a href="#h0-4-6" id="h0-4-6" class="d">-		result += &quot;				case(rom_value[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		result += &quot;				case(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+</a> 	}
+ 
+ 	for _, op := range proc.Op {
+<a href="#h0-5" id="h0-5" class="h">@@ -487,7 +493,8 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	case &quot;hy&quot;:
+ 		result += &quot;			end\n&quot;
+ 	case &quot;vn&quot;:
+<a href="#h0-5-3" id="h0-5-3" class="d">-		result += &quot;			end\n&quot;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		result += &quot;				end\n&quot;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		result += &quot;			endcase\n&quot;
+</a> 	}
+ 
+ 	result += &quot;		end\n&quot;
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a> b/<a href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,6 +69,7 @@ func (op R2o) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 			result += &quot;\t\tend\n&quot;
+ 			result += &quot;\t\telse\n&quot;
+ 			result += &quot;\t\tbegin\n&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+			result += ExecutionCase(conf, arch, 2, true)
+</a> 
+ 			if opbits == 1 {
+ 				result += &quot;\t\t\tcase(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -88,7 +89,7 @@ func (op R2o) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string
+</a> 			result += &quot;\t\t\t\tend\n&quot;
+ 
+ 			result += &quot;\t\t\tendcase\n&quot;
+<a href="#h1-1-3" id="h1-1-3" class="d">-
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			result += ExecutionCase(conf, arch, 2, false)
+</a> 			result += &quot;\t\tend\n&quot;
+ 
+ 			result += &quot;\tend\n&quot;
+</pre>
+</div>
+</body>
+</html>

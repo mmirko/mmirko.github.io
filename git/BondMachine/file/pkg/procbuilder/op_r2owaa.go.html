@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>op_r2owaa.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> op_r2owaa.go (10863B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package procbuilder
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> import (
+<a href="#l4" class="line" id="l4">      4</a> 	&quot;errors&quot;
+<a href="#l5" class="line" id="l5">      5</a> 	&quot;math/rand&quot;
+<a href="#l6" class="line" id="l6">      6</a> 	&quot;strconv&quot;
+<a href="#l7" class="line" id="l7">      7</a> 	&quot;strings&quot;
+<a href="#l8" class="line" id="l8">      8</a> 
+<a href="#l9" class="line" id="l9">      9</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#l10" class="line" id="l10">     10</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+<a href="#l11" class="line" id="l11">     11</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+<a href="#l12" class="line" id="l12">     12</a> )
+<a href="#l13" class="line" id="l13">     13</a> 
+<a href="#l14" class="line" id="l14">     14</a> type R2owaa struct{}
+<a href="#l15" class="line" id="l15">     15</a> 
+<a href="#l16" class="line" id="l16">     16</a> func (op R2owaa) Op_get_name() string {
+<a href="#l17" class="line" id="l17">     17</a> 	return &quot;r2owaa&quot;
+<a href="#l18" class="line" id="l18">     18</a> }
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> func (op R2owaa) Op_get_desc() string {
+<a href="#l21" class="line" id="l21">     21</a> 	return &quot;Register to output&quot;
+<a href="#l22" class="line" id="l22">     22</a> }
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> func (op R2owaa) Op_show_assembler(arch *Arch) string {
+<a href="#l25" class="line" id="l25">     25</a> 	opbits := arch.Opcodes_bits()
+<a href="#l26" class="line" id="l26">     26</a> 	outbits := arch.Outputs_bits()
+<a href="#l27" class="line" id="l27">     27</a> 	result := &quot;r2owaa [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(outbits) + &quot;(Output)]	// Set an output to the value of a given register [&quot; + strconv.Itoa(opbits+int(arch.R)+outbits) + &quot;]\n&quot;
+<a href="#l28" class="line" id="l28">     28</a> 	return result
+<a href="#l29" class="line" id="l29">     29</a> }
+<a href="#l30" class="line" id="l30">     30</a> 
+<a href="#l31" class="line" id="l31">     31</a> func (op R2owaa) Op_get_instruction_len(arch *Arch) int {
+<a href="#l32" class="line" id="l32">     32</a> 	opbits := arch.Opcodes_bits()
+<a href="#l33" class="line" id="l33">     33</a> 	outbits := arch.Outputs_bits()
+<a href="#l34" class="line" id="l34">     34</a> 	return opbits + int(arch.R) + int(outbits) // The bits for the opcode + bits for a register + bits for the output
+<a href="#l35" class="line" id="l35">     35</a> }
+<a href="#l36" class="line" id="l36">     36</a> 
+<a href="#l37" class="line" id="l37">     37</a> func (op R2owaa) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pname string) string {
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> 	result := &quot;&quot;
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a> 	// The extra process will be created and handled by the first waiting operator present in the architecture
+<a href="#l42" class="line" id="l42">     42</a> 	setflag := true
+<a href="#l43" class="line" id="l43">     43</a> 	for _, currop := range arch.Op {
+<a href="#l44" class="line" id="l44">     44</a> 		if currop.Op_get_name() == &quot;r2owa&quot; || currop.Op_get_name() == &quot;r2o&quot; {
+<a href="#l45" class="line" id="l45">     45</a> 			setflag = false
+<a href="#l46" class="line" id="l46">     46</a> 			break
+<a href="#l47" class="line" id="l47">     47</a> 		}
+<a href="#l48" class="line" id="l48">     48</a> 	}
+<a href="#l49" class="line" id="l49">     49</a> 
+<a href="#l50" class="line" id="l50">     50</a> 	if setflag {
+<a href="#l51" class="line" id="l51">     51</a> 		// It the first operator
+<a href="#l52" class="line" id="l52">     52</a> 
+<a href="#l53" class="line" id="l53">     53</a> 		opbits := arch.Opcodes_bits()
+<a href="#l54" class="line" id="l54">     54</a> 		rom_word := arch.Max_word()
+<a href="#l55" class="line" id="l55">     55</a> 
+<a href="#l56" class="line" id="l56">     56</a> 		result += &quot;\n&quot;
+<a href="#l57" class="line" id="l57">     57</a> 		// Data valid for outputs
+<a href="#l58" class="line" id="l58">     58</a> 		for j := 0; j &lt; int(arch.M); j++ {
+<a href="#l59" class="line" id="l59">     59</a> 			result += &quot;\treg &quot; + strings.ToLower(Get_output_name(j)) + &quot;_val;\n&quot;
+<a href="#l60" class="line" id="l60">     60</a> 		}
+<a href="#l61" class="line" id="l61">     61</a> 
+<a href="#l62" class="line" id="l62">     62</a> 		result += &quot;\n&quot;
+<a href="#l63" class="line" id="l63">     63</a> 
+<a href="#l64" class="line" id="l64">     64</a> 		for j := 0; j &lt; int(arch.M); j++ {
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a> 			objects := make([]string, 1)
+<a href="#l67" class="line" id="l67">     67</a> 			objects[0] = strings.ToLower(Get_output_name(j))
+<a href="#l68" class="line" id="l68">     68</a> 
+<a href="#l69" class="line" id="l69">     69</a> 			// Process for data outputs data valid
+<a href="#l70" class="line" id="l70">     70</a> 			result += &quot;\talways @(posedge clock_signal, posedge reset_signal)\n&quot;
+<a href="#l71" class="line" id="l71">     71</a> 			result += &quot;\tbegin\n&quot;
+<a href="#l72" class="line" id="l72">     72</a> 
+<a href="#l73" class="line" id="l73">     73</a> 			result += &quot;\t\tif (reset_signal)\n&quot;
+<a href="#l74" class="line" id="l74">     74</a> 			result += &quot;\t\tbegin\n&quot;
+<a href="#l75" class="line" id="l75">     75</a> 			result += &quot;\t\t\t&quot; + strings.ToLower(Get_output_name(j)) + &quot;_val &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l76" class="line" id="l76">     76</a> 			result += &quot;\t\tend\n&quot;
+<a href="#l77" class="line" id="l77">     77</a> 			result += &quot;\t\telse\n&quot;
+<a href="#l78" class="line" id="l78">     78</a> 			result += &quot;\t\tbegin\n&quot;
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> 			if opbits == 1 {
+<a href="#l81" class="line" id="l81">     81</a> 				result += &quot;\t\t\tcase(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;])\n&quot;
+<a href="#l82" class="line" id="l82">     82</a> 			} else {
+<a href="#l83" class="line" id="l83">     83</a> 				result += &quot;\t\t\tcase(current_instruction[&quot; + strconv.Itoa(rom_word-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits) + &quot;])\n&quot;
+<a href="#l84" class="line" id="l84">     84</a> 			}
+<a href="#l85" class="line" id="l85">     85</a> 
+<a href="#l86" class="line" id="l86">     86</a> 			for _, currop := range arch.Op {
+<a href="#l87" class="line" id="l87">     87</a> 				result += currop.Op_instruction_verilog_extra_block(arch, flavor, uint8(4), &quot;output_data_valid&quot;, objects)
+<a href="#l88" class="line" id="l88">     88</a> 			}
+<a href="#l89" class="line" id="l89">     89</a> 
+<a href="#l90" class="line" id="l90">     90</a> 			result += &quot;\t\t\t\tdefault: begin\n&quot;
+<a href="#l91" class="line" id="l91">     91</a> 			result += &quot;\t\t\t\t\tif (&quot; + strings.ToLower(Get_output_name(j)) + &quot;_received)\n&quot;
+<a href="#l92" class="line" id="l92">     92</a> 			result += &quot;\t\t\t\t\tbegin\n&quot;
+<a href="#l93" class="line" id="l93">     93</a> 			result += &quot;\t\t\t\t\t\t&quot; + strings.ToLower(Get_output_name(j)) + &quot;_val &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l94" class="line" id="l94">     94</a> 			result += &quot;\t\t\t\t\tend\n&quot;
+<a href="#l95" class="line" id="l95">     95</a> 			result += &quot;\t\t\t\tend\n&quot;
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> 			result += &quot;\t\t\tendcase\n&quot;
+<a href="#l98" class="line" id="l98">     98</a> 
+<a href="#l99" class="line" id="l99">     99</a> 			result += &quot;\t\tend\n&quot;
+<a href="#l100" class="line" id="l100">    100</a> 
+<a href="#l101" class="line" id="l101">    101</a> 			result += &quot;\tend\n&quot;
+<a href="#l102" class="line" id="l102">    102</a> 		}
+<a href="#l103" class="line" id="l103">    103</a> 	}
+<a href="#l104" class="line" id="l104">    104</a> 
+<a href="#l105" class="line" id="l105">    105</a> 	return result
+<a href="#l106" class="line" id="l106">    106</a> }
+<a href="#l107" class="line" id="l107">    107</a> 
+<a href="#l108" class="line" id="l108">    108</a> func (op R2owaa) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+<a href="#l109" class="line" id="l109">    109</a> 	rom_word := arch.Max_word()
+<a href="#l110" class="line" id="l110">    110</a> 	opbits := arch.Opcodes_bits()
+<a href="#l111" class="line" id="l111">    111</a> 	outbits := arch.Outputs_bits()
+<a href="#l112" class="line" id="l112">    112</a> 
+<a href="#l113" class="line" id="l113">    113</a> 	reg_num := 1 &lt;&lt; arch.R
+<a href="#l114" class="line" id="l114">    114</a> 
+<a href="#l115" class="line" id="l115">    115</a> 	pref := strings.Repeat(&quot;\t&quot;, 6)
+<a href="#l116" class="line" id="l116">    116</a> 
+<a href="#l117" class="line" id="l117">    117</a> 	result := &quot;&quot;
+<a href="#l118" class="line" id="l118">    118</a> 	result += &quot;					R2OWAA: begin\n&quot;
+<a href="#l119" class="line" id="l119">    119</a> 	if arch.M &gt; 0 {
+<a href="#l120" class="line" id="l120">    120</a> 		if arch.R == 1 {
+<a href="#l121" class="line" id="l121">    121</a> 			result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;])\n&quot;
+<a href="#l122" class="line" id="l122">    122</a> 		} else {
+<a href="#l123" class="line" id="l123">    123</a> 			result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)) + &quot;])\n&quot;
+<a href="#l124" class="line" id="l124">    124</a> 		}
+<a href="#l125" class="line" id="l125">    125</a> 		for i := 0; i &lt; reg_num; i++ {
+<a href="#l126" class="line" id="l126">    126</a> 			result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+<a href="#l127" class="line" id="l127">    127</a> 
+<a href="#l128" class="line" id="l128">    128</a> 			if outbits == 1 {
+<a href="#l129" class="line" id="l129">    129</a> 				result += pref + &quot;\tcase (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+<a href="#l130" class="line" id="l130">    130</a> 			} else {
+<a href="#l131" class="line" id="l131">    131</a> 				result += pref + &quot;\tcase (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(outbits)) + &quot;])\n&quot;
+<a href="#l132" class="line" id="l132">    132</a> 			}
+<a href="#l133" class="line" id="l133">    133</a> 
+<a href="#l134" class="line" id="l134">    134</a> 			for j := 0; j &lt; int(arch.M); j++ {
+<a href="#l135" class="line" id="l135">    135</a> 				result += pref + &quot;\t&quot; + strings.ToUpper(Get_output_name(j)) + &quot; : begin\n&quot;
+<a href="#l136" class="line" id="l136">    136</a> 
+<a href="#l137" class="line" id="l137">    137</a> 				result += pref + &quot;\t\tif (&quot; + strings.ToLower(Get_output_name(j)) + &quot;_val)\n&quot;
+<a href="#l138" class="line" id="l138">    138</a> 				result += pref + &quot;\t\tbegin\n&quot;
+<a href="#l139" class="line" id="l139">    139</a> 				result += pref + &quot;\t\t\tif (&quot; + strings.ToLower(Get_output_name(j)) + &quot;_received)\n&quot;
+<a href="#l140" class="line" id="l140">    140</a> 				result += pref + &quot;\t\t\tbegin\n&quot;
+<a href="#l141" class="line" id="l141">    141</a> 				result += pref + &quot;\t\t\t\t_aux&quot; + strings.ToLower(Get_output_name(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+<a href="#l142" class="line" id="l142">    142</a> 				result += pref + NextInstruction(conf, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+<a href="#l143" class="line" id="l143">    143</a> 				result += pref + &quot;\t\t\t\t$display(\&quot;R2OWAA &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_output_name(j)) + &quot;\&quot;);\n&quot;
+<a href="#l144" class="line" id="l144">    144</a> 				result += pref + &quot;\t\t\tend\n&quot;
+<a href="#l145" class="line" id="l145">    145</a> 				result += pref + &quot;\t\tend\n&quot;
+<a href="#l146" class="line" id="l146">    146</a> 				result += pref + &quot;\t\telse\n&quot;
+<a href="#l147" class="line" id="l147">    147</a> 				result += pref + &quot;\t\tbegin\n&quot;
+<a href="#l148" class="line" id="l148">    148</a> 				result += pref + &quot;\t\t\t\t_aux&quot; + strings.ToLower(Get_output_name(j)) + &quot; &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+<a href="#l149" class="line" id="l149">    149</a> 				result += pref + NextInstruction(conf, arch, 4, &quot;_pc + 1&#39;b1&quot;)
+<a href="#l150" class="line" id="l150">    150</a> 				result += pref + &quot;\t\t\t\t$display(\&quot;R2OWAA &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_output_name(j)) + &quot;\&quot;);\n&quot;
+<a href="#l151" class="line" id="l151">    151</a> 				result += pref + &quot;\t\tend\n&quot;
+<a href="#l152" class="line" id="l152">    152</a> 
+<a href="#l153" class="line" id="l153">    153</a> 				result += pref + &quot;\tend\n&quot;
+<a href="#l154" class="line" id="l154">    154</a> 
+<a href="#l155" class="line" id="l155">    155</a> 			}
+<a href="#l156" class="line" id="l156">    156</a> 			result += pref + &quot;\tendcase\n&quot;
+<a href="#l157" class="line" id="l157">    157</a> 			result += pref + &quot;end\n&quot;
+<a href="#l158" class="line" id="l158">    158</a> 		}
+<a href="#l159" class="line" id="l159">    159</a> 		result += pref + &quot;endcase\n&quot;
+<a href="#l160" class="line" id="l160">    160</a> 	} else {
+<a href="#l161" class="line" id="l161">    161</a> 		result += pref + &quot;$display(\&quot;NOP\&quot;);\n&quot;
+<a href="#l162" class="line" id="l162">    162</a> 	}
+<a href="#l163" class="line" id="l163">    163</a> 
+<a href="#l164" class="line" id="l164">    164</a> 	result += &quot;\t\t\t\t\tend\n&quot;
+<a href="#l165" class="line" id="l165">    165</a> 	return result
+<a href="#l166" class="line" id="l166">    166</a> }
+<a href="#l167" class="line" id="l167">    167</a> 
+<a href="#l168" class="line" id="l168">    168</a> func (op R2owaa) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+<a href="#l169" class="line" id="l169">    169</a> 	// TODO
+<a href="#l170" class="line" id="l170">    170</a> 	return &quot;&quot;
+<a href="#l171" class="line" id="l171">    171</a> }
+<a href="#l172" class="line" id="l172">    172</a> 
+<a href="#l173" class="line" id="l173">    173</a> func (op R2owaa) Assembler(arch *Arch, words []string) (string, error) {
+<a href="#l174" class="line" id="l174">    174</a> 	opbits := arch.Opcodes_bits()
+<a href="#l175" class="line" id="l175">    175</a> 	outbits := arch.Outputs_bits()
+<a href="#l176" class="line" id="l176">    176</a> 	rom_word := arch.Max_word()
+<a href="#l177" class="line" id="l177">    177</a> 
+<a href="#l178" class="line" id="l178">    178</a> 	reg_num := 2
+<a href="#l179" class="line" id="l179">    179</a> 	reg_num = reg_num &lt;&lt; (arch.R - 1)
+<a href="#l180" class="line" id="l180">    180</a> 
+<a href="#l181" class="line" id="l181">    181</a> 	if len(words) != 2 {
+<a href="#l182" class="line" id="l182">    182</a> 		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+<a href="#l183" class="line" id="l183">    183</a> 	}
+<a href="#l184" class="line" id="l184">    184</a> 
+<a href="#l185" class="line" id="l185">    185</a> 	result := &quot;&quot;
+<a href="#l186" class="line" id="l186">    186</a> 	for i := 0; i &lt; reg_num; i++ {
+<a href="#l187" class="line" id="l187">    187</a> 		if words[0] == strings.ToLower(Get_register_name(i)) {
+<a href="#l188" class="line" id="l188">    188</a> 			result += zeros_prefix(int(arch.R), get_binary(i))
+<a href="#l189" class="line" id="l189">    189</a> 			break
+<a href="#l190" class="line" id="l190">    190</a> 		}
+<a href="#l191" class="line" id="l191">    191</a> 	}
+<a href="#l192" class="line" id="l192">    192</a> 
+<a href="#l193" class="line" id="l193">    193</a> 	if result == &quot;&quot; {
+<a href="#l194" class="line" id="l194">    194</a> 		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+<a href="#l195" class="line" id="l195">    195</a> 	}
+<a href="#l196" class="line" id="l196">    196</a> 
+<a href="#l197" class="line" id="l197">    197</a> 	if partial, err := Process_output(words[1], int(arch.M)); err == nil {
+<a href="#l198" class="line" id="l198">    198</a> 		result += zeros_prefix(outbits, partial)
+<a href="#l199" class="line" id="l199">    199</a> 	} else {
+<a href="#l200" class="line" id="l200">    200</a> 		return &quot;&quot;, Prerror{err.Error()}
+<a href="#l201" class="line" id="l201">    201</a> 	}
+<a href="#l202" class="line" id="l202">    202</a> 
+<a href="#l203" class="line" id="l203">    203</a> 	for i := opbits + int(arch.R) + outbits; i &lt; rom_word; i++ {
+<a href="#l204" class="line" id="l204">    204</a> 		result += &quot;0&quot;
+<a href="#l205" class="line" id="l205">    205</a> 	}
+<a href="#l206" class="line" id="l206">    206</a> 
+<a href="#l207" class="line" id="l207">    207</a> 	return result, nil
+<a href="#l208" class="line" id="l208">    208</a> }
+<a href="#l209" class="line" id="l209">    209</a> 
+<a href="#l210" class="line" id="l210">    210</a> func (op R2owaa) Disassembler(arch *Arch, instr string) (string, error) {
+<a href="#l211" class="line" id="l211">    211</a> 	outbits := arch.Outputs_bits()
+<a href="#l212" class="line" id="l212">    212</a> 	reg_id := get_id(instr[:arch.R])
+<a href="#l213" class="line" id="l213">    213</a> 	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+<a href="#l214" class="line" id="l214">    214</a> 	inp_id := get_id(instr[arch.R : int(arch.R)+outbits])
+<a href="#l215" class="line" id="l215">    215</a> 	result += strings.ToLower(Get_output_name(inp_id))
+<a href="#l216" class="line" id="l216">    216</a> 	return result, nil
+<a href="#l217" class="line" id="l217">    217</a> }
+<a href="#l218" class="line" id="l218">    218</a> 
+<a href="#l219" class="line" id="l219">    219</a> func (op R2owaa) Simulate(vm *VM, instr string) error {
+<a href="#l220" class="line" id="l220">    220</a> 	outbits := vm.Mach.Outputs_bits()
+<a href="#l221" class="line" id="l221">    221</a> 	reg_bits := vm.Mach.R
+<a href="#l222" class="line" id="l222">    222</a> 	reg := get_id(instr[:reg_bits])
+<a href="#l223" class="line" id="l223">    223</a> 	inp := get_id(instr[reg_bits : int(reg_bits)+outbits])
+<a href="#l224" class="line" id="l224">    224</a> 	vm.Outputs[inp] = vm.Registers[reg]
+<a href="#l225" class="line" id="l225">    225</a> 	vm.Pc = vm.Pc + 1
+<a href="#l226" class="line" id="l226">    226</a> 	return nil
+<a href="#l227" class="line" id="l227">    227</a> }
+<a href="#l228" class="line" id="l228">    228</a> 
+<a href="#l229" class="line" id="l229">    229</a> func (op R2owaa) Generate(arch *Arch) string {
+<a href="#l230" class="line" id="l230">    230</a> 	outbits := arch.Outputs_bits()
+<a href="#l231" class="line" id="l231">    231</a> 	reg_num := 1 &lt;&lt; arch.R
+<a href="#l232" class="line" id="l232">    232</a> 	reg := rand.Intn(reg_num)
+<a href="#l233" class="line" id="l233">    233</a> 	inp := rand.Intn(int(arch.M))
+<a href="#l234" class="line" id="l234">    234</a> 	return zeros_prefix(int(arch.R), get_binary(reg)) + zeros_prefix(outbits, get_binary(inp))
+<a href="#l235" class="line" id="l235">    235</a> }
+<a href="#l236" class="line" id="l236">    236</a> 
+<a href="#l237" class="line" id="l237">    237</a> func (op R2owaa) Required_shared() (bool, []string) {
+<a href="#l238" class="line" id="l238">    238</a> 	return false, []string{}
+<a href="#l239" class="line" id="l239">    239</a> }
+<a href="#l240" class="line" id="l240">    240</a> 
+<a href="#l241" class="line" id="l241">    241</a> func (op R2owaa) Required_modes() (bool, []string) {
+<a href="#l242" class="line" id="l242">    242</a> 	return false, []string{}
+<a href="#l243" class="line" id="l243">    243</a> }
+<a href="#l244" class="line" id="l244">    244</a> 
+<a href="#l245" class="line" id="l245">    245</a> func (op R2owaa) Forbidden_modes() (bool, []string) {
+<a href="#l246" class="line" id="l246">    246</a> 	return false, []string{}
+<a href="#l247" class="line" id="l247">    247</a> }
+<a href="#l248" class="line" id="l248">    248</a> 
+<a href="#l249" class="line" id="l249">    249</a> func (op R2owaa) Op_instruction_internal_state(arch *Arch, flavor string) string {
+<a href="#l250" class="line" id="l250">    250</a> 	return &quot;&quot;
+<a href="#l251" class="line" id="l251">    251</a> }
+<a href="#l252" class="line" id="l252">    252</a> 
+<a href="#l253" class="line" id="l253">    253</a> func (Op R2owaa) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+<a href="#l254" class="line" id="l254">    254</a> 	return &quot;&quot;
+<a href="#l255" class="line" id="l255">    255</a> }
+<a href="#l256" class="line" id="l256">    256</a> 
+<a href="#l257" class="line" id="l257">    257</a> func (Op R2owaa) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+<a href="#l258" class="line" id="l258">    258</a> 	return &quot;&quot;
+<a href="#l259" class="line" id="l259">    259</a> }
+<a href="#l260" class="line" id="l260">    260</a> 
+<a href="#l261" class="line" id="l261">    261</a> func (Op R2owaa) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+<a href="#l262" class="line" id="l262">    262</a> 	return &quot;&quot;
+<a href="#l263" class="line" id="l263">    263</a> }
+<a href="#l264" class="line" id="l264">    264</a> 
+<a href="#l265" class="line" id="l265">    265</a> func (Op R2owaa) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+<a href="#l266" class="line" id="l266">    266</a> 	return []string{}, []string{}
+<a href="#l267" class="line" id="l267">    267</a> }
+<a href="#l268" class="line" id="l268">    268</a> 
+<a href="#l269" class="line" id="l269">    269</a> func (Op R2owaa) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+<a href="#l270" class="line" id="l270">    270</a> 	seq0, types0 := Sequence_to_0(words[0])
+<a href="#l271" class="line" id="l271">    271</a> 	seq1, types1 := Sequence_to_0(words[1])
+<a href="#l272" class="line" id="l272">    272</a> 
+<a href="#l273" class="line" id="l273">    273</a> 	if len(seq0) &gt; 0 &amp;&amp; types0 == O_REGISTER &amp;&amp; len(seq1) &gt; 0 &amp;&amp; types1 == O_OUTPUT {
+<a href="#l274" class="line" id="l274">    274</a> 
+<a href="#l275" class="line" id="l275">    275</a> 		result := make([]UsageNotify, 2+len(seq1))
+<a href="#l276" class="line" id="l276">    276</a> 		newnot0 := UsageNotify{C_OPCODE, &quot;r2owaa&quot;, I_NIL}
+<a href="#l277" class="line" id="l277">    277</a> 		result[0] = newnot0
+<a href="#l278" class="line" id="l278">    278</a> 		newnot1 := UsageNotify{C_REGSIZE, S_NIL, len(seq0)}
+<a href="#l279" class="line" id="l279">    279</a> 		result[1] = newnot1
+<a href="#l280" class="line" id="l280">    280</a> 
+<a href="#l281" class="line" id="l281">    281</a> 		for i, _ := range seq1 {
+<a href="#l282" class="line" id="l282">    282</a> 			result[i+2] = UsageNotify{C_OUTPUT, S_NIL, i + 1}
+<a href="#l283" class="line" id="l283">    283</a> 		}
+<a href="#l284" class="line" id="l284">    284</a> 
+<a href="#l285" class="line" id="l285">    285</a> 		return result, nil
+<a href="#l286" class="line" id="l286">    286</a> 
+<a href="#l287" class="line" id="l287">    287</a> 	}
+<a href="#l288" class="line" id="l288">    288</a> 
+<a href="#l289" class="line" id="l289">    289</a> 	return []UsageNotify{}, errors.New(&quot;Wrong parameters&quot;)
+<a href="#l290" class="line" id="l290">    290</a> 
+<a href="#l291" class="line" id="l291">    291</a> }
+<a href="#l292" class="line" id="l292">    292</a> 
+<a href="#l293" class="line" id="l293">    293</a> func (Op R2owaa) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+<a href="#l294" class="line" id="l294">    294</a> 	opbits := arch.Opcodes_bits()
+<a href="#l295" class="line" id="l295">    295</a> 	outbits := arch.Outputs_bits()
+<a href="#l296" class="line" id="l296">    296</a> 	rom_word := arch.Max_word()
+<a href="#l297" class="line" id="l297">    297</a> 
+<a href="#l298" class="line" id="l298">    298</a> 	result := &quot;&quot;
+<a href="#l299" class="line" id="l299">    299</a> 
+<a href="#l300" class="line" id="l300">    300</a> 	pref := strings.Repeat(&quot;\t&quot;, int(level))
+<a href="#l301" class="line" id="l301">    301</a> 
+<a href="#l302" class="line" id="l302">    302</a> 	switch blockname {
+<a href="#l303" class="line" id="l303">    303</a> 	case &quot;output_data_valid&quot;:
+<a href="#l304" class="line" id="l304">    304</a> 		result += pref + &quot;R2OWAA: begin\n&quot;
+<a href="#l305" class="line" id="l305">    305</a> 		if outbits == 1 {
+<a href="#l306" class="line" id="l306">    306</a> 			result += pref + &quot;\tcase (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;])\n&quot;
+<a href="#l307" class="line" id="l307">    307</a> 		} else {
+<a href="#l308" class="line" id="l308">    308</a> 			result += pref + &quot;\tcase (current_instruction[&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opbits-int(arch.R)-int(outbits)) + &quot;])\n&quot;
+<a href="#l309" class="line" id="l309">    309</a> 		}
+<a href="#l310" class="line" id="l310">    310</a> 
+<a href="#l311" class="line" id="l311">    311</a> 		result += pref + &quot;\t&quot; + strings.ToUpper(objects[0]) + &quot; : begin\n&quot;
+<a href="#l312" class="line" id="l312">    312</a> 
+<a href="#l313" class="line" id="l313">    313</a> 		result += pref + &quot;\t\tif (&quot; + strings.ToLower(objects[0]) + &quot;_val)\n&quot;
+<a href="#l314" class="line" id="l314">    314</a> 		result += pref + &quot;\t\tbegin\n&quot;
+<a href="#l315" class="line" id="l315">    315</a> 		result += pref + &quot;\t\t\tif (&quot; + strings.ToLower(objects[0]) + &quot;_received)\n&quot;
+<a href="#l316" class="line" id="l316">    316</a> 		result += pref + &quot;\t\t\tbegin\n&quot;
+<a href="#l317" class="line" id="l317">    317</a> 		result += pref + &quot;\t\t\t\t&quot; + strings.ToLower(objects[0]) + &quot;_val &lt;= 1&#39;b1;\n&quot;
+<a href="#l318" class="line" id="l318">    318</a> 		result += pref + &quot;\t\t\tend\n&quot;
+<a href="#l319" class="line" id="l319">    319</a> 		result += pref + &quot;\t\tend\n&quot;
+<a href="#l320" class="line" id="l320">    320</a> 		result += pref + &quot;\t\telse\n&quot;
+<a href="#l321" class="line" id="l321">    321</a> 		result += pref + &quot;\t\tbegin\n&quot;
+<a href="#l322" class="line" id="l322">    322</a> 		result += pref + &quot;\t\t\t&quot; + strings.ToLower(objects[0]) + &quot;_val &lt;= 1&#39;b1;\n&quot;
+<a href="#l323" class="line" id="l323">    323</a> 		result += pref + &quot;\t\tend\n&quot;
+<a href="#l324" class="line" id="l324">    324</a> 		result += pref + &quot;\tend\n&quot;
+<a href="#l325" class="line" id="l325">    325</a> 
+<a href="#l326" class="line" id="l326">    326</a> 		result += pref + &quot;\tdefault: begin\n&quot;
+<a href="#l327" class="line" id="l327">    327</a> 		result += pref + &quot;\t\tif (&quot; + strings.ToLower(objects[0]) + &quot;_received)\n&quot;
+<a href="#l328" class="line" id="l328">    328</a> 		result += pref + &quot;\t\tbegin\n&quot;
+<a href="#l329" class="line" id="l329">    329</a> 		result += pref + &quot;\t\t\t&quot; + strings.ToLower(objects[0]) + &quot;_val &lt;= #1 1&#39;b0;\n&quot;
+<a href="#l330" class="line" id="l330">    330</a> 		result += pref + &quot;\t\tend\n&quot;
+<a href="#l331" class="line" id="l331">    331</a> 		result += pref + &quot;\tend\n&quot;
+<a href="#l332" class="line" id="l332">    332</a> 
+<a href="#l333" class="line" id="l333">    333</a> 		result += pref + &quot;\tendcase\n&quot;
+<a href="#l334" class="line" id="l334">    334</a> 
+<a href="#l335" class="line" id="l335">    335</a> 		result += pref + &quot;end\n&quot;
+<a href="#l336" class="line" id="l336">    336</a> 	default:
+<a href="#l337" class="line" id="l337">    337</a> 		result = &quot;&quot;
+<a href="#l338" class="line" id="l338">    338</a> 	}
+<a href="#l339" class="line" id="l339">    339</a> 	return result
+<a href="#l340" class="line" id="l340">    340</a> }
+<a href="#l341" class="line" id="l341">    341</a> func (Op R2owaa) HLAssemblerMatch(arch *Arch) []string {
+<a href="#l342" class="line" id="l342">    342</a> 	result := make([]string, 0)
+<a href="#l343" class="line" id="l343">    343</a> 	return result
+<a href="#l344" class="line" id="l344">    344</a> }
+<a href="#l345" class="line" id="l345">    345</a> func (Op R2owaa) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+<a href="#l346" class="line" id="l346">    346</a> 	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+<a href="#l347" class="line" id="l347">    347</a> }
+<a href="#l348" class="line" id="l348">    348</a> func (Op R2owaa) ExtraFiles(arch *Arch) ([]string, []string) {
+<a href="#l349" class="line" id="l349">    349</a> 	return []string{}, []string{}
+<a href="#l350" class="line" id="l350">    350</a> }
+<a href="#l351" class="line" id="l351">    351</a> 
+<a href="#l352" class="line" id="l352">    352</a> func (Op R2owaa) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#l353" class="line" id="l353">    353</a> 	return nil, nil
+<a href="#l354" class="line" id="l354">    354</a> }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>First basic shell and friends - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f3d2ddf6d9d9ba72cfab9e57b80cb20551048fe3.html">f3d2ddf6d9d9ba72cfab9e57b80cb20551048fe3</a>
+<b>parent</b> <a href="../commit/5345d4777bf0c93c628eb509cf0b950b02a8ae8c.html">5345d4777bf0c93c628eb509cf0b950b02a8ae8c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 26 Sep 2023 13:40:07 +0200
+
+First basic shell and friends
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">library/fragments/comparestring.basm</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">library/fragments/putstringram.basm</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">library/fragments/readstring.basm</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">36</td><td><span class="i">++++</span><span class="d">--------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">76</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/basm/utils.go</a></td><td> | </td><td class="num">29</td><td><span class="i">++++++++++</span><span class="d">-------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/bmnumbers/export.go</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>8 files changed, 156 insertions(+), 56 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a> b/<a href="../file/library/fragments/comparestring.basm.html">library/fragments/comparestring.basm</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,18 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+; Compare a string rom/ram
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+; r0 pointer to the buffer beginning (es: mov r0, ram:buff)
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+; r1 pointer to the ROM string
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+; r2 is the lenght
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+%fragment comparestring
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	nop
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+cmpchar:
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	mov	r3, ram:[r0]
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	mov	r4, rom:[r1]
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	cmpr	r3, r4
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	dec	r2
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	jz	r2, end
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	inc	r0
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	inc	r1
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	jcmp	cmpchar
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+end:
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	nop
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+%endfragment
+</a><b>diff --git a/<a id="h1" href="../file/library/fragments/putstringram.basm.html">library/fragments/putstringram.basm</a> b/<a href="../file/library/fragments/putstringram.basm.html">library/fragments/putstringram.basm</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,15 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+; Ths function writes a string to the screen
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+; r0: pointer to the null terminated string (es: mov r0, ram:message)
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+; r1: x position within the screen (video textual memory vtm0)
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+%fragment putstringram
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+        nop
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+putchar:
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+        mov     r2, ram:[r0]
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+        jz      r2, end
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+        mov     vtm0:[r1], r2
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+        inc     r0
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+        inc     r1
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+        j putchar
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+end:
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+        nop
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+%endfragment
+</a><b>diff --git a/<a id="h2" href="../file/library/fragments/readstring.basm.html">library/fragments/readstring.basm</a> b/<a href="../file/library/fragments/readstring.basm.html">library/fragments/readstring.basm</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -2,8 +2,8 @@
+</a> ; r0 pointer to the buffer beginning (es: mov r0, ram:buff)
+ ; r2 lenght
+ %fragment readstring
+<a href="#h2-0-3" id="h2-0-3" class="d">-        rsets4	r2, 0
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	rsets4	r3, 13
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+        rsets8	r2, 0
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	rsets8	r3, 13
+</a> getchar:
+ 	i2rw	r1, i0
+ 	cmpr	r1, r3
+<a href="#h2-1" id="h2-1" class="h">@@ -15,7 +15,7 @@ getchar:
+</a>         j getchar
+ end:
+ 	mov	r0,r2
+<a href="#h2-1-3" id="h2-1-3" class="d">-        rsets4	r3,0
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+        rsets8	r3,0
+</a> loop:
+ 	mov	vtm0:[r0], r3
+ 	jz	r0, end2
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -256,10 +256,6 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 		if romData != &quot;&quot; {
+ 			wordSize := myArch.Max_word()
+ 			// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#h3-0-3" id="h3-0-3" class="d">-			wordPad := &quot;&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-			for i := 0; i &lt; int(wordSize); i++ {
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-				wordPad += &quot;0&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-			}
+</a> 			if wordSize &lt; 8 {
+ 				return errors.New(&quot;word size is too small&quot;)
+ 			}
+<a href="#h3-1" id="h3-1" class="h">@@ -270,11 +266,7 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 				for _, arg := range line.Elements {
+ 					hexVal := arg.GetValue()
+ 					if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#h3-1-3" id="h3-1-3" class="d">-						nS, _ := n.ExportBinary(false)
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-						nS = &quot;00000000&quot; + nS
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-						nS = nS[len(nS)-8:]
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-						nS = nS + wordPad
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-						nS = nS[:wordSize]
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+						nS, _ := n.ExportBinaryNBits(int(wordSize))
+</a> 						data = append(data, nS)
+ 					} else {
+ 						return err
+<a href="#h3-2" id="h3-2" class="h">@@ -709,10 +701,6 @@ outer:
+</a> 	if romData != &quot;&quot; {
+ 		wordSize := myMachine.Max_word()
+ 		// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#h3-2-3" id="h3-2-3" class="d">-		wordPad := &quot;&quot;
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-		for i := 0; i &lt; int(wordSize); i++ {
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-			wordPad += &quot;0&quot;
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-		}
+</a> 		if wordSize &lt; 8 {
+ 			return nil, errors.New(&quot;word size is too small&quot;)
+ 		}
+<a href="#h3-3" id="h3-3" class="h">@@ -723,9 +711,7 @@ outer:
+</a> 			for _, arg := range line.Elements {
+ 				hexVal := arg.GetValue()
+ 				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#h3-3-3" id="h3-3-3" class="d">-					nS, _ := n.ExportBinary(false)
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-					nS = nS + wordPad
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-					nS = nS[len(nS)-int(wordSize):]
+</a><a href="#h3-3-6" id="h3-3-6" class="i">+					nS, _ := n.ExportBinaryNBits(int(wordSize))
+</a> 					data = append(data, nS)
+ 				} else {
+ 					return nil, err
+<a href="#h3-4" id="h3-4" class="h">@@ -738,10 +724,6 @@ outer:
+</a> 
+ 	if ramData != &quot;&quot; {
+ 		rSize := myArch.Rsize
+<a href="#h3-4-3" id="h3-4-3" class="d">-		ramPad := &quot;&quot;
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-		for i := 0; i &lt; int(rSize); i++ {
+</a><a href="#h3-4-5" id="h3-4-5" class="d">-			ramPad += &quot;0&quot;
+</a><a href="#h3-4-6" id="h3-4-6" class="d">-		}
+</a> 		if rSize &lt; 8 {
+ 			return nil, errors.New(&quot;register size is too small&quot;)
+ 		}
+<a href="#h3-5" id="h3-5" class="h">@@ -752,9 +734,7 @@ outer:
+</a> 			for _, arg := range line.Elements {
+ 				hexVal := arg.GetValue()
+ 				if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#h3-5-3" id="h3-5-3" class="d">-					nS, _ := n.ExportBinary(false)
+</a><a href="#h3-5-4" id="h3-5-4" class="d">-					nS = nS + ramPad
+</a><a href="#h3-5-5" id="h3-5-5" class="d">-					nS = nS[len(nS)-int(rSize):]
+</a><a href="#h3-5-6" id="h3-5-6" class="i">+					nS, _ := n.ExportBinaryNBits(int(rSize))
+</a> 					data = append(data, nS)
+ 				} else {
+ 					return nil, err
+<a href="#h3-6" id="h3-6" class="h">@@ -892,10 +872,6 @@ func (bi *BasmInstance) CodeChoice(rSize uint8, i int, sh string) error {
+</a> 					wordSize := myArch.Max_word()
+ 
+ 					// fmt.Println(&quot;Word size: &quot;, wordSize)
+<a href="#h3-6-3" id="h3-6-3" class="d">-					wordPad := &quot;&quot;
+</a><a href="#h3-6-4" id="h3-6-4" class="d">-					for i := 0; i &lt; int(wordSize); i++ {
+</a><a href="#h3-6-5" id="h3-6-5" class="d">-						wordPad += &quot;0&quot;
+</a><a href="#h3-6-6" id="h3-6-6" class="d">-					}
+</a> 					if wordSize &lt; 8 {
+ 						return errors.New(&quot;word size is too small&quot;)
+ 					}
+<a href="#h3-7" id="h3-7" class="h">@@ -906,11 +882,7 @@ func (bi *BasmInstance) CodeChoice(rSize uint8, i int, sh string) error {
+</a> 						for _, arg := range line.Elements {
+ 							hexVal := arg.GetValue()
+ 							if n, err := bmnumbers.ImportString(hexVal); err == nil {
+<a href="#h3-7-3" id="h3-7-3" class="d">-								nS, _ := n.ExportBinary(false)
+</a><a href="#h3-7-4" id="h3-7-4" class="d">-								nS = &quot;00000000&quot; + nS
+</a><a href="#h3-7-5" id="h3-7-5" class="d">-								nS = nS[len(nS)-8:]
+</a><a href="#h3-7-6" id="h3-7-6" class="d">-								nS = nS + wordPad
+</a><a href="#h3-7-7" id="h3-7-7" class="d">-								nS = nS[:wordSize]
+</a><a href="#h3-7-8" id="h3-7-8" class="i">+								nS, _ := n.ExportBinaryNBits(int(wordSize))
+</a> 								data = append(data, nS)
+ 							} else {
+ 								return err
+<b>diff --git a/<a id="h4" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -33,6 +33,8 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 
+ 	// Loop over the cps to resolve the symbols of the combined sections
+ 	for _, cp := range bi.cps {
+<a href="#h4-0-3" id="h4-0-3" class="i">+
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		// Romcode specified
+</a> 		romCodeName := cp.GetMeta(&quot;romcode&quot;)
+ 		if strings.HasPrefix(romCodeName, &quot;romcode&quot;) {
+ 			if section, ok := bi.sections[romCodeName]; ok {
+<a href="#h4-1" id="h4-1" class="h">@@ -44,6 +46,25 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 				return errors.New(&quot;romcode section not found: &quot; + romCodeName)
+ 			}
+ 		}
+<a href="#h4-1-3" id="h4-1-3" class="i">+
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+		// Romcode alternatives
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+		romCodeAlts := strings.Split(cp.GetMeta(&quot;romalternatives&quot;), &quot;:&quot;)
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+		if len(romCodeAlts) &gt; 0 {
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+			for _, romCodeName := range romCodeAlts {
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+				if strings.HasPrefix(romCodeName, &quot;romcode&quot;) {
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+					if section, ok := bi.sections[romCodeName]; ok {
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+						name := romCodeName[7:]
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+						if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+							return err
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+						}
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+					} else {
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+						return errors.New(&quot;romcode section not found: &quot; + romCodeName)
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+					}
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+				}
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+			}
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+		}
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+
+</a><a href="#h4-1-21" id="h4-1-21" class="i">+		// Ramcode specified
+</a> 		ramCodeName := cp.GetMeta(&quot;ramcode&quot;)
+ 		if strings.HasPrefix(ramCodeName, &quot;ramcode&quot;) {
+ 			if section, ok := bi.sections[ramCodeName]; ok {
+<a href="#h4-2" id="h4-2" class="h">@@ -55,6 +76,25 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 				return errors.New(&quot;ramcode section not found: &quot; + ramCodeName)
+ 			}
+ 		}
+<a href="#h4-2-3" id="h4-2-3" class="i">+
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+		// Ramcode alternatives
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+		ramCodeAlts := strings.Split(cp.GetMeta(&quot;ramalternatives&quot;), &quot;:&quot;)
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+		if len(ramCodeAlts) &gt; 0 {
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+			for _, ramCodeName := range ramCodeAlts {
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+				if strings.HasPrefix(ramCodeName, &quot;ramcode&quot;) {
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+					if section, ok := bi.sections[ramCodeName]; ok {
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+						name := ramCodeName[7:]
+</a><a href="#h4-2-11" id="h4-2-11" class="i">+						if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-2-12" id="h4-2-12" class="i">+							return err
+</a><a href="#h4-2-13" id="h4-2-13" class="i">+						}
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+					} else {
+</a><a href="#h4-2-15" id="h4-2-15" class="i">+						return errors.New(&quot;ramcode section not found: &quot; + ramCodeName)
+</a><a href="#h4-2-16" id="h4-2-16" class="i">+					}
+</a><a href="#h4-2-17" id="h4-2-17" class="i">+				}
+</a><a href="#h4-2-18" id="h4-2-18" class="i">+			}
+</a><a href="#h4-2-19" id="h4-2-19" class="i">+		}
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+
+</a><a href="#h4-2-21" id="h4-2-21" class="i">+		// Romdata specified
+</a> 		romDataName := cp.GetMeta(&quot;romdata&quot;)
+ 		if strings.HasPrefix(romDataName, &quot;romdata&quot;) {
+ 			if section, ok := bi.sections[romDataName]; ok {
+<a href="#h4-3" id="h4-3" class="h">@@ -66,6 +106,25 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 				return errors.New(&quot;romdata section not found: &quot; + romDataName)
+ 			}
+ 		}
+<a href="#h4-3-3" id="h4-3-3" class="i">+
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+		// Romdata alternatives
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+		romDataAlts := strings.Split(cp.GetMeta(&quot;romdataalternatives&quot;), &quot;:&quot;)
+</a><a href="#h4-3-6" id="h4-3-6" class="i">+		if len(romDataAlts) &gt; 0 {
+</a><a href="#h4-3-7" id="h4-3-7" class="i">+			for _, romDataName := range romDataAlts {
+</a><a href="#h4-3-8" id="h4-3-8" class="i">+				if strings.HasPrefix(romDataName, &quot;romdata&quot;) {
+</a><a href="#h4-3-9" id="h4-3-9" class="i">+					if section, ok := bi.sections[romDataName]; ok {
+</a><a href="#h4-3-10" id="h4-3-10" class="i">+						name := romDataName[7:]
+</a><a href="#h4-3-11" id="h4-3-11" class="i">+						if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-3-12" id="h4-3-12" class="i">+							return err
+</a><a href="#h4-3-13" id="h4-3-13" class="i">+						}
+</a><a href="#h4-3-14" id="h4-3-14" class="i">+					} else {
+</a><a href="#h4-3-15" id="h4-3-15" class="i">+						return errors.New(&quot;romdata section not found: &quot; + romDataName)
+</a><a href="#h4-3-16" id="h4-3-16" class="i">+					}
+</a><a href="#h4-3-17" id="h4-3-17" class="i">+				}
+</a><a href="#h4-3-18" id="h4-3-18" class="i">+			}
+</a><a href="#h4-3-19" id="h4-3-19" class="i">+		}
+</a><a href="#h4-3-20" id="h4-3-20" class="i">+
+</a><a href="#h4-3-21" id="h4-3-21" class="i">+		// Ramdata specified
+</a> 		ramDataName := cp.GetMeta(&quot;ramdata&quot;)
+ 		if strings.HasPrefix(ramDataName, &quot;ramdata&quot;) {
+ 			if section, ok := bi.sections[ramDataName]; ok {
+<a href="#h4-4" id="h4-4" class="h">@@ -77,6 +136,23 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 				return errors.New(&quot;ramdata section not found: &quot; + ramDataName)
+ 			}
+ 		}
+<a href="#h4-4-3" id="h4-4-3" class="i">+
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+		// Ramdata alternatives
+</a><a href="#h4-4-5" id="h4-4-5" class="i">+		ramDataAlts := strings.Split(cp.GetMeta(&quot;ramdataalternatives&quot;), &quot;:&quot;)
+</a><a href="#h4-4-6" id="h4-4-6" class="i">+		if len(ramDataAlts) &gt; 0 {
+</a><a href="#h4-4-7" id="h4-4-7" class="i">+			for _, ramDataName := range ramDataAlts {
+</a><a href="#h4-4-8" id="h4-4-8" class="i">+				if strings.HasPrefix(ramDataName, &quot;ramdata&quot;) {
+</a><a href="#h4-4-9" id="h4-4-9" class="i">+					if section, ok := bi.sections[ramDataName]; ok {
+</a><a href="#h4-4-10" id="h4-4-10" class="i">+						name := ramDataName[7:]
+</a><a href="#h4-4-11" id="h4-4-11" class="i">+						if err := bi.resolveSymbols(section, name); err != nil {
+</a><a href="#h4-4-12" id="h4-4-12" class="i">+							return err
+</a><a href="#h4-4-13" id="h4-4-13" class="i">+						}
+</a><a href="#h4-4-14" id="h4-4-14" class="i">+					} else {
+</a><a href="#h4-4-15" id="h4-4-15" class="i">+						return errors.New(&quot;ramdata section not found: &quot; + ramDataName)
+</a><a href="#h4-4-16" id="h4-4-16" class="i">+					}
+</a><a href="#h4-4-17" id="h4-4-17" class="i">+				}
+</a><a href="#h4-4-18" id="h4-4-18" class="i">+			}
+</a><a href="#h4-4-19" id="h4-4-19" class="i">+		}
+</a> 	}
+ 	return nil
+ }
+<b>diff --git a/<a id="h5" href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a> b/<a href="../file/pkg/basm/utils.go.html">pkg/basm/utils.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -7,6 +7,8 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+</a> )
+ 
+ func purple(in ...interface{}) string {
+<a href="#h5-1" id="h5-1" class="h">@@ -79,27 +81,16 @@ func (bi *BasmInstance) Alert(logline ...interface{}) {
+</a> 
+ func object2Bytes(obj string, numeric bool) ([]string, error) {
+ 	if numeric {
+<a href="#h5-1-3" id="h5-1-3" class="d">-		result := make([]string, 0)
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-		if len(obj) &gt; 2 {
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-			if strings.HasPrefix(obj, &quot;0x&quot;) {
+</a><a href="#h5-1-6" id="h5-1-6" class="d">-				// Hex
+</a><a href="#h5-1-7" id="h5-1-7" class="d">-				hexstring := obj[2:]
+</a><a href="#h5-1-8" id="h5-1-8" class="d">-				if len(obj)%2 == 1 {
+</a><a href="#h5-1-9" id="h5-1-9" class="d">-					hexstring = &quot;0&quot; + hexstring
+</a><a href="#h5-1-10" id="h5-1-10" class="d">-				}
+</a><a href="#h5-1-11" id="h5-1-11" class="d">-				for i := 0; i &lt; len(hexstring); i = i + 2 {
+</a><a href="#h5-1-12" id="h5-1-12" class="d">-					result = append(result, &quot;0x&quot;+hexstring[i:i+2])
+</a><a href="#h5-1-13" id="h5-1-13" class="d">-				}
+</a><a href="#h5-1-14" id="h5-1-14" class="d">-				return result, nil
+</a><a href="#h5-1-15" id="h5-1-15" class="d">-			} else if obj[:2] == &quot;0b&quot; {
+</a><a href="#h5-1-16" id="h5-1-16" class="d">-				// TODO
+</a><a href="#h5-1-17" id="h5-1-17" class="d">-			} else if obj[:2] == &quot;0d&quot; {
+</a><a href="#h5-1-18" id="h5-1-18" class="d">-				// TODO
+</a><a href="#h5-1-19" id="h5-1-19" class="d">-			} else if obj[:2] == &quot;0f&quot; {
+</a><a href="#h5-1-20" id="h5-1-20" class="d">-				// TODO
+</a><a href="#h5-1-21" id="h5-1-21" class="i">+		if bmNumber, err := bmnumbers.ImportString(obj); err != nil {
+</a><a href="#h5-1-22" id="h5-1-22" class="i">+			return []string{}, err
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+		} else {
+</a><a href="#h5-1-24" id="h5-1-24" class="i">+			b := bmNumber.GetBytes()
+</a><a href="#h5-1-25" id="h5-1-25" class="i">+			result := make([]string, len(b))
+</a><a href="#h5-1-26" id="h5-1-26" class="i">+			for i, ch := range b {
+</a><a href="#h5-1-27" id="h5-1-27" class="i">+				result[i] = fmt.Sprintf(&quot;0x%x&quot;, ch)
+</a> 			}
+<a href="#h5-1-29" id="h5-1-29" class="i">+			return result, nil
+</a> 		}
+<a href="#h5-1-31" id="h5-1-31" class="d">-		return []string{}, errors.New(&quot;Unknown number format &quot; + obj)
+</a> 	} else {
+ 		result := make([]string, len(obj))
+ 		for i, ch := range obj {
+<b>diff --git a/<a id="h6" href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a> b/<a href="../file/pkg/bmnumbers/export.go.html">pkg/bmnumbers/export.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -59,6 +59,34 @@ func (n *BMNumber) ExportBinary(withSize bool) (string, error) {
+</a> 	return result, nil
+ }
+ 
+<a href="#h6-0-3" id="h6-0-3" class="i">+func (n *BMNumber) ExportBinaryNBits(bits int) (string, error) {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	if n == nil || n.number == nil {
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+	}
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+	result := &quot;&quot;
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+	for _, number := range n.number {
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+		dataVal := &quot;00000000&quot; + strconv.FormatUint(uint64(number), 2)
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+		result = dataVal[len(dataVal)-8:] + result
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+	}
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+	for len(result) &gt; 1 &amp;&amp; result[0] == &#39;0&#39; {
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+		result = result[1:]
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+	}
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+	if len(result) &gt; bits {
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+		return &quot;&quot;, errors.New(&quot;number too big for &quot; + strconv.Itoa(bits) + &quot; bits&quot;)
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+	}
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+	for len(result) &lt; bits {
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+		result = &quot;0&quot; + result
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+	}
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+	return result, nil
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+}
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+
+</a> func (n *BMNumber) ExportVerilogBinary() (string, error) {
+ 	if n == nil || n.number == nil {
+ 		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+<b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -61,8 +61,8 @@ func (op Ro2rri) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, 
+</a> 	regNum := 1 &lt;&lt; arch.R
+ 	rSize := int(arch.Rsize)
+ 
+<a href="#h7-0-3" id="h7-0-3" class="d">-	// If the WORD size is bigger than the register size, we need to slice the ROM value (that is right padded with zeros)
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-	sliceROM := &quot;romread_value[&quot; + strconv.Itoa(romWord-1) + &quot;:&quot; + strconv.Itoa(romWord-rSize) + &quot;]&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+	// If the WORD size is bigger than the register size, we need to slice the ROM value (that is left padded with zeros)
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+	sliceROM := &quot;romread_value[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0]&quot;
+</a> 	sliceReg := &quot;[&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0]&quot;
+ 
+ 	// If the register size is bigger than the WORD size, we need to add zeros to the ROM value
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bmgraph - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cc7795eec3f97756be4286a8adad6574d6fcfbf7.html">cc7795eec3f97756be4286a8adad6574d6fcfbf7</a>
+<b>parent</b> <a href="../commit/9cc9bc32bb9f7452373427497a7b85cee0c366e1.html">9cc9bc32bb9f7452373427497a7b85cee0c366e1</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Sat, 23 Dec 2023 15:56:11 +0100
+
+bmgraph
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">library/neurons/frag-nil.basm</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmgraph/bmgraph.go</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>4 files changed, 50 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a> b/<a href="../file/cmd/bmgraph/bmgraph.go.html">cmd/bmgraph/bmgraph.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -28,6 +28,8 @@ var bmInfoFile = flag.String(&quot;bminfo-file&quot;, &quot;&quot;, &quot;JSON description of the BondMac
+</a> 
+ var iomode = flag.String(&quot;io-mode&quot;, &quot;async&quot;, &quot;IO mode: async, sync&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+var useNilNeuron = flag.Bool(&quot;use-nil-neuron&quot;, false, &quot;Use the nil neuron&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> func init() {
+ 	flag.Parse()
+ 	if *saveBasm == &quot;&quot; {
+<a href="#h0-1" id="h0-1" class="h">@@ -104,6 +106,10 @@ func main() {
+</a> 		config.Pruned = make([]string, 0)
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if *useNilNeuron {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		config.UseNilNeuron = true
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	}
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+
+</a> 	if *neuronLibPath != &quot;&quot; {
+ 		config.NeuronLibPath = *neuronLibPath
+ 	} else {
+<a href="#h0-2" id="h0-2" class="h">@@ -154,6 +160,18 @@ func main() {
+</a> 
+ 	bg := new(bmgraph.Graph)
+ 	bg.Graph = graph
+<a href="#h0-2-3" id="h0-2-3" class="i">+	bg.Config = config
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	bg.RegisterSize = *registerSize
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	switch *iomode {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	case &quot;async&quot;:
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		bg.IOMode = bmgraph.ASYNC
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	case &quot;sync&quot;:
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		bg.IOMode = bmgraph.SYNC
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	default:
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		panic(&quot;Unknown IO mode&quot;)
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	}
+</a> 
+ 	if *saveBasm != &quot;&quot; {
+ 		if basmFile, err := bg.WriteBasm(); err == nil {
+<b>diff --git a/<a id="h1" href="../file/library/neurons/frag-nil.basm.html">library/neurons/frag-nil.basm</a> b/<a href="../file/library/neurons/frag-nil.basm.html">library/neurons/frag-nil.basm</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,5 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+%fragment nil template:true
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+%meta literal resin {{with $last := incs .Params.inputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+%meta literal resout {{with $last := incs .Params.outputs}}{{range $y := intRange &quot;1&quot; $last}}{{printf &quot;r%d:&quot; $y}}{{end}}{{end}}
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	nop
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+%endfragment
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a> b/<a href="../file/pkg/bmgraph/bmgraph.go.html">pkg/bmgraph/bmgraph.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -23,6 +23,7 @@ type Config struct {
+</a> 	Debug         bool
+ 	Verbose       bool
+ 	NeuronLibPath string
+<a href="#h2-0-3" id="h2-0-3" class="i">+	UseNilNeuron  bool
+</a> 	*bminfo.BMinfo
+ }
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -31,7 +32,10 @@ type Neuron struct {
+</a> }
+ 
+ type Graph struct {
+<a href="#h2-1-3" id="h2-1-3" class="i">+	RegisterSize int
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	IOMode       uint8
+</a> 	*cgraph.Graph
+<a href="#h2-1-6" id="h2-1-6" class="i">+	*Config
+</a> }
+ 
+ func (g *Graph) WriteBasm() (string, error) {
+<a href="#h2-2" id="h2-2" class="h">@@ -39,8 +43,17 @@ func (g *Graph) WriteBasm() (string, error) {
+</a> 		return &quot;&quot;, errors.New(&quot;Graph is nil&quot;)
+ 	}
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+	config := g.Config
+</a> 	result := &quot;&quot;
+ 
+<a href="#h2-2-6" id="h2-2-6" class="i">+	regSize := g.RegisterSize
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+	result += fmt.Sprintf(&quot;%%meta bmdef     global registersize:%d\n&quot;, regSize)
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+	switch g.IOMode {
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+	case ASYNC:
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+		result += fmt.Sprintf(&quot;%%meta bmdef     global iomode:async\n&quot;)
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+	case SYNC:
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		result += fmt.Sprintf(&quot;%%meta bmdef     global iomode:sync\n&quot;)
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	}
+</a> 	// Find out all the vertices
+ 	vertices := make(map[string]*cgraph.Node)
+ 	verticesInputs := make(map[string]int)
+<a href="#h2-3" id="h2-3" class="h">@@ -60,8 +73,8 @@ func (g *Graph) WriteBasm() (string, error) {
+</a> 				result += &quot;%meta filinkdef &quot; + src + &quot;_&quot; + dest + &quot; type:fl\n&quot;
+ 				destIdx := verticesInputs[dest]
+ 				srcIdx := verticesOutputs[src]
+<a href="#h2-3-3" id="h2-3-3" class="d">-				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + src + &quot; type:output, index:&quot; + fmt.Sprintf(&quot;%d&quot;, srcIdx) + &quot;\n&quot;
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + dest + &quot; type:input, index:&quot; + fmt.Sprintf(&quot;%d&quot;, destIdx) + &quot;\n&quot;
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + src + &quot;, type:output, index:&quot; + fmt.Sprintf(&quot;%d&quot;, srcIdx) + &quot;\n&quot;
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+				result += &quot;%meta filinkatt &quot; + src + &quot;_&quot; + dest + &quot; fi:&quot; + dest + &quot;, type:input, index:&quot; + fmt.Sprintf(&quot;%d&quot;, destIdx) + &quot;\n&quot;
+</a> 				verticesInputs[dest]++
+ 				verticesOutputs[src]++
+ 
+<a href="#h2-4" id="h2-4" class="h">@@ -70,7 +83,15 @@ func (g *Graph) WriteBasm() (string, error) {
+</a> 	}
+ 
+ 	for _, v := range vertices {
+<a href="#h2-4-3" id="h2-4-3" class="d">-		result += &quot;%meta fidef &quot; + v.Name() + &quot; fragment:&quot; + v.Name() + &quot; inputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesInputs[v.Name()]) + &quot; outputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesOutputs[v.Name()]) + &quot;\n&quot;
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+		name := v.Name()
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+		if config.UseNilNeuron {
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+			name = &quot;nil&quot;
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+		}
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+		result += &quot;%meta fidef &quot; + v.Name() + &quot; fragment:&quot; + name + &quot;, inputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesInputs[v.Name()]) + &quot;, outputs:&quot; + fmt.Sprintf(&quot;%d&quot;, verticesOutputs[v.Name()]) + &quot;\n&quot;
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+	}
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+	for _, v := range vertices {
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+		result += &quot;%meta cpdef &quot; + v.Name() + &quot; fragcollapse:&quot; + v.Name() + &quot;\n&quot;
+</a> 	}
+ 
+ 	return result, nil
+<b>diff --git a/<a id="h3" href="../file/pkg/neuralbond/neuralbond.go.html">pkg/neuralbond/neuralbond.go</a> b/<a href="../file/pkg/neuralbond/neuralbond.go.html">pkg/neuralbond/neuralbond.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,7 +4,7 @@ import (
+</a> 	&quot;encoding/json&quot;
+ 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	&quot;io/ioutil&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;os&quot;
+</a> 	&quot;sort&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bminfo&quot;
+<a href="#h3-1" id="h3-1" class="h">@@ -70,13 +70,13 @@ func (n *TrainedNet) Init(config *Config) error {
+</a> 	n.Neurons = make(map[string]*Neuron)
+ 
+ 	// List nb files in the neuron library path and load them
+<a href="#h3-1-3" id="h3-1-3" class="d">-	neuronFiles, err := ioutil.ReadDir(n.NetConfig.NeuronLibPath)
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	neuronFiles, err := os.ReadDir(n.NetConfig.NeuronLibPath)
+</a> 	if err != nil {
+ 		return err
+ 	}
+ 	for _, f := range neuronFiles {
+ 		if len(f.Name()) &gt; 3 &amp;&amp; f.Name()[len(f.Name())-3:] == &quot;.nb&quot; {
+<a href="#h3-1-10" id="h3-1-10" class="d">-			neuronFile, err := ioutil.ReadFile(n.NetConfig.NeuronLibPath + &quot;/&quot; + f.Name())
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+			neuronFile, err := os.ReadFile(n.NetConfig.NeuronLibPath + &quot;/&quot; + f.Name())
+</a> 			if err != nil {
+ 				return err
+ 			}
+</pre>
+</div>
+</body>
+</html>

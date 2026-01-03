@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Basic library - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/15b6f3525bc17a87f0f4ab10bd3c5f7768775746.html">15b6f3525bc17a87f0f4ab10bd3c5f7768775746</a>
+<b>parent</b> <a href="../commit/f51600b6d86afb8b6cf69511e44f86412eb2d3d0.html">f51600b6d86afb8b6cf69511e44f86412eb2d3d0</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  9 Dec 2022 13:04:27 +0100
+
+Basic library
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">34</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">bmnumbers/bmnumbers_test.go</a></td><td> | </td><td class="num">77</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">bmnumbers/dataset_test.go</a></td><td> | </td><td class="num">51</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">bmnumbers/export.go</a></td><td> | </td><td class="num">43</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">bmnumbers/import.go</a></td><td> | </td><td class="num">54</td><td><span class="i">++++++</span><span class="d">------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">bmnumbers/type_bin.go</a></td><td> | </td><td class="num">56</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">bmnumbers/type_float32.go</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">bmnumbers/type_hex.go</a></td><td> | </td><td class="num">48</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">bmnumbers/type_unsigned.go</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>9 files changed, 404 insertions(+), 55 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a> b/<a href="../file/bmnumbers/bmnumbers.go.html">bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,36 @@
+</a> package bmnumbers
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-// BMNumber is a binary representation of a number as a slice of uint64
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+import &quot;regexp&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+type ImportFunc func(*regexp.Regexp, string) (*BMNumber, error)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+type BMNumberType interface {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	getName() string
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	importMatchers() map[string]ImportFunc
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	convert(*BMNumber) error
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+// BMNumber is a binary representation of a number as a slice of bytes
+</a> type BMNumber struct {
+<a href="#h0-0-15" id="h0-0-15" class="d">-	number []uint64
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	number []byte
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	bits   int
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	nType  BMNumberType
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+var AllTypes []BMNumberType
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+var AllMatchers map[string]ImportFunc
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+func init() {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	AllTypes = make([]BMNumberType, 0)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	AllTypes = append(AllTypes, Unsigned{})
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	AllTypes = append(AllTypes, Float32{})
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	AllTypes = append(AllTypes, Hex{})
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	AllTypes = append(AllTypes, Bin{})
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	AllMatchers = make(map[string]ImportFunc)
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	for _, t := range AllTypes {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		for k, v := range t.importMatchers() {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			AllMatchers[k] = v
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+		}
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	}
+</a> }
+<b>diff --git a/<a id="h1" href="../file/bmnumbers/bmnumbers_test.go.html">bmnumbers/bmnumbers_test.go</a> b/<a href="../file/bmnumbers/bmnumbers_test.go.html">bmnumbers/bmnumbers_test.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,77 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmnumbers
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;testing&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+func TestNumberToUint64(t *testing.T) {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	dataSetUint := testDataSet(&quot;uintData&quot;)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	// Loop through the inputs and expected outputs
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	for input, expected := range dataSetUint.(map[string]uint64) {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		// Get the output
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		output, err := ImportString(input)
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		if err != nil {
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+			t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+		} else {
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+			// Check if the output is the expected output
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+			if value, err := output.ExportUint64(); err != nil {
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+				t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			} else {
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+				if value != expected {
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+					t.Errorf(&quot;did not get expected output: %d != %d&quot;, value, expected)
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+				} else {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+					t.Logf(&quot;got expected output: %d == %d&quot;, value, expected)
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+				}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+			}
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	}
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+}
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+func TestNumberToBinary(t *testing.T) {
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	dataSetBin := testDataSet(&quot;binData&quot;)
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	// Loop through the inputs and expected outputs
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	for input, expected := range dataSetBin.(map[string]string) {
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+		// Get the output
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+		output, err := ImportString(input)
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+		if err != nil {
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+			t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+		} else {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+			// Check if the output is the expected output
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+			if value, err := output.ExportBinary(true); err != nil {
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+				t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+			} else {
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+				if value != expected {
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+					t.Errorf(&quot;did not get expected output: %s != %s&quot;, value, expected)
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+				} else {
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+					t.Logf(&quot;got expected output: %s == %s&quot;, value, expected)
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+				}
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+			}
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+		}
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+	}
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+	dataSetBin = testDataSet(&quot;binDataNoSize&quot;)
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	// Loop through the inputs and expected outputs
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	for input, expected := range dataSetBin.(map[string]string) {
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+		// Get the output
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+		output, err := ImportString(input)
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+		if err != nil {
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+			t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+		} else {
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+			// Check if the output is the expected output
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+			if value, err := output.ExportBinary(false); err != nil {
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+				t.Errorf(&quot;Error: %s&quot;, err)
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+			} else {
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+				if value != expected {
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+					t.Errorf(&quot;did not get expected output: %s != %s&quot;, value, expected)
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+				} else {
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+					t.Logf(&quot;got expected output: %s == %s&quot;, value, expected)
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+				}
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+			}
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+		}
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+	}
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/bmnumbers/dataset_test.go.html">bmnumbers/dataset_test.go</a> b/<a href="../file/bmnumbers/dataset_test.go.html">bmnumbers/dataset_test.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,51 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmnumbers
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+func testDataSet(dataSet string) interface{} {
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	dataSetUint := make(map[string]uint64)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	dataSetBin := make(map[string]string)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	dataSetBinNoSize := make(map[string]string)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	dataSetUint[&quot;56&quot;] = 56
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	dataSetBin[&quot;56&quot;] = &quot;0b&lt;64&gt;111000&quot;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	dataSetBinNoSize[&quot;56&quot;] = &quot;111000&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	dataSetUint[&quot;0x901&quot;] = 2305
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	dataSetBin[&quot;0x901&quot;] = &quot;0b&lt;16&gt;100100000001&quot;
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	dataSetBinNoSize[&quot;0x901&quot;] = &quot;100100000001&quot;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	dataSetUint[&quot;0b10101&quot;] = 21
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	dataSetBin[&quot;0b10101&quot;] = &quot;0b&lt;5&gt;10101&quot;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	dataSetBinNoSize[&quot;0b10101&quot;] = &quot;10101&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	dataSetUint[&quot;0d56&quot;] = 56
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	dataSetBin[&quot;0d56&quot;] = &quot;0b&lt;64&gt;111000&quot;
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	dataSetBinNoSize[&quot;0d56&quot;] = &quot;111000&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	dataSetUint[&quot;0f56&quot;] = 1113587712
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	dataSetBin[&quot;0f56&quot;] = &quot;0b&lt;32&gt;1000010011000000000000000000000&quot;
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	dataSetBinNoSize[&quot;0f56&quot;] = &quot;1000010011000000000000000000000&quot;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+	dataSetUint[&quot;0finfinity&quot;] = 2139095040
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	dataSetBin[&quot;0finfinity&quot;] = &quot;0b&lt;32&gt;1111111100000000000000000000000&quot;
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	dataSetBinNoSize[&quot;0finfinity&quot;] = &quot;1111111100000000000000000000000&quot;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	dataSetUint[&quot;0fNaN&quot;] = 2143289344
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+	dataSetBin[&quot;0fNaN&quot;] = &quot;0b&lt;32&gt;1111111110000000000000000000000&quot;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	dataSetBinNoSize[&quot;0fNaN&quot;] = &quot;1111111110000000000000000000000&quot;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+	dataSetUint[&quot;0f4e-4&quot;] = 970045207
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	dataSetBin[&quot;0f4e-4&quot;] = &quot;0b&lt;32&gt;111001110100011011011100010111&quot;
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	dataSetBinNoSize[&quot;0f4e-4&quot;] = &quot;111001110100011011011100010111&quot;
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	switch dataSet {
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+	case &quot;uintData&quot;:
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+		return dataSetUint
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	case &quot;binData&quot;:
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+		return dataSetBin
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+	case &quot;binDataNoSize&quot;:
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+		return dataSetBinNoSize
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+	}
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	return nil
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a> b/<a href="../file/bmnumbers/export.go.html">bmnumbers/export.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,10 +1,43 @@
+</a> package bmnumbers
+ 
+<a href="#h3-0-2" id="h3-0-2" class="d">-import &quot;errors&quot;
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+import (
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;errors&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+)
+</a> 
+<a href="#h3-0-8" id="h3-0-8" class="d">-func (n *BMNumber) ExportSingleUint() (uint64, error) {
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-	if n != nil &amp;&amp; n.number != nil &amp;&amp; len(n.number) != 1 {
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-		return 0, errors.New(&quot;number is not a single uint64&quot;)
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+func (n *BMNumber) ExportUint64() (uint64, error) {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	if n == nil || n.number == nil || len(n.number) &gt; 8 {
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+		return 0, errors.New(&quot;number cannot be exported as uint64&quot;)
+</a> 	}
+<a href="#h3-0-15" id="h3-0-15" class="d">-	return n.number[0], nil
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	result := uint64(0)
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	for i := 0; i &lt; len(n.number); i++ {
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+		result += uint64(n.number[i]) &lt;&lt; (8 * uint(i))
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	}
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	return result, nil
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+}
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+func (n *BMNumber) ExportBinary(withSize bool) (string, error) {
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	if n == nil || n.number == nil {
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		return &quot;&quot;, errors.New(&quot;undefined number&quot;)
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	}
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	result := &quot;&quot;
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	for _, number := range n.number {
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+		dataVal := &quot;00000000&quot; + strconv.FormatUint(uint64(number), 2)
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		result = dataVal[len(dataVal)-8:] + result
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	}
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	for len(result) &gt; 0 &amp;&amp; result[0] == &#39;0&#39; {
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+		result = result[1:]
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	}
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+	if withSize {
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+		result = &quot;0b&lt;&quot; + strconv.Itoa(n.bits) + &quot;&gt;&quot; + result
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+	}
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	return result, nil
+</a> }
+<b>diff --git a/<a id="h4" href="../file/bmnumbers/import.go.html">bmnumbers/import.go</a> b/<a href="../file/bmnumbers/import.go.html">bmnumbers/import.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -2,58 +2,16 @@ package bmnumbers
+</a> 
+ import (
+ 	&quot;errors&quot;
+<a href="#h4-0-3" id="h4-0-3" class="d">-	&quot;math&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	&quot;strconv&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	&quot;regexp&quot;
+</a> )
+ 
+ // InitBMNumber creates a new BMNumber for a string
+<a href="#h4-0-9" id="h4-0-9" class="d">-func ImportNumberFromString(input string) (*BMNumber, error) {
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-	if len(input) &gt; 2 {
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-		if input[:2] == &quot;0x&quot; {
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-			// TODO Hex
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-		} else if input[:2] == &quot;0b&quot; {
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-			// TODO Binary
+</a><a href="#h4-0-15" id="h4-0-15" class="d">-		} else if input[:2] == &quot;0d&quot; {
+</a><a href="#h4-0-16" id="h4-0-16" class="d">-			// Decimal (also the default)
+</a><a href="#h4-0-17" id="h4-0-17" class="d">-			if s, err := strconv.Atoi(input[2:]); err == nil {
+</a><a href="#h4-0-18" id="h4-0-18" class="d">-				newNumber := BMNumber{}
+</a><a href="#h4-0-19" id="h4-0-19" class="d">-				newNumber.number = make([]uint64, 1)
+</a><a href="#h4-0-20" id="h4-0-20" class="d">-				newNumber.number[0] = uint64(s)
+</a><a href="#h4-0-21" id="h4-0-21" class="d">-				return &amp;newNumber, nil
+</a><a href="#h4-0-22" id="h4-0-22" class="d">-			} else {
+</a><a href="#h4-0-23" id="h4-0-23" class="d">-				return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h4-0-24" id="h4-0-24" class="d">-			}
+</a><a href="#h4-0-25" id="h4-0-25" class="d">-		} else if input[:2] == &quot;0f&quot; {
+</a><a href="#h4-0-26" id="h4-0-26" class="d">-			// Float32
+</a><a href="#h4-0-27" id="h4-0-27" class="d">-			if s, err := strconv.ParseFloat(input[2:], 32); err == nil {
+</a><a href="#h4-0-28" id="h4-0-28" class="d">-				newNumber := BMNumber{}
+</a><a href="#h4-0-29" id="h4-0-29" class="d">-				newNumber.number = make([]uint64, 1)
+</a><a href="#h4-0-30" id="h4-0-30" class="d">-				newNumber.number[0] = uint64(math.Float32bits(float32(s)))
+</a><a href="#h4-0-31" id="h4-0-31" class="d">-				return &amp;newNumber, nil
+</a><a href="#h4-0-32" id="h4-0-32" class="d">-			} else {
+</a><a href="#h4-0-33" id="h4-0-33" class="d">-				return nil, errors.New(&quot;unknown float32 number &quot; + input)
+</a><a href="#h4-0-34" id="h4-0-34" class="d">-			}
+</a><a href="#h4-0-35" id="h4-0-35" class="d">-		} else {
+</a><a href="#h4-0-36" id="h4-0-36" class="d">-			// Decimal (also the default)
+</a><a href="#h4-0-37" id="h4-0-37" class="d">-			if s, err := strconv.Atoi(input); err == nil {
+</a><a href="#h4-0-38" id="h4-0-38" class="d">-				newNumber := BMNumber{}
+</a><a href="#h4-0-39" id="h4-0-39" class="d">-				newNumber.number = make([]uint64, 1)
+</a><a href="#h4-0-40" id="h4-0-40" class="d">-				newNumber.number[0] = uint64(s)
+</a><a href="#h4-0-41" id="h4-0-41" class="d">-				return &amp;newNumber, nil
+</a><a href="#h4-0-42" id="h4-0-42" class="d">-			} else {
+</a><a href="#h4-0-43" id="h4-0-43" class="d">-				return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h4-0-44" id="h4-0-44" class="d">-			}
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+func ImportString(input string) (*BMNumber, error) {
+</a> 
+<a href="#h4-0-47" id="h4-0-47" class="d">-		}
+</a><a href="#h4-0-48" id="h4-0-48" class="d">-	} else {
+</a><a href="#h4-0-49" id="h4-0-49" class="d">-		// Decimal (also the default)
+</a><a href="#h4-0-50" id="h4-0-50" class="d">-		if s, err := strconv.Atoi(input); err == nil {
+</a><a href="#h4-0-51" id="h4-0-51" class="d">-			newNumber := BMNumber{}
+</a><a href="#h4-0-52" id="h4-0-52" class="d">-			newNumber.number = make([]uint64, 1)
+</a><a href="#h4-0-53" id="h4-0-53" class="d">-			newNumber.number[0] = uint64(s)
+</a><a href="#h4-0-54" id="h4-0-54" class="d">-			return &amp;newNumber, nil
+</a><a href="#h4-0-55" id="h4-0-55" class="d">-		} else {
+</a><a href="#h4-0-56" id="h4-0-56" class="d">-			return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+	for k, v := range AllMatchers {
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+		re := regexp.MustCompile(k)
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+		if re.MatchString(input) {
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+			return v(re, input)
+</a> 		}
+ 	}
+ 
+<b>diff --git a/<a id="h5" href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a> b/<a href="../file/bmnumbers/type_bin.go.html">bmnumbers/type_bin.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,56 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package bmnumbers
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+import (
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	&quot;regexp&quot;
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+)
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+type Bin struct{}
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+func (d Bin) getName() string {
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+	return &quot;unsigned&quot;
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+}
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+func (d Bin) importMatchers() map[string]ImportFunc {
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+	result[&quot;^0b(?P&lt;bin&gt;[0-1]+)$&quot;] = binImportNoSize
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+	// result[&quot;^0b&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;bin&gt;[0-1]+)$&quot;] = binImportWithSize
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+	return result
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+}
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+func (d Bin) convert(n *BMNumber) error {
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+	return nil
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+}
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+func binImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+	binNum := re.ReplaceAllString(input, &quot;${bin}&quot;)
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+	var nextByte string
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+	newNumber := BMNumber{}
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+	newNumber.number = make([]byte, (len(binNum)-1)/8+1)
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+	newNumber.bits = len(binNum)
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+	newNumber.nType = Bin{}
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+	for i := 0; ; i++ {
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+		if len(binNum) &gt; 8 {
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+			nextByte = binNum[len(binNum)-8:]
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+			binNum = binNum[:len(binNum)-8]
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+		} else if len(binNum) &gt; 0 {
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+			nextByte = binNum
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+			binNum = &quot;&quot;
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+		} else {
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+			break
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+		}
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+		if val, err := strconv.ParseUint(nextByte, 2, 8); err == nil {
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+			decoded := byte(val)
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+			newNumber.number[i] = decoded
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+		} else {
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+			return nil, errors.New(&quot;invalid binary number&quot; + input)
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+		}
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+	}
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+	return &amp;newNumber, nil
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a> b/<a href="../file/bmnumbers/type_float32.go.html">bmnumbers/type_float32.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,49 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+package bmnumbers
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+import (
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	&quot;math&quot;
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+	&quot;strconv&quot;
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+)
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+type Float32 struct{}
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+func (d Float32) getName() string {
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+	return &quot;unsigned&quot;
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+}
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+func (d Float32) importMatchers() map[string]ImportFunc {
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+	result[&quot;^0f(?P&lt;number&gt;[^lL].+)$&quot;] = float32Import
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+	return result
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+}
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+func (d Float32) convert(n *BMNumber) error {
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+	return nil
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+}
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+func float32Import(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+	number := re.ReplaceAllString(input, &quot;${number}&quot;)
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+	if s, err := strconv.ParseFloat(number, 32); err == nil {
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+		newNumber := BMNumber{}
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+		newNumber.number = make([]byte, 4)
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+		s := uint64(math.Float32bits(float32(s)))
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+		mask := uint64(255)
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+		for i := 0; i &lt; 4; i++ {
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+			newNumber.number[i] = byte(s &amp; mask)
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+			s = s &gt;&gt; 8
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+		}
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+		newNumber.bits = 32
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+		newNumber.nType = Float32{}
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+		return &amp;newNumber, nil
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+	} else {
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+		return nil, errors.New(&quot;unknown float32 number &quot; + input)
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+	}
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a> b/<a href="../file/bmnumbers/type_hex.go.html">bmnumbers/type_hex.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,48 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+package bmnumbers
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+import (
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+	&quot;encoding/hex&quot;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	&quot;errors&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+	&quot;regexp&quot;
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+)
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+type Hex struct{}
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+func (d Hex) getName() string {
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+	return &quot;unsigned&quot;
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+}
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+func (d Hex) importMatchers() map[string]ImportFunc {
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+	result[&quot;^0x(?P&lt;hex&gt;[0-9a-fA-F]+)$&quot;] = hexImportNoSize
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	// result[&quot;^0x&lt;(?P&lt;bits&gt;[0-9]+)&gt;(?P&lt;hex&gt;[0-9a-fA-F]+)$&quot;] = hexImportWithSize
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+	return result
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+}
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+func (d Hex) convert(n *BMNumber) error {
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+	return nil
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+}
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+func hexImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+	hexNum := re.ReplaceAllString(input, &quot;${hex}&quot;)
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+	if len(hexNum)%2 != 0 {
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+		hexNum = &quot;0&quot; + hexNum
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+	}
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+	if decoded, err := hex.DecodeString(hexNum); err == nil {
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+		newNumber := BMNumber{}
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+		newNumber.number = make([]byte, len(decoded))
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+		for i := 0; i &lt; len(decoded); i++ {
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+			newNumber.number[i] = decoded[len(decoded)-1-i]
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+		}
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+
+</a><a href="#h7-0-41" id="h7-0-41" class="i">+		newNumber.bits = len(decoded) * 8
+</a><a href="#h7-0-42" id="h7-0-42" class="i">+		newNumber.nType = Hex{}
+</a><a href="#h7-0-43" id="h7-0-43" class="i">+		return &amp;newNumber, nil
+</a><a href="#h7-0-44" id="h7-0-44" class="i">+	} else {
+</a><a href="#h7-0-45" id="h7-0-45" class="i">+		return nil, errors.New(&quot;invalid hex number&quot; + input)
+</a><a href="#h7-0-46" id="h7-0-46" class="i">+	}
+</a><a href="#h7-0-47" id="h7-0-47" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a> b/<a href="../file/bmnumbers/type_unsigned.go.html">bmnumbers/type_unsigned.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,47 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+package bmnumbers
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+import (
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+	&quot;regexp&quot;
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+)
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+type Unsigned struct{}
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+func (d Unsigned) getName() string {
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+	return &quot;unsigned&quot;
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+}
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+func (d Unsigned) importMatchers() map[string]ImportFunc {
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+	result[&quot;^(?P&lt;uint&gt;[0-9]+)$&quot;] = unsignedImportNoSize
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+	result[&quot;^0u(?P&lt;uint&gt;[0-9]+)$&quot;] = unsignedImportNoSize
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	result[&quot;^0d(?P&lt;uint&gt;[0-9]+)$&quot;] = unsignedImportNoSize
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+	return result
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+}
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+func (d Unsigned) convert(n *BMNumber) error {
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+	return nil
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+}
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+func unsignedImportNoSize(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+	uintDec := re.ReplaceAllString(input, &quot;${uint}&quot;)
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+	if s, err := strconv.ParseUint(uintDec, 10, 0); err == nil {
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+		newNumber := BMNumber{}
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+		newNumber.number = make([]byte, 8)
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+		mask := uint64(255)
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+		for i := 0; i &lt; 8; i++ {
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+			newNumber.number[i] = byte(s &amp; mask)
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+			s = s &gt;&gt; 8
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+		}
+</a><a href="#h8-0-39" id="h8-0-39" class="i">+
+</a><a href="#h8-0-40" id="h8-0-40" class="i">+		newNumber.bits = 64
+</a><a href="#h8-0-41" id="h8-0-41" class="i">+		newNumber.nType = Unsigned{}
+</a><a href="#h8-0-42" id="h8-0-42" class="i">+		return &amp;newNumber, nil
+</a><a href="#h8-0-43" id="h8-0-43" class="i">+	} else {
+</a><a href="#h8-0-44" id="h8-0-44" class="i">+		return nil, errors.New(&quot;invalid number&quot; + input)
+</a><a href="#h8-0-45" id="h8-0-45" class="i">+	}
+</a><a href="#h8-0-46" id="h8-0-46" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

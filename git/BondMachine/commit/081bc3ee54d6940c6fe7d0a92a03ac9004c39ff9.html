@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fragment analisys framework - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/081bc3ee54d6940c6fe7d0a92a03ac9004c39ff9.html">081bc3ee54d6940c6fe7d0a92a03ac9004c39ff9</a>
+<b>parent</b> <a href="../commit/85aa64ae77f0dbcb5665f764c578d598ff02703e.html">85aa64ae77f0dbcb5665f764c578d598ff02703e</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 28 Jun 2023 17:46:58 +0200
+
+Fragment analisys framework
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/basm/main.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/fragmentanalyzer.go</a></td><td> | </td><td class="num">43</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynamical_linear_quantizer.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/dynop_flopoco.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/dynop_linear_quantizer.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_adc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_add.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">pkg/procbuilder/op_addf.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">pkg/procbuilder/op_addf16.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">pkg/procbuilder/op_addi.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">pkg/procbuilder/op_addp.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">pkg/procbuilder/op_and.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h12">pkg/procbuilder/op_chc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h13">pkg/procbuilder/op_chw.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h14">pkg/procbuilder/op_cil.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h15">pkg/procbuilder/op_cilc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h16">pkg/procbuilder/op_cir.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h17">pkg/procbuilder/op_cirn.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h18">pkg/procbuilder/op_clc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h19">pkg/procbuilder/op_clr.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h20">pkg/procbuilder/op_cpy.go</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h21">pkg/procbuilder/op_cset.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h22">pkg/procbuilder/op_dec.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h23">pkg/procbuilder/op_div.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h24">pkg/procbuilder/op_divf.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h25">pkg/procbuilder/op_divf16.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h26">pkg/procbuilder/op_divp.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h27">pkg/procbuilder/op_dpc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h28">pkg/procbuilder/op_expf.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h29">pkg/procbuilder/op_hit.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h30">pkg/procbuilder/op_hlt.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h31">pkg/procbuilder/op_i2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h32">pkg/procbuilder/op_i2rw.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h33">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h34">pkg/procbuilder/op_incc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h35">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h36">pkg/procbuilder/op_jc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h37">pkg/procbuilder/op_je.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h38">pkg/procbuilder/op_jgt0f.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h39">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h40">pkg/procbuilder/op_k2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h41">pkg/procbuilder/op_lfsr82r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h42">pkg/procbuilder/op_m2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h43">pkg/procbuilder/op_mod.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h44">pkg/procbuilder/op_mulc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h45">pkg/procbuilder/op_mult.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h46">pkg/procbuilder/op_multf.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h47">pkg/procbuilder/op_multf16.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h48">pkg/procbuilder/op_multp.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h49">pkg/procbuilder/op_nand.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h50">pkg/procbuilder/op_nop.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h51">pkg/procbuilder/op_nor.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h52">pkg/procbuilder/op_not.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h53">pkg/procbuilder/op_or.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h54">pkg/procbuilder/op_q2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h55">pkg/procbuilder/op_r2m.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h56">pkg/procbuilder/op_r2o.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h57">pkg/procbuilder/op_r2owa.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h58">pkg/procbuilder/op_r2owaa.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h59">pkg/procbuilder/op_r2q.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h60">pkg/procbuilder/op_r2s.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h61">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h62">pkg/procbuilder/op_r2u.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h63">pkg/procbuilder/op_r2v.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h64">pkg/procbuilder/op_r2vri.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h65">pkg/procbuilder/op_ro2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h66">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h67">pkg/procbuilder/op_rsc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h68">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h69">pkg/procbuilder/op_s2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h70">pkg/procbuilder/op_saj.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h71">pkg/procbuilder/op_sbc.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h72">pkg/procbuilder/op_sic.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h73">pkg/procbuilder/op_sub.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h74">pkg/procbuilder/op_t2r.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h75">pkg/procbuilder/op_u2r.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h76">pkg/procbuilder/op_wrd.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h77">pkg/procbuilder/op_wwr.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h78">pkg/procbuilder/op_xnor.go</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h79">pkg/procbuilder/op_xor.go</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h80">pkg/procbuilder/procbuilder.go</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>81 files changed, 483 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a> b/<a href="../file/cmd/basm/main.go.html">cmd/basm/main.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -34,6 +34,8 @@ var dumpRequirements = flag.String(&quot;dump-requirements&quot;, &quot;&quot;, &quot;Dump the requiremen
+</a> 
+ var linearDataRange = flag.String(&quot;linear-data-range&quot;, &quot;&quot;, &quot;Load a linear data range file (with the syntax index,filename)&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+// TODO var passes = flag.String(&quot;passes&quot;, &quot;&quot;, &quot;List of comma separated optional passes to run (default: none)&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> func check(e error) {
+ 	if e != nil {
+ 		panic(e)
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a> b/<a href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,8 +1,12 @@
+</a> package basm
+ 
+ import (
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;errors&quot;
+</a> 	&quot;fmt&quot;
+ 	&quot;strings&quot;
+<a href="#h1-0-6" id="h1-0-6" class="i">+
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/procbuilder&quot;
+</a> )
+ 
+ func fragmentAnalyzer(bi *BasmInstance) error {
+<a href="#h1-1" id="h1-1" class="h">@@ -58,7 +62,44 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 
+ 		fBody.BasmMeta = fBody.SetMeta(&quot;resused&quot;, resUseds)
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-		// TODO rearrange resorces in the order they are used
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		// TODO rearrange resources in the order they are used
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		for _, line := range fBody.Lines {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+			if bi.debug {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+				fmt.Println(green(&quot;\t\t\tLine: &quot;) + line.String())
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+			matched := false
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+			var matching procbuilder.Opcode
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+			for j, matcher := range bi.matchers {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+				if bmline.MatchMatcher(matcher, line) {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+					if bi.debug {
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+						fmt.Println(yellow(&quot;\t\t\t\tMatching &quot; + matcher.String()))
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+					}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+					if matched {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+						return errors.New(&quot;ambiguous, more than one operator match&quot;)
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+					}
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+					matched = true
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+					matching = bi.matchersOps[j]
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+				}
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+			}
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			if !matched {
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+				return errors.New(&quot;no operator match&quot;)
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+			}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+			if meta, err := matching.HLAssemblerInstructionMetadata(nil, line); err != nil {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+				return err
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+			} else {
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+				if meta != nil {
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+					for k, v := range meta.LoopMeta() {
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+						line.BasmMeta = line.SetMeta(k, v)
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+					}
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+				}
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+			}
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+		}
+</a> 
+ 	}
+ 	// panic(&quot;fragmentAnalyzer not finished&quot;)
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynamical_linear_quantizer.go.html">pkg/procbuilder/dynamical_linear_quantizer.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,6 +5,8 @@ import (
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmnumbers&quot;
+ )
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -85,3 +87,7 @@ func (d DynLinearQuantizer) CreateInstruction(name string) (Opcode, error) {
+</a> 	return LinearQuantizer{lqName: name, s: s, t: t, opType: opType, max: max, pipeline: new(uint8)}, nil
+ 
+ }
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+func (Op DynLinearQuantizer) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	return nil, nil
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a> b/<a href="../file/pkg/procbuilder/dynop_flopoco.go.html">pkg/procbuilder/dynop_flopoco.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -290,3 +291,7 @@ func (Op FloPoCo) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> 	}
+ 	return []string{&quot;cp&quot; + arch.Tag + &quot;_&quot; + Op.floPoCoName + &quot;.vhd&quot;}, []string{vHDL}
+ }
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+func (Op FloPoCo) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	return nil, nil
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a> b/<a href="../file/pkg/procbuilder/dynop_linear_quantizer.go.html">pkg/procbuilder/dynop_linear_quantizer.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h4-1" id="h4-1" class="h">@@ -413,3 +414,7 @@ func (Op LinearQuantizer) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, n
+</a> func (Op LinearQuantizer) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h4-1-3" id="h4-1-3" class="i">+
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+func (Op LinearQuantizer) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+	return nil, nil
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a> b/<a href="../file/pkg/procbuilder/op_adc.go.html">pkg/procbuilder/op_adc.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -232,3 +233,7 @@ func (Op Adc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Adc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h5-1-3" id="h5-1-3" class="i">+
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+func (Op Adc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	return nil, nil
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a> b/<a href="../file/pkg/procbuilder/op_add.go.html">pkg/procbuilder/op_add.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h6-0-3" id="h6-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h6-1" id="h6-1" class="h">@@ -238,3 +239,18 @@ func (Op Add) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Add) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h6-1-3" id="h6-1-3" class="i">+
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+func (Op Add) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+	case &quot;add&quot;:
+</a><a href="#h6-1-7" id="h6-1-7" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h6-1-8" id="h6-1-8" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h6-1-9" id="h6-1-9" class="i">+		if regDst != &quot;&quot; &amp;&amp; regSrc != &quot;&quot; {
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h6-1-11" id="h6-1-11" class="i">+			meta = meta.SetMeta(&quot;inval&quot;, regDst)
+</a><a href="#h6-1-12" id="h6-1-12" class="i">+			meta = meta.SetMeta(&quot;val&quot;, regSrc+&quot;:&quot;+regDst)
+</a><a href="#h6-1-13" id="h6-1-13" class="i">+			return meta, nil
+</a><a href="#h6-1-14" id="h6-1-14" class="i">+		}
+</a><a href="#h6-1-15" id="h6-1-15" class="i">+	}
+</a><a href="#h6-1-16" id="h6-1-16" class="i">+	return nil, nil
+</a><a href="#h6-1-17" id="h6-1-17" class="i">+}
+</a><b>diff --git a/<a id="h7" href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a> b/<a href="../file/pkg/procbuilder/op_addf.go.html">pkg/procbuilder/op_addf.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h7-0-3" id="h7-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h7-1" id="h7-1" class="h">@@ -300,3 +301,7 @@ func (Op Addf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Addf) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h7-1-3" id="h7-1-3" class="i">+
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+func (Op Addf) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+	return nil, nil
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a> b/<a href="../file/pkg/procbuilder/op_addf16.go.html">pkg/procbuilder/op_addf16.go</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h8-0-3" id="h8-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 
+ 	&quot;github.com/x448/float16&quot;
+<a href="#h8-1" id="h8-1" class="h">@@ -302,3 +303,7 @@ func (Op Addf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node strin
+</a> func (Op Addf16) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h8-1-3" id="h8-1-3" class="i">+
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+func (Op Addf16) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h8-1-5" id="h8-1-5" class="i">+	return nil, nil
+</a><a href="#h8-1-6" id="h8-1-6" class="i">+}
+</a><b>diff --git a/<a id="h9" href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a> b/<a href="../file/pkg/procbuilder/op_addi.go.html">pkg/procbuilder/op_addi.go</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h9-0-3" id="h9-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h9-1" id="h9-1" class="h">@@ -272,3 +273,7 @@ func (Op Addi) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Addi) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h9-1-3" id="h9-1-3" class="i">+
+</a><a href="#h9-1-4" id="h9-1-4" class="i">+func (Op Addi) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h9-1-5" id="h9-1-5" class="i">+	return nil, nil
+</a><a href="#h9-1-6" id="h9-1-6" class="i">+}
+</a><b>diff --git a/<a id="h10" href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a> b/<a href="../file/pkg/procbuilder/op_addp.go.html">pkg/procbuilder/op_addp.go</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h10-0-3" id="h10-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h10-1" id="h10-1" class="h">@@ -280,3 +281,7 @@ func (Op Addp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Addp) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h10-1-3" id="h10-1-3" class="i">+
+</a><a href="#h10-1-4" id="h10-1-4" class="i">+func (Op Addp) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h10-1-5" id="h10-1-5" class="i">+	return nil, nil
+</a><a href="#h10-1-6" id="h10-1-6" class="i">+}
+</a><b>diff --git a/<a id="h11" href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a> b/<a href="../file/pkg/procbuilder/op_and.go.html">pkg/procbuilder/op_and.go</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h11-0-3" id="h11-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h11-1" id="h11-1" class="h">@@ -225,3 +226,7 @@ func (Op And) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op And) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h11-1-3" id="h11-1-3" class="i">+
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+func (Op And) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h11-1-5" id="h11-1-5" class="i">+	return nil, nil
+</a><a href="#h11-1-6" id="h11-1-6" class="i">+}
+</a><b>diff --git a/<a id="h12" href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a> b/<a href="../file/pkg/procbuilder/op_chc.go.html">pkg/procbuilder/op_chc.go</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h12-0-3" id="h12-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h12-1" id="h12-1" class="h">@@ -502,3 +503,7 @@ func (Op Chc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Chc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h12-1-3" id="h12-1-3" class="i">+
+</a><a href="#h12-1-4" id="h12-1-4" class="i">+func (Op Chc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h12-1-5" id="h12-1-5" class="i">+	return nil, nil
+</a><a href="#h12-1-6" id="h12-1-6" class="i">+}
+</a><b>diff --git a/<a id="h13" href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a> b/<a href="../file/pkg/procbuilder/op_chw.go.html">pkg/procbuilder/op_chw.go</a></b>
+<a href="#h13-0" id="h13-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h13-0-3" id="h13-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h13-1" id="h13-1" class="h">@@ -461,3 +462,7 @@ func (Op Chw) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Chw) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h13-1-3" id="h13-1-3" class="i">+
+</a><a href="#h13-1-4" id="h13-1-4" class="i">+func (Op Chw) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h13-1-5" id="h13-1-5" class="i">+	return nil, nil
+</a><a href="#h13-1-6" id="h13-1-6" class="i">+}
+</a><b>diff --git a/<a id="h14" href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a> b/<a href="../file/pkg/procbuilder/op_cil.go.html">pkg/procbuilder/op_cil.go</a></b>
+<a href="#h14-0" id="h14-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h14-0-3" id="h14-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h14-1" id="h14-1" class="h">@@ -192,3 +193,7 @@ func (Op Cil) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Cil) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h14-1-3" id="h14-1-3" class="i">+
+</a><a href="#h14-1-4" id="h14-1-4" class="i">+func (Op Cil) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h14-1-5" id="h14-1-5" class="i">+	return nil, nil
+</a><a href="#h14-1-6" id="h14-1-6" class="i">+}
+</a><b>diff --git a/<a id="h15" href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a> b/<a href="../file/pkg/procbuilder/op_cilc.go.html">pkg/procbuilder/op_cilc.go</a></b>
+<a href="#h15-0" id="h15-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h15-0-3" id="h15-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h15-1" id="h15-1" class="h">@@ -190,3 +191,7 @@ func (Op Cilc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Cilc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h15-1-3" id="h15-1-3" class="i">+
+</a><a href="#h15-1-4" id="h15-1-4" class="i">+func (Op Cilc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h15-1-5" id="h15-1-5" class="i">+	return nil, nil
+</a><a href="#h15-1-6" id="h15-1-6" class="i">+}
+</a><b>diff --git a/<a id="h16" href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a> b/<a href="../file/pkg/procbuilder/op_cir.go.html">pkg/procbuilder/op_cir.go</a></b>
+<a href="#h16-0" id="h16-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h16-0-3" id="h16-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h16-1" id="h16-1" class="h">@@ -192,3 +193,7 @@ func (Op Cir) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Cir) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h16-1-3" id="h16-1-3" class="i">+
+</a><a href="#h16-1-4" id="h16-1-4" class="i">+func (Op Cir) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h16-1-5" id="h16-1-5" class="i">+	return nil, nil
+</a><a href="#h16-1-6" id="h16-1-6" class="i">+}
+</a><b>diff --git a/<a id="h17" href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a> b/<a href="../file/pkg/procbuilder/op_cirn.go.html">pkg/procbuilder/op_cirn.go</a></b>
+<a href="#h17-0" id="h17-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h17-0-3" id="h17-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h17-1" id="h17-1" class="h">@@ -191,3 +192,7 @@ func (Op Cirn) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Cirn) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h17-1-3" id="h17-1-3" class="i">+
+</a><a href="#h17-1-4" id="h17-1-4" class="i">+func (Op Cirn) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h17-1-5" id="h17-1-5" class="i">+	return nil, nil
+</a><a href="#h17-1-6" id="h17-1-6" class="i">+}
+</a><b>diff --git a/<a id="h18" href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a> b/<a href="../file/pkg/procbuilder/op_clc.go.html">pkg/procbuilder/op_clc.go</a></b>
+<a href="#h18-0" id="h18-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;math/rand&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h18-0-3" id="h18-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h18-1" id="h18-1" class="h">@@ -135,3 +136,7 @@ func (Op Clc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Clc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h18-1-3" id="h18-1-3" class="i">+
+</a><a href="#h18-1-4" id="h18-1-4" class="i">+func (Op Clc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h18-1-5" id="h18-1-5" class="i">+	return nil, nil
+</a><a href="#h18-1-6" id="h18-1-6" class="i">+}
+</a><b>diff --git a/<a id="h19" href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a> b/<a href="../file/pkg/procbuilder/op_clr.go.html">pkg/procbuilder/op_clr.go</a></b>
+<a href="#h19-0" id="h19-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h19-0-3" id="h19-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h19-1" id="h19-1" class="h">@@ -195,3 +196,16 @@ func (Op Clr) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Clr) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h19-1-3" id="h19-1-3" class="i">+
+</a><a href="#h19-1-4" id="h19-1-4" class="i">+func (Op Clr) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h19-1-5" id="h19-1-5" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h19-1-6" id="h19-1-6" class="i">+	case &quot;clr&quot;:
+</a><a href="#h19-1-7" id="h19-1-7" class="i">+		regNeed := line.Elements[0].GetValue()
+</a><a href="#h19-1-8" id="h19-1-8" class="i">+		if regNeed != &quot;&quot; {
+</a><a href="#h19-1-9" id="h19-1-9" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h19-1-10" id="h19-1-10" class="i">+			meta = meta.SetMeta(&quot;inval&quot;, regNeed)
+</a><a href="#h19-1-11" id="h19-1-11" class="i">+			return meta, nil
+</a><a href="#h19-1-12" id="h19-1-12" class="i">+		}
+</a><a href="#h19-1-13" id="h19-1-13" class="i">+	}
+</a><a href="#h19-1-14" id="h19-1-14" class="i">+	return nil, nil
+</a><a href="#h19-1-15" id="h19-1-15" class="i">+}
+</a><b>diff --git a/<a id="h20" href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a> b/<a href="../file/pkg/procbuilder/op_cpy.go.html">pkg/procbuilder/op_cpy.go</a></b>
+<a href="#h20-0" id="h20-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h20-0-3" id="h20-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h20-1" id="h20-1" class="h">@@ -230,3 +231,28 @@ func (Op Cpy) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Cpy) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h20-1-3" id="h20-1-3" class="i">+
+</a><a href="#h20-1-4" id="h20-1-4" class="i">+func (Op Cpy) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h20-1-5" id="h20-1-5" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h20-1-6" id="h20-1-6" class="i">+	case &quot;cpy&quot;:
+</a><a href="#h20-1-7" id="h20-1-7" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h20-1-8" id="h20-1-8" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h20-1-9" id="h20-1-9" class="i">+		if regDst != &quot;&quot; &amp;&amp; regSrc != &quot;&quot; {
+</a><a href="#h20-1-10" id="h20-1-10" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h20-1-11" id="h20-1-11" class="i">+			meta = meta.SetMeta(&quot;val&quot;, regSrc)
+</a><a href="#h20-1-12" id="h20-1-12" class="i">+			meta = meta.SetMeta(&quot;inval&quot;, regDst)
+</a><a href="#h20-1-13" id="h20-1-13" class="i">+			return meta, nil
+</a><a href="#h20-1-14" id="h20-1-14" class="i">+		}
+</a><a href="#h20-1-15" id="h20-1-15" class="i">+	case &quot;mov&quot;:
+</a><a href="#h20-1-16" id="h20-1-16" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h20-1-17" id="h20-1-17" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h20-1-18" id="h20-1-18" class="i">+		if regDst != &quot;&quot; &amp;&amp; regSrc != &quot;&quot; {
+</a><a href="#h20-1-19" id="h20-1-19" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h20-1-20" id="h20-1-20" class="i">+			meta = meta.SetMeta(&quot;val&quot;, regSrc)
+</a><a href="#h20-1-21" id="h20-1-21" class="i">+			meta = meta.SetMeta(&quot;inval&quot;, regDst)
+</a><a href="#h20-1-22" id="h20-1-22" class="i">+			return meta, nil
+</a><a href="#h20-1-23" id="h20-1-23" class="i">+		}
+</a><a href="#h20-1-24" id="h20-1-24" class="i">+	}
+</a><a href="#h20-1-25" id="h20-1-25" class="i">+
+</a><a href="#h20-1-26" id="h20-1-26" class="i">+	return nil, nil
+</a><a href="#h20-1-27" id="h20-1-27" class="i">+}
+</a><b>diff --git a/<a id="h21" href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a> b/<a href="../file/pkg/procbuilder/op_cset.go.html">pkg/procbuilder/op_cset.go</a></b>
+<a href="#h21-0" id="h21-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;math/rand&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h21-0-3" id="h21-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h21-1" id="h21-1" class="h">@@ -135,3 +136,7 @@ func (Op Cset) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Cset) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h21-1-3" id="h21-1-3" class="i">+
+</a><a href="#h21-1-4" id="h21-1-4" class="i">+func (Op Cset) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h21-1-5" id="h21-1-5" class="i">+	return nil, nil
+</a><a href="#h21-1-6" id="h21-1-6" class="i">+}
+</a><b>diff --git a/<a id="h22" href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a> b/<a href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a></b>
+<a href="#h22-0" id="h22-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h22-0-3" id="h22-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h22-1" id="h22-1" class="h">@@ -193,3 +194,7 @@ func (Op Dec) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Dec) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h22-1-3" id="h22-1-3" class="i">+
+</a><a href="#h22-1-4" id="h22-1-4" class="i">+func (Op Dec) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h22-1-5" id="h22-1-5" class="i">+	return nil, nil
+</a><a href="#h22-1-6" id="h22-1-6" class="i">+}
+</a><b>diff --git a/<a id="h23" href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a> b/<a href="../file/pkg/procbuilder/op_div.go.html">pkg/procbuilder/op_div.go</a></b>
+<a href="#h23-0" id="h23-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h23-0-3" id="h23-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h23-1" id="h23-1" class="h">@@ -240,3 +241,7 @@ func (Op Div) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Div) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h23-1-3" id="h23-1-3" class="i">+
+</a><a href="#h23-1-4" id="h23-1-4" class="i">+func (Op Div) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h23-1-5" id="h23-1-5" class="i">+	return nil, nil
+</a><a href="#h23-1-6" id="h23-1-6" class="i">+}
+</a><b>diff --git a/<a id="h24" href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a> b/<a href="../file/pkg/procbuilder/op_divf.go.html">pkg/procbuilder/op_divf.go</a></b>
+<a href="#h24-0" id="h24-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h24-0-3" id="h24-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h24-1" id="h24-1" class="h">@@ -301,3 +302,7 @@ func (Op Divf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Divf) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h24-1-3" id="h24-1-3" class="i">+
+</a><a href="#h24-1-4" id="h24-1-4" class="i">+func (Op Divf) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h24-1-5" id="h24-1-5" class="i">+	return nil, nil
+</a><a href="#h24-1-6" id="h24-1-6" class="i">+}
+</a><b>diff --git a/<a id="h25" href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a> b/<a href="../file/pkg/procbuilder/op_divf16.go.html">pkg/procbuilder/op_divf16.go</a></b>
+<a href="#h25-0" id="h25-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h25-0-3" id="h25-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 
+ 	&quot;github.com/x448/float16&quot;
+<a href="#h25-1" id="h25-1" class="h">@@ -302,3 +303,8 @@ func (Op Divf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node strin
+</a> func (Op Divf16) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h25-1-3" id="h25-1-3" class="i">+
+</a><a href="#h25-1-4" id="h25-1-4" class="i">+func (Op Divf16) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h25-1-5" id="h25-1-5" class="i">+	return nil, nil
+</a><a href="#h25-1-6" id="h25-1-6" class="i">+}
+</a><a href="#h25-1-7" id="h25-1-7" class="i">+
+</a><b>diff --git a/<a id="h26" href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a> b/<a href="../file/pkg/procbuilder/op_divp.go.html">pkg/procbuilder/op_divp.go</a></b>
+<a href="#h26-0" id="h26-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h26-0-3" id="h26-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h26-1" id="h26-1" class="h">@@ -282,3 +283,7 @@ func (Op Divp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Divp) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h26-1-3" id="h26-1-3" class="i">+
+</a><a href="#h26-1-4" id="h26-1-4" class="i">+func (Op Divp) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h26-1-5" id="h26-1-5" class="i">+	return nil, nil
+</a><a href="#h26-1-6" id="h26-1-6" class="i">+}
+</a><b>diff --git a/<a id="h27" href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a> b/<a href="../file/pkg/procbuilder/op_dpc.go.html">pkg/procbuilder/op_dpc.go</a></b>
+<a href="#h27-0" id="h27-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h27-0-3" id="h27-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h27-1" id="h27-1" class="h">@@ -140,3 +141,7 @@ func (Op Dpc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Dpc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h27-1-3" id="h27-1-3" class="i">+
+</a><a href="#h27-1-4" id="h27-1-4" class="i">+func (Op Dpc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h27-1-5" id="h27-1-5" class="i">+	return nil, nil
+</a><a href="#h27-1-6" id="h27-1-6" class="i">+}
+</a><b>diff --git a/<a id="h28" href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a> b/<a href="../file/pkg/procbuilder/op_expf.go.html">pkg/procbuilder/op_expf.go</a></b>
+<a href="#h28-0" id="h28-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h28-0-3" id="h28-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h28-1" id="h28-1" class="h">@@ -198,3 +199,7 @@ func (Op Expf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Expf) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h28-1-3" id="h28-1-3" class="i">+
+</a><a href="#h28-1-4" id="h28-1-4" class="i">+func (Op Expf) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h28-1-5" id="h28-1-5" class="i">+	return nil, nil
+</a><a href="#h28-1-6" id="h28-1-6" class="i">+}
+</a><b>diff --git a/<a id="h29" href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a> b/<a href="../file/pkg/procbuilder/op_hit.go.html">pkg/procbuilder/op_hit.go</a></b>
+<a href="#h29-0" id="h29-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h29-0-3" id="h29-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h29-1" id="h29-1" class="h">@@ -163,3 +164,7 @@ func (Op Hit) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Hit) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h29-1-3" id="h29-1-3" class="i">+
+</a><a href="#h29-1-4" id="h29-1-4" class="i">+func (Op Hit) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h29-1-5" id="h29-1-5" class="i">+	return nil, nil
+</a><a href="#h29-1-6" id="h29-1-6" class="i">+}
+</a><b>diff --git a/<a id="h30" href="../file/pkg/procbuilder/op_hlt.go.html">pkg/procbuilder/op_hlt.go</a> b/<a href="../file/pkg/procbuilder/op_hlt.go.html">pkg/procbuilder/op_hlt.go</a></b>
+<a href="#h30-0" id="h30-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h30-0-3" id="h30-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h30-1" id="h30-1" class="h">@@ -124,3 +125,7 @@ func (Op Hlt) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Hlt) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h30-1-3" id="h30-1-3" class="i">+
+</a><a href="#h30-1-4" id="h30-1-4" class="i">+func (Op Hlt) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h30-1-5" id="h30-1-5" class="i">+	return nil, nil
+</a><a href="#h30-1-6" id="h30-1-6" class="i">+}
+</a><b>diff --git a/<a id="h31" href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a> b/<a href="../file/pkg/procbuilder/op_i2r.go.html">pkg/procbuilder/op_i2r.go</a></b>
+<a href="#h31-0" id="h31-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h31-0-3" id="h31-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h31-1" id="h31-1" class="h">@@ -340,3 +341,7 @@ func (Op I2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op I2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h31-1-3" id="h31-1-3" class="i">+
+</a><a href="#h31-1-4" id="h31-1-4" class="i">+func (Op I2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h31-1-5" id="h31-1-5" class="i">+	return nil, nil
+</a><a href="#h31-1-6" id="h31-1-6" class="i">+}
+</a><b>diff --git a/<a id="h32" href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a> b/<a href="../file/pkg/procbuilder/op_i2rw.go.html">pkg/procbuilder/op_i2rw.go</a></b>
+<a href="#h32-0" id="h32-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h32-0-3" id="h32-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h32-1" id="h32-1" class="h">@@ -362,3 +363,7 @@ func (Op I2rw) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op I2rw) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h32-1-3" id="h32-1-3" class="i">+
+</a><a href="#h32-1-4" id="h32-1-4" class="i">+func (Op I2rw) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h32-1-5" id="h32-1-5" class="i">+	return nil, nil
+</a><a href="#h32-1-6" id="h32-1-6" class="i">+}
+</a><b>diff --git a/<a id="h33" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h33-0" id="h33-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h33-0-3" id="h33-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h33-1" id="h33-1" class="h">@@ -196,3 +197,7 @@ func (Op Inc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Inc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h33-1-3" id="h33-1-3" class="i">+
+</a><a href="#h33-1-4" id="h33-1-4" class="i">+func (Op Inc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h33-1-5" id="h33-1-5" class="i">+	return nil, nil
+</a><a href="#h33-1-6" id="h33-1-6" class="i">+}
+</a><b>diff --git a/<a id="h34" href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a> b/<a href="../file/pkg/procbuilder/op_incc.go.html">pkg/procbuilder/op_incc.go</a></b>
+<a href="#h34-0" id="h34-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h34-0-3" id="h34-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h34-1" id="h34-1" class="h">@@ -190,3 +191,7 @@ func (Op Incc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Incc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h34-1-3" id="h34-1-3" class="i">+
+</a><a href="#h34-1-4" id="h34-1-4" class="i">+func (Op Incc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h34-1-5" id="h34-1-5" class="i">+	return nil, nil
+</a><a href="#h34-1-6" id="h34-1-6" class="i">+}
+</a><b>diff --git a/<a id="h35" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h35-0" id="h35-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h35-0-3" id="h35-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h35-1" id="h35-1" class="h">@@ -160,3 +161,7 @@ func (Op J) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, li
+</a> func (Op J) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h35-1-3" id="h35-1-3" class="i">+
+</a><a href="#h35-1-4" id="h35-1-4" class="i">+func (Op J) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h35-1-5" id="h35-1-5" class="i">+	return nil, nil
+</a><a href="#h35-1-6" id="h35-1-6" class="i">+}
+</a><b>diff --git a/<a id="h36" href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a> b/<a href="../file/pkg/procbuilder/op_jc.go.html">pkg/procbuilder/op_jc.go</a></b>
+<a href="#h36-0" id="h36-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h36-0-3" id="h36-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h36-1" id="h36-1" class="h">@@ -165,3 +166,7 @@ func (Op Jc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, l
+</a> func (Op Jc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h36-1-3" id="h36-1-3" class="i">+
+</a><a href="#h36-1-4" id="h36-1-4" class="i">+func (Op Jc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h36-1-5" id="h36-1-5" class="i">+	return nil, nil
+</a><a href="#h36-1-6" id="h36-1-6" class="i">+}
+</a><b>diff --git a/<a id="h37" href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a> b/<a href="../file/pkg/procbuilder/op_je.go.html">pkg/procbuilder/op_je.go</a></b>
+<a href="#h37-0" id="h37-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h37-0-3" id="h37-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h37-1" id="h37-1" class="h">@@ -143,3 +144,7 @@ func (Op Je) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, l
+</a> func (Op Je) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h37-1-3" id="h37-1-3" class="i">+
+</a><a href="#h37-1-4" id="h37-1-4" class="i">+func (Op Je) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h37-1-5" id="h37-1-5" class="i">+	return nil, nil
+</a><a href="#h37-1-6" id="h37-1-6" class="i">+}
+</a><b>diff --git a/<a id="h38" href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a> b/<a href="../file/pkg/procbuilder/op_jgt0f.go.html">pkg/procbuilder/op_jgt0f.go</a></b>
+<a href="#h38-0" id="h38-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h38-0-3" id="h38-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h38-1" id="h38-1" class="h">@@ -218,3 +219,7 @@ func (Op Jgt0f) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> func (Op Jgt0f) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h38-1-3" id="h38-1-3" class="i">+
+</a><a href="#h38-1-4" id="h38-1-4" class="i">+func (Op Jgt0f) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h38-1-5" id="h38-1-5" class="i">+	return nil, nil
+</a><a href="#h38-1-6" id="h38-1-6" class="i">+}
+</a><b>diff --git a/<a id="h39" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h39-0" id="h39-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h39-0-3" id="h39-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h39-1" id="h39-1" class="h">@@ -230,3 +231,7 @@ func (Op Jz) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, l
+</a> func (Op Jz) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h39-1-3" id="h39-1-3" class="i">+
+</a><a href="#h39-1-4" id="h39-1-4" class="i">+func (Op Jz) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h39-1-5" id="h39-1-5" class="i">+	return nil, nil
+</a><a href="#h39-1-6" id="h39-1-6" class="i">+}
+</a><b>diff --git a/<a id="h40" href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a> b/<a href="../file/pkg/procbuilder/op_k2r.go.html">pkg/procbuilder/op_k2r.go</a></b>
+<a href="#h40-0" id="h40-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h40-0-3" id="h40-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h40-1" id="h40-1" class="h">@@ -313,3 +314,7 @@ func (Op K2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op K2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h40-1-3" id="h40-1-3" class="i">+
+</a><a href="#h40-1-4" id="h40-1-4" class="i">+func (Op K2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h40-1-5" id="h40-1-5" class="i">+	return nil, nil
+</a><a href="#h40-1-6" id="h40-1-6" class="i">+}
+</a><b>diff --git a/<a id="h41" href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a> b/<a href="../file/pkg/procbuilder/op_lfsr82r.go.html">pkg/procbuilder/op_lfsr82r.go</a></b>
+<a href="#h41-0" id="h41-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h41-0-3" id="h41-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h41-1" id="h41-1" class="h">@@ -227,3 +228,7 @@ func (Op Lfsr82r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node stri
+</a> func (Op Lfsr82r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h41-1-3" id="h41-1-3" class="i">+
+</a><a href="#h41-1-4" id="h41-1-4" class="i">+func (Op Lfsr82r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h41-1-5" id="h41-1-5" class="i">+	return nil, nil
+</a><a href="#h41-1-6" id="h41-1-6" class="i">+}
+</a><b>diff --git a/<a id="h42" href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a> b/<a href="../file/pkg/procbuilder/op_m2r.go.html">pkg/procbuilder/op_m2r.go</a></b>
+<a href="#h42-0" id="h42-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h42-0-3" id="h42-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h42-1" id="h42-1" class="h">@@ -219,3 +220,7 @@ func (Op M2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op M2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h42-1-3" id="h42-1-3" class="i">+
+</a><a href="#h42-1-4" id="h42-1-4" class="i">+func (Op M2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h42-1-5" id="h42-1-5" class="i">+	return nil, nil
+</a><a href="#h42-1-6" id="h42-1-6" class="i">+}
+</a><b>diff --git a/<a id="h43" href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a> b/<a href="../file/pkg/procbuilder/op_mod.go.html">pkg/procbuilder/op_mod.go</a></b>
+<a href="#h43-0" id="h43-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h43-0-3" id="h43-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h43-1" id="h43-1" class="h">@@ -225,3 +226,7 @@ func (Op Mod) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Mod) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h43-1-3" id="h43-1-3" class="i">+
+</a><a href="#h43-1-4" id="h43-1-4" class="i">+func (Op Mod) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h43-1-5" id="h43-1-5" class="i">+	return nil, nil
+</a><a href="#h43-1-6" id="h43-1-6" class="i">+}
+</a><b>diff --git a/<a id="h44" href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a> b/<a href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a></b>
+<a href="#h44-0" id="h44-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h44-0-3" id="h44-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h44-1" id="h44-1" class="h">@@ -231,3 +232,7 @@ func (Op Mulc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Mulc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h44-1-3" id="h44-1-3" class="i">+
+</a><a href="#h44-1-4" id="h44-1-4" class="i">+func (Op Mulc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h44-1-5" id="h44-1-5" class="i">+	return nil, nil
+</a><a href="#h44-1-6" id="h44-1-6" class="i">+}
+</a><b>diff --git a/<a id="h45" href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a> b/<a href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a></b>
+<a href="#h45-0" id="h45-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h45-0-3" id="h45-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h45-1" id="h45-1" class="h">@@ -235,3 +236,7 @@ func (Op Mult) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Mult) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h45-1-3" id="h45-1-3" class="i">+
+</a><a href="#h45-1-4" id="h45-1-4" class="i">+func (Op Mult) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h45-1-5" id="h45-1-5" class="i">+	return nil, nil
+</a><a href="#h45-1-6" id="h45-1-6" class="i">+}
+</a><b>diff --git a/<a id="h46" href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a> b/<a href="../file/pkg/procbuilder/op_multf.go.html">pkg/procbuilder/op_multf.go</a></b>
+<a href="#h46-0" id="h46-0" class="h">@@ -9,6 +9,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h46-0-3" id="h46-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h46-1" id="h46-1" class="h">@@ -299,3 +300,7 @@ func (Op Multf) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> func (Op Multf) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h46-1-3" id="h46-1-3" class="i">+
+</a><a href="#h46-1-4" id="h46-1-4" class="i">+func (Op Multf) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h46-1-5" id="h46-1-5" class="i">+	return nil, nil
+</a><a href="#h46-1-6" id="h46-1-6" class="i">+}
+</a><b>diff --git a/<a id="h47" href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a> b/<a href="../file/pkg/procbuilder/op_multf16.go.html">pkg/procbuilder/op_multf16.go</a></b>
+<a href="#h47-0" id="h47-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;text/template&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h47-0-3" id="h47-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ 
+ 	&quot;github.com/x448/float16&quot;
+<a href="#h47-1" id="h47-1" class="h">@@ -301,3 +302,7 @@ func (Op Multf16) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node stri
+</a> func (Op Multf16) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h47-1-3" id="h47-1-3" class="i">+
+</a><a href="#h47-1-4" id="h47-1-4" class="i">+func (Op Multf16) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h47-1-5" id="h47-1-5" class="i">+	return nil, nil
+</a><a href="#h47-1-6" id="h47-1-6" class="i">+}
+</a><b>diff --git a/<a id="h48" href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a> b/<a href="../file/pkg/procbuilder/op_multp.go.html">pkg/procbuilder/op_multp.go</a></b>
+<a href="#h48-0" id="h48-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h48-0-3" id="h48-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h48-1" id="h48-1" class="h">@@ -282,3 +283,7 @@ func (Op Multp) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> func (Op Multp) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h48-1-3" id="h48-1-3" class="i">+
+</a><a href="#h48-1-4" id="h48-1-4" class="i">+func (Op Multp) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h48-1-5" id="h48-1-5" class="i">+	return nil, nil
+</a><a href="#h48-1-6" id="h48-1-6" class="i">+}
+</a><b>diff --git a/<a id="h49" href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a> b/<a href="../file/pkg/procbuilder/op_nand.go.html">pkg/procbuilder/op_nand.go</a></b>
+<a href="#h49-0" id="h49-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h49-0-3" id="h49-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h49-1" id="h49-1" class="h">@@ -225,3 +226,7 @@ func (Op Nand) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Nand) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h49-1-3" id="h49-1-3" class="i">+
+</a><a href="#h49-1-4" id="h49-1-4" class="i">+func (Op Nand) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h49-1-5" id="h49-1-5" class="i">+	return nil, nil
+</a><a href="#h49-1-6" id="h49-1-6" class="i">+}
+</a><b>diff --git a/<a id="h50" href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a> b/<a href="../file/pkg/procbuilder/op_nop.go.html">pkg/procbuilder/op_nop.go</a></b>
+<a href="#h50-0" id="h50-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h50-0-3" id="h50-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h50-1" id="h50-1" class="h">@@ -135,3 +136,8 @@ func (Op Nop) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Nop) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h50-1-3" id="h50-1-3" class="i">+
+</a><a href="#h50-1-4" id="h50-1-4" class="i">+func (Op Nop) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h50-1-5" id="h50-1-5" class="i">+	return nil, nil
+</a><a href="#h50-1-6" id="h50-1-6" class="i">+}
+</a><a href="#h50-1-7" id="h50-1-7" class="i">+
+</a><b>diff --git a/<a id="h51" href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a> b/<a href="../file/pkg/procbuilder/op_nor.go.html">pkg/procbuilder/op_nor.go</a></b>
+<a href="#h51-0" id="h51-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h51-0-3" id="h51-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h51-1" id="h51-1" class="h">@@ -225,3 +226,7 @@ func (Op Nor) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Nor) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h51-1-3" id="h51-1-3" class="i">+
+</a><a href="#h51-1-4" id="h51-1-4" class="i">+func (Op Nor) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h51-1-5" id="h51-1-5" class="i">+	return nil, nil
+</a><a href="#h51-1-6" id="h51-1-6" class="i">+}
+</a><b>diff --git a/<a id="h52" href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a> b/<a href="../file/pkg/procbuilder/op_not.go.html">pkg/procbuilder/op_not.go</a></b>
+<a href="#h52-0" id="h52-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h52-0-3" id="h52-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h52-1" id="h52-1" class="h">@@ -225,3 +226,7 @@ func (Op Not) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Not) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h52-1-3" id="h52-1-3" class="i">+
+</a><a href="#h52-1-4" id="h52-1-4" class="i">+func (Op Not) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h52-1-5" id="h52-1-5" class="i">+	return nil, nil
+</a><a href="#h52-1-6" id="h52-1-6" class="i">+}
+</a><b>diff --git a/<a id="h53" href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a> b/<a href="../file/pkg/procbuilder/op_or.go.html">pkg/procbuilder/op_or.go</a></b>
+<a href="#h53-0" id="h53-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h53-0-3" id="h53-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h53-1" id="h53-1" class="h">@@ -225,3 +226,7 @@ func (Op Or) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, l
+</a> func (Op Or) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h53-1-3" id="h53-1-3" class="i">+
+</a><a href="#h53-1-4" id="h53-1-4" class="i">+func (Op Or) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h53-1-5" id="h53-1-5" class="i">+	return nil, nil
+</a><a href="#h53-1-6" id="h53-1-6" class="i">+}
+</a><b>diff --git a/<a id="h54" href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a> b/<a href="../file/pkg/procbuilder/op_q2r.go.html">pkg/procbuilder/op_q2r.go</a></b>
+<a href="#h54-0" id="h54-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h54-0-3" id="h54-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h54-1" id="h54-1" class="h">@@ -313,3 +314,7 @@ func (Op Q2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Q2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h54-1-3" id="h54-1-3" class="i">+
+</a><a href="#h54-1-4" id="h54-1-4" class="i">+func (Op Q2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h54-1-5" id="h54-1-5" class="i">+	return nil, nil
+</a><a href="#h54-1-6" id="h54-1-6" class="i">+}
+</a><b>diff --git a/<a id="h55" href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a> b/<a href="../file/pkg/procbuilder/op_r2m.go.html">pkg/procbuilder/op_r2m.go</a></b>
+<a href="#h55-0" id="h55-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h55-0-3" id="h55-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h55-1" id="h55-1" class="h">@@ -246,3 +247,7 @@ func (Op R2m) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2m) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h55-1-3" id="h55-1-3" class="i">+
+</a><a href="#h55-1-4" id="h55-1-4" class="i">+func (Op R2m) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h55-1-5" id="h55-1-5" class="i">+	return nil, nil
+</a><a href="#h55-1-6" id="h55-1-6" class="i">+}
+</a><b>diff --git a/<a id="h56" href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a> b/<a href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a></b>
+<a href="#h56-0" id="h56-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h56-0-3" id="h56-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h56-1" id="h56-1" class="h">@@ -344,3 +345,7 @@ func (Op R2o) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2o) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h56-1-3" id="h56-1-3" class="i">+
+</a><a href="#h56-1-4" id="h56-1-4" class="i">+func (Op R2o) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h56-1-5" id="h56-1-5" class="i">+	return nil, nil
+</a><a href="#h56-1-6" id="h56-1-6" class="i">+}
+</a><b>diff --git a/<a id="h57" href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owa.go.html">pkg/procbuilder/op_r2owa.go</a></b>
+<a href="#h57-0" id="h57-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h57-0-3" id="h57-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h57-1" id="h57-1" class="h">@@ -363,3 +364,7 @@ func (Op R2owa) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> func (Op R2owa) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h57-1-3" id="h57-1-3" class="i">+
+</a><a href="#h57-1-4" id="h57-1-4" class="i">+func (Op R2owa) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h57-1-5" id="h57-1-5" class="i">+	return nil, nil
+</a><a href="#h57-1-6" id="h57-1-6" class="i">+}
+</a><b>diff --git a/<a id="h58" href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a> b/<a href="../file/pkg/procbuilder/op_r2owaa.go.html">pkg/procbuilder/op_r2owaa.go</a></b>
+<a href="#h58-0" id="h58-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h58-0-3" id="h58-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h58-1" id="h58-1" class="h">@@ -347,3 +348,7 @@ func (Op R2owaa) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node strin
+</a> func (Op R2owaa) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h58-1-3" id="h58-1-3" class="i">+
+</a><a href="#h58-1-4" id="h58-1-4" class="i">+func (Op R2owaa) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h58-1-5" id="h58-1-5" class="i">+	return nil, nil
+</a><a href="#h58-1-6" id="h58-1-6" class="i">+}
+</a><b>diff --git a/<a id="h59" href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a> b/<a href="../file/pkg/procbuilder/op_r2q.go.html">pkg/procbuilder/op_r2q.go</a></b>
+<a href="#h59-0" id="h59-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h59-0-3" id="h59-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h59-1" id="h59-1" class="h">@@ -320,3 +321,7 @@ func (Op R2q) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2q) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h59-1-3" id="h59-1-3" class="i">+
+</a><a href="#h59-1-4" id="h59-1-4" class="i">+func (Op R2q) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h59-1-5" id="h59-1-5" class="i">+	return nil, nil
+</a><a href="#h59-1-6" id="h59-1-6" class="i">+}
+</a><b>diff --git a/<a id="h60" href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a> b/<a href="../file/pkg/procbuilder/op_r2s.go.html">pkg/procbuilder/op_r2s.go</a></b>
+<a href="#h60-0" id="h60-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h60-0-3" id="h60-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h60-1" id="h60-1" class="h">@@ -183,3 +184,7 @@ func (Op R2s) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2s) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h60-1-3" id="h60-1-3" class="i">+
+</a><a href="#h60-1-4" id="h60-1-4" class="i">+func (Op R2s) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h60-1-5" id="h60-1-5" class="i">+	return nil, nil
+</a><a href="#h60-1-6" id="h60-1-6" class="i">+}
+</a><b>diff --git a/<a id="h61" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h61-0" id="h61-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h61-0-3" id="h61-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h61-1" id="h61-1" class="h">@@ -320,3 +321,7 @@ func (Op R2t) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2t) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h61-1-3" id="h61-1-3" class="i">+
+</a><a href="#h61-1-4" id="h61-1-4" class="i">+func (Op R2t) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h61-1-5" id="h61-1-5" class="i">+	return nil, nil
+</a><a href="#h61-1-6" id="h61-1-6" class="i">+}
+</a><b>diff --git a/<a id="h62" href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a> b/<a href="../file/pkg/procbuilder/op_r2u.go.html">pkg/procbuilder/op_r2u.go</a></b>
+<a href="#h62-0" id="h62-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h62-0-3" id="h62-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h62-1" id="h62-1" class="h">@@ -320,3 +321,7 @@ func (Op R2u) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2u) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h62-1-3" id="h62-1-3" class="i">+
+</a><a href="#h62-1-4" id="h62-1-4" class="i">+func (Op R2u) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h62-1-5" id="h62-1-5" class="i">+	return nil, nil
+</a><a href="#h62-1-6" id="h62-1-6" class="i">+}
+</a><b>diff --git a/<a id="h63" href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a> b/<a href="../file/pkg/procbuilder/op_r2v.go.html">pkg/procbuilder/op_r2v.go</a></b>
+<a href="#h63-0" id="h63-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h63-0-3" id="h63-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h63-1" id="h63-1" class="h">@@ -298,3 +299,7 @@ func (Op R2v) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op R2v) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h63-1-3" id="h63-1-3" class="i">+
+</a><a href="#h63-1-4" id="h63-1-4" class="i">+func (Op R2v) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h63-1-5" id="h63-1-5" class="i">+	return nil, nil
+</a><a href="#h63-1-6" id="h63-1-6" class="i">+}
+</a><b>diff --git a/<a id="h64" href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a> b/<a href="../file/pkg/procbuilder/op_r2vri.go.html">pkg/procbuilder/op_r2vri.go</a></b>
+<a href="#h64-0" id="h64-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h64-0-3" id="h64-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h64-1" id="h64-1" class="h">@@ -326,3 +327,7 @@ func (Op R2vri) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string
+</a> func (Op R2vri) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h64-1-3" id="h64-1-3" class="i">+
+</a><a href="#h64-1-4" id="h64-1-4" class="i">+func (Op R2vri) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h64-1-5" id="h64-1-5" class="i">+	return nil, nil
+</a><a href="#h64-1-6" id="h64-1-6" class="i">+}
+</a><b>diff --git a/<a id="h65" href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a> b/<a href="../file/pkg/procbuilder/op_ro2r.go.html">pkg/procbuilder/op_ro2r.go</a></b>
+<a href="#h65-0" id="h65-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h65-0-3" id="h65-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h65-1" id="h65-1" class="h">@@ -249,3 +250,7 @@ func (Op Ro2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Ro2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h65-1-3" id="h65-1-3" class="i">+
+</a><a href="#h65-1-4" id="h65-1-4" class="i">+func (Op Ro2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h65-1-5" id="h65-1-5" class="i">+	return nil, nil
+</a><a href="#h65-1-6" id="h65-1-6" class="i">+}
+</a><b>diff --git a/<a id="h66" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h66-0" id="h66-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h66-0-3" id="h66-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h66-1" id="h66-1" class="h">@@ -307,3 +308,7 @@ func (Op Ro2rri) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node strin
+</a> func (Op Ro2rri) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h66-1-3" id="h66-1-3" class="i">+
+</a><a href="#h66-1-4" id="h66-1-4" class="i">+func (Op Ro2rri) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h66-1-5" id="h66-1-5" class="i">+	return nil, nil
+</a><a href="#h66-1-6" id="h66-1-6" class="i">+}
+</a><b>diff --git a/<a id="h67" href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a> b/<a href="../file/pkg/procbuilder/op_rsc.go.html">pkg/procbuilder/op_rsc.go</a></b>
+<a href="#h67-0" id="h67-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h67-0-3" id="h67-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h67-1" id="h67-1" class="h">@@ -231,3 +232,7 @@ func (Op Rsc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Rsc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h67-1-3" id="h67-1-3" class="i">+
+</a><a href="#h67-1-4" id="h67-1-4" class="i">+func (Op Rsc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h67-1-5" id="h67-1-5" class="i">+	return nil, nil
+</a><a href="#h67-1-6" id="h67-1-6" class="i">+}
+</a><b>diff --git a/<a id="h68" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h68-0" id="h68-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h68-0-3" id="h68-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h68-1" id="h68-1" class="h">@@ -216,3 +217,7 @@ func (Op Rset) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Rset) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h68-1-3" id="h68-1-3" class="i">+
+</a><a href="#h68-1-4" id="h68-1-4" class="i">+func (Op Rset) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h68-1-5" id="h68-1-5" class="i">+	return nil, nil
+</a><a href="#h68-1-6" id="h68-1-6" class="i">+}
+</a><b>diff --git a/<a id="h69" href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a> b/<a href="../file/pkg/procbuilder/op_s2r.go.html">pkg/procbuilder/op_s2r.go</a></b>
+<a href="#h69-0" id="h69-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h69-0-3" id="h69-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h69-1" id="h69-1" class="h">@@ -179,3 +180,7 @@ func (Op S2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op S2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h69-1-3" id="h69-1-3" class="i">+
+</a><a href="#h69-1-4" id="h69-1-4" class="i">+func (Op S2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h69-1-5" id="h69-1-5" class="i">+	return nil, nil
+</a><a href="#h69-1-6" id="h69-1-6" class="i">+}
+</a><b>diff --git a/<a id="h70" href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a> b/<a href="../file/pkg/procbuilder/op_saj.go.html">pkg/procbuilder/op_saj.go</a></b>
+<a href="#h70-0" id="h70-0" class="h">@@ -5,6 +5,7 @@ import (
+</a> 	&quot;strconv&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h70-0-3" id="h70-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h70-1" id="h70-1" class="h">@@ -140,3 +141,7 @@ func (Op Saj) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Saj) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h70-1-3" id="h70-1-3" class="i">+
+</a><a href="#h70-1-4" id="h70-1-4" class="i">+func (Op Saj) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h70-1-5" id="h70-1-5" class="i">+	return nil, nil
+</a><a href="#h70-1-6" id="h70-1-6" class="i">+}
+</a><b>diff --git a/<a id="h71" href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a> b/<a href="../file/pkg/procbuilder/op_sbc.go.html">pkg/procbuilder/op_sbc.go</a></b>
+<a href="#h71-0" id="h71-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h71-0-3" id="h71-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h71-1" id="h71-1" class="h">@@ -231,3 +232,7 @@ func (Op Sbc) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Sbc) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h71-1-3" id="h71-1-3" class="i">+
+</a><a href="#h71-1-4" id="h71-1-4" class="i">+func (Op Sbc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h71-1-5" id="h71-1-5" class="i">+	return nil, nil
+</a><a href="#h71-1-6" id="h71-1-6" class="i">+}
+</a><b>diff --git a/<a id="h72" href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a> b/<a href="../file/pkg/procbuilder/op_sic.go.html">pkg/procbuilder/op_sic.go</a></b>
+<a href="#h72-0" id="h72-0" class="h">@@ -7,6 +7,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h72-0-3" id="h72-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h72-1" id="h72-1" class="h">@@ -290,3 +291,7 @@ func (Op Sic) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Sic) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h72-1-3" id="h72-1-3" class="i">+
+</a><a href="#h72-1-4" id="h72-1-4" class="i">+func (Op Sic) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h72-1-5" id="h72-1-5" class="i">+	return nil, nil
+</a><a href="#h72-1-6" id="h72-1-6" class="i">+}
+</a><b>diff --git a/<a id="h73" href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a> b/<a href="../file/pkg/procbuilder/op_sub.go.html">pkg/procbuilder/op_sub.go</a></b>
+<a href="#h73-0" id="h73-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h73-0-3" id="h73-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h73-1" id="h73-1" class="h">@@ -198,3 +199,7 @@ func (Op Sub) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Sub) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h73-1-3" id="h73-1-3" class="i">+
+</a><a href="#h73-1-4" id="h73-1-4" class="i">+func (Op Sub) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h73-1-5" id="h73-1-5" class="i">+	return nil, nil
+</a><a href="#h73-1-6" id="h73-1-6" class="i">+}
+</a><b>diff --git a/<a id="h74" href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a> b/<a href="../file/pkg/procbuilder/op_t2r.go.html">pkg/procbuilder/op_t2r.go</a></b>
+<a href="#h74-0" id="h74-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h74-0-3" id="h74-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h74-1" id="h74-1" class="h">@@ -313,3 +314,7 @@ func (Op T2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op T2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h74-1-3" id="h74-1-3" class="i">+
+</a><a href="#h74-1-4" id="h74-1-4" class="i">+func (Op T2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h74-1-5" id="h74-1-5" class="i">+	return nil, nil
+</a><a href="#h74-1-6" id="h74-1-6" class="i">+}
+</a><b>diff --git a/<a id="h75" href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a> b/<a href="../file/pkg/procbuilder/op_u2r.go.html">pkg/procbuilder/op_u2r.go</a></b>
+<a href="#h75-0" id="h75-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h75-0-3" id="h75-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h75-1" id="h75-1" class="h">@@ -313,3 +314,8 @@ func (Op U2r) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op U2r) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h75-1-3" id="h75-1-3" class="i">+
+</a><a href="#h75-1-4" id="h75-1-4" class="i">+func (Op U2r) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h75-1-5" id="h75-1-5" class="i">+	return nil, nil
+</a><a href="#h75-1-6" id="h75-1-6" class="i">+}
+</a><a href="#h75-1-7" id="h75-1-7" class="i">+
+</a><b>diff --git a/<a id="h76" href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a> b/<a href="../file/pkg/procbuilder/op_wrd.go.html">pkg/procbuilder/op_wrd.go</a></b>
+<a href="#h76-0" id="h76-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h76-0-3" id="h76-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h76-1" id="h76-1" class="h">@@ -299,3 +300,7 @@ func (Op Wrd) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Wrd) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h76-1-3" id="h76-1-3" class="i">+
+</a><a href="#h76-1-4" id="h76-1-4" class="i">+func (Op Wrd) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h76-1-5" id="h76-1-5" class="i">+	return nil, nil
+</a><a href="#h76-1-6" id="h76-1-6" class="i">+}
+</a><b>diff --git a/<a id="h77" href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a> b/<a href="../file/pkg/procbuilder/op_wwr.go.html">pkg/procbuilder/op_wwr.go</a></b>
+<a href="#h77-0" id="h77-0" class="h">@@ -8,6 +8,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h77-0-3" id="h77-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h77-1" id="h77-1" class="h">@@ -300,3 +301,8 @@ func (Op Wwr) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Wwr) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h77-1-3" id="h77-1-3" class="i">+
+</a><a href="#h77-1-4" id="h77-1-4" class="i">+func (Op Wwr) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h77-1-5" id="h77-1-5" class="i">+	return nil, nil
+</a><a href="#h77-1-6" id="h77-1-6" class="i">+}
+</a><a href="#h77-1-7" id="h77-1-7" class="i">+
+</a><b>diff --git a/<a id="h78" href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a> b/<a href="../file/pkg/procbuilder/op_xnor.go.html">pkg/procbuilder/op_xnor.go</a></b>
+<a href="#h78-0" id="h78-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h78-0-3" id="h78-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h78-1" id="h78-1" class="h">@@ -225,3 +226,8 @@ func (Op Xnor) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string,
+</a> func (Op Xnor) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h78-1-3" id="h78-1-3" class="i">+
+</a><a href="#h78-1-4" id="h78-1-4" class="i">+func (Op Xnor) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h78-1-5" id="h78-1-5" class="i">+	return nil, nil
+</a><a href="#h78-1-6" id="h78-1-6" class="i">+}
+</a><a href="#h78-1-7" id="h78-1-7" class="i">+
+</a><b>diff --git a/<a id="h79" href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a> b/<a href="../file/pkg/procbuilder/op_xor.go.html">pkg/procbuilder/op_xor.go</a></b>
+<a href="#h79-0" id="h79-0" class="h">@@ -6,6 +6,7 @@ import (
+</a> 	&quot;strings&quot;
+ 
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h79-0-3" id="h79-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h79-1" id="h79-1" class="h">@@ -225,3 +226,7 @@ func (Op Xor) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> func (Op Xor) ExtraFiles(arch *Arch) ([]string, []string) {
+ 	return []string{}, []string{}
+ }
+<a href="#h79-1-3" id="h79-1-3" class="i">+
+</a><a href="#h79-1-4" id="h79-1-4" class="i">+func (Op Xor) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h79-1-5" id="h79-1-5" class="i">+	return nil, nil
+</a><a href="#h79-1-6" id="h79-1-6" class="i">+}
+</a><b>diff --git a/<a id="h80" href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a> b/<a href="../file/pkg/procbuilder/procbuilder.go.html">pkg/procbuilder/procbuilder.go</a></b>
+<a href="#h80-0" id="h80-0" class="h">@@ -2,6 +2,7 @@ package procbuilder
+</a> 
+ import (
+ 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+<a href="#h80-0-3" id="h80-0-3" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+ )
+ 
+<a href="#h80-1" id="h80-1" class="h">@@ -22,6 +23,7 @@ type Opcode interface {
+</a> 	Assembler(*Arch, []string) (string, error)
+ 	HLAssemblerMatch(*Arch) []string
+ 	HLAssemblerNormalize(*Arch, *bmreqs.ReqRoot, string, *bmline.BasmLine) (*bmline.BasmLine, error)
+<a href="#h80-1-3" id="h80-1-3" class="i">+	HLAssemblerInstructionMetadata(*Arch, *bmline.BasmLine) (*bmmeta.BasmMeta, error)
+</a> 	Disassembler(*Arch, string) (string, error)
+ 	Simulate(*VM, string) error
+ 	Generate(*Arch) string
+</pre>
+</div>
+</body>
+</html>

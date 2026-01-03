@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fixed point - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/abf98356759999b4294643728414c1deb289ed39.html">abf98356759999b4294643728414c1deb289ed39</a>
+<b>parent</b> <a href="../commit/bcc85e15f3e32708c10a02227fc2e333c0ba1208.html">bcc85e15f3e32708c10a02227fc2e333c0ba1208</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed,  6 Sep 2023 14:38:35 +0200
+
+Fixed point
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bmnumbers/dynamical_fixed_point.go</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">pkg/bmnumbers/dyntype_fixed_point.go</a></td><td> | </td><td class="num">138</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bmnumbers/type_float32.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">pkg/procbuilder/dynamical_fixed_point.go</a></td><td> | </td><td class="num">77</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">pkg/procbuilder/dynop_fixed_point.go</a></td><td> | </td><td class="num">349</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/machine.go</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>7 files changed, 608 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -50,6 +50,7 @@ func init() {
+</a> 	dynLQRages := make(map[int]LinearDataRange)
+ 	dynLQ.Ranges = &amp;dynLQRages
+ 	AllDynamicalTypes = append(AllDynamicalTypes, dynLQ)
+<a href="#h0-0-3" id="h0-0-3" class="i">+	AllDynamicalTypes = append(AllDynamicalTypes, DynFixedPoint{})
+</a> 
+ 	AllMatchers = make(map[string]ImportFunc)
+ 	for _, t := range AllTypes {
+<a href="#h0-1" id="h0-1" class="h">@@ -60,6 +61,8 @@ func init() {
+</a> 
+ 	EventuallyCreateType(&quot;flpe4f4&quot;, nil)
+ 	EventuallyCreateType(&quot;lqs8t0&quot;, nil)
+<a href="#h0-1-3" id="h0-1-3" class="i">+	EventuallyCreateType(&quot;fps8f4&quot;, nil)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> }
+ 
+ func ListTypes() {
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/dynamical_fixed_point.go.html">pkg/bmnumbers/dynamical_fixed_point.go</a> b/<a href="../file/pkg/bmnumbers/dynamical_fixed_point.go.html">pkg/bmnumbers/dynamical_fixed_point.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,38 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmnumbers
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+import (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;regexp&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;strconv&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+type DynFixedPoint struct {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+func (d DynFixedPoint) GetName() string {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	return &quot;dyn_fixed_point&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+func (d DynFixedPoint) MatchName(name string) bool {
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	re := regexp.MustCompile(&quot;fps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	return re.MatchString(name)
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+}
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+func (d DynFixedPoint) CreateType(name string, param interface{}) (BMNumberType, error) {
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	re := regexp.MustCompile(&quot;fps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	if re.MatchString(name) {
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		fs := re.ReplaceAllString(name, &quot;${f}&quot;)
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+		s, _ := strconv.Atoi(ss)
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		f, _ := strconv.Atoi(fs)
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+		i := make(map[string]string)
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		i[&quot;multop&quot;] = &quot;multfps&quot; + ss + &quot;t&quot; + fs
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		i[&quot;addop&quot;] = &quot;addfps&quot; + ss + &quot;t&quot; + fs
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+		i[&quot;divop&quot;] = &quot;divfps&quot; + ss + &quot;t&quot; + fs
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		return FixedPoint{FixedPointName: name, s: s, f: f, instructions: i}, nil
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	}
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	return nil, errors.New(&quot;creation failed&quot;)
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/pkg/bmnumbers/dyntype_fixed_point.go.html">pkg/bmnumbers/dyntype_fixed_point.go</a> b/<a href="../file/pkg/bmnumbers/dyntype_fixed_point.go.html">pkg/bmnumbers/dyntype_fixed_point.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,138 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+package bmnumbers
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+import (
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+	&quot;bytes&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;encoding/binary&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	&quot;errors&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	&quot;regexp&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	&quot;strconv&quot;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+type FixedPoint struct {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	FixedPointName string
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	s              int
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+	f              int
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	instructions   map[string]string
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+func (d FixedPoint) GetName() string {
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	return d.FixedPointName
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+}
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+func (d FixedPoint) getInfo() string {
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	return &quot;&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+}
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+func (d FixedPoint) GetSize() int {
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	return d.s
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+}
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+func (d FixedPoint) importMatchers() map[string]ImportFunc {
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	result := make(map[string]ImportFunc)
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	result[&quot;^0fp&lt;(?P&lt;s&gt;[0-9]+)\\.(?P&lt;f&gt;[0-9]+)&gt;(?P&lt;number&gt;.+)$&quot;] = fixedPointImport
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+	return result
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+}
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+func (d FixedPoint) Convert(n *BMNumber) error {
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	convertFrom := n.nType.GetName()
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+	switch convertFrom {
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+	default:
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+		return errors.New(&quot;cannot convert from &quot; + convertFrom + &quot; to &quot; + d.GetName())
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	}
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+	return nil
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+}
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+func fixedPointImport(re *regexp.Regexp, input string) (*BMNumber, error) {
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	number := re.ReplaceAllString(input, &quot;${number}&quot;)
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	ss := re.ReplaceAllString(input, &quot;${s}&quot;)
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	fs := re.ReplaceAllString(input, &quot;${f}&quot;)
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+	s, _ := strconv.Atoi(ss)
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	f, _ := strconv.Atoi(fs)
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+	if s &lt; 1 || s &gt; 32 {
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+		return nil, errors.New(&quot;invalid s value for fixed point&quot;)
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+	}
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+	EventuallyCreateType(&quot;fps&quot;+ss+&quot;f&quot;+fs, nil)
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	if numberNum, err := strconv.ParseFloat(number, 64); err != nil {
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+		return nil, errors.New(&quot;invalid number for fixed point&quot;)
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+	} else {
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+		scale := float64(int(1) &lt;&lt; uint(f))
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+		fpNumber := int64(numberNum * scale)
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+		// Create a temporary buffer to write the number to
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+		buf := new(bytes.Buffer)
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+		binary.Write(buf, binary.LittleEndian, fpNumber)
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+		// Compute how many bytes we need to copy according to the number of bits (s)
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+		toCopy := (s-1)/8 + 1
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		newNumber := BMNumber{}
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+		newNumber.nType = FixedPoint{FixedPointName: &quot;fps&quot; + ss + &quot;f&quot; + fs, s: s, f: f}
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+		newNumber.number = make([]byte, toCopy)
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+		copy(newNumber.number, buf.Bytes()[0:toCopy])
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		newNumber.bits = s
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+		// Use a mask to clear the eventually unused bits on the last byte
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+		mask := byte(0xFF &gt;&gt; uint(8-(s-1)%8-1))
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+		newNumber.number[toCopy-1] = newNumber.number[toCopy-1] &amp; mask
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+		return &amp;newNumber, nil
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+	}
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+}
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+func (d FixedPoint) ExportString(n *BMNumber) (string, error) {
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	s := d.s
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	f := d.f
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+	ss := strconv.Itoa(s)
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+	fs := strconv.Itoa(f)
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+	// Find out if the number is negative
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+	var isNegative bool
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+	if n.number[len(n.number)-1]&amp;(uint8(128)&gt;&gt;uint(8-(s-1)%8-1)) != 0 {
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+		isNegative = true
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+	}
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+	copied := make([]byte, len(n.number))
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+	copy(copied, n.number)
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+	if isNegative {
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+		// Use a mask to clear the eventually unused bits on the last byte
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+		lastByte := (s-1)/8 + 1
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+		mask := byte(0xFF &gt;&gt; uint(8-(s-1)%8-1))
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+		copied[lastByte-1] = copied[lastByte-1] | ^mask
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+		for i := len(copied); i &lt; 8; i++ {
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+			copied = append(copied, 0xFF)
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+		}
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+	} else {
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+		for i := len(copied); i &lt; 8; i++ {
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+			copied = append(copied, 0x00)
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+		}
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+	}
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+	var number int64
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+	buf := bytes.NewReader(copied)
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+	if err := binary.Read(buf, binary.LittleEndian, &amp;number); err != nil {
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+		return &quot;&quot;, err
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+	}
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+	scale := float64(int(1) &lt;&lt; uint(f))
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+	numberF := float64(number) / scale
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+	result := &quot;0fp&lt;&quot; + ss + &quot;.&quot; + fs + &quot;&gt;&quot; + strconv.FormatFloat(numberF, &#39;f&#39;, -1, 64)
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+	return result, nil
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+}
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+func (d FixedPoint) ShowInstructions() map[string]string {
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+	return d.instructions
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+}
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+func (d FixedPoint) ShowPrefix() string {
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+	return &quot;0fp&lt;&quot; + strconv.Itoa(d.s) + &quot;.&quot; + strconv.Itoa(d.f) + &quot;&gt;&quot;
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a> b/<a href="../file/pkg/bmnumbers/type_float32.go.html">pkg/bmnumbers/type_float32.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -24,8 +24,8 @@ func (d Float32) GetSize() int {
+</a> func (d Float32) importMatchers() map[string]ImportFunc {
+ 	result := make(map[string]ImportFunc)
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-	result[&quot;^0f&lt;32&gt;(?P&lt;number&gt;[^lL].*)$&quot;] = float32Import
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	result[&quot;^0f(?P&lt;number&gt;[^lL&lt;].*)$&quot;] = float32Import
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	result[&quot;^0f&lt;32&gt;(?P&lt;number&gt;[^pPlL].*)$&quot;] = float32Import
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	result[&quot;^0f(?P&lt;number&gt;[^pPlL&lt;].*)$&quot;] = float32Import
+</a> 
+ 	return result
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/dynamical_fixed_point.go.html">pkg/procbuilder/dynamical_fixed_point.go</a> b/<a href="../file/pkg/procbuilder/dynamical_fixed_point.go.html">pkg/procbuilder/dynamical_fixed_point.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,77 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+package procbuilder
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+import (
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	&quot;regexp&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmconfig&quot;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+)
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+const (
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	FPADD = uint8(0) + iota
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	FPMULT
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	FPDIV
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+)
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+type DynFixedPoint struct {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+}
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+func (d DynFixedPoint) GetName() string {
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	return &quot;dyn_fixed_point&quot;
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+}
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+func (d DynFixedPoint) MatchName(name string) bool {
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+	re := regexp.MustCompile(&quot;multfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	if re.MatchString(name) {
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+		return true
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+	}
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+	re = regexp.MustCompile(&quot;addfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	if re.MatchString(name) {
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+		return true
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+	}
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+	re = regexp.MustCompile(&quot;divfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+	return re.MatchString(name)
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+}
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+func (d DynFixedPoint) CreateInstruction(name string) (Opcode, error) {
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+	var f, s int
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+	var opType uint8
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+	re := regexp.MustCompile(&quot;multfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+	if re.MatchString(name) {
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+		fs := re.ReplaceAllString(name, &quot;${f}&quot;)
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+		s, _ = strconv.Atoi(ss)
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+		f, _ = strconv.Atoi(fs)
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+		opType = FPMULT
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+	}
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+	re = regexp.MustCompile(&quot;addfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+	if re.MatchString(name) {
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+		fs := re.ReplaceAllString(name, &quot;${f}&quot;)
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+		s, _ = strconv.Atoi(ss)
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+		f, _ = strconv.Atoi(fs)
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+		opType = FPADD
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+	}
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+	re = regexp.MustCompile(&quot;divfps(?P&lt;s&gt;[0-9]+)f(?P&lt;f&gt;[0-9]+)&quot;)
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+	if re.MatchString(name) {
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+		ss := re.ReplaceAllString(name, &quot;${s}&quot;)
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+		fs := re.ReplaceAllString(name, &quot;${f}&quot;)
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+		s, _ = strconv.Atoi(ss)
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+		f, _ = strconv.Atoi(fs)
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+		opType = FPDIV
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+	}
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+	return FixedPoint{fpName: name, s: s, f: f, opType: opType, pipeline: new(uint8)}, nil
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+}
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+func (d DynFixedPoint) HLAssemblerGeneratorMatch(bmc *bmconfig.BmConfig) []string {
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+	result := make([]string, 0)
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+	return result
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+}
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+func (d DynFixedPoint) HLAssemblerGeneratorList(bmc *bmconfig.BmConfig, bl *bmline.BasmLine) []string {
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+	result := make([]string, 0)
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+	return result
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/dynop_fixed_point.go.html">pkg/procbuilder/dynop_fixed_point.go</a> b/<a href="../file/pkg/procbuilder/dynop_fixed_point.go.html">pkg/procbuilder/dynop_fixed_point.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,349 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+package procbuilder
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+import (
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	&quot;errors&quot;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	&quot;strconv&quot;
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	&quot;strings&quot;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmeta&quot;
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+)
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+const (
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	FPPUT = uint8(0) + iota
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+	FPGET
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+)
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+// The FixedPoint opcode is both a basic instruction and a template for other instructions.
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+type FixedPoint struct {
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+	fpName   string
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+	s        int
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+	f        int
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+	opType   uint8
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+	pipeline *uint8
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+}
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+func (op FixedPoint) Op_get_name() string {
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+	return op.fpName
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+}
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+func (op FixedPoint) Op_get_desc() string {
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+	return &quot;FixedPoint dynamical instruction &quot; + op.fpName
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+}
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+func (op FixedPoint) Op_show_assembler(arch *Arch) string {
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+	result := op.fpName + &quot; [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)] [&quot; + strconv.Itoa(int(arch.R)) + &quot;(Reg)]	// Set a register to the sum of its value with another register [&quot; + strconv.Itoa(opBits+int(arch.R)+int(arch.R)) + &quot;]\n&quot;
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+	return result
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+}
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+func (op FixedPoint) Op_get_instruction_len(arch *Arch) int {
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+	return opBits + int(arch.R) + int(arch.R) // The bits for the opcode + bits for a register + bits for another register
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+}
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+func (op FixedPoint) OpInstructionVerilogHeader(conf *Config, arch *Arch, flavor string, pName string) string {
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+	result := &quot;&quot;
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_a;\n&quot;
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+	result += &quot;\treg [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_b;\n&quot;
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+	result += &quot;\twire [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+	result += &quot;\treg	[1:0] &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_state;\n&quot;
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+	result += &quot;parameter &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_put         = 2&#39;d0,\n&quot;
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+	result += &quot;          &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_get         = 2&#39;d1;\n&quot;
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+	result += &quot;\t&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot; &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_inst (&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_a, &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_b,  &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_output_z);\n\n&quot;
+</a><a href="#h5-0-56" id="h5-0-56" class="i">+
+</a><a href="#h5-0-57" id="h5-0-57" class="i">+	return result
+</a><a href="#h5-0-58" id="h5-0-58" class="i">+}
+</a><a href="#h5-0-59" id="h5-0-59" class="i">+
+</a><a href="#h5-0-60" id="h5-0-60" class="i">+func (op FixedPoint) Op_instruction_verilog_state_machine(conf *Config, arch *Arch, rg *bmreqs.ReqRoot, flavor string) string {
+</a><a href="#h5-0-61" id="h5-0-61" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h5-0-62" id="h5-0-62" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h5-0-63" id="h5-0-63" class="i">+
+</a><a href="#h5-0-64" id="h5-0-64" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h5-0-65" id="h5-0-65" class="i">+
+</a><a href="#h5-0-66" id="h5-0-66" class="i">+	result := &quot;&quot;
+</a><a href="#h5-0-67" id="h5-0-67" class="i">+	result += &quot;					&quot; + strings.ToUpper(op.fpName) + &quot;: begin\n&quot;
+</a><a href="#h5-0-68" id="h5-0-68" class="i">+	if arch.R == 1 {
+</a><a href="#h5-0-69" id="h5-0-69" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;])\n&quot;
+</a><a href="#h5-0-70" id="h5-0-70" class="i">+	} else {
+</a><a href="#h5-0-71" id="h5-0-71" class="i">+		result += &quot;						case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h5-0-72" id="h5-0-72" class="i">+	}
+</a><a href="#h5-0-73" id="h5-0-73" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h5-0-74" id="h5-0-74" class="i">+
+</a><a href="#h5-0-75" id="h5-0-75" class="i">+		if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlyDestRegs)) {
+</a><a href="#h5-0-76" id="h5-0-76" class="i">+			cp := arch.Tag
+</a><a href="#h5-0-77" id="h5-0-77" class="i">+			req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:&quot; + op.fpName, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: Get_register_name(i), Op: bmreqs.OpCheck})
+</a><a href="#h5-0-78" id="h5-0-78" class="i">+			if req.Value == &quot;false&quot; {
+</a><a href="#h5-0-79" id="h5-0-79" class="i">+				continue
+</a><a href="#h5-0-80" id="h5-0-80" class="i">+			}
+</a><a href="#h5-0-81" id="h5-0-81" class="i">+		}
+</a><a href="#h5-0-82" id="h5-0-82" class="i">+
+</a><a href="#h5-0-83" id="h5-0-83" class="i">+		result += &quot;						&quot; + strings.ToUpper(Get_register_name(i)) + &quot; : begin\n&quot;
+</a><a href="#h5-0-84" id="h5-0-84" class="i">+
+</a><a href="#h5-0-85" id="h5-0-85" class="i">+		if arch.R == 1 {
+</a><a href="#h5-0-86" id="h5-0-86" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;])\n&quot;
+</a><a href="#h5-0-87" id="h5-0-87" class="i">+		} else {
+</a><a href="#h5-0-88" id="h5-0-88" class="i">+			result += &quot;							case (current_instruction[&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-1) + &quot;:&quot; + strconv.Itoa(rom_word-opBits-int(arch.R)-int(arch.R)) + &quot;])\n&quot;
+</a><a href="#h5-0-89" id="h5-0-89" class="i">+		}
+</a><a href="#h5-0-90" id="h5-0-90" class="i">+
+</a><a href="#h5-0-91" id="h5-0-91" class="i">+		for j := 0; j &lt; reg_num; j++ {
+</a><a href="#h5-0-92" id="h5-0-92" class="i">+
+</a><a href="#h5-0-93" id="h5-0-93" class="i">+			if IsHwOptimizationSet(conf.HwOptimizations, HwOptimizations(OnlySrcRegs)) {
+</a><a href="#h5-0-94" id="h5-0-94" class="i">+				cp := arch.Tag
+</a><a href="#h5-0-95" id="h5-0-95" class="i">+				req := rg.Requirement(bmreqs.ReqRequest{Node: &quot;/bm:cps/id:&quot; + cp + &quot;/opcodes:&quot; + op.fpName, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: Get_register_name(j), Op: bmreqs.OpCheck})
+</a><a href="#h5-0-96" id="h5-0-96" class="i">+				if req.Value == &quot;false&quot; {
+</a><a href="#h5-0-97" id="h5-0-97" class="i">+					continue
+</a><a href="#h5-0-98" id="h5-0-98" class="i">+				}
+</a><a href="#h5-0-99" id="h5-0-99" class="i">+			}
+</a><a href="#h5-0-100" id="h5-0-100" class="i">+
+</a><a href="#h5-0-101" id="h5-0-101" class="i">+			result += &quot;							&quot; + strings.ToUpper(Get_register_name(j)) + &quot; : begin\n&quot;
+</a><a href="#h5-0-102" id="h5-0-102" class="i">+			result += &quot;							case (&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_state)\n&quot;
+</a><a href="#h5-0-103" id="h5-0-103" class="i">+			result += &quot;							&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_put : begin\n&quot;
+</a><a href="#h5-0-104" id="h5-0-104" class="i">+			result += &quot;								&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_a &lt;= #1 _&quot; + strings.ToLower(Get_register_name(i)) + &quot;;\n&quot;
+</a><a href="#h5-0-105" id="h5-0-105" class="i">+			result += &quot;								&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_input_b &lt;= #1 _&quot; + strings.ToLower(Get_register_name(j)) + &quot;;\n&quot;
+</a><a href="#h5-0-106" id="h5-0-106" class="i">+			result += &quot;								&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_get;\n&quot;
+</a><a href="#h5-0-107" id="h5-0-107" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h5-0-108" id="h5-0-108" class="i">+			result += &quot;							&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_get : begin\n&quot;
+</a><a href="#h5-0-109" id="h5-0-109" class="i">+			result += &quot;								_&quot; + strings.ToLower(Get_register_name(i)) + &quot; &lt;= #1 &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_output_z;\n&quot;
+</a><a href="#h5-0-110" id="h5-0-110" class="i">+			result += &quot;								&quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_state &lt;= #1 &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;_put;\n&quot;
+</a><a href="#h5-0-111" id="h5-0-111" class="i">+			result += NextInstruction(conf, arch, 8, &quot;_pc + 1&#39;b1&quot;)
+</a><a href="#h5-0-112" id="h5-0-112" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h5-0-113" id="h5-0-113" class="i">+			result += &quot;							endcase\n&quot;
+</a><a href="#h5-0-114" id="h5-0-114" class="i">+			result += &quot;								$display(\&quot;&quot; + strings.ToUpper(op.fpName) + &quot; &quot; + strings.ToUpper(Get_register_name(i)) + &quot; &quot; + strings.ToUpper(Get_register_name(j)) + &quot;\&quot;);\n&quot;
+</a><a href="#h5-0-115" id="h5-0-115" class="i">+			result += &quot;							end\n&quot;
+</a><a href="#h5-0-116" id="h5-0-116" class="i">+		}
+</a><a href="#h5-0-117" id="h5-0-117" class="i">+		result += &quot;							endcase\n&quot;
+</a><a href="#h5-0-118" id="h5-0-118" class="i">+		result += &quot;						end\n&quot;
+</a><a href="#h5-0-119" id="h5-0-119" class="i">+	}
+</a><a href="#h5-0-120" id="h5-0-120" class="i">+	result += &quot;						endcase\n&quot;
+</a><a href="#h5-0-121" id="h5-0-121" class="i">+	result += &quot;					end\n&quot;
+</a><a href="#h5-0-122" id="h5-0-122" class="i">+	return result
+</a><a href="#h5-0-123" id="h5-0-123" class="i">+}
+</a><a href="#h5-0-124" id="h5-0-124" class="i">+
+</a><a href="#h5-0-125" id="h5-0-125" class="i">+func (op FixedPoint) Op_instruction_verilog_footer(arch *Arch, flavor string) string {
+</a><a href="#h5-0-126" id="h5-0-126" class="i">+	// TODO
+</a><a href="#h5-0-127" id="h5-0-127" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-128" id="h5-0-128" class="i">+}
+</a><a href="#h5-0-129" id="h5-0-129" class="i">+
+</a><a href="#h5-0-130" id="h5-0-130" class="i">+func (op FixedPoint) Assembler(arch *Arch, words []string) (string, error) {
+</a><a href="#h5-0-131" id="h5-0-131" class="i">+	opBits := arch.Opcodes_bits()
+</a><a href="#h5-0-132" id="h5-0-132" class="i">+	rom_word := arch.Max_word()
+</a><a href="#h5-0-133" id="h5-0-133" class="i">+
+</a><a href="#h5-0-134" id="h5-0-134" class="i">+	reg_num := 1 &lt;&lt; arch.R
+</a><a href="#h5-0-135" id="h5-0-135" class="i">+
+</a><a href="#h5-0-136" id="h5-0-136" class="i">+	if len(words) != 2 {
+</a><a href="#h5-0-137" id="h5-0-137" class="i">+		return &quot;&quot;, Prerror{&quot;Wrong arguments number&quot;}
+</a><a href="#h5-0-138" id="h5-0-138" class="i">+	}
+</a><a href="#h5-0-139" id="h5-0-139" class="i">+
+</a><a href="#h5-0-140" id="h5-0-140" class="i">+	result := &quot;&quot;
+</a><a href="#h5-0-141" id="h5-0-141" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h5-0-142" id="h5-0-142" class="i">+		if words[0] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h5-0-143" id="h5-0-143" class="i">+			result += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h5-0-144" id="h5-0-144" class="i">+			break
+</a><a href="#h5-0-145" id="h5-0-145" class="i">+		}
+</a><a href="#h5-0-146" id="h5-0-146" class="i">+	}
+</a><a href="#h5-0-147" id="h5-0-147" class="i">+
+</a><a href="#h5-0-148" id="h5-0-148" class="i">+	if result == &quot;&quot; {
+</a><a href="#h5-0-149" id="h5-0-149" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[0]}
+</a><a href="#h5-0-150" id="h5-0-150" class="i">+	}
+</a><a href="#h5-0-151" id="h5-0-151" class="i">+
+</a><a href="#h5-0-152" id="h5-0-152" class="i">+	partial := &quot;&quot;
+</a><a href="#h5-0-153" id="h5-0-153" class="i">+	for i := 0; i &lt; reg_num; i++ {
+</a><a href="#h5-0-154" id="h5-0-154" class="i">+		if words[1] == strings.ToLower(Get_register_name(i)) {
+</a><a href="#h5-0-155" id="h5-0-155" class="i">+			partial += zeros_prefix(int(arch.R), get_binary(i))
+</a><a href="#h5-0-156" id="h5-0-156" class="i">+			break
+</a><a href="#h5-0-157" id="h5-0-157" class="i">+		}
+</a><a href="#h5-0-158" id="h5-0-158" class="i">+	}
+</a><a href="#h5-0-159" id="h5-0-159" class="i">+
+</a><a href="#h5-0-160" id="h5-0-160" class="i">+	if partial == &quot;&quot; {
+</a><a href="#h5-0-161" id="h5-0-161" class="i">+		return &quot;&quot;, Prerror{&quot;Unknown register name &quot; + words[1]}
+</a><a href="#h5-0-162" id="h5-0-162" class="i">+	}
+</a><a href="#h5-0-163" id="h5-0-163" class="i">+
+</a><a href="#h5-0-164" id="h5-0-164" class="i">+	result += partial
+</a><a href="#h5-0-165" id="h5-0-165" class="i">+
+</a><a href="#h5-0-166" id="h5-0-166" class="i">+	for i := opBits + 2*int(arch.R); i &lt; rom_word; i++ {
+</a><a href="#h5-0-167" id="h5-0-167" class="i">+		result += &quot;0&quot;
+</a><a href="#h5-0-168" id="h5-0-168" class="i">+	}
+</a><a href="#h5-0-169" id="h5-0-169" class="i">+
+</a><a href="#h5-0-170" id="h5-0-170" class="i">+	return result, nil
+</a><a href="#h5-0-171" id="h5-0-171" class="i">+}
+</a><a href="#h5-0-172" id="h5-0-172" class="i">+
+</a><a href="#h5-0-173" id="h5-0-173" class="i">+func (op FixedPoint) Disassembler(arch *Arch, instr string) (string, error) {
+</a><a href="#h5-0-174" id="h5-0-174" class="i">+	reg_id := get_id(instr[:arch.R])
+</a><a href="#h5-0-175" id="h5-0-175" class="i">+	result := strings.ToLower(Get_register_name(reg_id)) + &quot; &quot;
+</a><a href="#h5-0-176" id="h5-0-176" class="i">+	reg_id = get_id(instr[arch.R : 2*int(arch.R)])
+</a><a href="#h5-0-177" id="h5-0-177" class="i">+	result += strings.ToLower(Get_register_name(reg_id))
+</a><a href="#h5-0-178" id="h5-0-178" class="i">+	return result, nil
+</a><a href="#h5-0-179" id="h5-0-179" class="i">+}
+</a><a href="#h5-0-180" id="h5-0-180" class="i">+
+</a><a href="#h5-0-181" id="h5-0-181" class="i">+func (op FixedPoint) Simulate(vm *VM, instr string) error {
+</a><a href="#h5-0-182" id="h5-0-182" class="i">+	regBits := vm.Mach.R
+</a><a href="#h5-0-183" id="h5-0-183" class="i">+	regDest := get_id(instr[:regBits])
+</a><a href="#h5-0-184" id="h5-0-184" class="i">+	regSrc := get_id(instr[regBits : regBits*2])
+</a><a href="#h5-0-185" id="h5-0-185" class="i">+
+</a><a href="#h5-0-186" id="h5-0-186" class="i">+	s := int64(uint64(1) &lt;&lt; (op.f))
+</a><a href="#h5-0-187" id="h5-0-187" class="i">+
+</a><a href="#h5-0-188" id="h5-0-188" class="i">+	switch *op.pipeline {
+</a><a href="#h5-0-189" id="h5-0-189" class="i">+	case FPPUT:
+</a><a href="#h5-0-190" id="h5-0-190" class="i">+		*op.pipeline = LQGET
+</a><a href="#h5-0-191" id="h5-0-191" class="i">+	case LQGET:
+</a><a href="#h5-0-192" id="h5-0-192" class="i">+		switch op.opType {
+</a><a href="#h5-0-193" id="h5-0-193" class="i">+		case LQADD:
+</a><a href="#h5-0-194" id="h5-0-194" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a><a href="#h5-0-195" id="h5-0-195" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) + Int8FromBits(vm.Registers[regSrc].(uint8)))
+</a><a href="#h5-0-196" id="h5-0-196" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a><a href="#h5-0-197" id="h5-0-197" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) + Int16FromBits(vm.Registers[regSrc].(uint16)))
+</a><a href="#h5-0-198" id="h5-0-198" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a><a href="#h5-0-199" id="h5-0-199" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) + Int32FromBits(vm.Registers[regSrc].(uint32)))
+</a><a href="#h5-0-200" id="h5-0-200" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a><a href="#h5-0-201" id="h5-0-201" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) + Int64FromBits(vm.Registers[regSrc].(uint64)))
+</a><a href="#h5-0-202" id="h5-0-202" class="i">+			} else {
+</a><a href="#h5-0-203" id="h5-0-203" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a><a href="#h5-0-204" id="h5-0-204" class="i">+			}
+</a><a href="#h5-0-205" id="h5-0-205" class="i">+		case LQMULT:
+</a><a href="#h5-0-206" id="h5-0-206" class="i">+			// TODO Check if this is correct
+</a><a href="#h5-0-207" id="h5-0-207" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a><a href="#h5-0-208" id="h5-0-208" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * Int8FromBits(vm.Registers[regSrc].(uint8)) / int8(s))
+</a><a href="#h5-0-209" id="h5-0-209" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a><a href="#h5-0-210" id="h5-0-210" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * Int16FromBits(vm.Registers[regSrc].(uint16)) / int16(s))
+</a><a href="#h5-0-211" id="h5-0-211" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a><a href="#h5-0-212" id="h5-0-212" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * Int32FromBits(vm.Registers[regSrc].(uint32)) / int32(s))
+</a><a href="#h5-0-213" id="h5-0-213" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a><a href="#h5-0-214" id="h5-0-214" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * Int64FromBits(vm.Registers[regSrc].(uint64)) / int64(s))
+</a><a href="#h5-0-215" id="h5-0-215" class="i">+			} else {
+</a><a href="#h5-0-216" id="h5-0-216" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a><a href="#h5-0-217" id="h5-0-217" class="i">+			}
+</a><a href="#h5-0-218" id="h5-0-218" class="i">+		case LQDIV:
+</a><a href="#h5-0-219" id="h5-0-219" class="i">+			// TODO Check if this is correct
+</a><a href="#h5-0-220" id="h5-0-220" class="i">+			if vm.Mach.Rsize &lt;= 8 {
+</a><a href="#h5-0-221" id="h5-0-221" class="i">+				vm.Registers[regDest] = Int8bits(Int8FromBits(vm.Registers[regDest].(uint8)) * int8(s) / Int8FromBits(vm.Registers[regSrc].(uint8)))
+</a><a href="#h5-0-222" id="h5-0-222" class="i">+			} else if vm.Mach.Rsize &lt;= 16 {
+</a><a href="#h5-0-223" id="h5-0-223" class="i">+				vm.Registers[regDest] = Int16bits(Int16FromBits(vm.Registers[regDest].(uint16)) * int16(s) / Int16FromBits(vm.Registers[regSrc].(uint16)))
+</a><a href="#h5-0-224" id="h5-0-224" class="i">+			} else if vm.Mach.Rsize &lt;= 32 {
+</a><a href="#h5-0-225" id="h5-0-225" class="i">+				vm.Registers[regDest] = Int32bits(Int32FromBits(vm.Registers[regDest].(uint32)) * int32(s) / Int32FromBits(vm.Registers[regSrc].(uint32)))
+</a><a href="#h5-0-226" id="h5-0-226" class="i">+			} else if vm.Mach.Rsize &lt;= 64 {
+</a><a href="#h5-0-227" id="h5-0-227" class="i">+				vm.Registers[regDest] = Int64bits(Int64FromBits(vm.Registers[regDest].(uint64)) * int64(s) / Int64FromBits(vm.Registers[regSrc].(uint64)))
+</a><a href="#h5-0-228" id="h5-0-228" class="i">+			} else {
+</a><a href="#h5-0-229" id="h5-0-229" class="i">+				return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</a><a href="#h5-0-230" id="h5-0-230" class="i">+			}
+</a><a href="#h5-0-231" id="h5-0-231" class="i">+		}
+</a><a href="#h5-0-232" id="h5-0-232" class="i">+		vm.Pc = vm.Pc + 1
+</a><a href="#h5-0-233" id="h5-0-233" class="i">+		*op.pipeline = LQPUT
+</a><a href="#h5-0-234" id="h5-0-234" class="i">+	}
+</a><a href="#h5-0-235" id="h5-0-235" class="i">+	return nil
+</a><a href="#h5-0-236" id="h5-0-236" class="i">+}
+</a><a href="#h5-0-237" id="h5-0-237" class="i">+
+</a><a href="#h5-0-238" id="h5-0-238" class="i">+// The random genaration does nothing
+</a><a href="#h5-0-239" id="h5-0-239" class="i">+func (op FixedPoint) Generate(arch *Arch) string {
+</a><a href="#h5-0-240" id="h5-0-240" class="i">+	// TODO
+</a><a href="#h5-0-241" id="h5-0-241" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-242" id="h5-0-242" class="i">+}
+</a><a href="#h5-0-243" id="h5-0-243" class="i">+
+</a><a href="#h5-0-244" id="h5-0-244" class="i">+func (op FixedPoint) Required_shared() (bool, []string) {
+</a><a href="#h5-0-245" id="h5-0-245" class="i">+	// TODO
+</a><a href="#h5-0-246" id="h5-0-246" class="i">+	return false, []string{}
+</a><a href="#h5-0-247" id="h5-0-247" class="i">+}
+</a><a href="#h5-0-248" id="h5-0-248" class="i">+
+</a><a href="#h5-0-249" id="h5-0-249" class="i">+func (op FixedPoint) Required_modes() (bool, []string) {
+</a><a href="#h5-0-250" id="h5-0-250" class="i">+	return false, []string{}
+</a><a href="#h5-0-251" id="h5-0-251" class="i">+}
+</a><a href="#h5-0-252" id="h5-0-252" class="i">+
+</a><a href="#h5-0-253" id="h5-0-253" class="i">+func (op FixedPoint) Forbidden_modes() (bool, []string) {
+</a><a href="#h5-0-254" id="h5-0-254" class="i">+	return false, []string{}
+</a><a href="#h5-0-255" id="h5-0-255" class="i">+}
+</a><a href="#h5-0-256" id="h5-0-256" class="i">+
+</a><a href="#h5-0-257" id="h5-0-257" class="i">+func (op FixedPoint) Op_instruction_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h5-0-258" id="h5-0-258" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-259" id="h5-0-259" class="i">+}
+</a><a href="#h5-0-260" id="h5-0-260" class="i">+
+</a><a href="#h5-0-261" id="h5-0-261" class="i">+func (Op FixedPoint) Op_instruction_verilog_reset(arch *Arch, flavor string) string {
+</a><a href="#h5-0-262" id="h5-0-262" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-263" id="h5-0-263" class="i">+}
+</a><a href="#h5-0-264" id="h5-0-264" class="i">+
+</a><a href="#h5-0-265" id="h5-0-265" class="i">+func (Op FixedPoint) Op_instruction_verilog_default_state(arch *Arch, flavor string) string {
+</a><a href="#h5-0-266" id="h5-0-266" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-267" id="h5-0-267" class="i">+}
+</a><a href="#h5-0-268" id="h5-0-268" class="i">+
+</a><a href="#h5-0-269" id="h5-0-269" class="i">+func (Op FixedPoint) Op_instruction_verilog_internal_state(arch *Arch, flavor string) string {
+</a><a href="#h5-0-270" id="h5-0-270" class="i">+	return &quot;&quot;
+</a><a href="#h5-0-271" id="h5-0-271" class="i">+}
+</a><a href="#h5-0-272" id="h5-0-272" class="i">+
+</a><a href="#h5-0-273" id="h5-0-273" class="i">+func (op FixedPoint) Op_instruction_verilog_extra_modules(arch *Arch, flavor string) ([]string, []string) {
+</a><a href="#h5-0-274" id="h5-0-274" class="i">+	result := &quot;\n\n&quot;
+</a><a href="#h5-0-275" id="h5-0-275" class="i">+	var moduleName string
+</a><a href="#h5-0-276" id="h5-0-276" class="i">+	s := strconv.Itoa(op.s - 1)
+</a><a href="#h5-0-277" id="h5-0-277" class="i">+	f := strconv.Itoa(op.f)
+</a><a href="#h5-0-278" id="h5-0-278" class="i">+
+</a><a href="#h5-0-279" id="h5-0-279" class="i">+	result += &quot;module &quot; + op.fpName + &quot;_&quot; + arch.Tag + &quot;(\n&quot;
+</a><a href="#h5-0-280" id="h5-0-280" class="i">+	result += &quot;input_a,\n&quot;
+</a><a href="#h5-0-281" id="h5-0-281" class="i">+	result += &quot;input_b,\n&quot;
+</a><a href="#h5-0-282" id="h5-0-282" class="i">+	result += &quot;output_z);\n&quot;
+</a><a href="#h5-0-283" id="h5-0-283" class="i">+	result += &quot;	input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_a;\n&quot;
+</a><a href="#h5-0-284" id="h5-0-284" class="i">+	result += &quot;	input signed    [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] input_b;\n&quot;
+</a><a href="#h5-0-285" id="h5-0-285" class="i">+	result += &quot;	output signed   [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] output_z;\n&quot;
+</a><a href="#h5-0-286" id="h5-0-286" class="i">+	result += &quot;\n&quot;
+</a><a href="#h5-0-287" id="h5-0-287" class="i">+
+</a><a href="#h5-0-288" id="h5-0-288" class="i">+	switch op.opType {
+</a><a href="#h5-0-289" id="h5-0-289" class="i">+	case LQADD:
+</a><a href="#h5-0-290" id="h5-0-290" class="i">+		result += &quot;	assign output_z = input_a + input_b;\n&quot;
+</a><a href="#h5-0-291" id="h5-0-291" class="i">+		moduleName = &quot;adder&quot;
+</a><a href="#h5-0-292" id="h5-0-292" class="i">+	case LQMULT:
+</a><a href="#h5-0-293" id="h5-0-293" class="i">+		result += &quot;	wire signed [&quot; + strconv.Itoa(int(arch.Rsize)-1) + &quot;:0] mult_result;\n&quot;
+</a><a href="#h5-0-294" id="h5-0-294" class="i">+		result += &quot;	assign mult_result = input_a * input_b;\n&quot;
+</a><a href="#h5-0-295" id="h5-0-295" class="i">+		result += &quot;	assign output_z = (mult_result[&quot; + s + &quot;]) ? (mult_result &gt;&gt;&gt; &quot; + f + &quot;) : (mult_result &gt;&gt; &quot; + f + &quot;);\n&quot;
+</a><a href="#h5-0-296" id="h5-0-296" class="i">+		moduleName = &quot;multiplier&quot;
+</a><a href="#h5-0-297" id="h5-0-297" class="i">+	case LQDIV:
+</a><a href="#h5-0-298" id="h5-0-298" class="i">+		result += &quot;	assign output_z = (input_a[&quot; + s + &quot;] ^ input_b[&quot; + s + &quot;]) ? -((((input_a[&quot; + s + &quot;] ? -input_a : input_a) &lt;&lt;&lt; &quot; + f + &quot;) / (input_b[&quot; + s + &quot;] ? -input_b : input_b))) : ((input_a &lt;&lt;&lt; &quot; + f + &quot;) / input_b);\n&quot;
+</a><a href="#h5-0-299" id="h5-0-299" class="i">+		moduleName = &quot;divider&quot;
+</a><a href="#h5-0-300" id="h5-0-300" class="i">+	}
+</a><a href="#h5-0-301" id="h5-0-301" class="i">+	result += &quot;endmodule\n&quot;
+</a><a href="#h5-0-302" id="h5-0-302" class="i">+
+</a><a href="#h5-0-303" id="h5-0-303" class="i">+	moduleNames := []string{moduleName}
+</a><a href="#h5-0-304" id="h5-0-304" class="i">+	moduleCodes := []string{result}
+</a><a href="#h5-0-305" id="h5-0-305" class="i">+
+</a><a href="#h5-0-306" id="h5-0-306" class="i">+	return moduleNames, moduleCodes
+</a><a href="#h5-0-307" id="h5-0-307" class="i">+}
+</a><a href="#h5-0-308" id="h5-0-308" class="i">+
+</a><a href="#h5-0-309" id="h5-0-309" class="i">+func (Op FixedPoint) AbstractAssembler(arch *Arch, words []string) ([]UsageNotify, error) {
+</a><a href="#h5-0-310" id="h5-0-310" class="i">+	result := make([]UsageNotify, 0)
+</a><a href="#h5-0-311" id="h5-0-311" class="i">+	return result, nil
+</a><a href="#h5-0-312" id="h5-0-312" class="i">+}
+</a><a href="#h5-0-313" id="h5-0-313" class="i">+
+</a><a href="#h5-0-314" id="h5-0-314" class="i">+func (Op FixedPoint) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level uint8, blockname string, objects []string) string {
+</a><a href="#h5-0-315" id="h5-0-315" class="i">+	result := &quot;&quot;
+</a><a href="#h5-0-316" id="h5-0-316" class="i">+	switch blockname {
+</a><a href="#h5-0-317" id="h5-0-317" class="i">+	default:
+</a><a href="#h5-0-318" id="h5-0-318" class="i">+		result = &quot;&quot;
+</a><a href="#h5-0-319" id="h5-0-319" class="i">+	}
+</a><a href="#h5-0-320" id="h5-0-320" class="i">+	return result
+</a><a href="#h5-0-321" id="h5-0-321" class="i">+}
+</a><a href="#h5-0-322" id="h5-0-322" class="i">+func (Op FixedPoint) HLAssemblerMatch(arch *Arch) []string {
+</a><a href="#h5-0-323" id="h5-0-323" class="i">+	result := make([]string, 0)
+</a><a href="#h5-0-324" id="h5-0-324" class="i">+	result = append(result, Op.fpName+&quot;::*--type=reg::*--type=reg&quot;)
+</a><a href="#h5-0-325" id="h5-0-325" class="i">+	return result
+</a><a href="#h5-0-326" id="h5-0-326" class="i">+}
+</a><a href="#h5-0-327" id="h5-0-327" class="i">+func (Op FixedPoint) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+</a><a href="#h5-0-328" id="h5-0-328" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h5-0-329" id="h5-0-329" class="i">+	case Op.fpName:
+</a><a href="#h5-0-330" id="h5-0-330" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h5-0-331" id="h5-0-331" class="i">+		regSrc := line.Elements[1].GetValue()
+</a><a href="#h5-0-332" id="h5-0-332" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h5-0-333" id="h5-0-333" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h5-0-334" id="h5-0-334" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;opcodes&quot;, Value: Op.fpName, Op: bmreqs.OpAdd})
+</a><a href="#h5-0-335" id="h5-0-335" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:&quot; + Op.fpName, T: bmreqs.ObjectSet, Name: &quot;destregs&quot;, Value: regDst, Op: bmreqs.OpAdd})
+</a><a href="#h5-0-336" id="h5-0-336" class="i">+		rg.Requirement(bmreqs.ReqRequest{Node: node + &quot;/opcodes:&quot; + Op.fpName, T: bmreqs.ObjectSet, Name: &quot;sourceregs&quot;, Value: regSrc, Op: bmreqs.OpAdd})
+</a><a href="#h5-0-337" id="h5-0-337" class="i">+		return line, nil
+</a><a href="#h5-0-338" id="h5-0-338" class="i">+	}
+</a><a href="#h5-0-339" id="h5-0-339" class="i">+	return nil, errors.New(&quot;HL Assembly normalize failed&quot;)
+</a><a href="#h5-0-340" id="h5-0-340" class="i">+}
+</a><a href="#h5-0-341" id="h5-0-341" class="i">+
+</a><a href="#h5-0-342" id="h5-0-342" class="i">+func (Op FixedPoint) ExtraFiles(arch *Arch) ([]string, []string) {
+</a><a href="#h5-0-343" id="h5-0-343" class="i">+	return []string{}, []string{}
+</a><a href="#h5-0-344" id="h5-0-344" class="i">+}
+</a><a href="#h5-0-345" id="h5-0-345" class="i">+
+</a><a href="#h5-0-346" id="h5-0-346" class="i">+func (Op FixedPoint) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+</a><a href="#h5-0-347" id="h5-0-347" class="i">+	return nil, nil
+</a><a href="#h5-0-348" id="h5-0-348" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a> b/<a href="../file/pkg/procbuilder/machine.go.html">pkg/procbuilder/machine.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -126,6 +126,7 @@ func init() {
+</a> 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynRsets{})
+ 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynCall{})
+ 	AllDynamicalInstructions = append(AllDynamicalInstructions, DynStack{})
+<a href="#h6-0-3" id="h6-0-3" class="i">+	AllDynamicalInstructions = append(AllDynamicalInstructions, DynFixedPoint{})
+</a> 
+ 	Allshared = make([]Sharedel, 0)
+ 	Allshared = append(Allshared, Sharedmem{})
+</pre>
+</div>
+</body>
+</html>

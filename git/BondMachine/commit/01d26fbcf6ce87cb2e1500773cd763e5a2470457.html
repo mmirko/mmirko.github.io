@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Resolver and ROM - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/01d26fbcf6ce87cb2e1500773cd763e5a2470457.html">01d26fbcf6ce87cb2e1500773cd763e5a2470457</a>
+<b>parent</b> <a href="../commit/86f8d0417c7217c83222da120c3445af59303861.html">86f8d0417c7217c83222da120c3445af59303861</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2023 17:06:56 +0200
+
+Resolver and ROM
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/memcomposer.go</a></td><td> | </td><td class="num">230</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/basm/passes.go</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">pkg/basm/sectioncleaner.go</a></td><td> | </td><td class="num">59</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/basm/symbolresolver.go</a></td><td> | </td><td class="num">131</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_mulc.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_mult.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+</table></pre><pre>7 files changed, 336 insertions(+), 112 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -99,6 +99,7 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		passDynamicalInstructions |
+ 		passSymbolTagger1 |
+ 		passSymbolTagger2 |
+<a href="#h0-0-3" id="h0-0-3" class="i">+		passSymbolTagger3 |
+</a> 		passDataSections2Bytes |
+ 		passMetadataInfer1 |
+ 		passMetadataInfer2 |
+<a href="#h0-1" id="h0-1" class="h">@@ -109,7 +110,8 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		passFragmentPruner |
+ 		passFragmentComposer |
+ 		passFragmentOptimizer1 |
+<a href="#h0-1-3" id="h0-1-3" class="d">-		passMemComposer
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		passMemComposer |
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		passSectionCleaner
+</a> 
+ 	bi.matchers = make([]*bmline.BasmLine, 0)
+ 	bi.matchersOps = make([]procbuilder.Opcode, 0)
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a> b/<a href="../file/pkg/basm/memcomposer.go.html">pkg/basm/memcomposer.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,6 +4,9 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+ 	&quot;strconv&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;strings&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmreqs&quot;
+</a> )
+ 
+ func memComposer(bi *BasmInstance) error {
+<a href="#h1-1" id="h1-1" class="h">@@ -12,91 +15,200 @@ func memComposer(bi *BasmInstance) error {
+</a> 		fmt.Println(green(&quot;\tConnecting CP code and ROM:&quot;))
+ 	}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	removalList := make(map[string]struct{})
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-
+</a> 	// Loop over the CP code and data and connect them to the ROM
+ 	for _, cp := range bi.cps {
+<a href="#h1-1-7" id="h1-1-7" class="d">-		code := cp.GetMeta(&quot;romcode&quot;)
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-		data := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-		if code == &quot;&quot; || data == &quot;&quot; {
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-			continue
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		romAlternatives := make([]string, 0)
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		ramAlternatives := make([]string, 0)
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+		message := &quot;\t\tConnecting &quot;
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		cpNewSectionName := &quot;&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		dataNames := &quot;&quot;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		romCodeName := cp.GetMeta(&quot;romcode&quot;)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		if romCodeName != &quot;&quot; {
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+			message += &quot;romcode &quot; + romCodeName + &quot;, &quot;
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+			if _, ok := bi.sections[romCodeName]; !ok {
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+				return errors.New(&quot;ROM code section &quot; + romCodeName + &quot; not found&quot;)
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			}
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+		}
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+		romDataName := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+		if romDataName != &quot;&quot; {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+			message += &quot;romdata &quot; + romDataName + &quot;, &quot;
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			dataNames += &quot;_od_&quot; + romDataName
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+			if _, ok := bi.sections[romDataName]; !ok {
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+				return errors.New(&quot;ROM data section &quot; + romDataName + &quot; not found&quot;)
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+			}
+</a> 		}
+<a href="#h1-1-33" id="h1-1-33" class="i">+		ramCodeName := cp.GetMeta(&quot;ramcode&quot;)
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+		if ramCodeName != &quot;&quot; {
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+			message += &quot;ramcode &quot; + ramCodeName + &quot;, &quot;
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+			if _, ok := bi.sections[ramCodeName]; !ok {
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+				return errors.New(&quot;RAM code section &quot; + ramCodeName + &quot; not found&quot;)
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+			}
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+		}
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+		ramDataName := cp.GetMeta(&quot;ramdata&quot;)
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+		if ramDataName != &quot;&quot; {
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+			message += &quot;ramdata &quot; + ramDataName + &quot;, &quot;
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+			dataNames += &quot;_ad_&quot; + ramDataName
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+			if _, ok := bi.sections[ramDataName]; !ok {
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+				return errors.New(&quot;RAM data section &quot; + ramDataName + &quot; not found&quot;)
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+			}
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+		}
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+		romSections := make([]string, 0)
+</a> 
+<a href="#h1-1-51" id="h1-1-51" class="d">-		if bi.debug {
+</a><a href="#h1-1-52" id="h1-1-52" class="d">-			fmt.Println(green(&quot;\t\tConnecting code &quot; + code + &quot; and data &quot; + data))
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+		if romCodeName != &quot;&quot; {
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+			alts := bi.sections[romCodeName].sectionBody.GetMeta(&quot;alternatives&quot;)
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+			if alts != &quot;&quot; {
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+				splitAlts := strings.Split(alts, &quot;:&quot;)
+</a><a href="#h1-1-57" id="h1-1-57" class="i">+				romSections = append(romSections, splitAlts...)
+</a><a href="#h1-1-58" id="h1-1-58" class="i">+			} else {
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+				romSections = append(romSections, romCodeName)
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+			}
+</a> 		}
+ 
+<a href="#h1-1-63" id="h1-1-63" class="d">-		sectionCode := bi.sections[code]
+</a><a href="#h1-1-64" id="h1-1-64" class="d">-		sectionData := bi.sections[data]
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+		ramSections := make([]string, 0)
+</a> 
+<a href="#h1-1-67" id="h1-1-67" class="d">-		sectionLength := len(sectionCode.sectionBody.Lines)
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+		if ramCodeName != &quot;&quot; {
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+			alts := bi.sections[ramCodeName].sectionBody.GetMeta(&quot;alternatives&quot;)
+</a><a href="#h1-1-70" id="h1-1-70" class="i">+			if alts != &quot;&quot; {
+</a><a href="#h1-1-71" id="h1-1-71" class="i">+				splitAlts := strings.Split(alts, &quot;:&quot;)
+</a><a href="#h1-1-72" id="h1-1-72" class="i">+				ramSections = append(ramSections, splitAlts...)
+</a><a href="#h1-1-73" id="h1-1-73" class="i">+			} else {
+</a><a href="#h1-1-74" id="h1-1-74" class="i">+				ramSections = append(ramSections, ramCodeName)
+</a><a href="#h1-1-75" id="h1-1-75" class="i">+			}
+</a><a href="#h1-1-76" id="h1-1-76" class="i">+		}
+</a> 
+<a href="#h1-1-78" id="h1-1-78" class="d">-		if bi.debug {
+</a><a href="#h1-1-79" id="h1-1-79" class="d">-			fmt.Println(green(&quot;\t\t\tCode section length: &quot; + fmt.Sprintf(&quot;%d&quot;, sectionLength)))
+</a><a href="#h1-1-80" id="h1-1-80" class="i">+		var romData *BasmSection
+</a><a href="#h1-1-81" id="h1-1-81" class="i">+		var ramData *BasmSection
+</a><a href="#h1-1-82" id="h1-1-82" class="i">+
+</a><a href="#h1-1-83" id="h1-1-83" class="i">+		if romDataName != &quot;&quot; {
+</a><a href="#h1-1-84" id="h1-1-84" class="i">+			romData = bi.sections[romDataName]
+</a><a href="#h1-1-85" id="h1-1-85" class="i">+		}
+</a><a href="#h1-1-86" id="h1-1-86" class="i">+		if ramDataName != &quot;&quot; {
+</a><a href="#h1-1-87" id="h1-1-87" class="i">+			ramData = bi.sections[ramDataName]
+</a> 		}
+ 
+<a href="#h1-1-90" id="h1-1-90" class="d">-		cpNewSectionName := &quot;coderom_&quot; + code + &quot;_&quot; + data
+</a><a href="#h1-1-91" id="h1-1-91" class="d">-
+</a><a href="#h1-1-92" id="h1-1-92" class="d">-		newSection := new(BasmSection)
+</a><a href="#h1-1-93" id="h1-1-93" class="d">-		newSection.sectionName = cpNewSectionName
+</a><a href="#h1-1-94" id="h1-1-94" class="d">-		newSection.sectionType = sectRomText
+</a><a href="#h1-1-95" id="h1-1-95" class="d">-		newSection.sectionBody = sectionCode.sectionBody.Copy()
+</a><a href="#h1-1-96" id="h1-1-96" class="d">-
+</a><a href="#h1-1-97" id="h1-1-97" class="d">-		// Collection locations
+</a><a href="#h1-1-98" id="h1-1-98" class="d">-		locations := make(map[string]string)
+</a><a href="#h1-1-99" id="h1-1-99" class="d">-		for _, vari := range sectionData.sectionBody.Lines {
+</a><a href="#h1-1-100" id="h1-1-100" class="d">-			varName := vari.Operation.GetValue()
+</a><a href="#h1-1-101" id="h1-1-101" class="d">-			offset := vari.Operation.GetMeta(&quot;offset&quot;)
+</a><a href="#h1-1-102" id="h1-1-102" class="d">-			location, _ := strconv.Atoi(offset)
+</a><a href="#h1-1-103" id="h1-1-103" class="d">-			location += sectionLength
+</a><a href="#h1-1-104" id="h1-1-104" class="d">-			locations[varName] = strconv.Itoa(location)
+</a><a href="#h1-1-105" id="h1-1-105" class="i">+		if len(romSections) == 0 {
+</a><a href="#h1-1-106" id="h1-1-106" class="i">+			romSections = append(romSections, &quot;&quot;)
+</a><a href="#h1-1-107" id="h1-1-107" class="i">+		}
+</a><a href="#h1-1-108" id="h1-1-108" class="i">+		if len(ramSections) == 0 {
+</a><a href="#h1-1-109" id="h1-1-109" class="i">+			ramSections = append(ramSections, &quot;&quot;)
+</a> 		}
+ 
+<a href="#h1-1-112" id="h1-1-112" class="d">-		// Searching for ROM variable to be translated into the ROM address
+</a><a href="#h1-1-113" id="h1-1-113" class="i">+		for _, romSection := range romSections {
+</a><a href="#h1-1-114" id="h1-1-114" class="i">+			for _, ramSection := range ramSections {
+</a><a href="#h1-1-115" id="h1-1-115" class="i">+				cpNewSectionName = &quot;&quot;
+</a><a href="#h1-1-116" id="h1-1-116" class="i">+				if bi.debug {
+</a><a href="#h1-1-117" id="h1-1-117" class="i">+					fmt.Println(green(message))
+</a><a href="#h1-1-118" id="h1-1-118" class="i">+				}
+</a> 
+<a href="#h1-1-120" id="h1-1-120" class="d">-		body := newSection.sectionBody
+</a><a href="#h1-1-121" id="h1-1-121" class="d">-		usefullSection := false
+</a><a href="#h1-1-122" id="h1-1-122" class="i">+				var romCode *BasmSection
+</a><a href="#h1-1-123" id="h1-1-123" class="i">+				var ramCode *BasmSection
+</a> 
+<a href="#h1-1-125" id="h1-1-125" class="d">-		for _, line := range body.Lines {
+</a><a href="#h1-1-126" id="h1-1-126" class="d">-			for _, arg := range line.Elements {
+</a><a href="#h1-1-127" id="h1-1-127" class="d">-				if arg.GetMeta(&quot;type&quot;) == &quot;rom&quot; &amp;&amp; arg.GetMeta(&quot;romaddressing&quot;) == &quot;symbol&quot; {
+</a><a href="#h1-1-128" id="h1-1-128" class="d">-					removalList[code] = struct{}{}
+</a><a href="#h1-1-129" id="h1-1-129" class="d">-					usefullSection = true
+</a><a href="#h1-1-130" id="h1-1-130" class="d">-					romVariable := arg.GetMeta(&quot;symbol&quot;)
+</a><a href="#h1-1-131" id="h1-1-131" class="d">-					if romVariable == &quot;&quot; {
+</a><a href="#h1-1-132" id="h1-1-132" class="d">-						return errors.New(&quot;ROM variable cannot be empty&quot;)
+</a><a href="#h1-1-133" id="h1-1-133" class="i">+				if romSection != &quot;&quot; {
+</a><a href="#h1-1-134" id="h1-1-134" class="i">+					if _, ok := bi.sections[romSection]; !ok {
+</a><a href="#h1-1-135" id="h1-1-135" class="i">+						return errors.New(&quot;ROM section &quot; + romSection + &quot; not found&quot;)
+</a><a href="#h1-1-136" id="h1-1-136" class="i">+					} else {
+</a><a href="#h1-1-137" id="h1-1-137" class="i">+						cpNewSectionName += &quot;_ot_&quot; + romSection
+</a><a href="#h1-1-138" id="h1-1-138" class="i">+						romCode = bi.sections[romSection]
+</a> 					}
+<a href="#h1-1-140" id="h1-1-140" class="i">+				}
+</a> 
+<a href="#h1-1-142" id="h1-1-142" class="d">-					if loc, ok := locations[romVariable]; ok {
+</a><a href="#h1-1-143" id="h1-1-143" class="d">-						arg.SetValue(loc)
+</a><a href="#h1-1-144" id="h1-1-144" class="d">-						arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h1-1-145" id="h1-1-145" class="d">-						arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h1-1-146" id="h1-1-146" class="d">-						arg.BasmMeta.RmMeta(&quot;romaddressing&quot;)
+</a><a href="#h1-1-147" id="h1-1-147" class="d">-						arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a><a href="#h1-1-148" id="h1-1-148" class="i">+				if ramSection != &quot;&quot; {
+</a><a href="#h1-1-149" id="h1-1-149" class="i">+					if _, ok := bi.sections[ramSection]; !ok {
+</a><a href="#h1-1-150" id="h1-1-150" class="i">+						return errors.New(&quot;RAM section &quot; + ramSection + &quot; not found&quot;)
+</a> 					} else {
+<a href="#h1-1-152" id="h1-1-152" class="d">-						return errors.New(&quot;ROM variable &quot; + romVariable + &quot; not found&quot;)
+</a><a href="#h1-1-153" id="h1-1-153" class="i">+						cpNewSectionName += &quot;_at_&quot; + ramSection
+</a><a href="#h1-1-154" id="h1-1-154" class="i">+						ramCode = bi.sections[ramSection]
+</a> 					}
+<a href="#h1-1-156" id="h1-1-156" class="i">+				}
+</a> 
+<a href="#h1-1-158" id="h1-1-158" class="i">+				cpNewSectionName += dataNames
+</a><a href="#h1-1-159" id="h1-1-159" class="i">+
+</a><a href="#h1-1-160" id="h1-1-160" class="i">+				var romSectionLength int = 0
+</a><a href="#h1-1-161" id="h1-1-161" class="i">+				var ramSectionLength int = 0
+</a><a href="#h1-1-162" id="h1-1-162" class="i">+
+</a><a href="#h1-1-163" id="h1-1-163" class="i">+				if romCode != nil {
+</a><a href="#h1-1-164" id="h1-1-164" class="i">+					romSectionLength = len(romCode.sectionBody.Lines)
+</a><a href="#h1-1-165" id="h1-1-165" class="i">+				}
+</a><a href="#h1-1-166" id="h1-1-166" class="i">+				if ramCode != nil {
+</a><a href="#h1-1-167" id="h1-1-167" class="i">+					ramSectionLength = len(ramCode.sectionBody.Lines)
+</a><a href="#h1-1-168" id="h1-1-168" class="i">+				}
+</a><a href="#h1-1-169" id="h1-1-169" class="i">+
+</a><a href="#h1-1-170" id="h1-1-170" class="i">+				if bi.debug {
+</a><a href="#h1-1-171" id="h1-1-171" class="i">+					fmt.Println(green(&quot;\t\t\tCode rom section length: &quot; + fmt.Sprintf(&quot;%d&quot;, romSectionLength)))
+</a><a href="#h1-1-172" id="h1-1-172" class="i">+					fmt.Println(green(&quot;\t\t\tCode ram section length: &quot; + fmt.Sprintf(&quot;%d&quot;, ramSectionLength)))
+</a><a href="#h1-1-173" id="h1-1-173" class="i">+				}
+</a><a href="#h1-1-174" id="h1-1-174" class="i">+
+</a><a href="#h1-1-175" id="h1-1-175" class="i">+				// Resolving Symbols for the composed section
+</a><a href="#h1-1-176" id="h1-1-176" class="i">+				if romData != nil {
+</a><a href="#h1-1-177" id="h1-1-177" class="i">+					for _, symbol := range romData.sectionBody.Lines {
+</a><a href="#h1-1-178" id="h1-1-178" class="i">+						symbolName := symbol.Operation.GetValue()
+</a><a href="#h1-1-179" id="h1-1-179" class="i">+						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+</a><a href="#h1-1-180" id="h1-1-180" class="i">+						location, _ := strconv.Atoi(offset)
+</a><a href="#h1-1-181" id="h1-1-181" class="i">+						location += romSectionLength
+</a><a href="#h1-1-182" id="h1-1-182" class="i">+						bi.symbols[&quot;romdata.romdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+</a><a href="#h1-1-183" id="h1-1-183" class="i">+					}
+</a> 				}
+<a href="#h1-1-185" id="h1-1-185" class="d">-			}
+</a><a href="#h1-1-186" id="h1-1-186" class="d">-		}
+</a> 
+<a href="#h1-1-188" id="h1-1-188" class="d">-		// TODO Temporary fix
+</a><a href="#h1-1-189" id="h1-1-189" class="d">-		usefullSection = true
+</a><a href="#h1-1-190" id="h1-1-190" class="i">+				if ramData != nil {
+</a><a href="#h1-1-191" id="h1-1-191" class="i">+					for _, symbol := range ramData.sectionBody.Lines {
+</a><a href="#h1-1-192" id="h1-1-192" class="i">+						symbolName := symbol.Operation.GetValue()
+</a><a href="#h1-1-193" id="h1-1-193" class="i">+						offset := symbol.Operation.GetMeta(&quot;offset&quot;)
+</a><a href="#h1-1-194" id="h1-1-194" class="i">+						location, _ := strconv.Atoi(offset)
+</a><a href="#h1-1-195" id="h1-1-195" class="i">+						location += ramSectionLength
+</a><a href="#h1-1-196" id="h1-1-196" class="i">+						bi.symbols[&quot;ramdata.ramdata&quot;+cpNewSectionName+&quot;.&quot;+symbolName] = int64(location)
+</a><a href="#h1-1-197" id="h1-1-197" class="i">+					}
+</a><a href="#h1-1-198" id="h1-1-198" class="i">+				}
+</a> 
+<a href="#h1-1-200" id="h1-1-200" class="d">-		bi.sections[newSection.sectionName] = newSection
+</a><a href="#h1-1-201" id="h1-1-201" class="d">-		if usefullSection {
+</a><a href="#h1-1-202" id="h1-1-202" class="d">-			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romcode&quot;, newSection.sectionName)
+</a><a href="#h1-1-203" id="h1-1-203" class="d">-		} else {
+</a><a href="#h1-1-204" id="h1-1-204" class="d">-			removalList[newSection.sectionName] = struct{}{}
+</a><a href="#h1-1-205" id="h1-1-205" class="i">+				// If the original section is not empty, we need to create a new section from it
+</a><a href="#h1-1-206" id="h1-1-206" class="i">+				if romCode != nil {
+</a><a href="#h1-1-207" id="h1-1-207" class="i">+					newSection := new(BasmSection)
+</a><a href="#h1-1-208" id="h1-1-208" class="i">+					newSection.sectionName = &quot;romcode&quot; + cpNewSectionName
+</a><a href="#h1-1-209" id="h1-1-209" class="i">+					newSection.sectionType = sectRomText
+</a><a href="#h1-1-210" id="h1-1-210" class="i">+					newSection.sectionBody = romCode.sectionBody.Copy()
+</a><a href="#h1-1-211" id="h1-1-211" class="i">+					bi.resolveSymbols(newSection, cpNewSectionName)
+</a><a href="#h1-1-212" id="h1-1-212" class="i">+					bi.sections[newSection.sectionName] = newSection
+</a><a href="#h1-1-213" id="h1-1-213" class="i">+					romAlternatives = append(romAlternatives, newSection.sectionName)
+</a><a href="#h1-1-214" id="h1-1-214" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:romtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+</a><a href="#h1-1-215" id="h1-1-215" class="i">+					bi.rg.Clone(&quot;/code:romtexts/sections:&quot;+romSection, &quot;/code:romtexts/sections:&quot;+newSection.sectionName)
+</a><a href="#h1-1-216" id="h1-1-216" class="i">+				}
+</a><a href="#h1-1-217" id="h1-1-217" class="i">+
+</a><a href="#h1-1-218" id="h1-1-218" class="i">+				// Same for RAM code
+</a><a href="#h1-1-219" id="h1-1-219" class="i">+				if ramCode != nil {
+</a><a href="#h1-1-220" id="h1-1-220" class="i">+					newSection := new(BasmSection)
+</a><a href="#h1-1-221" id="h1-1-221" class="i">+					newSection.sectionName = &quot;ramcode&quot; + cpNewSectionName
+</a><a href="#h1-1-222" id="h1-1-222" class="i">+					newSection.sectionType = sectRamText
+</a><a href="#h1-1-223" id="h1-1-223" class="i">+					newSection.sectionBody = ramCode.sectionBody.Copy()
+</a><a href="#h1-1-224" id="h1-1-224" class="i">+					bi.resolveSymbols(newSection, cpNewSectionName)
+</a><a href="#h1-1-225" id="h1-1-225" class="i">+					bi.sections[newSection.sectionName] = newSection
+</a><a href="#h1-1-226" id="h1-1-226" class="i">+					ramAlternatives = append(ramAlternatives, newSection.sectionName)
+</a><a href="#h1-1-227" id="h1-1-227" class="i">+					bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;code:ramtexts&quot;, T: bmreqs.ObjectSet, Name: &quot;sections&quot;, Value: newSection.sectionName, Op: bmreqs.OpAdd})
+</a><a href="#h1-1-228" id="h1-1-228" class="i">+					bi.rg.Clone(&quot;/code:ramtexts/sections:&quot;+ramSection, &quot;/code:ramtexts/sections:&quot;+newSection.sectionName)
+</a><a href="#h1-1-229" id="h1-1-229" class="i">+				}
+</a><a href="#h1-1-230" id="h1-1-230" class="i">+			}
+</a> 		}
+ 
+<a href="#h1-1-233" id="h1-1-233" class="d">-	}
+</a><a href="#h1-1-234" id="h1-1-234" class="i">+		switch len(romAlternatives) {
+</a><a href="#h1-1-235" id="h1-1-235" class="i">+		case 0:
+</a><a href="#h1-1-236" id="h1-1-236" class="i">+		case 1:
+</a><a href="#h1-1-237" id="h1-1-237" class="i">+			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romcode&quot;, romAlternatives[0])
+</a><a href="#h1-1-238" id="h1-1-238" class="i">+		default:
+</a><a href="#h1-1-239" id="h1-1-239" class="i">+			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;romalternatives&quot;, strings.Join(romAlternatives, &quot;:&quot;))
+</a><a href="#h1-1-240" id="h1-1-240" class="i">+			cp.BasmMeta.RmMeta(&quot;romcode&quot;)
+</a><a href="#h1-1-241" id="h1-1-241" class="i">+		}
+</a> 
+<a href="#h1-1-243" id="h1-1-243" class="d">-	// Removing processed sections
+</a><a href="#h1-1-244" id="h1-1-244" class="d">-	for rem := range removalList {
+</a><a href="#h1-1-245" id="h1-1-245" class="d">-		delete(bi.sections, rem)
+</a><a href="#h1-1-246" id="h1-1-246" class="i">+		switch len(ramAlternatives) {
+</a><a href="#h1-1-247" id="h1-1-247" class="i">+		case 0:
+</a><a href="#h1-1-248" id="h1-1-248" class="i">+		case 1:
+</a><a href="#h1-1-249" id="h1-1-249" class="i">+			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramcode&quot;, ramAlternatives[0])
+</a><a href="#h1-1-250" id="h1-1-250" class="i">+		default:
+</a><a href="#h1-1-251" id="h1-1-251" class="i">+			cp.BasmMeta = cp.BasmMeta.SetMeta(&quot;ramalternatives&quot;, strings.Join(ramAlternatives, &quot;:&quot;))
+</a><a href="#h1-1-252" id="h1-1-252" class="i">+			cp.BasmMeta.RmMeta(&quot;ramcode&quot;)
+</a><a href="#h1-1-253" id="h1-1-253" class="i">+		}
+</a> 	}
+ 
+ 	return nil
+<a href="#h1-1-257" id="h1-1-257" class="i">+
+</a> }
+<b>diff --git a/<a id="h2" href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a> b/<a href="../file/pkg/basm/passes.go.html">pkg/basm/passes.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -17,8 +17,10 @@ const (
+</a> 	passMatcherResolver       = uint64(2048)
+ 	passSymbolTagger2         = uint64(4096)
+ 	passMemComposer           = uint64(8192)
+<a href="#h2-0-3" id="h2-0-3" class="d">-	passSymbolsResolver       = uint64(16384)
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	LAST_PASS                 = uint64(16384)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	passSectionCleaner        = uint64(16384)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	passSymbolTagger3         = uint64(32768)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	passSymbolsResolver       = uint64(65536)
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	LAST_PASS                 = uint64(65536)
+</a> )
+ 
+ func getPassFunction() map[uint64]func(*BasmInstance) error {
+<a href="#h2-1" id="h2-1" class="h">@@ -27,6 +29,7 @@ func getPassFunction() map[uint64]func(*BasmInstance) error {
+</a> 		passDynamicalInstructions: dynamicalInstructions,
+ 		passSymbolTagger1:         symbolTagger,
+ 		passSymbolTagger2:         symbolTagger,
+<a href="#h2-1-3" id="h2-1-3" class="i">+		passSymbolTagger3:         symbolTagger,
+</a> 		passDataSections2Bytes:    dataSections2Bytes,
+ 		passMetadataInfer1:        metadataInfer,
+ 		passMetadataInfer2:        metadataInfer,
+<a href="#h2-2" id="h2-2" class="h">@@ -38,6 +41,7 @@ func getPassFunction() map[uint64]func(*BasmInstance) error {
+</a> 		passFragmentComposer:      fragmentComposer,
+ 		passFragmentOptimizer1:    fragmentOptimizer,
+ 		passMemComposer:           memComposer,
+<a href="#h2-2-3" id="h2-2-3" class="i">+		passSectionCleaner:        sectionCleaner,
+</a> 	}
+ }
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -47,6 +51,7 @@ func getPassFunctionName() map[uint64]string {
+</a> 		passDynamicalInstructions: &quot;dynamicalInstructions&quot;,
+ 		passSymbolTagger1:         &quot;symbolTagger (1)&quot;,
+ 		passSymbolTagger2:         &quot;symbolTagger (2)&quot;,
+<a href="#h2-3-3" id="h2-3-3" class="i">+		passSymbolTagger3:         &quot;symbolTagger (3)&quot;,
+</a> 		passDataSections2Bytes:    &quot;datasections2bytes&quot;,
+ 		passMetadataInfer1:        &quot;metadataInfer (1)&quot;,
+ 		passMetadataInfer2:        &quot;metadataInfer (2)&quot;,
+<a href="#h2-4" id="h2-4" class="h">@@ -58,6 +63,7 @@ func getPassFunctionName() map[uint64]string {
+</a> 		passFragmentComposer:      &quot;fragmentComposer&quot;,
+ 		passFragmentOptimizer1:    &quot;fragmentOptimizer&quot;,
+ 		passMemComposer:           &quot;memComposer&quot;,
+<a href="#h2-4-3" id="h2-4-3" class="i">+		passSectionCleaner:        &quot;sectionCleaner&quot;,
+</a> 	}
+ }
+ 
+<a href="#h2-5" id="h2-5" class="h">@@ -67,6 +73,7 @@ func IsOptionalPass() map[uint64]bool {
+</a> 		passDynamicalInstructions: false,
+ 		passSymbolTagger1:         false,
+ 		passSymbolTagger2:         false,
+<a href="#h2-5-3" id="h2-5-3" class="i">+		passSymbolTagger3:         false,
+</a> 		passDataSections2Bytes:    false,
+ 		passMetadataInfer1:        false,
+ 		passMetadataInfer2:        false,
+<a href="#h2-6" id="h2-6" class="h">@@ -78,6 +85,7 @@ func IsOptionalPass() map[uint64]bool {
+</a> 		passFragmentComposer:      false,
+ 		passFragmentOptimizer1:    true,
+ 		passMemComposer:           false,
+<a href="#h2-6-3" id="h2-6-3" class="i">+		passSectionCleaner:        false,
+</a> 	}
+ }
+ 
+<a href="#h2-7" id="h2-7" class="h">@@ -91,6 +99,7 @@ func GetPassMnemonic() map[uint64]string {
+</a> 		passDynamicalInstructions: &quot;dynamicalinstructions&quot;,
+ 		passSymbolTagger1:         &quot;symboltagger1&quot;,
+ 		passSymbolTagger2:         &quot;symboltagger2&quot;,
+<a href="#h2-7-3" id="h2-7-3" class="i">+		passSymbolTagger3:         &quot;symboltagger3&quot;,
+</a> 		passDataSections2Bytes:    &quot;datasections2bytes&quot;,
+ 		passMetadataInfer1:        &quot;metadatainfer1&quot;,
+ 		passMetadataInfer2:        &quot;metadatainfer2&quot;,
+<a href="#h2-8" id="h2-8" class="h">@@ -102,6 +111,7 @@ func GetPassMnemonic() map[uint64]string {
+</a> 		passFragmentComposer:      &quot;fragmentcomposer&quot;,
+ 		passFragmentOptimizer1:    &quot;fragmentoptimizer&quot;,
+ 		passMemComposer:           &quot;memcomposer&quot;,
+<a href="#h2-8-3" id="h2-8-3" class="i">+		passSectionCleaner:        &quot;sectioncleaner&quot;,
+</a> 	}
+ 
+ }
+<b>diff --git a/<a id="h3" href="../file/pkg/basm/sectioncleaner.go.html">pkg/basm/sectioncleaner.go</a> b/<a href="../file/pkg/basm/sectioncleaner.go.html">pkg/basm/sectioncleaner.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,59 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+package basm
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+import (
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	&quot;fmt&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	&quot;strings&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+)
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+func sectionCleaner(bi *BasmInstance) error {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	if bi.debug {
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		fmt.Println(green(&quot;\tPruning unused sections:&quot;))
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	}
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	usefulSections := make(map[string]struct{})
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	for _, cp := range bi.cps {
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+		romCodeName := cp.GetMeta(&quot;romcode&quot;)
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+		if romCodeName != &quot;&quot; {
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+			usefulSections[romCodeName] = struct{}{}
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+		}
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+		romDataName := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+		if romDataName != &quot;&quot; {
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+			usefulSections[romDataName] = struct{}{}
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+		}
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+		ramCodeName := cp.GetMeta(&quot;ramcode&quot;)
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+		if ramCodeName != &quot;&quot; {
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+			usefulSections[ramCodeName] = struct{}{}
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+		}
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		ramDataName := cp.GetMeta(&quot;ramdata&quot;)
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+		if ramDataName != &quot;&quot; {
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+			usefulSections[ramDataName] = struct{}{}
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+		}
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		altRomCodeName := cp.GetMeta(&quot;romalternatives&quot;)
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+		if altRomCodeName != &quot;&quot; {
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+			splitAlts := strings.Split(altRomCodeName, &quot;:&quot;)
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+			for _, alt := range splitAlts {
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+				usefulSections[alt] = struct{}{}
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+			}
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+		}
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+		altRamCodeName := cp.GetMeta(&quot;ramalternatives&quot;)
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+		if altRamCodeName != &quot;&quot; {
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+			splitAlts := strings.Split(altRamCodeName, &quot;:&quot;)
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+			for _, alt := range splitAlts {
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+				usefulSections[alt] = struct{}{}
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+			}
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+		}
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	}
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+	// Remove the unused sections
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+	for sectionName, _ := range bi.sections {
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+		if _, ok := usefulSections[sectionName]; !ok {
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+			if bi.debug {
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+				fmt.Println(yellow(&quot;\t\tRemoving section: &quot;) + sectionName)
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+			}
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+			delete(bi.sections, sectionName)
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+		}
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+	}
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+	return nil
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a> b/<a href="../file/pkg/basm/symbolresolver.go.html">pkg/basm/symbolresolver.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -4,32 +4,10 @@ import (
+</a> 	&quot;errors&quot;
+ 	&quot;fmt&quot;
+ 	&quot;strconv&quot;
+<a href="#h4-0-3" id="h4-0-3" class="d">-
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmline&quot;
+</a> )
+ 
+ func symbolResolver(bi *BasmInstance) error {
+ 
+<a href="#h4-0-9" id="h4-0-9" class="d">-	// Filter the matchers to select only the symbol based one
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-	filteredMatchers := make([]*bmline.BasmLine, 0)
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-	if bi.debug {
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-		fmt.Println(green(&quot;\tFiltering matchers:&quot;))
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-	}
+</a><a href="#h4-0-15" id="h4-0-15" class="d">-
+</a><a href="#h4-0-16" id="h4-0-16" class="d">-	for _, matcher := range bi.matchers {
+</a><a href="#h4-0-17" id="h4-0-17" class="d">-		if bmline.FilterMatcher(matcher, &quot;symbol&quot;) {
+</a><a href="#h4-0-18" id="h4-0-18" class="d">-			filteredMatchers = append(filteredMatchers, matcher)
+</a><a href="#h4-0-19" id="h4-0-19" class="d">-			if bi.debug {
+</a><a href="#h4-0-20" id="h4-0-20" class="d">-				fmt.Println(red(&quot;\t\tActive matcher:&quot;) + matcher.String())
+</a><a href="#h4-0-21" id="h4-0-21" class="d">-			}
+</a><a href="#h4-0-22" id="h4-0-22" class="d">-		} else {
+</a><a href="#h4-0-23" id="h4-0-23" class="d">-			if bi.debug {
+</a><a href="#h4-0-24" id="h4-0-24" class="d">-				fmt.Println(yellow(&quot;\t\tInactive matcher:&quot;) + matcher.String())
+</a><a href="#h4-0-25" id="h4-0-25" class="d">-			}
+</a><a href="#h4-0-26" id="h4-0-26" class="d">-		}
+</a><a href="#h4-0-27" id="h4-0-27" class="d">-	}
+</a><a href="#h4-0-28" id="h4-0-28" class="d">-
+</a> 	if bi.debug {
+ 		fmt.Println(green(&quot;\tProcessing sections:&quot;))
+ 	}
+<a href="#h4-1" id="h4-1" class="h">@@ -40,41 +18,96 @@ func symbolResolver(bi *BasmInstance) error {
+</a> 			if bi.debug {
+ 				fmt.Println(green(&quot;\t\tSection: &quot;) + sectName)
+ 			}
+<a href="#h4-1-3" id="h4-1-3" class="i">+			if err := bi.resolveSymbols(section, &quot;&quot;); err != nil {
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+				return err
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+			}
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+		} else {
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+			if bi.debug {
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+				fmt.Println(yellow(&quot;\t\tSection type not handled: &quot;) + sectName)
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+			}
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+		}
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+	}
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+	return nil
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+}
+</a> 
+<a href="#h4-1-15" id="h4-1-15" class="d">-			body := section.sectionBody
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+func (bi *BasmInstance) resolveSymbols(section *BasmSection, name string) error {
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+	// If name is empty, it means that the section name is used
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+	// If name is not empty, named composed on it are used according the convention
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+	// Using name is useful to handle the romcode/romdata sections in combined mode
+</a> 
+<a href="#h4-1-21" id="h4-1-21" class="d">-			for _, line := range body.Lines {
+</a><a href="#h4-1-22" id="h4-1-22" class="i">+	body := section.sectionBody
+</a> 
+<a href="#h4-1-24" id="h4-1-24" class="d">-				for _, arg := range line.Elements {
+</a><a href="#h4-1-25" id="h4-1-25" class="d">-					if arg.GetMeta(&quot;type&quot;) == &quot;symbol&quot; {
+</a><a href="#h4-1-26" id="h4-1-26" class="d">-						symbol := arg.GetValue()
+</a><a href="#h4-1-27" id="h4-1-27" class="i">+	for _, line := range body.Lines {
+</a><a href="#h4-1-28" id="h4-1-28" class="i">+		for _, arg := range line.Elements {
+</a> 
+<a href="#h4-1-30" id="h4-1-30" class="d">-						// Search the symbol in local symbols
+</a><a href="#h4-1-31" id="h4-1-31" class="d">-						localSymbol := &quot;&quot;
+</a><a href="#h4-1-32" id="h4-1-32" class="d">-						if section.sectionType == sectRomText {
+</a><a href="#h4-1-33" id="h4-1-33" class="d">-							localSymbol = &quot;rom.&quot; + sectName + &quot;.&quot; + symbol
+</a><a href="#h4-1-34" id="h4-1-34" class="d">-						} else {
+</a><a href="#h4-1-35" id="h4-1-35" class="d">-							localSymbol = &quot;ram.&quot; + sectName + &quot;.&quot; + symbol
+</a><a href="#h4-1-36" id="h4-1-36" class="d">-						}
+</a><a href="#h4-1-37" id="h4-1-37" class="i">+			// Search the symbol in local symbols
+</a><a href="#h4-1-38" id="h4-1-38" class="i">+			if arg.GetMeta(&quot;type&quot;) == &quot;symbol&quot; {
+</a><a href="#h4-1-39" id="h4-1-39" class="i">+				symbol := arg.GetValue()
+</a><a href="#h4-1-40" id="h4-1-40" class="i">+				localSymbol := &quot;&quot;
+</a> 
+<a href="#h4-1-42" id="h4-1-42" class="d">-						if loc, ok := bi.symbols[localSymbol]; ok {
+</a><a href="#h4-1-43" id="h4-1-43" class="d">-							// Apply the correction if any
+</a><a href="#h4-1-44" id="h4-1-44" class="d">-							// if body.GetMeta(&quot;symbcorrection&quot;) != &quot;&quot; {
+</a><a href="#h4-1-45" id="h4-1-45" class="d">-							// 	correction, _ := strconv.Atoi(body.GetMeta(&quot;symbcorrection&quot;))
+</a><a href="#h4-1-46" id="h4-1-46" class="d">-							// 	loc += int64(correction)
+</a><a href="#h4-1-47" id="h4-1-47" class="d">-							// }
+</a><a href="#h4-1-48" id="h4-1-48" class="d">-							arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h4-1-49" id="h4-1-49" class="d">-							arg.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h4-1-50" id="h4-1-50" class="d">-							continue
+</a><a href="#h4-1-51" id="h4-1-51" class="d">-						}
+</a><a href="#h4-1-52" id="h4-1-52" class="d">-						// TODO: Finish this
+</a><a href="#h4-1-53" id="h4-1-53" class="d">-						return errors.New(&quot;symbol not found: &quot; + symbol)
+</a><a href="#h4-1-54" id="h4-1-54" class="i">+				if name == &quot;&quot; {
+</a><a href="#h4-1-55" id="h4-1-55" class="i">+					if section.sectionType == sectRomText {
+</a><a href="#h4-1-56" id="h4-1-56" class="i">+						localSymbol = &quot;rom.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a><a href="#h4-1-57" id="h4-1-57" class="i">+					} else {
+</a><a href="#h4-1-58" id="h4-1-58" class="i">+						localSymbol = &quot;ram.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a> 					}
+<a href="#h4-1-60" id="h4-1-60" class="i">+				} else {
+</a><a href="#h4-1-61" id="h4-1-61" class="i">+					if section.sectionType == sectRomText {
+</a><a href="#h4-1-62" id="h4-1-62" class="i">+						localSymbol = &quot;rom.romcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h4-1-63" id="h4-1-63" class="i">+					} else {
+</a><a href="#h4-1-64" id="h4-1-64" class="i">+						localSymbol = &quot;ram.ramcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h4-1-65" id="h4-1-65" class="i">+					}
+</a><a href="#h4-1-66" id="h4-1-66" class="i">+				}
+</a><a href="#h4-1-67" id="h4-1-67" class="i">+
+</a><a href="#h4-1-68" id="h4-1-68" class="i">+				if loc, ok := bi.symbols[localSymbol]; ok {
+</a><a href="#h4-1-69" id="h4-1-69" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h4-1-70" id="h4-1-70" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h4-1-71" id="h4-1-71" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h4-1-72" id="h4-1-72" class="i">+					continue
+</a> 				}
+ 			}
+<a href="#h4-1-75" id="h4-1-75" class="d">-		} else {
+</a><a href="#h4-1-76" id="h4-1-76" class="d">-			if bi.debug {
+</a><a href="#h4-1-77" id="h4-1-77" class="d">-				fmt.Println(yellow(&quot;\t\tSection type not handled: &quot;) + sectName)
+</a><a href="#h4-1-78" id="h4-1-78" class="i">+
+</a><a href="#h4-1-79" id="h4-1-79" class="i">+			// Search the symbol in rom
+</a><a href="#h4-1-80" id="h4-1-80" class="i">+			if arg.GetMeta(&quot;type&quot;) == &quot;rom&quot; &amp;&amp; arg.GetMeta(&quot;romaddressing&quot;) == &quot;symbol&quot; {
+</a><a href="#h4-1-81" id="h4-1-81" class="i">+				symbol := arg.GetMeta(&quot;symbol&quot;)
+</a><a href="#h4-1-82" id="h4-1-82" class="i">+				if symbol == &quot;&quot; {
+</a><a href="#h4-1-83" id="h4-1-83" class="i">+					return errors.New(&quot;ROM symbol cannot be empty&quot;)
+</a><a href="#h4-1-84" id="h4-1-84" class="i">+				}
+</a><a href="#h4-1-85" id="h4-1-85" class="i">+
+</a><a href="#h4-1-86" id="h4-1-86" class="i">+				// In romdata
+</a><a href="#h4-1-87" id="h4-1-87" class="i">+				romSymbol := &quot;&quot;
+</a><a href="#h4-1-88" id="h4-1-88" class="i">+				if name == &quot;&quot; {
+</a><a href="#h4-1-89" id="h4-1-89" class="i">+					romSymbol = &quot;romdata.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a><a href="#h4-1-90" id="h4-1-90" class="i">+				} else {
+</a><a href="#h4-1-91" id="h4-1-91" class="i">+					romSymbol = &quot;romdata.romdata&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h4-1-92" id="h4-1-92" class="i">+				}
+</a><a href="#h4-1-93" id="h4-1-93" class="i">+				if loc, ok := bi.symbols[romSymbol]; ok {
+</a><a href="#h4-1-94" id="h4-1-94" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h4-1-95" id="h4-1-95" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h4-1-96" id="h4-1-96" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h4-1-97" id="h4-1-97" class="i">+					arg.BasmMeta.RmMeta(&quot;romaddressing&quot;)
+</a><a href="#h4-1-98" id="h4-1-98" class="i">+					arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a><a href="#h4-1-99" id="h4-1-99" class="i">+					continue
+</a><a href="#h4-1-100" id="h4-1-100" class="i">+				}
+</a><a href="#h4-1-101" id="h4-1-101" class="i">+
+</a><a href="#h4-1-102" id="h4-1-102" class="i">+				// In romcode
+</a><a href="#h4-1-103" id="h4-1-103" class="i">+				romSymbol = &quot;&quot;
+</a><a href="#h4-1-104" id="h4-1-104" class="i">+				if name == &quot;&quot; {
+</a><a href="#h4-1-105" id="h4-1-105" class="i">+					romSymbol = &quot;rom.&quot; + section.sectionName + &quot;.&quot; + symbol
+</a><a href="#h4-1-106" id="h4-1-106" class="i">+				} else {
+</a><a href="#h4-1-107" id="h4-1-107" class="i">+					romSymbol = &quot;romcode.romcode&quot; + name + &quot;.&quot; + symbol
+</a><a href="#h4-1-108" id="h4-1-108" class="i">+				}
+</a><a href="#h4-1-109" id="h4-1-109" class="i">+				if loc, ok := bi.symbols[romSymbol]; ok {
+</a><a href="#h4-1-110" id="h4-1-110" class="i">+					arg.SetValue(strconv.Itoa(int(loc)))
+</a><a href="#h4-1-111" id="h4-1-111" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;type&quot;, &quot;number&quot;)
+</a><a href="#h4-1-112" id="h4-1-112" class="i">+					arg.BasmMeta = arg.BasmMeta.SetMeta(&quot;numbertype&quot;, &quot;unsigned&quot;)
+</a><a href="#h4-1-113" id="h4-1-113" class="i">+					arg.BasmMeta.RmMeta(&quot;romaddressing&quot;)
+</a><a href="#h4-1-114" id="h4-1-114" class="i">+					arg.BasmMeta.RmMeta(&quot;symbol&quot;)
+</a><a href="#h4-1-115" id="h4-1-115" class="i">+					continue
+</a><a href="#h4-1-116" id="h4-1-116" class="i">+				}
+</a><a href="#h4-1-117" id="h4-1-117" class="i">+
+</a><a href="#h4-1-118" id="h4-1-118" class="i">+				// return errors.New(&quot;symbol not found: &quot; + symbol)
+</a><a href="#h4-1-119" id="h4-1-119" class="i">+
+</a> 			}
+ 		}
+ 	}
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a> b/<a href="../file/pkg/procbuilder/op_mulc.go.html">pkg/procbuilder/op_mulc.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -147,8 +147,12 @@ func (op Mulc) Simulate(vm *VM, instr string) error {
+</a> 		vm.Registers[regdest] = vm.Registers[regdest].(uint8) * vm.Registers[regsrc].(uint8)
+ 	case 16:
+ 		vm.Registers[regdest] = vm.Registers[regdest].(uint16) * vm.Registers[regsrc].(uint16)
+<a href="#h5-0-3" id="h5-0-3" class="i">+	case 32:
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		vm.Registers[regdest] = vm.Registers[regdest].(uint32) * vm.Registers[regsrc].(uint32)
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	case 64:
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+		vm.Registers[regdest] = vm.Registers[regdest].(uint64) * vm.Registers[regsrc].(uint64)
+</a> 	default:
+<a href="#h5-0-8" id="h5-0-8" class="d">-		// TODO Fix
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+
+</a> 	}
+ 	vm.Pc = vm.Pc + 1
+ 	return nil
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a> b/<a href="../file/pkg/procbuilder/op_mult.go.html">pkg/procbuilder/op_mult.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -141,6 +141,10 @@ func (op Mult) Simulate(vm *VM, instr string) error {
+</a> 		vm.Registers[regdest] = vm.Registers[regdest].(uint8) * vm.Registers[regsrc].(uint8)
+ 	case 16:
+ 		vm.Registers[regdest] = vm.Registers[regdest].(uint16) * vm.Registers[regsrc].(uint16)
+<a href="#h6-0-3" id="h6-0-3" class="i">+	case 32:
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		vm.Registers[regdest] = vm.Registers[regdest].(uint32) * vm.Registers[regsrc].(uint32)
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	case 64:
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+		vm.Registers[regdest] = vm.Registers[regdest].(uint64) * vm.Registers[regsrc].(uint64)
+</a> 	default:
+ 		// TODO Fix
+ 	}
+</pre>
+</div>
+</body>
+</html>

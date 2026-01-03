@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>vn mode fix - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a80b5a4dae17b85119fa8c4f508e9fa0d13c7e34.html">a80b5a4dae17b85119fa8c4f508e9fa0d13c7e34</a>
+<b>parent</b> <a href="../commit/508d7961291a916c5c096087852eb0be75b01b89.html">508d7961291a916c5c096087852eb0be75b01b89</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 11 Sep 2023 23:57:52 +0200
+
+vn mode fix
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/procbuilder/conproc.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_j.go</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 9 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a> b/<a href="../file/pkg/procbuilder/conproc.go.html">pkg/procbuilder/conproc.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -456,6 +456,9 @@ func (proc *Conproc) Write_verilog(conf *Config, arch *Arch, processor_module_na
+</a> 	case &quot;vn&quot;:
+ 		result += &quot;			case (vn_state)\n&quot;
+ 		result += &quot;			FETCH: begin\n&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+		result += &quot;				vn_state &lt;= WAIT;\n&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		result += &quot;			end\n&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		result += &quot;			WAIT: begin\n&quot;
+</a> 		result += &quot;				vn_state &lt;= EXECUTE;\n&quot;
+ 		result += &quot;				ram_instruction &lt;= ram_dout;\n&quot;
+ 		result += &quot;			end\n&quot;
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a> b/<a href="../file/pkg/procbuilder/op_j.go.html">pkg/procbuilder/op_j.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -216,13 +216,18 @@ func (Op J) Op_instruction_verilog_extra_block(arch *Arch, flavor string, level 
+</a> 	return result
+ }
+ func (Op J) HLAssemblerMatch(arch *Arch) []string {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	result := make([]string, 2)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	result := make([]string, 4)
+</a> 	result[0] = &quot;j::*--type=number&quot;
+ 	result[1] = &quot;j::*--type=symbol&quot;
+<a href="#h1-0-7" id="h1-0-7" class="i">+	result[2] = &quot;jmp::*--type=number&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	result[3] = &quot;jmp::*--type=symbol&quot;
+</a> 	return result
+ }
+ func (Op J) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, line *bmline.BasmLine) (*bmline.BasmLine, error) {
+ 	switch line.Operation.GetValue() {
+<a href="#h1-0-13" id="h1-0-13" class="i">+	case &quot;jmp&quot;:
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		line.Operation.SetValue(&quot;j&quot;)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		return line, nil
+</a> 	case &quot;j&quot;:
+ 		return line, nil
+ 	}
+</pre>
+</div>
+</body>
+</html>

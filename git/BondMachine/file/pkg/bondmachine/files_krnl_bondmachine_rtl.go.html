@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_krnl_bondmachine_rtl.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_krnl_bondmachine_rtl.go (8624B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	krnlBondmachineRTL = `
+<a href="#l5" class="line" id="l5">      5</a> /**
+<a href="#l6" class="line" id="l6">      6</a> * Copyright (C) 2019-2021 Xilinx, Inc
+<a href="#l7" class="line" id="l7">      7</a> *
+<a href="#l8" class="line" id="l8">      8</a> * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;). You may
+<a href="#l9" class="line" id="l9">      9</a> * not use this file except in compliance with the License. A copy of the
+<a href="#l10" class="line" id="l10">     10</a> * License is located at
+<a href="#l11" class="line" id="l11">     11</a> *
+<a href="#l12" class="line" id="l12">     12</a> *     http://www.apache.org/licenses/LICENSE-2.0
+<a href="#l13" class="line" id="l13">     13</a> *
+<a href="#l14" class="line" id="l14">     14</a> * Unless required by applicable law or agreed to in writing, software
+<a href="#l15" class="line" id="l15">     15</a> * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+<a href="#l16" class="line" id="l16">     16</a> * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+<a href="#l17" class="line" id="l17">     17</a> * License for the specific language governing permissions and limitations
+<a href="#l18" class="line" id="l18">     18</a> * under the License.
+<a href="#l19" class="line" id="l19">     19</a> */
+<a href="#l20" class="line" id="l20">     20</a> 
+<a href="#l21" class="line" id="l21">     21</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l22" class="line" id="l22">     22</a> // Description: This is a wrapper of module &quot;krnl_bondmachine_rtl_int&quot;
+<a href="#l23" class="line" id="l23">     23</a> ///////////////////////////////////////////////////////////////////////////////
+<a href="#l24" class="line" id="l24">     24</a> 
+<a href="#l25" class="line" id="l25">     25</a> // default_nettype of none prevents implicit wire declaration.
+<a href="#l26" class="line" id="l26">     26</a> ` + &quot;`default_nettype none&quot; + `
+<a href="#l27" class="line" id="l27">     27</a> ` + &quot;`timescale 1 ns / 1 ps &quot; + `
+<a href="#l28" class="line" id="l28">     28</a> 
+<a href="#l29" class="line" id="l29">     29</a> module krnl_bondmachine_rtl #( 
+<a href="#l30" class="line" id="l30">     30</a>   parameter integer  C_S_AXI_CONTROL_DATA_WIDTH = 32,
+<a href="#l31" class="line" id="l31">     31</a>   parameter integer  C_S_AXI_CONTROL_ADDR_WIDTH = 6,
+<a href="#l32" class="line" id="l32">     32</a>   parameter integer  C_M_AXI_GMEM_ID_WIDTH = 1,
+<a href="#l33" class="line" id="l33">     33</a>   parameter integer  C_M_AXI_GMEM_ADDR_WIDTH = 64,
+<a href="#l34" class="line" id="l34">     34</a>   parameter integer  C_M_AXI_GMEM_DATA_WIDTH = 32
+<a href="#l35" class="line" id="l35">     35</a> )
+<a href="#l36" class="line" id="l36">     36</a> (
+<a href="#l37" class="line" id="l37">     37</a>   // System signals
+<a href="#l38" class="line" id="l38">     38</a>   input  wire  ap_clk,
+<a href="#l39" class="line" id="l39">     39</a>   input  wire  ap_rst_n,
+<a href="#l40" class="line" id="l40">     40</a>   // AXI4 master interface 
+<a href="#l41" class="line" id="l41">     41</a>   output wire                                 m_axi_gmem_AWVALID,
+<a href="#l42" class="line" id="l42">     42</a>   input  wire                                 m_axi_gmem_AWREADY,
+<a href="#l43" class="line" id="l43">     43</a>   output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_AWADDR,
+<a href="#l44" class="line" id="l44">     44</a>   output wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_AWID,
+<a href="#l45" class="line" id="l45">     45</a>   output wire [7:0]                           m_axi_gmem_AWLEN,
+<a href="#l46" class="line" id="l46">     46</a>   output wire [2:0]                           m_axi_gmem_AWSIZE,
+<a href="#l47" class="line" id="l47">     47</a>   // Tie-off AXI4 transaction options that are not being used.
+<a href="#l48" class="line" id="l48">     48</a>   output wire [1:0]                           m_axi_gmem_AWBURST,
+<a href="#l49" class="line" id="l49">     49</a>   output wire [1:0]                           m_axi_gmem_AWLOCK,
+<a href="#l50" class="line" id="l50">     50</a>   output wire [3:0]                           m_axi_gmem_AWCACHE,
+<a href="#l51" class="line" id="l51">     51</a>   output wire [2:0]                           m_axi_gmem_AWPROT,
+<a href="#l52" class="line" id="l52">     52</a>   output wire [3:0]                           m_axi_gmem_AWQOS,
+<a href="#l53" class="line" id="l53">     53</a>   output wire [3:0]                           m_axi_gmem_AWREGION,
+<a href="#l54" class="line" id="l54">     54</a>   output wire                                 m_axi_gmem_WVALID,
+<a href="#l55" class="line" id="l55">     55</a>   input  wire                                 m_axi_gmem_WREADY,
+<a href="#l56" class="line" id="l56">     56</a>   output wire [C_M_AXI_GMEM_DATA_WIDTH-1:0]   m_axi_gmem_WDATA,
+<a href="#l57" class="line" id="l57">     57</a>   output wire [C_M_AXI_GMEM_DATA_WIDTH/8-1:0] m_axi_gmem_WSTRB,
+<a href="#l58" class="line" id="l58">     58</a>   output wire                                 m_axi_gmem_WLAST,
+<a href="#l59" class="line" id="l59">     59</a>   output wire                                 m_axi_gmem_ARVALID,
+<a href="#l60" class="line" id="l60">     60</a>   input  wire                                 m_axi_gmem_ARREADY,
+<a href="#l61" class="line" id="l61">     61</a>   output wire [C_M_AXI_GMEM_ADDR_WIDTH-1:0]   m_axi_gmem_ARADDR,
+<a href="#l62" class="line" id="l62">     62</a>   output wire [C_M_AXI_GMEM_ID_WIDTH-1:0]     m_axi_gmem_ARID,
+<a href="#l63" class="line" id="l63">     63</a>   output wire [7:0]                           m_axi_gmem_ARLEN,
+<a href="#l64" class="line" id="l64">     64</a>   output wire [2:0]                           m_axi_gmem_ARSIZE,
+<a href="#l65" class="line" id="l65">     65</a>   output wire [1:0]                           m_axi_gmem_ARBURST,
+<a href="#l66" class="line" id="l66">     66</a>   output wire [1:0]                           m_axi_gmem_ARLOCK,
+<a href="#l67" class="line" id="l67">     67</a>   output wire [3:0]                           m_axi_gmem_ARCACHE,
+<a href="#l68" class="line" id="l68">     68</a>   output wire [2:0]                           m_axi_gmem_ARPROT,
+<a href="#l69" class="line" id="l69">     69</a>   output wire [3:0]                           m_axi_gmem_ARQOS,
+<a href="#l70" class="line" id="l70">     70</a>   output wire [3:0]                           m_axi_gmem_ARREGION,
+<a href="#l71" class="line" id="l71">     71</a>   input  wire                                 m_axi_gmem_RVALID,
+<a href="#l72" class="line" id="l72">     72</a>   output wire                                 m_axi_gmem_RREADY,
+<a href="#l73" class="line" id="l73">     73</a>   input  wire [C_M_AXI_GMEM_DATA_WIDTH - 1:0] m_axi_gmem_RDATA,
+<a href="#l74" class="line" id="l74">     74</a>   input  wire                                 m_axi_gmem_RLAST,
+<a href="#l75" class="line" id="l75">     75</a>   input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_RID,
+<a href="#l76" class="line" id="l76">     76</a>   input  wire [1:0]                           m_axi_gmem_RRESP,
+<a href="#l77" class="line" id="l77">     77</a>   input  wire                                 m_axi_gmem_BVALID,
+<a href="#l78" class="line" id="l78">     78</a>   output wire                                 m_axi_gmem_BREADY,
+<a href="#l79" class="line" id="l79">     79</a>   input  wire [1:0]                           m_axi_gmem_BRESP,
+<a href="#l80" class="line" id="l80">     80</a>   input  wire [C_M_AXI_GMEM_ID_WIDTH - 1:0]   m_axi_gmem_BID,
+<a href="#l81" class="line" id="l81">     81</a> 
+<a href="#l82" class="line" id="l82">     82</a>   // AXI4-Lite slave interface
+<a href="#l83" class="line" id="l83">     83</a>   input  wire                                    s_axi_control_AWVALID,
+<a href="#l84" class="line" id="l84">     84</a>   output wire                                    s_axi_control_AWREADY,
+<a href="#l85" class="line" id="l85">     85</a>   input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_AWADDR,
+<a href="#l86" class="line" id="l86">     86</a>   input  wire                                    s_axi_control_WVALID,
+<a href="#l87" class="line" id="l87">     87</a>   output wire                                    s_axi_control_WREADY,
+<a href="#l88" class="line" id="l88">     88</a>   input  wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_WDATA,
+<a href="#l89" class="line" id="l89">     89</a>   input  wire [C_S_AXI_CONTROL_DATA_WIDTH/8-1:0] s_axi_control_WSTRB,
+<a href="#l90" class="line" id="l90">     90</a>   input  wire                                    s_axi_control_ARVALID,
+<a href="#l91" class="line" id="l91">     91</a>   output wire                                    s_axi_control_ARREADY,
+<a href="#l92" class="line" id="l92">     92</a>   input  wire [C_S_AXI_CONTROL_ADDR_WIDTH-1:0]   s_axi_control_ARADDR,
+<a href="#l93" class="line" id="l93">     93</a>   output wire                                    s_axi_control_RVALID,
+<a href="#l94" class="line" id="l94">     94</a>   input  wire                                    s_axi_control_RREADY,
+<a href="#l95" class="line" id="l95">     95</a>   output wire [C_S_AXI_CONTROL_DATA_WIDTH-1:0]   s_axi_control_RDATA,
+<a href="#l96" class="line" id="l96">     96</a>   output wire [1:0]                              s_axi_control_RRESP,
+<a href="#l97" class="line" id="l97">     97</a>   output wire                                    s_axi_control_BVALID,
+<a href="#l98" class="line" id="l98">     98</a>   input  wire                                    s_axi_control_BREADY,
+<a href="#l99" class="line" id="l99">     99</a>   output wire [1:0]                              s_axi_control_BRESP,
+<a href="#l100" class="line" id="l100">    100</a>   output wire                                    interrupt 
+<a href="#l101" class="line" id="l101">    101</a> );
+<a href="#l102" class="line" id="l102">    102</a> 
+<a href="#l103" class="line" id="l103">    103</a> krnl_bondmachine_rtl_int #(
+<a href="#l104" class="line" id="l104">    104</a>   .C_S_AXI_CONTROL_DATA_WIDTH  ( C_S_AXI_CONTROL_DATA_WIDTH ),
+<a href="#l105" class="line" id="l105">    105</a>   .C_S_AXI_CONTROL_ADDR_WIDTH  ( C_S_AXI_CONTROL_ADDR_WIDTH ),
+<a href="#l106" class="line" id="l106">    106</a>   .C_M_AXI_GMEM_ID_WIDTH       ( C_M_AXI_GMEM_ID_WIDTH ),
+<a href="#l107" class="line" id="l107">    107</a>   .C_M_AXI_GMEM_ADDR_WIDTH     ( C_M_AXI_GMEM_ADDR_WIDTH ),
+<a href="#l108" class="line" id="l108">    108</a>   .C_M_AXI_GMEM_DATA_WIDTH     ( C_M_AXI_GMEM_DATA_WIDTH )
+<a href="#l109" class="line" id="l109">    109</a> )
+<a href="#l110" class="line" id="l110">    110</a> inst_krnl_bondmachine_rtl_int (
+<a href="#l111" class="line" id="l111">    111</a>   .ap_clk                 ( ap_clk ),
+<a href="#l112" class="line" id="l112">    112</a>   .ap_rst_n               ( ap_rst_n ),
+<a href="#l113" class="line" id="l113">    113</a>   .m_axi_gmem_AWVALID     ( m_axi_gmem_AWVALID ),
+<a href="#l114" class="line" id="l114">    114</a>   .m_axi_gmem_AWREADY     ( m_axi_gmem_AWREADY ),
+<a href="#l115" class="line" id="l115">    115</a>   .m_axi_gmem_AWADDR      ( m_axi_gmem_AWADDR ),
+<a href="#l116" class="line" id="l116">    116</a>   .m_axi_gmem_AWID        ( m_axi_gmem_AWID ),
+<a href="#l117" class="line" id="l117">    117</a>   .m_axi_gmem_AWLEN       ( m_axi_gmem_AWLEN ),
+<a href="#l118" class="line" id="l118">    118</a>   .m_axi_gmem_AWSIZE      ( m_axi_gmem_AWSIZE ),
+<a href="#l119" class="line" id="l119">    119</a>   .m_axi_gmem_AWBURST     ( m_axi_gmem_AWBURST ),
+<a href="#l120" class="line" id="l120">    120</a>   .m_axi_gmem_AWLOCK      ( m_axi_gmem_AWLOCK ),
+<a href="#l121" class="line" id="l121">    121</a>   .m_axi_gmem_AWCACHE     ( m_axi_gmem_AWCACHE ),
+<a href="#l122" class="line" id="l122">    122</a>   .m_axi_gmem_AWPROT      ( m_axi_gmem_AWPROT ),
+<a href="#l123" class="line" id="l123">    123</a>   .m_axi_gmem_AWQOS       ( m_axi_gmem_AWQOS ),
+<a href="#l124" class="line" id="l124">    124</a>   .m_axi_gmem_AWREGION    ( m_axi_gmem_AWREGION ),
+<a href="#l125" class="line" id="l125">    125</a>   .m_axi_gmem_WVALID      ( m_axi_gmem_WVALID ),
+<a href="#l126" class="line" id="l126">    126</a>   .m_axi_gmem_WREADY      ( m_axi_gmem_WREADY ),
+<a href="#l127" class="line" id="l127">    127</a>   .m_axi_gmem_WDATA       ( m_axi_gmem_WDATA ),
+<a href="#l128" class="line" id="l128">    128</a>   .m_axi_gmem_WSTRB       ( m_axi_gmem_WSTRB ),
+<a href="#l129" class="line" id="l129">    129</a>   .m_axi_gmem_WLAST       ( m_axi_gmem_WLAST ),
+<a href="#l130" class="line" id="l130">    130</a>   .m_axi_gmem_ARVALID     ( m_axi_gmem_ARVALID ),
+<a href="#l131" class="line" id="l131">    131</a>   .m_axi_gmem_ARREADY     ( m_axi_gmem_ARREADY ),
+<a href="#l132" class="line" id="l132">    132</a>   .m_axi_gmem_ARADDR      ( m_axi_gmem_ARADDR ),
+<a href="#l133" class="line" id="l133">    133</a>   .m_axi_gmem_ARID        ( m_axi_gmem_ARID ),
+<a href="#l134" class="line" id="l134">    134</a>   .m_axi_gmem_ARLEN       ( m_axi_gmem_ARLEN ),
+<a href="#l135" class="line" id="l135">    135</a>   .m_axi_gmem_ARSIZE      ( m_axi_gmem_ARSIZE ),
+<a href="#l136" class="line" id="l136">    136</a>   .m_axi_gmem_ARBURST     ( m_axi_gmem_ARBURST ),
+<a href="#l137" class="line" id="l137">    137</a>   .m_axi_gmem_ARLOCK      ( m_axi_gmem_ARLOCK ),
+<a href="#l138" class="line" id="l138">    138</a>   .m_axi_gmem_ARCACHE     ( m_axi_gmem_ARCACHE ),
+<a href="#l139" class="line" id="l139">    139</a>   .m_axi_gmem_ARPROT      ( m_axi_gmem_ARPROT ),
+<a href="#l140" class="line" id="l140">    140</a>   .m_axi_gmem_ARQOS       ( m_axi_gmem_ARQOS ),
+<a href="#l141" class="line" id="l141">    141</a>   .m_axi_gmem_ARREGION    ( m_axi_gmem_ARREGION ),
+<a href="#l142" class="line" id="l142">    142</a>   .m_axi_gmem_RVALID      ( m_axi_gmem_RVALID ),
+<a href="#l143" class="line" id="l143">    143</a>   .m_axi_gmem_RREADY      ( m_axi_gmem_RREADY ),
+<a href="#l144" class="line" id="l144">    144</a>   .m_axi_gmem_RDATA       ( m_axi_gmem_RDATA ),
+<a href="#l145" class="line" id="l145">    145</a>   .m_axi_gmem_RLAST       ( m_axi_gmem_RLAST ),
+<a href="#l146" class="line" id="l146">    146</a>   .m_axi_gmem_RID         ( m_axi_gmem_RID ),
+<a href="#l147" class="line" id="l147">    147</a>   .m_axi_gmem_RRESP       ( m_axi_gmem_RRESP ),
+<a href="#l148" class="line" id="l148">    148</a>   .m_axi_gmem_BVALID      ( m_axi_gmem_BVALID ),
+<a href="#l149" class="line" id="l149">    149</a>   .m_axi_gmem_BREADY      ( m_axi_gmem_BREADY ),
+<a href="#l150" class="line" id="l150">    150</a>   .m_axi_gmem_BRESP       ( m_axi_gmem_BRESP ),
+<a href="#l151" class="line" id="l151">    151</a>   .m_axi_gmem_BID         ( m_axi_gmem_BID ),
+<a href="#l152" class="line" id="l152">    152</a>   .s_axi_control_AWVALID  ( s_axi_control_AWVALID ),
+<a href="#l153" class="line" id="l153">    153</a>   .s_axi_control_AWREADY  ( s_axi_control_AWREADY ),
+<a href="#l154" class="line" id="l154">    154</a>   .s_axi_control_AWADDR   ( s_axi_control_AWADDR ),
+<a href="#l155" class="line" id="l155">    155</a>   .s_axi_control_WVALID   ( s_axi_control_WVALID ),
+<a href="#l156" class="line" id="l156">    156</a>   .s_axi_control_WREADY   ( s_axi_control_WREADY ),
+<a href="#l157" class="line" id="l157">    157</a>   .s_axi_control_WDATA    ( s_axi_control_WDATA ),
+<a href="#l158" class="line" id="l158">    158</a>   .s_axi_control_WSTRB    ( s_axi_control_WSTRB ),
+<a href="#l159" class="line" id="l159">    159</a>   .s_axi_control_ARVALID  ( s_axi_control_ARVALID ),
+<a href="#l160" class="line" id="l160">    160</a>   .s_axi_control_ARREADY  ( s_axi_control_ARREADY ),
+<a href="#l161" class="line" id="l161">    161</a>   .s_axi_control_ARADDR   ( s_axi_control_ARADDR ),
+<a href="#l162" class="line" id="l162">    162</a>   .s_axi_control_RVALID   ( s_axi_control_RVALID ),
+<a href="#l163" class="line" id="l163">    163</a>   .s_axi_control_RREADY   ( s_axi_control_RREADY ),
+<a href="#l164" class="line" id="l164">    164</a>   .s_axi_control_RDATA    ( s_axi_control_RDATA ),
+<a href="#l165" class="line" id="l165">    165</a>   .s_axi_control_RRESP    ( s_axi_control_RRESP ),
+<a href="#l166" class="line" id="l166">    166</a>   .s_axi_control_BVALID   ( s_axi_control_BVALID ),
+<a href="#l167" class="line" id="l167">    167</a>   .s_axi_control_BREADY   ( s_axi_control_BREADY ),
+<a href="#l168" class="line" id="l168">    168</a>   .s_axi_control_BRESP    ( s_axi_control_BRESP ),
+<a href="#l169" class="line" id="l169">    169</a>   .interrupt              ( interrupt )
+<a href="#l170" class="line" id="l170">    170</a> );
+<a href="#l171" class="line" id="l171">    171</a> endmodule : krnl_bondmachine_rtl
+<a href="#l172" class="line" id="l172">    172</a> 
+<a href="#l173" class="line" id="l173">    173</a> ` + &quot;`default_nettype wire&quot; + `
+<a href="#l174" class="line" id="l174">    174</a> 
+<a href="#l175" class="line" id="l175">    175</a> `
+<a href="#l176" class="line" id="l176">    176</a> )
+</pre>
+</div>
+</body>
+</html>

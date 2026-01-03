@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Initial stack creator engine - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1855baa20c0da90bf1eedbca1fda9b5bd097c642.html">1855baa20c0da90bf1eedbca1fda9b5bd097c642</a>
+<b>parent</b> <a href="../commit/d2f842c218d068c64c2903fd9fff2c0a32cea81a.html">d2f842c218d068c64c2903fd9fff2c0a32cea81a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Fri,  6 Jan 2023 15:13:46 +0100
+
+Initial stack creator engine
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">pkg/bmstack/bmstack.go</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkg/bmstack/stackfile.go</a></td><td> | </td><td class="num">69</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 118 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a> b/<a href="../file/pkg/bmstack/bmstack.go.html">pkg/bmstack/bmstack.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,49 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+package bmstack
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+import (
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;text/template&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+type stateMachine struct {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	Nums     int
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	Bits     int
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	Buswidth string
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	Names    []string
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	Binary   []string
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+type BmStack struct {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	Rsize       uint8
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	Buswidth    string
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	Inputs      []string
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	InputsBins  []string
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	Outputs     []string
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	OutputsBins []string
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	SendSM      stateMachine
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	funcMap     template.FuncMap
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	PackageName string
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	ModuleName  string
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+}
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+func CreateBasicStack() *BmStack {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	result := new(BmStack)
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	//result.Rsize = bmach.Rsize
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	//result.Buswidth = &quot;[&quot; + strconv.Itoa(int(bmach.Rsize)-1) + &quot;:0]&quot;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	funcMap := template.FuncMap{
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		&quot;inc&quot;: func(i int) int {
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			return i + 1
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		},
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+		&quot;dec&quot;: func(i int) int {
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			return i - 1
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		},
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+		&quot;next&quot;: func(i int) int {
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+			if i &lt; result.SendSM.Nums-1 {
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+				return i + 1
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			} else {
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				return 0
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+			}
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		},
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	}
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	result.funcMap = funcMap
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	return result
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/pkg/bmstack/stackfile.go.html">pkg/bmstack/stackfile.go</a> b/<a href="../file/pkg/bmstack/stackfile.go.html">pkg/bmstack/stackfile.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,69 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+package bmstack
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+const (
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	stack = `
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+    wire [31:0] states;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+    wire [31:0] changes;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+    wire [31:0] DVDR_PS2PL;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+    wire [31:0] DVDR_PL2PS;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+    {{- if .Outputs }}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+    {{- range .Outputs }}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+    wire [31:0] {{ . }};
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+    {{- end }}
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+    {{- end }}
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+    {{- if .Inputs }}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+    {{- range .Inputs }}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+    wire [31:0] {{ . }};
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+    {{- end }}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+    {{- end }}
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+    bondmachine_main bondmachine_inst(
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+        .clk(S_AXI_ACLK),
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+        .btnC(btnC),
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+    //    .led(led),
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+        .A_DVDR_PS2PL(DVDR_PS2PL),
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+        .A_DVDR_PL2PS(DVDR_PL2PS),
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+        .A_changes(changes),
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+        .A_states(states),
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	{{- if .Outputs }}
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	{{- range .Outputs }}
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	.A_{{ . }}({{ . }}),
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	{{- end }}
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+	{{- end }}
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	{{- if .Inputs }}
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	{{- range .Inputs }}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	.A_{{ . }}({{ . }}),
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	{{- end }}
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	{{- end }}
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+        .interrupt(interrupt)
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+    );
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+    {{- $smindex:= 0 }}
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+    {{- if .Inputs }}
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+    {{- range .Inputs }}
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+    assign {{ . }} = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+    {{- $smindex = inc $smindex }}
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+    {{- end }}
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+    {{- end }}
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+    assign DVDR_PS2PL = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+    {{- $smindex = inc $smindex }}
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+    assign states = slv_reg{{ $smindex }}[31:0];
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+    {{- $smindex = inc $smindex }}
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+    always @( posedge S_AXI_ACLK )
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+    begin
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+    {{- if .Outputs }}
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+    {{- range .Outputs }}
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+        slv_reg{{ $smindex }} &lt;= {{ . }}[31:0];
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+        {{- $smindex = inc $smindex }}
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+    {{- end }}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+    {{- end }}   
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+        slv_reg{{ $smindex }} &lt;= DVDR_PL2PS[31:0];
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+    {{- $smindex = inc $smindex }}
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+        slv_reg{{ $smindex }} &lt;= changes[31:0];
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+    end  
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+    
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+`
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+)
+</a></pre>
+</div>
+</body>
+</html>

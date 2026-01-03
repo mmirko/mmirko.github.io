@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emulation fixed - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3be6dbe5c46addecce6223c5d0b7d3b2b4c2a16a.html">3be6dbe5c46addecce6223c5d0b7d3b2b4c2a16a</a>
+<b>parent</b> <a href="../commit/84d26c24fc8b6ca0e65c0cba09eb1206914e1cd7.html">84d26c24fc8b6ca0e65c0cba09eb1206914e1cd7</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Wed, 11 Oct 2023 17:07:14 +0200
+
+Emulation fixed
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/basm.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/basm/templates.go</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/dynop_rsets.go</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_ro2rri.go</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>4 files changed, 19 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a> b/<a href="../file/pkg/basm/basm.go.html">pkg/basm/basm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -113,7 +113,7 @@ func (bi *BasmInstance) BasmInstanceInit(bm *bondmachine.Bondmachine) {
+</a> 		passEntryPoints |
+ 		passSymbolsResolver |
+ 		passMatcherResolver |
+<a href="#h0-0-3" id="h0-0-3" class="d">-		passFragmentAnalyzer |
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		// passFragmentAnalyzer |
+</a> 		passFragmentPruner |
+ 		passFragmentComposer |
+ 		passFragmentOptimizer1 |
+<b>diff --git a/<a id="h1" href="../file/pkg/basm/templates.go.html">pkg/basm/templates.go</a> b/<a href="../file/pkg/basm/templates.go.html">pkg/basm/templates.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,7 +2,6 @@ package basm
+</a> 
+ import (
+ 	&quot;bytes&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;fmt&quot;
+</a> 	&quot;regexp&quot;
+ 	&quot;strconv&quot;
+ 	&quot;strings&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -130,7 +129,7 @@ func applyTemplate(e *bmline.BasmElement, params map[string]string) error {
+</a> 
+ 	e.SetValue(f.String())
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	fmt.Println(params)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	// fmt.Println(params)
+</a> 
+ 	return nil
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/dynop_rsets.go.html">pkg/procbuilder/dynop_rsets.go</a> b/<a href="../file/pkg/procbuilder/dynop_rsets.go.html">pkg/procbuilder/dynop_rsets.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -122,7 +122,7 @@ func (op Rsets) Simulate(vm *VM, instr string) error {
+</a> 	// TODO: check
+ 	reg_bits := vm.Mach.R
+ 	reg := get_id(instr[:reg_bits])
+<a href="#h2-0-3" id="h2-0-3" class="d">-	memVal := get_id(instr[reg_bits : reg_bits+vm.Mach.Rsize])
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	memVal := get_id(instr[reg_bits : reg_bits+uint8(op.s)])
+</a> 	if vm.Mach.Rsize &lt;= 8 {
+ 		vm.Registers[reg] = uint8(memVal)
+ 	} else if vm.Mach.Rsize &lt;= 16 {
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a> b/<a href="../file/pkg/procbuilder/op_ro2rri.go.html">pkg/procbuilder/op_ro2rri.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -179,39 +179,41 @@ func (op Ro2rri) Simulate(vm *VM, instr string) error {
+</a> 	regSrc := get_id(instr[regBits : regBits*2])
+ 	sliceSize := int(vm.Mach.Rsize)
+ 	rSize := int(vm.Mach.Rsize)
+<a href="#h3-0-3" id="h3-0-3" class="i">+	wordSize := len(vm.Mach.Program.Slocs[0])
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	slocsLen := len(vm.Mach.Program.Slocs)
+</a> 
+ 	// The slice size is the minimum between the register size and the word size
+<a href="#h3-0-7" id="h3-0-7" class="d">-	if sliceSize &gt; len(vm.Mach.Program.Slocs[0]) {
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-		sliceSize = len(vm.Mach.Program.Slocs[0])
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	if sliceSize &gt; wordSize {
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		sliceSize = wordSize
+</a> 	}
+ 
+ 	if rSize &lt;= 8 {
+ 		loc := int(vm.Registers[regSrc].(uint8))
+<a href="#h3-0-15" id="h3-0-15" class="d">-		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-			vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+		if loc &lt; slocsLen {
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Program.Slocs[loc][wordSize-sliceSize : wordSize]))
+</a> 		} else {
+<a href="#h3-0-20" id="h3-0-20" class="d">-			vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+			vm.Registers[regDest] = uint8(get_id(vm.Mach.Data.Vars[loc-slocsLen][wordSize-sliceSize : wordSize]))
+</a> 		}
+ 	} else if rSize &lt;= 16 {
+ 		loc := int(vm.Registers[regSrc].(uint16))
+<a href="#h3-0-25" id="h3-0-25" class="d">-		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h3-0-26" id="h3-0-26" class="d">-			vm.Registers[regDest] = uint16(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+		if loc &lt; slocsLen {
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Program.Slocs[loc][wordSize-sliceSize : wordSize]))
+</a> 		} else {
+<a href="#h3-0-30" id="h3-0-30" class="d">-			vm.Registers[regDest] = uint16(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+			vm.Registers[regDest] = uint16(get_id(vm.Mach.Data.Vars[loc-slocsLen][wordSize-sliceSize : wordSize]))
+</a> 		}
+ 	} else if rSize &lt;= 32 {
+ 		loc := int(vm.Registers[regSrc].(uint32))
+<a href="#h3-0-35" id="h3-0-35" class="d">-		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h3-0-36" id="h3-0-36" class="d">-			vm.Registers[regDest] = uint32(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+		if loc &lt; slocsLen {
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Program.Slocs[loc][wordSize-sliceSize : wordSize]))
+</a> 		} else {
+<a href="#h3-0-40" id="h3-0-40" class="d">-			vm.Registers[regDest] = uint32(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+			vm.Registers[regDest] = uint32(get_id(vm.Mach.Data.Vars[loc-slocsLen][wordSize-sliceSize : wordSize]))
+</a> 		}
+ 	} else if rSize &lt;= 64 {
+ 		loc := int(vm.Registers[regSrc].(uint64))
+<a href="#h3-0-45" id="h3-0-45" class="d">-		if loc &lt; len(vm.Mach.Program.Slocs) {
+</a><a href="#h3-0-46" id="h3-0-46" class="d">-			vm.Registers[regDest] = uint64(get_id(vm.Mach.Program.Slocs[loc][0:sliceSize]))
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+		if loc &lt; slocsLen {
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Program.Slocs[loc][wordSize-sliceSize : wordSize]))
+</a> 		} else {
+<a href="#h3-0-50" id="h3-0-50" class="d">-			vm.Registers[regDest] = uint64(get_id(vm.Mach.Data.Vars[loc-len(vm.Mach.Program.Slocs)][0:sliceSize]))
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+			vm.Registers[regDest] = uint64(get_id(vm.Mach.Data.Vars[loc-slocsLen][wordSize-sliceSize : wordSize]))
+</a> 		}
+ 	} else {
+ 		return errors.New(&quot;invalid register size, must be &lt;= 64&quot;)
+</pre>
+</div>
+</body>
+</html>

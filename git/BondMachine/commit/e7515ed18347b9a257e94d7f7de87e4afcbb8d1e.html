@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Software quantum simulator - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e7515ed18347b9a257e94d7f7de87e4afcbb8d1e.html">e7515ed18347b9a257e94d7f7de87e4afcbb8d1e</a>
+<b>parent</b> <a href="../commit/7d83d8363015743c0a5294d3f0d1c7218caf677a.html">7d83d8363015743c0a5294d3f0d1c7218caf677a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon,  4 Mar 2024 18:02:18 +0100
+
+Software quantum simulator
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmqsim/bmqsim.go</a></td><td> | </td><td class="num">74</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 116 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a> b/<a href="../file/cmd/bmqsim/bmqsim.go.html">cmd/bmqsim/bmqsim.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,7 @@
+</a> package main
+ 
+ import (
+<a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;encoding/json&quot;
+</a> 	&quot;flag&quot;
+ 	&quot;fmt&quot;
+ 	&quot;log&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -35,8 +36,8 @@ var buildFullHardwareHardcoded = flag.Bool(&quot;build-full-hw-hardcoded&quot;, false, &quot;Bu
+</a> 
+ // 4
+ var softwareSimulation = flag.Bool(&quot;software-simulation&quot;, false, &quot;Software simulation mode&quot;)
+<a href="#h0-1-3" id="h0-1-3" class="d">-var softwareSimulationInput = flag.String(&quot;software-simulation-input&quot;, &quot;&quot;, &quot;Software simulation mode input file&quot;)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-var softwareSimulationOutput = flag.String(&quot;software-simulation-output&quot;, &quot;&quot;, &quot;Software simulation mode output file&quot;)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+var softwareSimulationInput = flag.String(&quot;software-simulation-input&quot;, &quot;&quot;, &quot;Software simulation mode input file. If not provided, the input will be zero-state&quot;)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+var softwareSimulationOutput = flag.String(&quot;software-simulation-output&quot;, &quot;&quot;, &quot;Software simulation mode output file, if not provided the output will be printed to stdout&quot;)
+</a> 
+ // Common options
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -297,14 +298,52 @@ func main() {
+</a> 	}
+ 
+ 	if *softwareSimulation {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		// Build a binary for a matrix sequence BM
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		fmt.Println(&quot;Under construction&quot;)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		if startBuilding {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			// Software simulation mode
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			if *softwareSimulationInput != &quot;&quot; {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+				// Load the input data from a json file
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+				inputs := new([]bmqsim.StateArray)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+				if inputJSON, err := os.ReadFile(*softwareSimulationInput); err == nil {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+					if err := json.Unmarshal([]byte(inputJSON), inputs); err != nil {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+						panic(err)
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+					}
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+				} else {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+					panic(err)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+				}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+				sim.Inputs = *inputs
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+			} else {
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+				// Zero state
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+				inputs := new(bmqsim.StateArray)
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				inputs.Vector = make([]bmmatrix.Complex32, sim.StateSize())
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+				for i := range inputs.Vector {
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+					if i == 0 {
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+						inputs.Vector[i] = bmmatrix.Complex32{Real: 1, Imag: 0}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+					} else {
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+						inputs.Vector[i] = bmmatrix.Complex32{Real: 0, Imag: 0}
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+					}
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+				}
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+				sim.Inputs = make([]bmqsim.StateArray, 1)
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+				sim.Inputs[0] = *inputs
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+			}
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+			if err := sim.RunSoftwareSimulation(); err != nil {
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+				bld.Alert(err)
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+				return
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+			}
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+			// Save the output data to a json file or print it to stdout
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+			if outputJSON, err := json.Marshal(sim.Outputs); err == nil {
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+				if *softwareSimulationOutput != &quot;&quot; {
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+					os.WriteFile(*softwareSimulationOutput, outputJSON, 0644)
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+				} else {
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+					fmt.Println(string(outputJSON))
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+				}
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+			} else {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+				panic(err)
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+			}
+</a> 
+<a href="#h0-2-49" id="h0-2-49" class="d">-		if *hardwareFlavorList {
+</a><a href="#h0-2-50" id="h0-2-50" class="d">-			// List of available hardware flavors for the selected operating mode
+</a><a href="#h0-2-51" id="h0-2-51" class="d">-		} else if *hardwareFlavor != &quot;&quot; {
+</a> 		} else {
+<a href="#h0-2-53" id="h0-2-53" class="d">-			bld.Alert(&quot;Hardware flavor must be selected&quot;)
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+			bld.Alert(&quot;No quantum circuit to run the software simulation&quot;)
+</a> 		}
+ 	}
+ 
+<b>diff --git a/<a id="h1" href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a> b/<a href="../file/pkg/bmqsim/bmqsim.go.html">pkg/bmqsim/bmqsim.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,6 +10,10 @@ import (
+</a> 	&quot;github.com/BondMachineHQ/BondMachine/pkg/bmmatrix&quot;
+ )
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+type StateArray struct {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	Vector []bmmatrix.Complex32
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+}
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> type IOmap struct {
+ 	Assoc map[string]string
+ }
+<a href="#h1-1" id="h1-1" class="h">@@ -19,6 +23,8 @@ type BmQSimulator struct {
+</a> 	qbits    []string
+ 	qbitsNum map[string]int
+ 	Mtx      []*bmmatrix.BmMatrixSquareComplex
+<a href="#h1-1-3" id="h1-1-3" class="i">+	Inputs   []StateArray
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Outputs  []StateArray
+</a> }
+ 
+ // BmQSimulatorInit initializes the BmQSimulator
+<a href="#h1-2" id="h1-2" class="h">@@ -29,6 +35,14 @@ func (sim *BmQSimulator) BmQSimulatorInit() {
+</a> 	sim.qbitsNum = make(map[string]int)
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+func (sim *BmQSimulator) QbitsNum() int {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	return len(sim.qbits)
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+}
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+func (sim *BmQSimulator) StateSize() int {
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	return int(math.Pow(2, float64(len(sim.qbits))))
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+}
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+
+</a> func (sim *BmQSimulator) Dump() string {
+ 	return fmt.Sprintf(&quot;BmQSimulator: verbose=%t, debug=%t, qbits=%v, qbitsNum=%v&quot;, sim.verbose, sim.debug, sim.qbits, sim.qbitsNum)
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -215,7 +229,12 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 				result = bmmatrix.TensorProductComplex(result, ident)
+ 			}
+ 		} else {
+<a href="#h1-3-3" id="h1-3-3" class="d">-			argNumQBits := len(op[fundLine].Elements)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			argNumQBits := 0
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+			for _, arg := range op[fundLine].Elements {
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+				if _, ok := sim.qbitsNum[arg.GetValue()]; ok {
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+					argNumQBits++
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+				}
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+			}
+</a> 			if argNumQBits == 1 {
+ 				// Single qbit operation
+ 				// Create the matrix
+<a href="#h1-4" id="h1-4" class="h">@@ -233,16 +252,21 @@ func (sim *BmQSimulator) BmMatrixFromOperation(op []*bmline.BasmLine) (*bmmatrix
+</a> 				// The order of the qbits in the operation is important, we need to reorder the qbits in the operation
+ 				// if they are not in sequence by swapping the qbits and then swapping them back after the matrix is created
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-				localOrder := make([]int, argNumQBits)
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+				localOrder := make([]int, len(op[fundLine].Elements))
+</a> 				for i, arg := range op[fundLine].Elements {
+ 					argName := arg.GetValue()
+<a href="#h1-4-7" id="h1-4-7" class="d">-					localOrder[i] = sim.qbitsNum[argName]
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+					if _, ok := sim.qbitsNum[argName]; ok {
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+						localOrder[i] = sim.qbitsNum[argName]
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+					} else {
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+						// Leaving out the arguments that are not qbits
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+						localOrder[i] = -1
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+					}
+</a> 				}
+ 
+ 				//fmt.Println(localOrder, q)
+ 
+ 				for i, lq := range localOrder {
+<a href="#h1-4-19" id="h1-4-19" class="d">-					if lq != q {
+</a><a href="#h1-4-20" id="h1-4-20" class="i">+					if lq != q &amp;&amp; lq != -1 {
+</a> 						// Swap the qbits
+ 						localQBits[q], localQBits[lq] = localQBits[lq], localQBits[q]
+ 						// Add the swap to the list
+<a href="#h1-5" id="h1-5" class="h">@@ -342,8 +366,12 @@ func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrix
+</a> 		return bmmatrix.PauliZ(), nil
+ 	case &quot;cx&quot;, &quot;cnot&quot;, &quot;xor&quot;:
+ 		return bmmatrix.CNot(), nil
+<a href="#h1-5-3" id="h1-5-3" class="d">-	case &quot;s&quot;, &quot;p&quot;, &quot;phase&quot;:
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	case &quot;s&quot;, &quot;p&quot;:
+</a> 		return bmmatrix.S(), nil
+<a href="#h1-5-6" id="h1-5-6" class="i">+	case &quot;v&quot;, &quot;sx&quot;:
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+		return bmmatrix.Sx(), nil
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+	case &quot;t&quot;:
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+		return bmmatrix.T(), nil
+</a> 	case &quot;xnor&quot;:
+ 		return bmmatrix.XNor(), nil
+ 	case &quot;cz&quot;, &quot;cphase&quot;, &quot;csign&quot;, &quot;cpf&quot;:
+<a href="#h1-6" id="h1-6" class="h">@@ -354,6 +382,10 @@ func (sim *BmQSimulator) MatrixFromOp(line *bmline.BasmLine) (*bmmatrix.BmMatrix
+</a> 		return bmmatrix.Swap(), nil
+ 	case &quot;iswap&quot;:
+ 		return bmmatrix.Iswap(), nil
+<a href="#h1-6-3" id="h1-6-3" class="i">+	case &quot;phase&quot;, &quot;ph&quot;:
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		return sim.Phase(line)
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+	case &quot;r&quot;:
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+		return sim.P(line)
+</a> 	case &quot;zero&quot;:
+ 	// Ignore the zero operation
+ 	default:
+<a href="#h1-7" id="h1-7" class="h">@@ -385,3 +417,35 @@ func (sim *BmQSimulator) EmitBMAPIMaps(hwflavor string) (string, error) {
+</a> 	}
+ 	return &quot;&quot;, fmt.Errorf(&quot;no qbits defined&quot;)
+ }
+<a href="#h1-7-3" id="h1-7-3" class="i">+
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+func (sim *BmQSimulator) RunSoftwareSimulation() error {
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+	// TODO Include the checks
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+	sim.Outputs = make([]StateArray, len(sim.Inputs))
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	for i, input := range sim.Inputs {
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+		if len(input.Vector) != sim.StateSize() {
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+			return fmt.Errorf(&quot;input %d has %d vectors, expected %d&quot;, i, len(input.Vector), sim.StateSize())
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+		}
+</a><a href="#h1-7-11" id="h1-7-11" class="i">+
+</a><a href="#h1-7-12" id="h1-7-12" class="i">+		curState := make([]bmmatrix.Complex32, sim.StateSize())
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+		copy(curState, input.Vector)
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+		for j, mtx := range sim.Mtx {
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+			if mtx == nil {
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+				return fmt.Errorf(&quot;matrix %d is nil&quot;, j)
+</a><a href="#h1-7-18" id="h1-7-18" class="i">+			}
+</a><a href="#h1-7-19" id="h1-7-19" class="i">+			if len(mtx.Data) != sim.StateSize() {
+</a><a href="#h1-7-20" id="h1-7-20" class="i">+				return fmt.Errorf(&quot;matrix %d has %d vectors, expected %d&quot;, j, len(mtx.Data), sim.StateSize())
+</a><a href="#h1-7-21" id="h1-7-21" class="i">+			}
+</a><a href="#h1-7-22" id="h1-7-22" class="i">+
+</a><a href="#h1-7-23" id="h1-7-23" class="i">+			if newState, err := bmmatrix.MatrixVectorProductComplex(mtx, curState); err != nil {
+</a><a href="#h1-7-24" id="h1-7-24" class="i">+				return fmt.Errorf(&quot;error running the software simulation: %v&quot;, err)
+</a><a href="#h1-7-25" id="h1-7-25" class="i">+			} else {
+</a><a href="#h1-7-26" id="h1-7-26" class="i">+				curState = newState
+</a><a href="#h1-7-27" id="h1-7-27" class="i">+			}
+</a><a href="#h1-7-28" id="h1-7-28" class="i">+		}
+</a><a href="#h1-7-29" id="h1-7-29" class="i">+
+</a><a href="#h1-7-30" id="h1-7-30" class="i">+		sim.Outputs[i] = StateArray{Vector: curState}
+</a><a href="#h1-7-31" id="h1-7-31" class="i">+
+</a><a href="#h1-7-32" id="h1-7-32" class="i">+	}
+</a><a href="#h1-7-33" id="h1-7-33" class="i">+	return nil
+</a><a href="#h1-7-34" id="h1-7-34" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

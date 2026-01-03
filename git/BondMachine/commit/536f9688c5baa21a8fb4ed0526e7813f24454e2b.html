@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Opcodes metadata - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/536f9688c5baa21a8fb4ed0526e7813f24454e2b.html">536f9688c5baa21a8fb4ed0526e7813f24454e2b</a>
+<b>parent</b> <a href="../commit/d241042178ab38aaf5da83b95a0cf0310125629f.html">d241042178ab38aaf5da83b95a0cf0310125629f</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  4 Jul 2023 16:11:45 +0200
+
+Opcodes metadata
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/fragmentanalyzer.go</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/procbuilder/op_dec.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/procbuilder/op_inc.go</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/procbuilder/op_jz.go</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">pkg/procbuilder/op_r2o.go</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">pkg/procbuilder/op_r2t.go</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">pkg/procbuilder/op_rset.go</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>7 files changed, 71 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a> b/<a href="../file/pkg/basm/fragmentanalyzer.go.html">pkg/basm/fragmentanalyzer.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -204,7 +204,6 @@ func fragmentAnalyzer(bi *BasmInstance) error {
+</a> 
+ 						}
+ 					}
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a> 				}
+ 			}
+ 		}
+<b>diff --git a/<a id="h1" href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a> b/<a href="../file/pkg/procbuilder/op_dec.go.html">pkg/procbuilder/op_dec.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -196,5 +196,15 @@ func (Op Dec) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op Dec) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	case &quot;dec&quot;:
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+			meta = meta.SetMeta(&quot;inv&quot;, regDst)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			return meta, nil
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		}
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	}
+</a> 	return nil, nil
+ }
+<b>diff --git a/<a id="h2" href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a> b/<a href="../file/pkg/procbuilder/op_inc.go.html">pkg/procbuilder/op_inc.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -199,5 +199,15 @@ func (Op Inc) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op Inc) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h2-0-3" id="h2-0-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	case &quot;inc&quot;:
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+			meta = meta.SetMeta(&quot;inv&quot;, regDst)
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+			return meta, nil
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	}
+</a> 	return nil, nil
+ }
+<b>diff --git a/<a id="h3" href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a> b/<a href="../file/pkg/procbuilder/op_jz.go.html">pkg/procbuilder/op_jz.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -233,5 +233,14 @@ func (Op Jz) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op Jz) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h3-0-3" id="h3-0-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	case &quot;jz&quot;:
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+			return meta, nil
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+		}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	}
+</a> 	return nil, nil
+ }
+<b>diff --git a/<a id="h4" href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a> b/<a href="../file/pkg/procbuilder/op_r2o.go.html">pkg/procbuilder/op_r2o.go</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -347,5 +347,21 @@ func (Op R2o) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op R2o) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h4-0-3" id="h4-0-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	case &quot;r20&quot;:
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+			return meta, nil
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+		}
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	case &quot;mov&quot;:
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+		regDst := line.Elements[1].GetValue()
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+			return meta, nil
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+		}
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	}
+</a> 	return nil, nil
+ }
+<b>diff --git a/<a id="h5" href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a> b/<a href="../file/pkg/procbuilder/op_r2t.go.html">pkg/procbuilder/op_r2t.go</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -266,7 +266,7 @@ func (Op R2t) HLAssemblerNormalize(arch *Arch, rg *bmreqs.ReqRoot, node string, 
+</a> 	case &quot;r2t&quot;:
+ 		regVal := line.Elements[0].GetValue()
+ 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;registers&quot;, Value: regVal, Op: bmreqs.OpAdd})
+<a href="#h5-0-3" id="h5-0-3" class="d">-		soVal := line.Elements[0].GetValue()
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		soVal := line.Elements[1].GetValue()
+</a> 		rg.Requirement(bmreqs.ReqRequest{Node: node, T: bmreqs.ObjectSet, Name: &quot;sos&quot;, Value: soVal, Op: bmreqs.OpAdd})
+ 		return line, nil
+ 	case &quot;push&quot;:
+<a href="#h5-1" id="h5-1" class="h">@@ -323,5 +323,21 @@ func (Op R2t) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op R2t) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h5-1-3" id="h5-1-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	case &quot;r2t&quot;, &quot;push&quot;:
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+		regDst := line.Elements[0].GetValue()
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+			return meta, nil
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+		}
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+	case &quot;mov&quot;:
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+		regDst := line.Elements[1].GetValue()
+</a><a href="#h5-1-13" id="h5-1-13" class="i">+		if regDst != &quot;&quot; {
+</a><a href="#h5-1-14" id="h5-1-14" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h5-1-15" id="h5-1-15" class="i">+			meta = meta.SetMeta(&quot;use&quot;, regDst)
+</a><a href="#h5-1-16" id="h5-1-16" class="i">+			return meta, nil
+</a><a href="#h5-1-17" id="h5-1-17" class="i">+		}
+</a><a href="#h5-1-18" id="h5-1-18" class="i">+	}
+</a> 	return nil, nil
+ }
+<b>diff --git a/<a id="h6" href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a> b/<a href="../file/pkg/procbuilder/op_rset.go.html">pkg/procbuilder/op_rset.go</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -219,5 +219,14 @@ func (Op Rset) ExtraFiles(arch *Arch) ([]string, []string) {
+</a> }
+ 
+ func (Op Rset) HLAssemblerInstructionMetadata(arch *Arch, line *bmline.BasmLine) (*bmmeta.BasmMeta, error) {
+<a href="#h6-0-3" id="h6-0-3" class="i">+	switch line.Operation.GetValue() {
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+	case &quot;rset&quot;:
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+		regNeed := line.Elements[0].GetValue()
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+		if regNeed != &quot;&quot; {
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+			var meta *bmmeta.BasmMeta
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+			meta = meta.SetMeta(&quot;inv&quot;, regNeed)
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+			return meta, nil
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+		}
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+	}
+</a> 	return nil, nil
+ }
+</pre>
+</div>
+</body>
+</html>

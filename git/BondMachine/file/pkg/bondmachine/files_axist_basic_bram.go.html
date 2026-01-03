@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>files_axist_basic_bram.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> files_axist_basic_bram.go (24721B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bondmachine
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	basicAXIStreamBram = `
+<a href="#l5" class="line" id="l5">      5</a> 
+<a href="#l6" class="line" id="l6">      6</a> 	module bram_oneportsync
+<a href="#l7" class="line" id="l7">      7</a> 	#(
+<a href="#l8" class="line" id="l8">      8</a> 			parameter RAM_WIDTH 		= 32,
+<a href="#l9" class="line" id="l9">      9</a> 			parameter RAM_DEPTH         = 256
+<a href="#l10" class="line" id="l10">     10</a> 		)(
+<a href="#l11" class="line" id="l11">     11</a> 		input clk, 
+<a href="#l12" class="line" id="l12">     12</a> 		input [RAM_WIDTH-1:0] addr,
+<a href="#l13" class="line" id="l13">     13</a> 		input [RAM_WIDTH-1:0] waddr,
+<a href="#l14" class="line" id="l14">     14</a> 		input cs_n,
+<a href="#l15" class="line" id="l15">     15</a> 		input wr_n, 
+<a href="#l16" class="line" id="l16">     16</a> 		input rd_n,
+<a href="#l17" class="line" id="l17">     17</a> 		input [RAM_WIDTH-1:0] bram_data_in,
+<a href="#l18" class="line" id="l18">     18</a> 		output reg [RAM_WIDTH-1:0] bram_data_out
+<a href="#l19" class="line" id="l19">     19</a> 	);
+<a href="#l20" class="line" id="l20">     20</a>     
+<a href="#l21" class="line" id="l21">     21</a>     (* RAM_STYLE=&quot;BLOCK&quot; *)
+<a href="#l22" class="line" id="l22">     22</a>     reg [RAM_WIDTH-1:0] mem [RAM_DEPTH-1:0];
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a>     always @(posedge clk)
+<a href="#l25" class="line" id="l25">     25</a>         if (cs_n == 1&#39;b0) begin
+<a href="#l26" class="line" id="l26">     26</a>             begin
+<a href="#l27" class="line" id="l27">     27</a>                 if (wr_n == 1&#39;b1) mem[(addr)] &lt;= bram_data_in;
+<a href="#l28" class="line" id="l28">     28</a>                 if (rd_n == 1&#39;b1) bram_data_out &lt;= mem[waddr];
+<a href="#l29" class="line" id="l29">     29</a>             end
+<a href="#l30" class="line" id="l30">     30</a>         end
+<a href="#l31" class="line" id="l31">     31</a>     endmodule
+<a href="#l32" class="line" id="l32">     32</a> 	
+<a href="#l33" class="line" id="l33">     33</a> 	module bram
+<a href="#l34" class="line" id="l34">     34</a> 	#(
+<a href="#l35" class="line" id="l35">     35</a> 		parameter RAM_WIDTH 		= 32,
+<a href="#l36" class="line" id="l36">     36</a> 		parameter RAM_ADDR_BITS 	= 9
+<a href="#l37" class="line" id="l37">     37</a> 	)
+<a href="#l38" class="line" id="l38">     38</a> 	(
+<a href="#l39" class="line" id="l39">     39</a> 	input							clock,
+<a href="#l40" class="line" id="l40">     40</a> 	input							ram_enable,
+<a href="#l41" class="line" id="l41">     41</a> 	input							write_enable,
+<a href="#l42" class="line" id="l42">     42</a>     input 		[31:0]	waddress,
+<a href="#l43" class="line" id="l43">     43</a>     input 		[31:0]	raddress,
+<a href="#l44" class="line" id="l44">     44</a>     input 		[31:0] 	input_data,
+<a href="#l45" class="line" id="l45">     45</a> 	output reg 	[31:0] 	output_data
+<a href="#l46" class="line" id="l46">     46</a> 	);
+<a href="#l47" class="line" id="l47">     47</a> 	
+<a href="#l48" class="line" id="l48">     48</a>    
+<a href="#l49" class="line" id="l49">     49</a>    (* RAM_STYLE=&quot;BLOCK&quot; *)
+<a href="#l50" class="line" id="l50">     50</a>    reg [RAM_WIDTH-1:0] ram_name [RAM_ADDR_BITS:0];
+<a href="#l51" class="line" id="l51">     51</a>     
+<a href="#l52" class="line" id="l52">     52</a>    always @(posedge clock) begin
+<a href="#l53" class="line" id="l53">     53</a>       if (ram_enable) begin
+<a href="#l54" class="line" id="l54">     54</a>          if (write_enable) begin
+<a href="#l55" class="line" id="l55">     55</a>             ram_name[waddress] &lt;= input_data;
+<a href="#l56" class="line" id="l56">     56</a>          end
+<a href="#l57" class="line" id="l57">     57</a>             
+<a href="#l58" class="line" id="l58">     58</a>          output_data &lt;= ram_name[raddress];
+<a href="#l59" class="line" id="l59">     59</a>       end
+<a href="#l60" class="line" id="l60">     60</a>     end
+<a href="#l61" class="line" id="l61">     61</a>     
+<a href="#l62" class="line" id="l62">     62</a>     
+<a href="#l63" class="line" id="l63">     63</a> 	endmodule
+<a href="#l64" class="line" id="l64">     64</a> 
+<a href="#l65" class="line" id="l65">     65</a> 	module {{ .ModuleName }}_v1_0 #
+<a href="#l66" class="line" id="l66">     66</a> 	(
+<a href="#l67" class="line" id="l67">     67</a> 		parameter integer C_S00_AXIS_TDATA_WIDTH	= 32,
+<a href="#l68" class="line" id="l68">     68</a> 		parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+<a href="#l69" class="line" id="l69">     69</a> 		parameter integer C_M00_AXIS_START_COUNT	= 32
+<a href="#l70" class="line" id="l70">     70</a> 	)
+<a href="#l71" class="line" id="l71">     71</a> 	(
+<a href="#l72" class="line" id="l72">     72</a> 
+<a href="#l73" class="line" id="l73">     73</a> 		input wire  s00_axis_aclk,
+<a href="#l74" class="line" id="l74">     74</a> 		input wire  s00_axis_aresetn,
+<a href="#l75" class="line" id="l75">     75</a> 		output wire  s00_axis_tready,
+<a href="#l76" class="line" id="l76">     76</a> 		input wire [C_S00_AXIS_TDATA_WIDTH-1 : 0] s00_axis_tdata,
+<a href="#l77" class="line" id="l77">     77</a> 		input wire  s00_axis_tlast,
+<a href="#l78" class="line" id="l78">     78</a> 		input wire  s00_axis_tvalid,
+<a href="#l79" class="line" id="l79">     79</a> 
+<a href="#l80" class="line" id="l80">     80</a> 		input wire  m00_axis_aclk,
+<a href="#l81" class="line" id="l81">     81</a> 		input wire  m00_axis_aresetn,
+<a href="#l82" class="line" id="l82">     82</a> 		output wire  m00_axis_tvalid,
+<a href="#l83" class="line" id="l83">     83</a> 		output wire [C_M00_AXIS_TDATA_WIDTH-1 : 0] m00_axis_tdata,
+<a href="#l84" class="line" id="l84">     84</a> 		output wire  m00_axis_tlast,
+<a href="#l85" class="line" id="l85">     85</a> 		input wire  m00_axis_tready
+<a href="#l86" class="line" id="l86">     86</a> 	);
+<a href="#l87" class="line" id="l87">     87</a> 
+<a href="#l88" class="line" id="l88">     88</a> 	reg tx_done;
+<a href="#l89" class="line" id="l89">     89</a> 
+<a href="#l90" class="line" id="l90">     90</a>     /*
+<a href="#l91" class="line" id="l91">     91</a>         NOW START THE AXIS SLAVE SECTION
+<a href="#l92" class="line" id="l92">     92</a>     */
+<a href="#l93" class="line" id="l93">     93</a> 
+<a href="#l94" class="line" id="l94">     94</a>     localparam samples = {{ .Samples }}; // number of samples that I expect from the client
+<a href="#l95" class="line" id="l95">     95</a>     localparam bminputs = {{ .InputNum }};  // number of bminputs for each sample (or bminputs)
+<a href="#l96" class="line" id="l96">     96</a>     localparam bmoutputs = {{ .OutputNum }}; // number of output for the classification
+<a href="#l97" class="line" id="l97">     97</a> 	localparam NUMBER_OF_INPUTS  = samples*bminputs;                                     
+<a href="#l98" class="line" id="l98">     98</a>     localparam NUMBER_OF_OUTPUTS = samples*bmoutputs;
+<a href="#l99" class="line" id="l99">     99</a> 	localparam precision = {{ $.Rsize }}; // precision bit
+<a href="#l100" class="line" id="l100">    100</a> 	localparam maxfifoloop = (C_S00_AXIS_TDATA_WIDTH / precision) - 1;
+<a href="#l101" class="line" id="l101">    101</a> 	localparam waitCycle = 2;
+<a href="#l102" class="line" id="l102">    102</a>     localparam raddress_size = (precision == 32) ? NUMBER_OF_INPUTS : ((NUMBER_OF_INPUTS % 2 == 0) ? (NUMBER_OF_INPUTS / 2) : (NUMBER_OF_INPUTS / 2 + 1));
+<a href="#l103" class="line" id="l103">    103</a>     localparam waddressn_size = (precision == 32) ? NUMBER_OF_OUTPUTS : ((NUMBER_OF_OUTPUTS % 2 == 0) ? (NUMBER_OF_OUTPUTS / 2) : (NUMBER_OF_OUTPUTS / 2 + 1));
+<a href="#l104" class="line" id="l104">    104</a>     localparam waitStream = 10;
+<a href="#l105" class="line" id="l105">    105</a> 
+<a href="#l106" class="line" id="l106">    106</a> 	// Machine state for the slave stream part
+<a href="#l107" class="line" id="l107">    107</a> 	parameter [1:0] IDLE = 1&#39;b0,
+<a href="#l108" class="line" id="l108">    108</a> 	                WRITE_FIFO  = 1&#39;b1; 
+<a href="#l109" class="line" id="l109">    109</a> 
+<a href="#l110" class="line" id="l110">    110</a> 	wire  	   axis_tready;
+<a href="#l111" class="line" id="l111">    111</a> 	reg        mst_exec_state;     
+<a href="#l112" class="line" id="l112">    112</a> 	wire       fifo_wren;
+<a href="#l113" class="line" id="l113">    113</a> 	reg        fifo_full_flag;
+<a href="#l114" class="line" id="l114">    114</a> 	reg [{{ .CountersBits }}:0] write_pointer;
+<a href="#l115" class="line" id="l115">    115</a> 	reg        writes_done;
+<a href="#l116" class="line" id="l116">    116</a>     wire       test;
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a> 	assign s00_axis_tready	= axis_tready;
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> 	/*
+<a href="#l121" class="line" id="l121">    121</a> 		ADD BLOCK RAM MODULE HERE
+<a href="#l122" class="line" id="l122">    122</a> 	*/
+<a href="#l123" class="line" id="l123">    123</a> 	
+<a href="#l124" class="line" id="l124">    124</a>     reg							ram_enable = 1;
+<a href="#l125" class="line" id="l125">    125</a>     reg							input_stream_write_enable = 1;
+<a href="#l126" class="line" id="l126">    126</a>     reg							input_stream_ram_enable = 1;
+<a href="#l127" class="line" id="l127">    127</a>     reg 	[C_S00_AXIS_TDATA_WIDTH-1:0]	input_stream_waddress = 0;
+<a href="#l128" class="line" id="l128">    128</a>     reg 	[C_S00_AXIS_TDATA_WIDTH-1:0]	input_stream_raddress = raddress_size; 
+<a href="#l129" class="line" id="l129">    129</a>     reg 	[C_S00_AXIS_TDATA_WIDTH-1:0] 	input_stream_data = 0;
+<a href="#l130" class="line" id="l130">    130</a>     wire	[C_S00_AXIS_TDATA_WIDTH-1:0] 	input_output_stream_data;
+<a href="#l131" class="line" id="l131">    131</a>     
+<a href="#l132" class="line" id="l132">    132</a>     reg [31:0] blockram_state_machine = 0;
+<a href="#l133" class="line" id="l133">    133</a>     reg [31:0] half_precision_input_index = 0; 
+<a href="#l134" class="line" id="l134">    134</a>     
+<a href="#l135" class="line" id="l135">    135</a>     
+<a href="#l136" class="line" id="l136">    136</a> 	bram
+<a href="#l137" class="line" id="l137">    137</a>     #(
+<a href="#l138" class="line" id="l138">    138</a>         .RAM_WIDTH 		(C_S00_AXIS_TDATA_WIDTH 		),
+<a href="#l139" class="line" id="l139">    139</a>         .RAM_ADDR_BITS 	(NUMBER_OF_INPUTS 	)
+<a href="#l140" class="line" id="l140">    140</a>     )
+<a href="#l141" class="line" id="l141">    141</a>     bram_inst
+<a href="#l142" class="line" id="l142">    142</a>     (
+<a href="#l143" class="line" id="l143">    143</a>         .clock			(s00_axis_aclk	),
+<a href="#l144" class="line" id="l144">    144</a>         .ram_enable		(input_stream_ram_enable		),
+<a href="#l145" class="line" id="l145">    145</a>         .write_enable	(input_stream_write_enable	),
+<a href="#l146" class="line" id="l146">    146</a>         .waddress		(input_stream_waddress ),
+<a href="#l147" class="line" id="l147">    147</a>         .raddress		(input_stream_raddress		),
+<a href="#l148" class="line" id="l148">    148</a>         .input_data		(input_stream_data		),
+<a href="#l149" class="line" id="l149">    149</a>         .output_data    (input_output_stream_data	)
+<a href="#l150" class="line" id="l150">    150</a>     );
+<a href="#l151" class="line" id="l151">    151</a>     
+<a href="#l152" class="line" id="l152">    152</a>     reg [31:0] data_in = 32&#39;d0;
+<a href="#l153" class="line" id="l153">    153</a>     reg [31:0] rwaddress = 0;
+<a href="#l154" class="line" id="l154">    154</a>     reg [31:0] waddressn = waddressn_size;
+<a href="#l155" class="line" id="l155">    155</a>     reg  wr_n = 1&#39;b0;
+<a href="#l156" class="line" id="l156">    156</a>     reg  rd_n = 1&#39;b0;
+<a href="#l157" class="line" id="l157">    157</a>     wire [31:0] data_out;
+<a href="#l158" class="line" id="l158">    158</a>     
+<a href="#l159" class="line" id="l159">    159</a>     
+<a href="#l160" class="line" id="l160">    160</a>     bram_oneportsync
+<a href="#l161" class="line" id="l161">    161</a>     #(
+<a href="#l162" class="line" id="l162">    162</a>         .RAM_WIDTH 		(C_S00_AXIS_TDATA_WIDTH ),
+<a href="#l163" class="line" id="l163">    163</a>         .RAM_DEPTH 	    (NUMBER_OF_OUTPUTS 	)
+<a href="#l164" class="line" id="l164">    164</a>     )
+<a href="#l165" class="line" id="l165">    165</a>     bram_oneportsync_inst
+<a href="#l166" class="line" id="l166">    166</a>     (
+<a href="#l167" class="line" id="l167">    167</a>         .clk(s00_axis_aclk), 
+<a href="#l168" class="line" id="l168">    168</a>         .addr(rwaddress), 
+<a href="#l169" class="line" id="l169">    169</a>         .waddr(waddressn),
+<a href="#l170" class="line" id="l170">    170</a>         .cs_n(0),
+<a href="#l171" class="line" id="l171">    171</a>         .wr_n(wr_n), 
+<a href="#l172" class="line" id="l172">    172</a>         .rd_n(rd_n),
+<a href="#l173" class="line" id="l173">    173</a>         .bram_data_in(data_in),
+<a href="#l174" class="line" id="l174">    174</a>         .bram_data_out(data_out)
+<a href="#l175" class="line" id="l175">    175</a>     );
+<a href="#l176" class="line" id="l176">    176</a> 
+<a href="#l177" class="line" id="l177">    177</a> 	always @(posedge s00_axis_aclk) 
+<a href="#l178" class="line" id="l178">    178</a> 	begin  
+<a href="#l179" class="line" id="l179">    179</a> 	  if (!s00_axis_aresetn) 
+<a href="#l180" class="line" id="l180">    180</a> 	    begin
+<a href="#l181" class="line" id="l181">    181</a> 	      mst_exec_state &lt;= IDLE;
+<a href="#l182" class="line" id="l182">    182</a> 	    end  
+<a href="#l183" class="line" id="l183">    183</a> 	  else
+<a href="#l184" class="line" id="l184">    184</a> 	    case (mst_exec_state)
+<a href="#l185" class="line" id="l185">    185</a> 	      IDLE:
+<a href="#l186" class="line" id="l186">    186</a> 	          if (s00_axis_tvalid)
+<a href="#l187" class="line" id="l187">    187</a> 	            begin
+<a href="#l188" class="line" id="l188">    188</a> 	              mst_exec_state &lt;= WRITE_FIFO;
+<a href="#l189" class="line" id="l189">    189</a> 	            end
+<a href="#l190" class="line" id="l190">    190</a> 	          else
+<a href="#l191" class="line" id="l191">    191</a> 	            begin
+<a href="#l192" class="line" id="l192">    192</a> 	              mst_exec_state &lt;= IDLE;
+<a href="#l193" class="line" id="l193">    193</a> 	            end
+<a href="#l194" class="line" id="l194">    194</a> 	      WRITE_FIFO:
+<a href="#l195" class="line" id="l195">    195</a> 	        if (writes_done)
+<a href="#l196" class="line" id="l196">    196</a> 	          begin
+<a href="#l197" class="line" id="l197">    197</a> 	            mst_exec_state &lt;= IDLE;
+<a href="#l198" class="line" id="l198">    198</a> 	          end
+<a href="#l199" class="line" id="l199">    199</a> 	        else
+<a href="#l200" class="line" id="l200">    200</a> 	          begin
+<a href="#l201" class="line" id="l201">    201</a> 	            mst_exec_state &lt;= WRITE_FIFO;
+<a href="#l202" class="line" id="l202">    202</a> 	          end
+<a href="#l203" class="line" id="l203">    203</a> 
+<a href="#l204" class="line" id="l204">    204</a> 	    endcase
+<a href="#l205" class="line" id="l205">    205</a> 	end
+<a href="#l206" class="line" id="l206">    206</a> 
+<a href="#l207" class="line" id="l207">    207</a> 	assign axis_tready = ((mst_exec_state == WRITE_FIFO) &amp;&amp; (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1));
+<a href="#l208" class="line" id="l208">    208</a> 
+<a href="#l209" class="line" id="l209">    209</a> 	always@(posedge s00_axis_aclk)
+<a href="#l210" class="line" id="l210">    210</a> 	begin
+<a href="#l211" class="line" id="l211">    211</a> 
+<a href="#l212" class="line" id="l212">    212</a> 	  if (tx_done) begin
+<a href="#l213" class="line" id="l213">    213</a> 	       write_pointer &lt;= 0;
+<a href="#l214" class="line" id="l214">    214</a> 	       writes_done &lt;= 1&#39;b0;
+<a href="#l215" class="line" id="l215">    215</a> 		   input_stream_waddress &lt;= 0;
+<a href="#l216" class="line" id="l216">    216</a> 	  end
+<a href="#l217" class="line" id="l217">    217</a> 	  else begin
+<a href="#l218" class="line" id="l218">    218</a> 	  if(!s00_axis_aresetn)
+<a href="#l219" class="line" id="l219">    219</a> 	    begin
+<a href="#l220" class="line" id="l220">    220</a> 	      write_pointer &lt;= 0;
+<a href="#l221" class="line" id="l221">    221</a> 	      writes_done &lt;= 1&#39;b0;
+<a href="#l222" class="line" id="l222">    222</a> 	    end  
+<a href="#l223" class="line" id="l223">    223</a> 	  else
+<a href="#l224" class="line" id="l224">    224</a> 	    if (write_pointer &lt;= (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)
+<a href="#l225" class="line" id="l225">    225</a> 	      begin
+<a href="#l226" class="line" id="l226">    226</a> 	        if (fifo_wren)
+<a href="#l227" class="line" id="l227">    227</a> 	          begin
+<a href="#l228" class="line" id="l228">    228</a> 	            write_pointer &lt;= write_pointer + 1;
+<a href="#l229" class="line" id="l229">    229</a> 				input_stream_waddress &lt;= input_stream_waddress + 1;
+<a href="#l230" class="line" id="l230">    230</a> 	            writes_done &lt;= 1&#39;b0;
+<a href="#l231" class="line" id="l231">    231</a> 	          end
+<a href="#l232" class="line" id="l232">    232</a> 	          if ((write_pointer == (NUMBER_OF_INPUTS/(maxfifoloop+1))-1)|| s00_axis_tlast)
+<a href="#l233" class="line" id="l233">    233</a> 	            begin
+<a href="#l234" class="line" id="l234">    234</a> 	              writes_done &lt;= 1&#39;b1;
+<a href="#l235" class="line" id="l235">    235</a> 	            end
+<a href="#l236" class="line" id="l236">    236</a> 	      end
+<a href="#l237" class="line" id="l237">    237</a> 	      end
+<a href="#l238" class="line" id="l238">    238</a> 	end 
+<a href="#l239" class="line" id="l239">    239</a> 
+<a href="#l240" class="line" id="l240">    240</a> 
+<a href="#l241" class="line" id="l241">    241</a> 	assign fifo_wren = s00_axis_tvalid &amp;&amp; axis_tready;
+<a href="#l242" class="line" id="l242">    242</a> 
+<a href="#l243" class="line" id="l243">    243</a>     always @( posedge s00_axis_aclk )
+<a href="#l244" class="line" id="l244">    244</a>     begin
+<a href="#l245" class="line" id="l245">    245</a>       if (fifo_wren)
+<a href="#l246" class="line" id="l246">    246</a>         begin
+<a href="#l247" class="line" id="l247">    247</a>           if (precision == 32) begin
+<a href="#l248" class="line" id="l248">    248</a> 			input_stream_data &lt;= s00_axis_tdata;
+<a href="#l249" class="line" id="l249">    249</a>           end
+<a href="#l250" class="line" id="l250">    250</a>           else if (precision == 16) begin
+<a href="#l251" class="line" id="l251">    251</a> 			input_stream_data[31:16]  &lt;= s00_axis_tdata[15:0];
+<a href="#l252" class="line" id="l252">    252</a> 			input_stream_data[15:0] &lt;= s00_axis_tdata[31:16];
+<a href="#l253" class="line" id="l253">    253</a>           end
+<a href="#l254" class="line" id="l254">    254</a>         end   
+<a href="#l255" class="line" id="l255">    255</a>      end      
+<a href="#l256" class="line" id="l256">    256</a> 
+<a href="#l257" class="line" id="l257">    257</a>     /*
+<a href="#l258" class="line" id="l258">    258</a>         NOW START THE MASTER AXIS SECTION
+<a href="#l259" class="line" id="l259">    259</a>     */
+<a href="#l260" class="line" id="l260">    260</a>                              
+<a href="#l261" class="line" id="l261">    261</a> 	parameter [1:0] IDLE_M = 2&#39;b00,                                             
+<a href="#l262" class="line" id="l262">    262</a> 	                INIT_COUNTER_M  = 2&#39;b01, 
+<a href="#l263" class="line" id="l263">    263</a> 	                PROCESS_BM = 2&#39;B10,   
+<a href="#l264" class="line" id="l264">    264</a> 	                SEND_STREAM_M   = 2&#39;b11; 
+<a href="#l265" class="line" id="l265">    265</a> 
+<a href="#l266" class="line" id="l266">    266</a> 	reg [1:0]   mst_exec_state_M;
+<a href="#l267" class="line" id="l267">    267</a>     reg [{{ .CountersBits }}:0] 	count;
+<a href="#l268" class="line" id="l268">    268</a> 
+<a href="#l269" class="line" id="l269">    269</a>     wire  	axis_tvalid;
+<a href="#l270" class="line" id="l270">    270</a>     reg  	axis_tvalid_delay;
+<a href="#l271" class="line" id="l271">    271</a>     wire  	axis_tlast;
+<a href="#l272" class="line" id="l272">    272</a>     reg  	axis_tlast_delay;
+<a href="#l273" class="line" id="l273">    273</a>     reg [C_M00_AXIS_TDATA_WIDTH-1 : 0] 	stream_data_out;
+<a href="#l274" class="line" id="l274">    274</a>     wire  	tx_en;
+<a href="#l275" class="line" id="l275">    275</a>     wire     bm_done;
+<a href="#l276" class="line" id="l276">    276</a> 
+<a href="#l277" class="line" id="l277">    277</a>     reg  [{{ .CountersBits }}:0] outputs_counter = 0;
+<a href="#l278" class="line" id="l278">    278</a>     reg  [{{ .CountersBits }}:0] outputs_counter_incr = 0;
+<a href="#l279" class="line" id="l279">    279</a> 	reg  [{{ .CountersBits }}:0] outputs_counter_pointer = 0;
+<a href="#l280" class="line" id="l280">    280</a>     reg  [{{ .CountersBits }}:0] stream_output_counter = 0;
+<a href="#l281" class="line" id="l281">    281</a> 
+<a href="#l282" class="line" id="l282">    282</a> 	{{- if .Outputs }}
+<a href="#l283" class="line" id="l283">    283</a> 	{{- range .Outputs }}
+<a href="#l284" class="line" id="l284">    284</a> 	reg [1:0] write_{{ . }};
+<a href="#l285" class="line" id="l285">    285</a> 	{{- end }}
+<a href="#l286" class="line" id="l286">    286</a> 	{{- end }}
+<a href="#l287" class="line" id="l287">    287</a> 
+<a href="#l288" class="line" id="l288">    288</a>     assign m00_axis_tvalid	= axis_tvalid_delay;
+<a href="#l289" class="line" id="l289">    289</a> 	assign m00_axis_tdata	= stream_data_out;
+<a href="#l290" class="line" id="l290">    290</a> 	assign m00_axis_tlast	= axis_tlast_delay;
+<a href="#l291" class="line" id="l291">    291</a> 
+<a href="#l292" class="line" id="l292">    292</a> 	always @(posedge m00_axis_aclk)                                             
+<a href="#l293" class="line" id="l293">    293</a> 	begin                                                                     
+<a href="#l294" class="line" id="l294">    294</a> 	  if (!m00_axis_aresetn)                                                  
+<a href="#l295" class="line" id="l295">    295</a> 	    begin                                                                 
+<a href="#l296" class="line" id="l296">    296</a> 	      mst_exec_state_M &lt;= IDLE_M;                                             
+<a href="#l297" class="line" id="l297">    297</a> 	      count    &lt;= 0;                                                      
+<a href="#l298" class="line" id="l298">    298</a> 	    end                                                                   
+<a href="#l299" class="line" id="l299">    299</a> 	  else                                                                    
+<a href="#l300" class="line" id="l300">    300</a> 	    case (mst_exec_state_M)                                                 
+<a href="#l301" class="line" id="l301">    301</a> 	      IDLE_M:                                                         
+<a href="#l302" class="line" id="l302">    302</a> 	            mst_exec_state_M  &lt;= INIT_COUNTER_M; 
+<a href="#l303" class="line" id="l303">    303</a> 
+<a href="#l304" class="line" id="l304">    304</a> 	      INIT_COUNTER_M:                              
+<a href="#l305" class="line" id="l305">    305</a> 	        if ( count == 32 - 1 )                               
+<a href="#l306" class="line" id="l306">    306</a> 	          begin                                                           
+<a href="#l307" class="line" id="l307">    307</a> 	            mst_exec_state_M  &lt;= PROCESS_BM;                               
+<a href="#l308" class="line" id="l308">    308</a> 	          end                                                             
+<a href="#l309" class="line" id="l309">    309</a> 	        else                                                              
+<a href="#l310" class="line" id="l310">    310</a> 	          begin                                                           
+<a href="#l311" class="line" id="l311">    311</a> 	            count &lt;= count + 1;                                           
+<a href="#l312" class="line" id="l312">    312</a> 	            mst_exec_state_M  &lt;= INIT_COUNTER_M;                              
+<a href="#l313" class="line" id="l313">    313</a> 	          end                                                             
+<a href="#l314" class="line" id="l314">    314</a> 
+<a href="#l315" class="line" id="l315">    315</a> 	      PROCESS_BM:
+<a href="#l316" class="line" id="l316">    316</a> 	           if (!bm_done) 
+<a href="#l317" class="line" id="l317">    317</a> 	           begin
+<a href="#l318" class="line" id="l318">    318</a> 	               mst_exec_state_M &lt;= PROCESS_BM;
+<a href="#l319" class="line" id="l319">    319</a> 	           end
+<a href="#l320" class="line" id="l320">    320</a> 	           else
+<a href="#l321" class="line" id="l321">    321</a> 	           begin
+<a href="#l322" class="line" id="l322">    322</a> 	               mst_exec_state_M &lt;= SEND_STREAM_M;   
+<a href="#l323" class="line" id="l323">    323</a> 	           end
+<a href="#l324" class="line" id="l324">    324</a> 
+<a href="#l325" class="line" id="l325">    325</a> 	      SEND_STREAM_M:                          
+<a href="#l326" class="line" id="l326">    326</a> 	        if (tx_done)                                                      
+<a href="#l327" class="line" id="l327">    327</a> 	          begin                                                           
+<a href="#l328" class="line" id="l328">    328</a> 	            mst_exec_state_M &lt;= IDLE_M;                                       
+<a href="#l329" class="line" id="l329">    329</a> 	          end                                                             
+<a href="#l330" class="line" id="l330">    330</a> 	        else                                                              
+<a href="#l331" class="line" id="l331">    331</a> 	          begin                                                           
+<a href="#l332" class="line" id="l332">    332</a> 	            mst_exec_state_M &lt;= SEND_STREAM_M;                                
+<a href="#l333" class="line" id="l333">    333</a> 	          end                                                             
+<a href="#l334" class="line" id="l334">    334</a> 	    endcase                                                               
+<a href="#l335" class="line" id="l335">    335</a> 	end
+<a href="#l336" class="line" id="l336">    336</a> 
+<a href="#l337" class="line" id="l337">    337</a> 	reg [31:0] endStream = NUMBER_OF_OUTPUTS/(maxfifoloop+1) - 1;
+<a href="#l338" class="line" id="l338">    338</a>     reg [31:0] wait_stream = 0;
+<a href="#l339" class="line" id="l339">    339</a> 
+<a href="#l340" class="line" id="l340">    340</a> 	assign axis_tvalid = ((mst_exec_state_M == SEND_STREAM_M) &amp;&amp; (writes_done) &amp;&amp; (bm_done) &amp;&amp; (sendData == waitCycle) &amp;&amp; (rd_n) &amp;&amp; (wait_stream &gt;= waitStream));
+<a href="#l341" class="line" id="l341">    341</a>     assign axis_tlast = (waddressn == 1);
+<a href="#l342" class="line" id="l342">    342</a> 
+<a href="#l343" class="line" id="l343">    343</a>     always @(posedge m00_axis_aclk)                                                                  
+<a href="#l344" class="line" id="l344">    344</a> 	begin        
+<a href="#l345" class="line" id="l345">    345</a> 	if (tx_done) begin
+<a href="#l346" class="line" id="l346">    346</a> 	       axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+<a href="#l347" class="line" id="l347">    347</a> 	      axis_tlast_delay &lt;= 1&#39;b0;         
+<a href="#l348" class="line" id="l348">    348</a> 	end     
+<a href="#l349" class="line" id="l349">    349</a> 	else begin                                                                             
+<a href="#l350" class="line" id="l350">    350</a> 	  if (!m00_axis_aresetn)                                                                         
+<a href="#l351" class="line" id="l351">    351</a> 	    begin                                                                                      
+<a href="#l352" class="line" id="l352">    352</a> 	      axis_tvalid_delay &lt;= 1&#39;b0;                                                               
+<a href="#l353" class="line" id="l353">    353</a> 	      axis_tlast_delay &lt;= 1&#39;b0;                                                                
+<a href="#l354" class="line" id="l354">    354</a> 	    end                                                                                        
+<a href="#l355" class="line" id="l355">    355</a> 	  else                                                                                         
+<a href="#l356" class="line" id="l356">    356</a> 	    begin                                                                                      
+<a href="#l357" class="line" id="l357">    357</a> 	      axis_tvalid_delay &lt;= axis_tvalid;                                                        
+<a href="#l358" class="line" id="l358">    358</a> 	      axis_tlast_delay &lt;= axis_tlast;                                                          
+<a href="#l359" class="line" id="l359">    359</a> 	    end                                                                                        
+<a href="#l360" class="line" id="l360">    360</a> 	end 
+<a href="#l361" class="line" id="l361">    361</a> 	end
+<a href="#l362" class="line" id="l362">    362</a> 
+<a href="#l363" class="line" id="l363">    363</a> 	{{- if .Inputs }}
+<a href="#l364" class="line" id="l364">    364</a> 	{{- range .Inputs }}
+<a href="#l365" class="line" id="l365">    365</a> 	reg [{{ dec $.Rsize }}:0] {{ . }}_r = {{ $.Rsize }}&#39;b0;
+<a href="#l366" class="line" id="l366">    366</a> 	{{- end }}
+<a href="#l367" class="line" id="l367">    367</a> 	{{- end }}
+<a href="#l368" class="line" id="l368">    368</a> 
+<a href="#l369" class="line" id="l369">    369</a> 	{{- if .Outputs }}
+<a href="#l370" class="line" id="l370">    370</a> 	{{- range .Outputs }}
+<a href="#l371" class="line" id="l371">    371</a> 	reg [{{ dec $.Rsize }}:0] {{ . }}_received_r;
+<a href="#l372" class="line" id="l372">    372</a> 	{{- end }}
+<a href="#l373" class="line" id="l373">    373</a> 	{{- end }}
+<a href="#l374" class="line" id="l374">    374</a> 
+<a href="#l375" class="line" id="l375">    375</a> 	{{- if .Inputs }}
+<a href="#l376" class="line" id="l376">    376</a> 	{{- range .Inputs }}
+<a href="#l377" class="line" id="l377">    377</a> 	wire [{{ dec $.Rsize }}:0] {{ . }};
+<a href="#l378" class="line" id="l378">    378</a> 	wire {{ . }}_valid;
+<a href="#l379" class="line" id="l379">    379</a> 	wire {{ . }}_received;
+<a href="#l380" class="line" id="l380">    380</a> 	{{- end }}
+<a href="#l381" class="line" id="l381">    381</a> 	{{- end }}
+<a href="#l382" class="line" id="l382">    382</a> 
+<a href="#l383" class="line" id="l383">    383</a> 	{{- if .Inputs }}
+<a href="#l384" class="line" id="l384">    384</a> 	{{- range .Inputs }}
+<a href="#l385" class="line" id="l385">    385</a> 	reg {{ . }}_valid_r = 1&#39;b0;
+<a href="#l386" class="line" id="l386">    386</a> 	{{- end }}
+<a href="#l387" class="line" id="l387">    387</a> 	{{- end }}
+<a href="#l388" class="line" id="l388">    388</a> 
+<a href="#l389" class="line" id="l389">    389</a> 	{{- if .Outputs }}
+<a href="#l390" class="line" id="l390">    390</a> 	{{- range .Outputs }}
+<a href="#l391" class="line" id="l391">    391</a> 	wire [{{ dec $.Rsize }}:0] {{ . }};
+<a href="#l392" class="line" id="l392">    392</a> 	wire {{ . }}_valid;
+<a href="#l393" class="line" id="l393">    393</a> 	wire {{ . }}_received;
+<a href="#l394" class="line" id="l394">    394</a> 	reg  {{ . }}_valid_r = 1&#39;b0;
+<a href="#l395" class="line" id="l395">    395</a> 	{{- end }}
+<a href="#l396" class="line" id="l396">    396</a> 	{{- end }}
+<a href="#l397" class="line" id="l397">    397</a> 
+<a href="#l398" class="line" id="l398">    398</a> 	{{- if .Inputs }}
+<a href="#l399" class="line" id="l399">    399</a> 	{{- range .Inputs }}
+<a href="#l400" class="line" id="l400">    400</a> 	assign {{ . }} = {{ . }}_r;
+<a href="#l401" class="line" id="l401">    401</a> 	{{- end }}
+<a href="#l402" class="line" id="l402">    402</a> 	{{- end }}
+<a href="#l403" class="line" id="l403">    403</a> 
+<a href="#l404" class="line" id="l404">    404</a> 	{{- if .Inputs }}
+<a href="#l405" class="line" id="l405">    405</a> 	{{- range .Inputs }}
+<a href="#l406" class="line" id="l406">    406</a> 	assign {{ . }}_valid = {{ . }}_valid_r;
+<a href="#l407" class="line" id="l407">    407</a> 	{{- end }}
+<a href="#l408" class="line" id="l408">    408</a> 	{{- end }}
+<a href="#l409" class="line" id="l409">    409</a> 
+<a href="#l410" class="line" id="l410">    410</a> 	{{- if .Outputs }}
+<a href="#l411" class="line" id="l411">    411</a> 	{{- range .Outputs }}
+<a href="#l412" class="line" id="l412">    412</a> 	assign {{ . }}_received = {{ . }}_received_r;
+<a href="#l413" class="line" id="l413">    413</a> 	{{- end }}
+<a href="#l414" class="line" id="l414">    414</a> 	{{- end }}
+<a href="#l415" class="line" id="l415">    415</a> 
+<a href="#l416" class="line" id="l416">    416</a>     assign bm_done = (outputs_counter_incr == samples);
+<a href="#l417" class="line" id="l417">    417</a> 	reg[1:0] send = 2&#39;b00;
+<a href="#l418" class="line" id="l418">    418</a> 
+<a href="#l419" class="line" id="l419">    419</a> 	bondmachine bm(.clk(m00_axis_aclk),
+<a href="#l420" class="line" id="l420">    420</a> 	.reset(!m00_axis_aresetn),
+<a href="#l421" class="line" id="l421">    421</a> 	{{- if .Inputs }}
+<a href="#l422" class="line" id="l422">    422</a> 	{{- range .Inputs }}
+<a href="#l423" class="line" id="l423">    423</a> 	.{{ . }}({{ . }}),
+<a href="#l424" class="line" id="l424">    424</a> 	.{{ . }}_valid({{ . }}_valid),
+<a href="#l425" class="line" id="l425">    425</a> 	.{{ . }}_received({{ . }}_received),
+<a href="#l426" class="line" id="l426">    426</a> 	{{- end }}
+<a href="#l427" class="line" id="l427">    427</a> 	{{- end }}
+<a href="#l428" class="line" id="l428">    428</a> 	{{- if .Outputs }}
+<a href="#l429" class="line" id="l429">    429</a> 	{{- $outputsLen := len .Outputs }}
+<a href="#l430" class="line" id="l430">    430</a> 	{{- range $i, $output := .Outputs }}
+<a href="#l431" class="line" id="l431">    431</a> 	.{{ $output }}({{ $output }}),
+<a href="#l432" class="line" id="l432">    432</a> 	.{{ $output }}_valid({{ $output }}_valid),
+<a href="#l433" class="line" id="l433">    433</a> 	{{- if eq (inc $i) $outputsLen }}
+<a href="#l434" class="line" id="l434">    434</a> 	.{{ $output }}_received({{ $output }}_received)
+<a href="#l435" class="line" id="l435">    435</a> 	{{- else }}
+<a href="#l436" class="line" id="l436">    436</a> 	.{{ $output }}_received({{ $output }}_received),
+<a href="#l437" class="line" id="l437">    437</a> 	{{- end }}
+<a href="#l438" class="line" id="l438">    438</a> 	{{- end }}
+<a href="#l439" class="line" id="l439">    439</a> 	{{- end }}
+<a href="#l440" class="line" id="l440">    440</a> 	);
+<a href="#l441" class="line" id="l441">    441</a> 
+<a href="#l442" class="line" id="l442">    442</a> 	assign tx_en = m00_axis_tready &amp;&amp; ((mst_exec_state_M == SEND_STREAM_M) &amp;&amp; (writes_done) &amp;&amp; (bm_done) &amp;&amp; (rd_n) &amp;&amp; (wait_stream &gt;= waitStream));  
+<a href="#l443" class="line" id="l443">    443</a> 
+<a href="#l444" class="line" id="l444">    444</a> 	reg [31:0] outputIndex = 0;
+<a href="#l445" class="line" id="l445">    445</a> 	always @( posedge m00_axis_aclk )                  
+<a href="#l446" class="line" id="l446">    446</a> 	begin
+<a href="#l447" class="line" id="l447">    447</a> 	   if (tx_done) begin
+<a href="#l448" class="line" id="l448">    448</a> 	       rwaddress &lt;= 0;
+<a href="#l449" class="line" id="l449">    449</a> 	       outputIndex &lt;= 0;
+<a href="#l450" class="line" id="l450">    450</a> 	   end
+<a href="#l451" class="line" id="l451">    451</a> 	   
+<a href="#l452" class="line" id="l452">    452</a> 	   if (mst_exec_state_M == PROCESS_BM) begin
+<a href="#l453" class="line" id="l453">    453</a> 	       if (precision == 32) begin
+<a href="#l454" class="line" id="l454">    454</a> 				{{- if .Outputs }}
+<a href="#l455" class="line" id="l455">    455</a> 				{{- $OutputsLen := len .Outputs }}
+<a href="#l456" class="line" id="l456">    456</a> 				{{- range $i, $output := .Outputs }}
+<a href="#l457" class="line" id="l457">    457</a> 				{{- if eq ($i) 0 }}
+<a href="#l458" class="line" id="l458">    458</a> 				if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+<a href="#l459" class="line" id="l459">    459</a> 					rwaddress &lt;= rwaddress +1;
+<a href="#l460" class="line" id="l460">    460</a> 				end
+<a href="#l461" class="line" id="l461">    461</a> 				{{- else }}
+<a href="#l462" class="line" id="l462">    462</a> 				else if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+<a href="#l463" class="line" id="l463">    463</a> 					rwaddress &lt;= rwaddress +1;
+<a href="#l464" class="line" id="l464">    464</a> 				end
+<a href="#l465" class="line" id="l465">    465</a> 				{{- end }}
+<a href="#l466" class="line" id="l466">    466</a> 				{{- end }}
+<a href="#l467" class="line" id="l467">    467</a> 				{{- end }}
+<a href="#l468" class="line" id="l468">    468</a> 
+<a href="#l469" class="line" id="l469">    469</a>            end 
+<a href="#l470" class="line" id="l470">    470</a>            else if (precision == 16) begin
+<a href="#l471" class="line" id="l471">    471</a> 		   
+<a href="#l472" class="line" id="l472">    472</a> 		   {{- $OutputsLen := len .Outputs }}
+<a href="#l473" class="line" id="l473">    473</a> 		   {{- range $i, $output := .Outputs }}
+<a href="#l474" class="line" id="l474">    474</a> 		   {{- if eq ($OutputsLen) 1 }}
+<a href="#l475" class="line" id="l475">    475</a> 		   if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+<a href="#l476" class="line" id="l476">    476</a> 		   {{- else }}
+<a href="#l477" class="line" id="l477">    477</a> 		   {{- if eq ($i) 0 }}
+<a href="#l478" class="line" id="l478">    478</a> 		   if (({{ . }}_valid &amp;&amp; !{{ . }}_received_r) {{- else }} {{- if eq $i (sub $OutputsLen 1) }} || ({{ . }}_valid &amp;&amp; !{{ . }}_received_r)) begin {{- else }} || ({{ . }}_valid &amp;&amp; !{{ . }}_received_r)
+<a href="#l479" class="line" id="l479">    479</a> 		   {{- end }}  
+<a href="#l480" class="line" id="l480">    480</a> 		   {{- end }}
+<a href="#l481" class="line" id="l481">    481</a> 		   {{- end }}
+<a href="#l482" class="line" id="l482">    482</a> 		   {{- end }}
+<a href="#l483" class="line" id="l483">    483</a> 
+<a href="#l484" class="line" id="l484">    484</a> 		   			if (outputIndex == 1) begin
+<a href="#l485" class="line" id="l485">    485</a>                         outputIndex &lt;= 0;
+<a href="#l486" class="line" id="l486">    486</a>                     end 
+<a href="#l487" class="line" id="l487">    487</a>                     else begin
+<a href="#l488" class="line" id="l488">    488</a>                         outputIndex &lt;= outputIndex + 1;
+<a href="#l489" class="line" id="l489">    489</a>                         rwaddress &lt;= rwaddress + 1;
+<a href="#l490" class="line" id="l490">    490</a>                     end
+<a href="#l491" class="line" id="l491">    491</a> 			end
+<a href="#l492" class="line" id="l492">    492</a>            end
+<a href="#l493" class="line" id="l493">    493</a> 	   end
+<a href="#l494" class="line" id="l494">    494</a> 	end
+<a href="#l495" class="line" id="l495">    495</a> 
+<a href="#l496" class="line" id="l496">    496</a> 	reg [1:0] f = 2&#39;d1;
+<a href="#l497" class="line" id="l497">    497</a>     reg [31:0] precision_index = 0;
+<a href="#l498" class="line" id="l498">    498</a>     reg [31:0] prev_value = 0;
+<a href="#l499" class="line" id="l499">    499</a> 
+<a href="#l500" class="line" id="l500">    500</a> 
+<a href="#l501" class="line" id="l501">    501</a> 
+<a href="#l502" class="line" id="l502">    502</a> 	always @( posedge m00_axis_aclk )                  
+<a href="#l503" class="line" id="l503">    503</a> 	begin        
+<a href="#l504" class="line" id="l504">    504</a>     
+<a href="#l505" class="line" id="l505">    505</a>         if (tx_done) begin
+<a href="#l506" class="line" id="l506">    506</a>             outputs_counter &lt;= 0;
+<a href="#l507" class="line" id="l507">    507</a>             outputs_counter_incr &lt;= 0;
+<a href="#l508" class="line" id="l508">    508</a> 			outputs_counter_pointer &lt;= 0;
+<a href="#l509" class="line" id="l509">    509</a> 			{{- if .Outputs }}
+<a href="#l510" class="line" id="l510">    510</a> 			{{- range .Outputs }}
+<a href="#l511" class="line" id="l511">    511</a> 			{{ . }}_received_r &lt;= 1&#39;b0;
+<a href="#l512" class="line" id="l512">    512</a> 			{{ . }}_valid_r &lt;= 1&#39;b0;
+<a href="#l513" class="line" id="l513">    513</a> 			{{- end }}
+<a href="#l514" class="line" id="l514">    514</a> 			{{- end }}
+<a href="#l515" class="line" id="l515">    515</a> 			blockram_state_machine &lt;= 0;
+<a href="#l516" class="line" id="l516">    516</a> 			rd_n &lt;= 1&#39;b0;
+<a href="#l517" class="line" id="l517">    517</a> 			{{- if .Outputs }}
+<a href="#l518" class="line" id="l518">    518</a> 			{{- range .Outputs }}
+<a href="#l519" class="line" id="l519">    519</a> 			write_{{ . }} &lt;= 0;
+<a href="#l520" class="line" id="l520">    520</a> 			{{- end }}
+<a href="#l521" class="line" id="l521">    521</a> 			input_stream_raddress &lt;= raddress_size;
+<a href="#l522" class="line" id="l522">    522</a> 			send &lt;= 2&#39;b00;
+<a href="#l523" class="line" id="l523">    523</a> 			input_stream_write_enable &lt;= 1;
+<a href="#l524" class="line" id="l524">    524</a>         end
+<a href="#l525" class="line" id="l525">    525</a>         else begin
+<a href="#l526" class="line" id="l526">    526</a> 		if (writes_done &amp;&amp; !bm_done) begin     
+<a href="#l527" class="line" id="l527">    527</a> 		if (send == 2&#39;b00) begin
+<a href="#l528" class="line" id="l528">    528</a> 			if (precision == 32) begin
+<a href="#l529" class="line" id="l529">    529</a> 					if (blockram_state_machine == 32&#39;d0) begin
+<a href="#l530" class="line" id="l530">    530</a> 						 input_stream_write_enable &lt;= 0;
+<a href="#l531" class="line" id="l531">    531</a> 						 blockram_state_machine &lt;= 32&#39;d1;
+<a href="#l532" class="line" id="l532">    532</a> 					end else if (blockram_state_machine == 32&#39;d1) begin
+<a href="#l533" class="line" id="l533">    533</a> 						 blockram_state_machine &lt;= 32&#39;d2;
+<a href="#l534" class="line" id="l534">    534</a> 						 input_stream_raddress &lt;= input_stream_raddress - 1;
+<a href="#l535" class="line" id="l535">    535</a> 					end {{- if .Inputs }} {{- $inputsLen := len .Inputs }} {{- range $i, $input := .Inputs }} {{- if ne (inc $i) $inputsLen }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+<a href="#l536" class="line" id="l536">    536</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+<a href="#l537" class="line" id="l537">    537</a> 						{{ $input }}_r &lt;= input_output_stream_data;
+<a href="#l538" class="line" id="l538">    538</a> 						input_stream_raddress &lt;= input_stream_raddress - 1;
+<a href="#l539" class="line" id="l539">    539</a> 					end {{- else }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+<a href="#l540" class="line" id="l540">    540</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+<a href="#l541" class="line" id="l541">    541</a> 						{{ $input }}_r &lt;= input_output_stream_data;
+<a href="#l542" class="line" id="l542">    542</a> 					{{- end }}
+<a href="#l543" class="line" id="l543">    543</a> 					{{- end }}
+<a href="#l544" class="line" id="l544">    544</a> 					{{- end }}
+<a href="#l545" class="line" id="l545">    545</a> 					{{- end }}
+<a href="#l546" class="line" id="l546">    546</a> 					end{{ $inputsLength := len .Inputs }} else if (blockram_state_machine == 32&#39;d{{ add $inputsLength 2 }}) begin
+<a href="#l547" class="line" id="l547">    547</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $inputsLength 3 }};
+<a href="#l548" class="line" id="l548">    548</a> 						{{- if .Inputs }}
+<a href="#l549" class="line" id="l549">    549</a> 						{{- range .Inputs }}
+<a href="#l550" class="line" id="l550">    550</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l551" class="line" id="l551">    551</a> 						{{- end }}
+<a href="#l552" class="line" id="l552">    552</a> 						{{- end }}
+<a href="#l553" class="line" id="l553">    553</a> 					end
+<a href="#l554" class="line" id="l554">    554</a> 					else begin
+<a href="#l555" class="line" id="l555">    555</a> 						 blockram_state_machine &lt;= 32&#39;d0;
+<a href="#l556" class="line" id="l556">    556</a> 						 send &lt;= 2&#39;b01;
+<a href="#l557" class="line" id="l557">    557</a> 					 end
+<a href="#l558" class="line" id="l558">    558</a> 				end
+<a href="#l559" class="line" id="l559">    559</a> 			else if (precision == 16) begin
+<a href="#l560" class="line" id="l560">    560</a> 					if (blockram_state_machine == 32&#39;d0) begin
+<a href="#l561" class="line" id="l561">    561</a> 						input_stream_write_enable &lt;= 0;
+<a href="#l562" class="line" id="l562">    562</a> 						blockram_state_machine &lt;= 32&#39;d1;
+<a href="#l563" class="line" id="l563">    563</a> 					end else if (blockram_state_machine == 32&#39;d1) begin
+<a href="#l564" class="line" id="l564">    564</a> 						blockram_state_machine &lt;= 32&#39;d2;
+<a href="#l565" class="line" id="l565">    565</a> 						if (f == 1) begin
+<a href="#l566" class="line" id="l566">    566</a> 							f &lt;= 0;
+<a href="#l567" class="line" id="l567">    567</a> 							input_stream_raddress &lt;= input_stream_raddress - 1;
+<a href="#l568" class="line" id="l568">    568</a> 						end
+<a href="#l569" class="line" id="l569">    569</a> 					end {{- if .Inputs }} {{- $inputsLen := len .Inputs }} {{- range $i, $input := .Inputs }} {{- if ne (inc $i) $inputsLen }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+<a href="#l570" class="line" id="l570">    570</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+<a href="#l571" class="line" id="l571">    571</a> 						if (half_precision_input_index == 0) begin
+<a href="#l572" class="line" id="l572">    572</a> 							{{ $input }}_r &lt;= input_output_stream_data[15:0];
+<a href="#l573" class="line" id="l573">    573</a> 							half_precision_input_index &lt;= half_precision_input_index + 1;
+<a href="#l574" class="line" id="l574">    574</a>                             prev_value &lt;= input_output_stream_data;
+<a href="#l575" class="line" id="l575">    575</a> 						end else begin
+<a href="#l576" class="line" id="l576">    576</a> 							{{ $input }}_r &lt;= prev_value[31:16];
+<a href="#l577" class="line" id="l577">    577</a> 							half_precision_input_index &lt;= 0;
+<a href="#l578" class="line" id="l578">    578</a> 							input_stream_raddress &lt;= input_stream_raddress - 1;
+<a href="#l579" class="line" id="l579">    579</a> 						end
+<a href="#l580" class="line" id="l580">    580</a> 					end {{- else }} else if (blockram_state_machine == 32&#39;d{{ add $i 2 }}) begin
+<a href="#l581" class="line" id="l581">    581</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $i 3 }};
+<a href="#l582" class="line" id="l582">    582</a> 						if (half_precision_input_index == 0) begin
+<a href="#l583" class="line" id="l583">    583</a> 							{{ $input }}_r &lt;= input_output_stream_data[15:0];
+<a href="#l584" class="line" id="l584">    584</a> 							half_precision_input_index &lt;= half_precision_input_index + 1;
+<a href="#l585" class="line" id="l585">    585</a> 							prev_value &lt;= input_output_stream_data;
+<a href="#l586" class="line" id="l586">    586</a> 						end else begin
+<a href="#l587" class="line" id="l587">    587</a> 							{{ $input }}_r &lt;= prev_value[31:16];
+<a href="#l588" class="line" id="l588">    588</a> 							half_precision_input_index &lt;= 0;
+<a href="#l589" class="line" id="l589">    589</a> 							f &lt;= 1;
+<a href="#l590" class="line" id="l590">    590</a> 						end
+<a href="#l591" class="line" id="l591">    591</a> 					end{{- end }} {{- end}} {{- end}} {{ $inputsLength := len .Inputs }} else if (blockram_state_machine == 32&#39;d{{ add $inputsLength 2 }}) begin
+<a href="#l592" class="line" id="l592">    592</a> 						blockram_state_machine &lt;= 32&#39;d{{ add $inputsLength 3 }};
+<a href="#l593" class="line" id="l593">    593</a> 						{{- if .Inputs }}
+<a href="#l594" class="line" id="l594">    594</a> 						{{- range .Inputs }}
+<a href="#l595" class="line" id="l595">    595</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l596" class="line" id="l596">    596</a> 						{{- end }}
+<a href="#l597" class="line" id="l597">    597</a> 						{{- end }}
+<a href="#l598" class="line" id="l598">    598</a> 					end
+<a href="#l599" class="line" id="l599">    599</a> 					else begin
+<a href="#l600" class="line" id="l600">    600</a> 						 blockram_state_machine &lt;= 32&#39;d0;
+<a href="#l601" class="line" id="l601">    601</a> 						 send &lt;= 2&#39;b01;
+<a href="#l602" class="line" id="l602">    602</a> 					end
+<a href="#l603" class="line" id="l603">    603</a> 				end
+<a href="#l604" class="line" id="l604">    604</a> 			end
+<a href="#l605" class="line" id="l605">    605</a> 		else if (send == 2&#39;b01) begin
+<a href="#l606" class="line" id="l606">    606</a> 			if (
+<a href="#l607" class="line" id="l607">    607</a> 				{{- if .Inputs }}
+<a href="#l608" class="line" id="l608">    608</a> 				{{- $InputsLen := len .Inputs }}
+<a href="#l609" class="line" id="l609">    609</a> 				{{- range $i, $input := .Inputs }}
+<a href="#l610" class="line" id="l610">    610</a> 				{{- if eq (inc $i) $InputsLen }}
+<a href="#l611" class="line" id="l611">    611</a> 				{{ $input }}_received
+<a href="#l612" class="line" id="l612">    612</a> 				{{- else }}
+<a href="#l613" class="line" id="l613">    613</a> 				{{ $input }}_received &amp;&amp;
+<a href="#l614" class="line" id="l614">    614</a> 				{{- end }}
+<a href="#l615" class="line" id="l615">    615</a> 				{{- end }}
+<a href="#l616" class="line" id="l616">    616</a> 				{{- end }}
+<a href="#l617" class="line" id="l617">    617</a> 			) begin
+<a href="#l618" class="line" id="l618">    618</a> 				{{- if .Inputs }}
+<a href="#l619" class="line" id="l619">    619</a> 				{{- range .Inputs }}
+<a href="#l620" class="line" id="l620">    620</a> 				{{ . }}_valid_r &lt;= 1&#39;b0;
+<a href="#l621" class="line" id="l621">    621</a> 				{{- end }}
+<a href="#l622" class="line" id="l622">    622</a> 				{{- end }}
+<a href="#l623" class="line" id="l623">    623</a> 				send &lt;= 2&#39;b10;
+<a href="#l624" class="line" id="l624">    624</a> 				wr_n &lt;= 1;
+<a href="#l625" class="line" id="l625">    625</a> 			end
+<a href="#l626" class="line" id="l626">    626</a> 		end
+<a href="#l627" class="line" id="l627">    627</a> 		else if (send == 2&#39;b10) begin
+<a href="#l628" class="line" id="l628">    628</a> 				{{- if .Outputs }}
+<a href="#l629" class="line" id="l629">    629</a> 				{{- $OutputsLen := len .Outputs }}
+<a href="#l630" class="line" id="l630">    630</a> 				{{- range $i, $output := .Outputs }}
+<a href="#l631" class="line" id="l631">    631</a> 				{{- if eq ($i) 0 }}
+<a href="#l632" class="line" id="l632">    632</a> 				if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+<a href="#l633" class="line" id="l633">    633</a> 					{{ . }}_received_r &lt;= 1&#39;b1;
+<a href="#l634" class="line" id="l634">    634</a> 					write_{{ . }} &lt;= 1;
+<a href="#l635" class="line" id="l635">    635</a> 				end
+<a href="#l636" class="line" id="l636">    636</a> 				{{- else }}
+<a href="#l637" class="line" id="l637">    637</a> 				else if ({{ . }}_valid &amp;&amp; !{{ . }}_received_r) begin
+<a href="#l638" class="line" id="l638">    638</a> 					{{ . }}_received_r &lt;= 1&#39;b1;
+<a href="#l639" class="line" id="l639">    639</a> 					write_{{ . }} &lt;= 1;
+<a href="#l640" class="line" id="l640">    640</a> 				end
+<a href="#l641" class="line" id="l641">    641</a> 				{{- end }}
+<a href="#l642" class="line" id="l642">    642</a> 				{{- end }}
+<a href="#l643" class="line" id="l643">    643</a> 				{{- end }}
+<a href="#l644" class="line" id="l644">    644</a> 		
+<a href="#l645" class="line" id="l645">    645</a> 				if (precision == 32) begin
+<a href="#l646" class="line" id="l646">    646</a> 				{{- if .Outputs }}
+<a href="#l647" class="line" id="l647">    647</a> 				{{- $OutputsLen := len .Outputs }}
+<a href="#l648" class="line" id="l648">    648</a> 				{{- range $i, $output := .Outputs }}
+<a href="#l649" class="line" id="l649">    649</a> 				{{- if eq ($i) 0 }}
+<a href="#l650" class="line" id="l650">    650</a> 				if (write_{{ . }}) begin
+<a href="#l651" class="line" id="l651">    651</a> 						write_{{ . }} &lt;= 0;
+<a href="#l652" class="line" id="l652">    652</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l653" class="line" id="l653">    653</a> 						data_in &lt;= {{ . }};
+<a href="#l654" class="line" id="l654">    654</a> 				end
+<a href="#l655" class="line" id="l655">    655</a> 				{{- else }}
+<a href="#l656" class="line" id="l656">    656</a> 				else if (write_{{ . }}) begin
+<a href="#l657" class="line" id="l657">    657</a> 						write_{{ . }} &lt;= 0;
+<a href="#l658" class="line" id="l658">    658</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l659" class="line" id="l659">    659</a> 						data_in &lt;= {{ . }};
+<a href="#l660" class="line" id="l660">    660</a> 				end
+<a href="#l661" class="line" id="l661">    661</a> 				{{- end }}
+<a href="#l662" class="line" id="l662">    662</a> 				{{- end }}
+<a href="#l663" class="line" id="l663">    663</a> 				{{- end }}
+<a href="#l664" class="line" id="l664">    664</a> 				end 
+<a href="#l665" class="line" id="l665">    665</a> 				else if (precision == 16) begin
+<a href="#l666" class="line" id="l666">    666</a> 
+<a href="#l667" class="line" id="l667">    667</a> 				{{- if .Outputs }}
+<a href="#l668" class="line" id="l668">    668</a> 				{{- $OutputsLen := len .Outputs }}
+<a href="#l669" class="line" id="l669">    669</a> 				{{- range $i, $output := .Outputs }}
+<a href="#l670" class="line" id="l670">    670</a> 				{{- if eq ($i) 0 }}
+<a href="#l671" class="line" id="l671">    671</a> 				if (write_{{ . }}) begin
+<a href="#l672" class="line" id="l672">    672</a> 						write_{{ . }} &lt;= 0;
+<a href="#l673" class="line" id="l673">    673</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l674" class="line" id="l674">    674</a> 						if (outputIndex == 0) begin
+<a href="#l675" class="line" id="l675">    675</a> 							data_in[15:0] &lt;= {{ . }};
+<a href="#l676" class="line" id="l676">    676</a> 						end
+<a href="#l677" class="line" id="l677">    677</a> 						else if(outputIndex == 1) begin
+<a href="#l678" class="line" id="l678">    678</a> 							data_in[31:16] &lt;= {{ . }};
+<a href="#l679" class="line" id="l679">    679</a> 						end
+<a href="#l680" class="line" id="l680">    680</a> 				end
+<a href="#l681" class="line" id="l681">    681</a> 				{{- else }}
+<a href="#l682" class="line" id="l682">    682</a> 				else if (write_{{ . }}) begin
+<a href="#l683" class="line" id="l683">    683</a> 						write_{{ . }} &lt;= 0;
+<a href="#l684" class="line" id="l684">    684</a> 						{{ . }}_valid_r &lt;= 1&#39;b1;
+<a href="#l685" class="line" id="l685">    685</a> 						if (outputIndex == 0) begin
+<a href="#l686" class="line" id="l686">    686</a> 							data_in[15:0] &lt;= {{ . }};
+<a href="#l687" class="line" id="l687">    687</a> 						end
+<a href="#l688" class="line" id="l688">    688</a> 						else if(outputIndex == 1) begin
+<a href="#l689" class="line" id="l689">    689</a> 							data_in[31:16] &lt;= {{ . }};
+<a href="#l690" class="line" id="l690">    690</a> 						end
+<a href="#l691" class="line" id="l691">    691</a> 				end
+<a href="#l692" class="line" id="l692">    692</a> 				{{- end }}
+<a href="#l693" class="line" id="l693">    693</a> 				{{- end}}
+<a href="#l694" class="line" id="l694">    694</a> 				{{- end}}
+<a href="#l695" class="line" id="l695">    695</a> 				end 
+<a href="#l696" class="line" id="l696">    696</a> 				if (
+<a href="#l697" class="line" id="l697">    697</a> 					{{- if .Outputs }}
+<a href="#l698" class="line" id="l698">    698</a> 					{{- $OutputsLen := len .Outputs }}
+<a href="#l699" class="line" id="l699">    699</a> 					{{- range $i, $output := .Outputs }}
+<a href="#l700" class="line" id="l700">    700</a> 					{{- if eq (inc $i) $OutputsLen }}
+<a href="#l701" class="line" id="l701">    701</a> 					{{ $output }}_valid_r
+<a href="#l702" class="line" id="l702">    702</a> 					{{- else }}
+<a href="#l703" class="line" id="l703">    703</a> 					{{ $output }}_valid_r &amp;&amp;
+<a href="#l704" class="line" id="l704">    704</a> 					{{- end }}
+<a href="#l705" class="line" id="l705">    705</a> 					{{- end }}
+<a href="#l706" class="line" id="l706">    706</a> 					{{- end }}
+<a href="#l707" class="line" id="l707">    707</a> 					 ) begin
+<a href="#l708" class="line" id="l708">    708</a> 				{{- if .Outputs }}
+<a href="#l709" class="line" id="l709">    709</a> 						{{- range .Outputs }}
+<a href="#l710" class="line" id="l710">    710</a> 							{{ . }}_valid_r &lt;= 1&#39;b0;
+<a href="#l711" class="line" id="l711">    711</a> 						{{- end }}
+<a href="#l712" class="line" id="l712">    712</a> 						{{- end }}
+<a href="#l713" class="line" id="l713">    713</a> 
+<a href="#l714" class="line" id="l714">    714</a> 				outputs_counter_pointer &lt;= outputs_counter_pointer + bmoutputs;
+<a href="#l715" class="line" id="l715">    715</a> 				outputs_counter_incr &lt;= outputs_counter_incr + 1;
+<a href="#l716" class="line" id="l716">    716</a> 				outputs_counter &lt;= bminputs*(outputs_counter_incr+1);
+<a href="#l717" class="line" id="l717">    717</a> 			
+<a href="#l718" class="line" id="l718">    718</a> 				 end
+<a href="#l719" class="line" id="l719">    719</a> 				else if(
+<a href="#l720" class="line" id="l720">    720</a> 					{{- if .Outputs }}
+<a href="#l721" class="line" id="l721">    721</a> 					{{- $outputsLen := len .Outputs }}
+<a href="#l722" class="line" id="l722">    722</a> 					{{- range $i, $output := .Outputs }}
+<a href="#l723" class="line" id="l723">    723</a> 					{{- if eq (inc $i) $outputsLen }}
+<a href="#l724" class="line" id="l724">    724</a> 					!{{ $output }}_valid &amp;&amp; {{ $output }}_received_r
+<a href="#l725" class="line" id="l725">    725</a> 					{{- else }}
+<a href="#l726" class="line" id="l726">    726</a> 					!{{ $output }}_valid &amp;&amp; {{ $output }}_received_r &amp;&amp;
+<a href="#l727" class="line" id="l727">    727</a> 					{{- end }}
+<a href="#l728" class="line" id="l728">    728</a> 					{{- end }}
+<a href="#l729" class="line" id="l729">    729</a> 					{{- end }}
+<a href="#l730" class="line" id="l730">    730</a> 				) 
+<a href="#l731" class="line" id="l731">    731</a> 					begin
+<a href="#l732" class="line" id="l732">    732</a> 						{{- if .Outputs }}
+<a href="#l733" class="line" id="l733">    733</a> 						{{- range .Outputs }}
+<a href="#l734" class="line" id="l734">    734</a> 							{{ . }}_received_r &lt;= 1&#39;b0;
+<a href="#l735" class="line" id="l735">    735</a> 						{{- end }}
+<a href="#l736" class="line" id="l736">    736</a> 						{{- end }}
+<a href="#l737" class="line" id="l737">    737</a> 							
+<a href="#l738" class="line" id="l738">    738</a> 							send &lt;= 2&#39;b00;
+<a href="#l739" class="line" id="l739">    739</a> 					end
+<a href="#l740" class="line" id="l740">    740</a> 			end
+<a href="#l741" class="line" id="l741">    741</a> 		end
+<a href="#l742" class="line" id="l742">    742</a> 		//end 
+<a href="#l743" class="line" id="l743">    743</a> 		else
+<a href="#l744" class="line" id="l744">    744</a> 		begin
+<a href="#l745" class="line" id="l745">    745</a> 		 if (bm_done) begin
+<a href="#l746" class="line" id="l746">    746</a> 			 wr_n &lt;= 1&#39;b0;
+<a href="#l747" class="line" id="l747">    747</a> 			 rd_n &lt;= 1&#39;b1;
+<a href="#l748" class="line" id="l748">    748</a> 		 end
+<a href="#l749" class="line" id="l749">    749</a> 		end
+<a href="#l750" class="line" id="l750">    750</a> 	    end
+<a href="#l751" class="line" id="l751">    751</a> 	end
+<a href="#l752" class="line" id="l752">    752</a> 	
+<a href="#l753" class="line" id="l753">    753</a> 	reg [31:0] sendData = waitCycle;
+<a href="#l754" class="line" id="l754">    754</a>     
+<a href="#l755" class="line" id="l755">    755</a> 	always @( posedge m00_axis_aclk )                  
+<a href="#l756" class="line" id="l756">    756</a>     begin        
+<a href="#l757" class="line" id="l757">    757</a>        if (tx_done) begin
+<a href="#l758" class="line" id="l758">    758</a>         stream_output_counter &lt;= 0;
+<a href="#l759" class="line" id="l759">    759</a>         tx_done &lt;= 1&#39;b0;
+<a href="#l760" class="line" id="l760">    760</a>         waddressn &lt;= waddressn_size;
+<a href="#l761" class="line" id="l761">    761</a>         sendData &lt;= waitCycle;
+<a href="#l762" class="line" id="l762">    762</a>         wait_stream &lt;= 0;
+<a href="#l763" class="line" id="l763">    763</a>        end
+<a href="#l764" class="line" id="l764">    764</a>       
+<a href="#l765" class="line" id="l765">    765</a>       if (rd_n == 1) begin
+<a href="#l766" class="line" id="l766">    766</a>             if (wait_stream &lt; waitStream) begin
+<a href="#l767" class="line" id="l767">    767</a>                 wait_stream &lt;= wait_stream + 1;
+<a href="#l768" class="line" id="l768">    768</a>             end
+<a href="#l769" class="line" id="l769">    769</a>       end
+<a href="#l770" class="line" id="l770">    770</a>                                      
+<a href="#l771" class="line" id="l771">    771</a>       if(!m00_axis_aresetn)                            
+<a href="#l772" class="line" id="l772">    772</a>         begin   
+<a href="#l773" class="line" id="l773">    773</a>           stream_data_out &lt;= 1;                      
+<a href="#l774" class="line" id="l774">    774</a>         end                                          
+<a href="#l775" class="line" id="l775">    775</a>       else if (tx_en)
+<a href="#l776" class="line" id="l776">    776</a>         begin
+<a href="#l777" class="line" id="l777">    777</a>               if (waddressn &gt;= 0) begin
+<a href="#l778" class="line" id="l778">    778</a>                   if (precision == 32) begin
+<a href="#l779" class="line" id="l779">    779</a>                         if (sendData &lt; waitCycle) begin
+<a href="#l780" class="line" id="l780">    780</a>                                if(sendData == 0) begin
+<a href="#l781" class="line" id="l781">    781</a>                                     waddressn &lt;= waddressn - 1;
+<a href="#l782" class="line" id="l782">    782</a>                                 end
+<a href="#l783" class="line" id="l783">    783</a>                                 sendData &lt;= sendData + 1;
+<a href="#l784" class="line" id="l784">    784</a>                         end
+<a href="#l785" class="line" id="l785">    785</a>                        else if (sendData == waitCycle) begin
+<a href="#l786" class="line" id="l786">    786</a>                             sendData &lt;= 0;
+<a href="#l787" class="line" id="l787">    787</a>                             stream_data_out &lt;= data_out;
+<a href="#l788" class="line" id="l788">    788</a>                         end
+<a href="#l789" class="line" id="l789">    789</a>                   end
+<a href="#l790" class="line" id="l790">    790</a>                   else if (precision == 16) begin
+<a href="#l791" class="line" id="l791">    791</a>                         if (sendData &lt; waitCycle) begin
+<a href="#l792" class="line" id="l792">    792</a>                                if(sendData == 0) begin
+<a href="#l793" class="line" id="l793">    793</a>                                     waddressn &lt;= waddressn - 1;
+<a href="#l794" class="line" id="l794">    794</a>                                 end
+<a href="#l795" class="line" id="l795">    795</a>                                 sendData &lt;= sendData + 1;
+<a href="#l796" class="line" id="l796">    796</a>                          end
+<a href="#l797" class="line" id="l797">    797</a>                        else if (sendData == waitCycle) begin
+<a href="#l798" class="line" id="l798">    798</a>                             sendData &lt;= 0;
+<a href="#l799" class="line" id="l799">    799</a>                             stream_data_out[15:0] &lt;= data_out[15:0];
+<a href="#l800" class="line" id="l800">    800</a>                             stream_data_out[31:16] &lt;= data_out[31:16];
+<a href="#l801" class="line" id="l801">    801</a>                        end
+<a href="#l802" class="line" id="l802">    802</a>                   end
+<a href="#l803" class="line" id="l803">    803</a>                   if (waddressn == 0) begin
+<a href="#l804" class="line" id="l804">    804</a>                         tx_done &lt;= 1&#39;b1;
+<a href="#l805" class="line" id="l805">    805</a>                   end
+<a href="#l806" class="line" id="l806">    806</a>             end
+<a href="#l807" class="line" id="l807">    807</a>         end                                          
+<a href="#l808" class="line" id="l808">    808</a>     end
+<a href="#l809" class="line" id="l809">    809</a> 
+<a href="#l810" class="line" id="l810">    810</a> endmodule
+<a href="#l811" class="line" id="l811">    811</a> 
+<a href="#l812" class="line" id="l812">    812</a> `
+<a href="#l813" class="line" id="l813">    813</a> )</pre>
+</div>
+</body>
+</html>

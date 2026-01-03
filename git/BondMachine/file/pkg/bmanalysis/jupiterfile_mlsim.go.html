@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>jupiterfile_mlsim.go - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../../../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../../../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../../../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../"><img src="../../../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../../../log.html">Log</a> | <a href="../../../files.html">Files</a> | <a href="../../../refs.html">Refs</a> | <a href="../../../file/README.md.html">README</a> | <a href="../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> jupiterfile_mlsim.go (7883B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> package bmanalysis
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> const (
+<a href="#l4" class="line" id="l4">      4</a> 	notebookMLSim = `
+<a href="#l5" class="line" id="l5">      5</a> 	{
+<a href="#l6" class="line" id="l6">      6</a> 		&quot;cells&quot;: [
+<a href="#l7" class="line" id="l7">      7</a> 			{
+<a href="#l8" class="line" id="l8">      8</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l9" class="line" id="l9">      9</a> 				&quot;execution_count&quot;: null,
+<a href="#l10" class="line" id="l10">     10</a> 				&quot;metadata&quot;: {},
+<a href="#l11" class="line" id="l11">     11</a> 				&quot;outputs&quot;: [],
+<a href="#l12" class="line" id="l12">     12</a> 				&quot;source&quot;: [
+<a href="#l13" class="line" id="l13">     13</a> 					&quot;!pip install pandas\n&quot;,
+<a href="#l14" class="line" id="l14">     14</a> 					&quot;!pip install matplotlib\n&quot;,
+<a href="#l15" class="line" id="l15">     15</a> 					&quot;!pip install numpy&quot;
+<a href="#l16" class="line" id="l16">     16</a> 				]
+<a href="#l17" class="line" id="l17">     17</a> 			},
+<a href="#l18" class="line" id="l18">     18</a> 			{
+<a href="#l19" class="line" id="l19">     19</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l20" class="line" id="l20">     20</a> 				&quot;execution_count&quot;: null,
+<a href="#l21" class="line" id="l21">     21</a> 				&quot;metadata&quot;: {},
+<a href="#l22" class="line" id="l22">     22</a> 				&quot;outputs&quot;: [],
+<a href="#l23" class="line" id="l23">     23</a> 				&quot;source&quot;: [
+<a href="#l24" class="line" id="l24">     24</a> 					&quot;import pandas as pd\n&quot;,
+<a href="#l25" class="line" id="l25">     25</a> 					&quot;import json\n&quot;,
+<a href="#l26" class="line" id="l26">     26</a> 					&quot;import numpy as np\n&quot;,
+<a href="#l27" class="line" id="l27">     27</a> 					&quot;import matplotlib.pyplot as plt\n&quot;,
+<a href="#l28" class="line" id="l28">     28</a> 					&quot;import re&quot;
+<a href="#l29" class="line" id="l29">     29</a> 				]
+<a href="#l30" class="line" id="l30">     30</a> 			},
+<a href="#l31" class="line" id="l31">     31</a> 			{
+<a href="#l32" class="line" id="l32">     32</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l33" class="line" id="l33">     33</a> 				&quot;execution_count&quot;: null,
+<a href="#l34" class="line" id="l34">     34</a> 				&quot;metadata&quot;: {},
+<a href="#l35" class="line" id="l35">     35</a> 				&quot;outputs&quot;: [],
+<a href="#l36" class="line" id="l36">     36</a> 				&quot;source&quot;: [
+<a href="#l37" class="line" id="l37">     37</a> 					&quot;def fix_values(value):\n&quot;,
+<a href="#l38" class="line" id="l38">     38</a> 					&quot;    try:\n&quot;,
+<a href="#l39" class="line" id="l39">     39</a> 					&quot;        if isinstance(value, float) or isinstance(value, int):\n&quot;,
+<a href="#l40" class="line" id="l40">     40</a> 					&quot;            return value\n&quot;,
+<a href="#l41" class="line" id="l41">     41</a> 					&quot;        toclean_value = value.replace(\&quot;0lq&lt;16.1&gt;\&quot;, \&quot;\&quot;) #0lq&lt;16.1&gt;12.542724609375\n&quot;,
+<a href="#l42" class="line" id="l42">     42</a> 					&quot;        toclean_value = toclean_value.replace(\&quot;0lq&lt;8.1&gt;\&quot;, \&quot;\&quot;) #0lq&lt;16.1&gt;12.542724609375\n&quot;,
+<a href="#l43" class="line" id="l43">     43</a> 					&quot;        toclean_value = toclean_value.replace(\&quot;0f&lt;16&gt;\&quot;, \&quot;\&quot;)\n&quot;,
+<a href="#l44" class="line" id="l44">     44</a> 					&quot;        toclean_value = toclean_value.replace(\&quot;0f&lt;32&gt;\&quot;, \&quot;\&quot;)\n&quot;,
+<a href="#l45" class="line" id="l45">     45</a> 					&quot;        cleaned_value = re.sub(r&#39;[^0-9.]&#39;, &#39;&#39;, str(toclean_value))\n&quot;,
+<a href="#l46" class="line" id="l46">     46</a> 					&quot;        return float(cleaned_value)\n&quot;,
+<a href="#l47" class="line" id="l47">     47</a> 					&quot;    except Exception as e:\n&quot;,
+<a href="#l48" class="line" id="l48">     48</a> 					&quot;        error_message = str(e)\n&quot;,
+<a href="#l49" class="line" id="l49">     49</a> 					&quot;        if \&quot;+Inf\&quot; in value:\n&quot;,
+<a href="#l50" class="line" id="l50">     50</a> 					&quot;            return 9999999999999999\n&quot;,
+<a href="#l51" class="line" id="l51">     51</a> 					&quot;        else:\n&quot;,
+<a href="#l52" class="line" id="l52">     52</a> 					&quot;            print(\&quot;Unable to convert this value: \&quot;, toclean_value)\n&quot;,
+<a href="#l53" class="line" id="l53">     53</a> 					&quot;            return 0&quot;
+<a href="#l54" class="line" id="l54">     54</a> 				]
+<a href="#l55" class="line" id="l55">     55</a> 			},
+<a href="#l56" class="line" id="l56">     56</a> 			{
+<a href="#l57" class="line" id="l57">     57</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l58" class="line" id="l58">     58</a> 				&quot;execution_count&quot;: null,
+<a href="#l59" class="line" id="l59">     59</a> 				&quot;metadata&quot;: {},
+<a href="#l60" class="line" id="l60">     60</a> 				&quot;outputs&quot;: [],
+<a href="#l61" class="line" id="l61">     61</a> 				&quot;source&quot;: [
+<a href="#l62" class="line" id="l62">     62</a> 					&quot;def read_mk_file(file_path):\n&quot;,
+<a href="#l63" class="line" id="l63">     63</a> 					&quot;    dictionary = {}\n&quot;,
+<a href="#l64" class="line" id="l64">     64</a> 					&quot;    with open(file_path, &#39;r&#39;) as file:\n&quot;,
+<a href="#l65" class="line" id="l65">     65</a> 					&quot;        for line in file:\n&quot;,
+<a href="#l66" class="line" id="l66">     66</a> 					&quot;            line = line.strip()\n&quot;,
+<a href="#l67" class="line" id="l67">     67</a> 					&quot;            if line and not line.startswith(&#39;#&#39;) and &#39;=&#39; in line:\n&quot;,
+<a href="#l68" class="line" id="l68">     68</a> 					&quot;                key, value = line.split(&#39;=&#39;, 1)\n&quot;,
+<a href="#l69" class="line" id="l69">     69</a> 					&quot;                dictionary[key.strip()] = value.strip()\n&quot;,
+<a href="#l70" class="line" id="l70">     70</a> 					&quot;    return dictionary&quot;
+<a href="#l71" class="line" id="l71">     71</a> 				]
+<a href="#l72" class="line" id="l72">     72</a> 			},
+<a href="#l73" class="line" id="l73">     73</a> 			{
+<a href="#l74" class="line" id="l74">     74</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l75" class="line" id="l75">     75</a> 				&quot;execution_count&quot;: null,
+<a href="#l76" class="line" id="l76">     76</a> 				&quot;metadata&quot;: {},
+<a href="#l77" class="line" id="l77">     77</a> 				&quot;outputs&quot;: [],
+<a href="#l78" class="line" id="l78">     78</a> 				&quot;source&quot;: [
+<a href="#l79" class="line" id="l79">     79</a> 					&quot;def load_data(filename, toPlot):\n&quot;,
+<a href="#l80" class="line" id="l80">     80</a> 					&quot;    \n&quot;,
+<a href="#l81" class="line" id="l81">     81</a> 					&quot;    runinfo = {}\n&quot;,
+<a href="#l82" class="line" id="l82">     82</a> 					&quot;    \n&quot;,
+<a href="#l83" class="line" id="l83">     83</a> 					&quot;    rundata = pd.read_csv(filename+&#39;.csv&#39;)\n&quot;,
+<a href="#l84" class="line" id="l84">     84</a> 					&quot;    columns = rundata.columns.tolist()\n&quot;,
+<a href="#l85" class="line" id="l85">     85</a> 					&quot;    columns = columns[1:len(columns)]\n&quot;,
+<a href="#l86" class="line" id="l86">     86</a> 					&quot;    \n&quot;,
+<a href="#l87" class="line" id="l87">     87</a> 					&quot;    rundata.set_index(&#39;tick&#39;, inplace=True)\n&quot;,
+<a href="#l88" class="line" id="l88">     88</a> 					&quot;    \n&quot;,
+<a href="#l89" class="line" id="l89">     89</a> 					&quot;    for c in columns:\n&quot;,
+<a href="#l90" class="line" id="l90">     90</a> 					&quot;        rundata[c] = rundata[c].apply(fix_values)\n&quot;,
+<a href="#l91" class="line" id="l91">     91</a> 					&quot;    \n&quot;,
+<a href="#l92" class="line" id="l92">     92</a> 					&quot;    directory_name = filename.replace(\&quot;_simreport\&quot;, \&quot;\&quot;)\n&quot;,
+<a href="#l93" class="line" id="l93">     93</a> 					&quot;    runinfo[\&quot;templateinfo\&quot;] = read_mk_file(directory_name+\&quot;/generated.mk\&quot;)\n&quot;,
+<a href="#l94" class="line" id="l94">     94</a> 					&quot;    \n&quot;,
+<a href="#l95" class="line" id="l95">     95</a> 					&quot;    if not toPlot:\n&quot;,
+<a href="#l96" class="line" id="l96">     96</a> 					&quot;        runinfo[\&quot;name\&quot;] = filename\n&quot;,
+<a href="#l97" class="line" id="l97">     97</a> 					&quot;        runinfo[\&quot;rundata\&quot;] = rundata\n&quot;,
+<a href="#l98" class="line" id="l98">     98</a> 					&quot;        runinfo[\&quot;columns\&quot;] = columns\n&quot;,
+<a href="#l99" class="line" id="l99">     99</a> 					&quot;        \n&quot;,
+<a href="#l100" class="line" id="l100">    100</a> 					&quot;        return runinfo\n&quot;,
+<a href="#l101" class="line" id="l101">    101</a> 					&quot;    \n&quot;,
+<a href="#l102" class="line" id="l102">    102</a> 					&quot;    for c in columns:\n&quot;,
+<a href="#l103" class="line" id="l103">    103</a> 					&quot;        \n&quot;,
+<a href="#l104" class="line" id="l104">    104</a> 					&quot;        plt.figure(figsize=(10, 6))\n&quot;,
+<a href="#l105" class="line" id="l105">    105</a> 					&quot;        rundata[c].plot()\n&quot;,
+<a href="#l106" class="line" id="l106">    106</a> 					&quot;        plt.xlabel(&#39;Tick&#39;, fontsize=16)\n&quot;,
+<a href="#l107" class="line" id="l107">    107</a> 					&quot;        plt.ylabel(c, fontsize=16)\n&quot;,
+<a href="#l108" class="line" id="l108">    108</a> 					&quot;        plt.xticks(fontsize=14)\n&quot;,
+<a href="#l109" class="line" id="l109">    109</a> 					&quot;        plt.yticks(fontsize=14)\n&quot;,
+<a href="#l110" class="line" id="l110">    110</a> 					&quot;        plt.title(&#39;Plot of &#39;+c+&#39; against Tick&#39;, fontsize=14)\n&quot;,
+<a href="#l111" class="line" id="l111">    111</a> 					&quot;        #plt.show()\n&quot;,
+<a href="#l112" class="line" id="l112">    112</a> 					&quot;        \n&quot;,
+<a href="#l113" class="line" id="l113">    113</a> 					&quot;    runinfo[\&quot;name\&quot;] = filename\n&quot;,
+<a href="#l114" class="line" id="l114">    114</a> 					&quot;    runinfo[\&quot;rundata\&quot;] = rundata \n&quot;,
+<a href="#l115" class="line" id="l115">    115</a> 					&quot;    runinfo[\&quot;columns\&quot;] = columns\n&quot;,
+<a href="#l116" class="line" id="l116">    116</a> 					&quot;    \n&quot;,
+<a href="#l117" class="line" id="l117">    117</a> 					&quot;    return runinfo\n&quot;,
+<a href="#l118" class="line" id="l118">    118</a> 					&quot;    &quot;
+<a href="#l119" class="line" id="l119">    119</a> 				]
+<a href="#l120" class="line" id="l120">    120</a> 			},
+<a href="#l121" class="line" id="l121">    121</a> 			{
+<a href="#l122" class="line" id="l122">    122</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l123" class="line" id="l123">    123</a> 				&quot;execution_count&quot;: null,
+<a href="#l124" class="line" id="l124">    124</a> 				&quot;metadata&quot;: {},
+<a href="#l125" class="line" id="l125">    125</a> 				&quot;outputs&quot;: [],
+<a href="#l126" class="line" id="l126">    126</a> 				&quot;source&quot;: [
+<a href="#l127" class="line" id="l127">    127</a> 					&quot;def analyze(runs, pivot, pl1, pl2, specific_resources):\n&quot;,
+<a href="#l128" class="line" id="l128">    128</a> 					&quot;    \n&quot;,
+<a href="#l129" class="line" id="l129">    129</a> 					&quot;    resources = runs[0][\&quot;columns\&quot;]\n&quot;,
+<a href="#l130" class="line" id="l130">    130</a> 					&quot;    if specific_resources != None:\n&quot;,
+<a href="#l131" class="line" id="l131">    131</a> 					&quot;        if len(specific_resources) &gt; 0:\n&quot;,
+<a href="#l132" class="line" id="l132">    132</a> 					&quot;            resources = specific_resources\n&quot;,
+<a href="#l133" class="line" id="l133">    133</a> 					&quot;            \n&quot;,
+<a href="#l134" class="line" id="l134">    134</a> 					&quot;    if pl1:\n&quot;,
+<a href="#l135" class="line" id="l135">    135</a> 					&quot;        for res in resources:\n&quot;,
+<a href="#l136" class="line" id="l136">    136</a> 					&quot;            to_plot = []\n&quot;,
+<a href="#l137" class="line" id="l137">    137</a> 					&quot;            ticks = []\n&quot;,
+<a href="#l138" class="line" id="l138">    138</a> 					&quot;            \n&quot;,
+<a href="#l139" class="line" id="l139">    139</a> 					&quot;            for r in runs:\n&quot;,
+<a href="#l140" class="line" id="l140">    140</a> 					&quot;                ticks = r[\&quot;rundata\&quot;].index\n&quot;,
+<a href="#l141" class="line" id="l141">    141</a> 					&quot;                values_in_scope = r[\&quot;rundata\&quot;][res]\n&quot;,
+<a href="#l142" class="line" id="l142">    142</a> 					&quot;                \n&quot;,
+<a href="#l143" class="line" id="l143">    143</a> 					&quot;                to_plot.append({\n&quot;,
+<a href="#l144" class="line" id="l144">    144</a> 					&quot;                    \&quot;name\&quot;: r[\&quot;templateinfo\&quot;][\&quot;TEMPLATE_INSTANCENAME\&quot;],\n&quot;,
+<a href="#l145" class="line" id="l145">    145</a> 					&quot;                    \&quot;resource\&quot;: res,\n&quot;,
+<a href="#l146" class="line" id="l146">    146</a> 					&quot;                    \&quot;values\&quot;: values_in_scope.tolist(),\n&quot;,
+<a href="#l147" class="line" id="l147">    147</a> 					&quot;                    \&quot;info\&quot;: r[\&quot;templateinfo\&quot;]\n&quot;,
+<a href="#l148" class="line" id="l148">    148</a> 					&quot;                })\n&quot;,
+<a href="#l149" class="line" id="l149">    149</a> 					&quot;            \n&quot;,
+<a href="#l150" class="line" id="l150">    150</a> 					&quot;            \n&quot;,
+<a href="#l151" class="line" id="l151">    151</a> 					&quot;            fig_height = len(to_plot)*2\n&quot;,
+<a href="#l152" class="line" id="l152">    152</a> 					&quot;            fig_width = len(to_plot)*4\n&quot;,
+<a href="#l153" class="line" id="l153">    153</a> 					&quot;            \n&quot;,
+<a href="#l154" class="line" id="l154">    154</a> 					&quot;            fig, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={&#39;width_ratios&#39;: [4, 2]}, figsize=(fig_width, fig_height))\n&quot;,
+<a href="#l155" class="line" id="l155">    155</a> 					&quot;            ax2.set_axis_off()\n&quot;,
+<a href="#l156" class="line" id="l156">    156</a> 					&quot;            info_to_plot = r[\&quot;templateinfo\&quot;]\n&quot;,
+<a href="#l157" class="line" id="l157">    157</a> 					&quot;            \n&quot;,
+<a href="#l158" class="line" id="l158">    158</a> 					&quot;            pos=1\n&quot;,
+<a href="#l159" class="line" id="l159">    159</a> 					&quot;            for t in to_plot:\n&quot;,
+<a href="#l160" class="line" id="l160">    160</a> 					&quot;                ax1.plot(ticks, t[\&quot;values\&quot;], label=t[\&quot;name\&quot;])\n&quot;,
+<a href="#l161" class="line" id="l161">    161</a> 					&quot;                last_value = t[\&quot;values\&quot;][-1]\n&quot;,
+<a href="#l162" class="line" id="l162">    162</a> 					&quot;                ax1.text(ticks[-1], last_value, t[\&quot;name\&quot;], ha=&#39;center&#39;, va=&#39;bottom&#39;, fontsize=14)\n&quot;,
+<a href="#l163" class="line" id="l163">    163</a> 					&quot;                ax1.set_title(t[\&quot;resource\&quot;])\n&quot;,
+<a href="#l164" class="line" id="l164">    164</a> 					&quot;                \n&quot;,
+<a href="#l165" class="line" id="l165">    165</a> 					&quot;                for key,value in t[\&quot;info\&quot;].items():\n&quot;,
+<a href="#l166" class="line" id="l166">    166</a> 					&quot;                    ax2.text(0.0, pos, key+\&quot;: \&quot;+str(value))\n&quot;,
+<a href="#l167" class="line" id="l167">    167</a> 					&quot;                    pos-=0.05\n&quot;,
+<a href="#l168" class="line" id="l168">    168</a> 					&quot;                \n&quot;,
+<a href="#l169" class="line" id="l169">    169</a> 					&quot;                pos -= 0.05\n&quot;,
+<a href="#l170" class="line" id="l170">    170</a> 					&quot;            ax1.legend()\n&quot;,
+<a href="#l171" class="line" id="l171">    171</a> 					&quot;            \n&quot;,
+<a href="#l172" class="line" id="l172">    172</a> 					&quot;    \n&quot;,
+<a href="#l173" class="line" id="l173">    173</a> 					&quot;    if pl2:\n&quot;,
+<a href="#l174" class="line" id="l174">    174</a> 					&quot;        for res in resources:        \n&quot;,
+<a href="#l175" class="line" id="l175">    175</a> 					&quot;            for i in range(0, len(runs)):\n&quot;,
+<a href="#l176" class="line" id="l176">    176</a> 					&quot;                ticks = runs[i][\&quot;rundata\&quot;].index\n&quot;,
+<a href="#l177" class="line" id="l177">    177</a> 					&quot;                if i != pivot:\n&quot;,
+<a href="#l178" class="line" id="l178">    178</a> 					&quot;                    diff = abs((runs[i][\&quot;rundata\&quot;][res] - runs[pivot][\&quot;rundata\&quot;][res]).mean())\n&quot;,
+<a href="#l179" class="line" id="l179">    179</a> 					&quot;                    \n&quot;,
+<a href="#l180" class="line" id="l180">    180</a> 					&quot;                    if diff &gt; 10:\n&quot;,
+<a href="#l181" class="line" id="l181">    181</a> 					&quot;                        print(\&quot; For resource: \&quot;, res, \&quot; mean difference of value between \&quot;, runs[i][\&quot;name\&quot;], \&quot;and \&quot;, runs[pivot][\&quot;name\&quot;] , \&quot; is \&quot;, diff)\n&quot;,
+<a href="#l182" class="line" id="l182">    182</a> 					&quot;        \n&quot;,
+<a href="#l183" class="line" id="l183">    183</a> 					&quot;    &quot;
+<a href="#l184" class="line" id="l184">    184</a> 				]
+<a href="#l185" class="line" id="l185">    185</a> 			},
+<a href="#l186" class="line" id="l186">    186</a> 			{{- if .ProjectsList }}
+<a href="#l187" class="line" id="l187">    187</a> 			{{- range .ProjectsList }}
+<a href="#l188" class="line" id="l188">    188</a> 			{
+<a href="#l189" class="line" id="l189">    189</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l190" class="line" id="l190">    190</a> 				&quot;execution_count&quot;: null,
+<a href="#l191" class="line" id="l191">    191</a> 				&quot;id&quot;: &quot;976bd531-2a31-4a80-b1d9-0cc7f4cc9ce8&quot;,
+<a href="#l192" class="line" id="l192">    192</a> 				&quot;metadata&quot;: {},
+<a href="#l193" class="line" id="l193">    193</a> 				&quot;outputs&quot;: [],
+<a href="#l194" class="line" id="l194">    194</a> 				&quot;source&quot;: [
+<a href="#l195" class="line" id="l195">    195</a> 				&quot;{{ . }}=load_data(\&quot;{{ . }}_simreport\&quot;, False)&quot;
+<a href="#l196" class="line" id="l196">    196</a> 				]
+<a href="#l197" class="line" id="l197">    197</a> 			},
+<a href="#l198" class="line" id="l198">    198</a> 			{{- end }}
+<a href="#l199" class="line" id="l199">    199</a> 			{{- end }}
+<a href="#l200" class="line" id="l200">    200</a> 			{
+<a href="#l201" class="line" id="l201">    201</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l202" class="line" id="l202">    202</a> 				&quot;execution_count&quot;: null,
+<a href="#l203" class="line" id="l203">    203</a> 				&quot;metadata&quot;: {},
+<a href="#l204" class="line" id="l204">    204</a> 				&quot;outputs&quot;: [],
+<a href="#l205" class="line" id="l205">    205</a> 				&quot;source&quot;: [
+<a href="#l206" class="line" id="l206">    206</a> 				 &quot;analyze([{{- if .ProjectsList }} {{- $projectLen := len .ProjectsList }} {{- range $i, $project := .ProjectsList }} {{- if eq (inc $i) $projectLen }} {{ $project }} {{- else }} {{ $project }}, {{- end }} {{- end }} {{- end }}], 0, True, True, [])&quot;
+<a href="#l207" class="line" id="l207">    207</a> 				]
+<a href="#l208" class="line" id="l208">    208</a> 			},
+<a href="#l209" class="line" id="l209">    209</a> 			{
+<a href="#l210" class="line" id="l210">    210</a> 				&quot;cell_type&quot;: &quot;code&quot;,
+<a href="#l211" class="line" id="l211">    211</a> 				&quot;execution_count&quot;: null,
+<a href="#l212" class="line" id="l212">    212</a> 				&quot;metadata&quot;: {},
+<a href="#l213" class="line" id="l213">    213</a> 				&quot;outputs&quot;: [],
+<a href="#l214" class="line" id="l214">    214</a> 				&quot;source&quot;: []
+<a href="#l215" class="line" id="l215">    215</a> 			}
+<a href="#l216" class="line" id="l216">    216</a> 		],
+<a href="#l217" class="line" id="l217">    217</a> 		&quot;metadata&quot;: {
+<a href="#l218" class="line" id="l218">    218</a> 			&quot;kernelspec&quot;: {
+<a href="#l219" class="line" id="l219">    219</a> 				&quot;display_name&quot;: &quot;Python 3&quot;,
+<a href="#l220" class="line" id="l220">    220</a> 				&quot;language&quot;: &quot;python&quot;,
+<a href="#l221" class="line" id="l221">    221</a> 				&quot;name&quot;: &quot;python3&quot;
+<a href="#l222" class="line" id="l222">    222</a> 			},
+<a href="#l223" class="line" id="l223">    223</a> 			&quot;language_info&quot;: {
+<a href="#l224" class="line" id="l224">    224</a> 				&quot;codemirror_mode&quot;: {
+<a href="#l225" class="line" id="l225">    225</a> 					&quot;name&quot;: &quot;ipython&quot;,
+<a href="#l226" class="line" id="l226">    226</a> 					&quot;version&quot;: 3
+<a href="#l227" class="line" id="l227">    227</a> 				},
+<a href="#l228" class="line" id="l228">    228</a> 				&quot;file_extension&quot;: &quot;.py&quot;,
+<a href="#l229" class="line" id="l229">    229</a> 				&quot;mimetype&quot;: &quot;text/x-python&quot;,
+<a href="#l230" class="line" id="l230">    230</a> 				&quot;name&quot;: &quot;python&quot;,
+<a href="#l231" class="line" id="l231">    231</a> 				&quot;nbconvert_exporter&quot;: &quot;python&quot;,
+<a href="#l232" class="line" id="l232">    232</a> 				&quot;pygments_lexer&quot;: &quot;ipython3&quot;,
+<a href="#l233" class="line" id="l233">    233</a> 				&quot;version&quot;: &quot;3.8.10&quot;
+<a href="#l234" class="line" id="l234">    234</a> 			},
+<a href="#l235" class="line" id="l235">    235</a> 			&quot;orig_nbformat&quot;: 4
+<a href="#l236" class="line" id="l236">    236</a> 		},
+<a href="#l237" class="line" id="l237">    237</a> 		&quot;nbformat&quot;: 4,
+<a href="#l238" class="line" id="l238">    238</a> 		&quot;nbformat_minor&quot;: 2
+<a href="#l239" class="line" id="l239">    239</a> 	}
+<a href="#l240" class="line" id="l240">    240</a> `
+<a href="#l241" class="line" id="l241">    241</a> )
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>override to cast - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a92d508cc2630f78c84d08f29906d4d38eb0949e.html">a92d508cc2630f78c84d08f29906d4d38eb0949e</a>
+<b>parent</b> <a href="../commit/0ee2b5743fe252ae6b97bf3bbbcb73f06d4b8f9d.html">0ee2b5743fe252ae6b97bf3bbbcb73f06d4b8f9d</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Mon, 17 Apr 2023 16:04:29 +0200
+
+override to cast
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkg/bmnumbers/bmnumbers.go</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkg/bmnumbers/serve.go</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">pkg/bondmachine/files_aximm_pynq_example.go</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>4 files changed, 21 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a> b/<a href="../file/cmd/bmnumbers/bmnumbers.go.html">cmd/bmnumbers/bmnumbers.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,8 +15,8 @@ import (
+</a> var verbose = flag.Bool(&quot;v&quot;, false, &quot;Verbose&quot;)
+ var debug = flag.Bool(&quot;d&quot;, false, &quot;Verbose&quot;)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-var convertTo = flag.String(&quot;convert-to&quot;, &quot;&quot;, &quot;Convert to type&quot;)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-var overrideTo = flag.String(&quot;override-to&quot;, &quot;&quot;, &quot;Override type&quot;)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+var convertTo = flag.String(&quot;convert&quot;, &quot;&quot;, &quot;Convert to type&quot;)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+var castTo = flag.String(&quot;cast&quot;, &quot;&quot;, &quot;Cast to type&quot;)
+</a> var dumpAs = flag.String(&quot;dump-as&quot;, &quot;native&quot;, &quot;Dump as (native, hex, bin)&quot;)
+ 
+ var withSize = flag.Bool(&quot;with-size&quot;, false, &quot;With size&quot;)
+<a href="#h0-1" id="h0-1" class="h">@@ -108,8 +108,8 @@ func main() {
+</a> 	} else {
+ 
+ 		var newType bmnumbers.BMNumberType
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if *overrideTo != &quot;&quot; &amp;&amp; *convertTo != &quot;&quot; {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			log.Fatal(&quot;Error: Cannot override and convert at the same time&quot;)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		if *castTo != &quot;&quot; &amp;&amp; *convertTo != &quot;&quot; {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			log.Fatal(&quot;Error: Cannot cast and convert at the same time&quot;)
+</a> 		}
+ 
+ 		switch {
+<a href="#h0-2" id="h0-2" class="h">@@ -123,11 +123,11 @@ func main() {
+</a> 				newType = v
+ 				// fmt.Println(v)
+ 			}
+<a href="#h0-2-3" id="h0-2-3" class="d">-		case *overrideTo != &quot;&quot;:
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			if _, err := bmnumbers.EventuallyCreateType(*overrideTo, nil); err != nil {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		case *castTo != &quot;&quot;:
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			if _, err := bmnumbers.EventuallyCreateType(*castTo, nil); err != nil {
+</a> 				log.Fatal(err)
+ 			}
+<a href="#h0-2-9" id="h0-2-9" class="d">-			if v := bmnumbers.GetType(*overrideTo); v == nil {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			if v := bmnumbers.GetType(*castTo); v == nil {
+</a> 				log.Fatal(&quot;Error: Unknown type&quot;)
+ 			} else {
+ 				newType = v
+<a href="#h0-3" id="h0-3" class="h">@@ -149,8 +149,8 @@ func main() {
+</a> 						}
+ 					}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-					if *overrideTo != &quot;&quot; {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-						if err := bmnumbers.OverrideType(output, newType); err != nil {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+					if *castTo != &quot;&quot; {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+						if err := bmnumbers.CastType(output, newType); err != nil {
+</a> 							fmt.Println(&quot;Error: &quot;, err)
+ 						}
+ 					}
+<b>diff --git a/<a id="h1" href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a> b/<a href="../file/pkg/bmnumbers/bmnumbers.go.html">pkg/bmnumbers/bmnumbers.go</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -75,13 +75,13 @@ func (n *BMNumber) GetTypeName() string {
+</a> 	return n.nType.GetName()
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-func OverrideType(n *BMNumber, t BMNumberType) error {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+func CastType(n *BMNumber, t BMNumberType) error {
+</a> 	if n == nil || n.number == nil {
+<a href="#h1-0-6" id="h1-0-6" class="d">-		return errors.New(&quot;Cannot override type of nil number&quot;)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		return errors.New(&quot;Cannot cast type of nil number&quot;)
+</a> 	}
+ 
+ 	if t.getSize() != -1 &amp;&amp; t.getSize() != n.bits {
+<a href="#h1-0-11" id="h1-0-11" class="d">-		return errors.New(&quot;Cannot override number of type &quot; + n.nType.GetName() + &quot; with type &quot; + t.GetName() + &quot; because they have different sizes&quot;)
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		return errors.New(&quot;Cannot cast number of type &quot; + n.nType.GetName() + &quot; with type &quot; + t.GetName() + &quot; because they have different sizes&quot;)
+</a> 	}
+ 
+ 	n.nType = t
+<b>diff --git a/<a id="h2" href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a> b/<a href="../file/pkg/bmnumbers/serve.go.html">pkg/bmnumbers/serve.go</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,7 +1,5 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-// TRY WITH CURL 
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-// curl -X POST -d &#39;{&quot;action&quot;: &quot;override&quot;, &quot;numbers&quot;: [&quot;0f0.45&quot;, &quot;0f0.30&quot;], &quot;reqType&quot;: &quot;bin&quot;, &quot;dumpMode&quot;: &quot;native&quot;}&#39; http://127.0.0.1:8080/bmnumbers
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+// TRY WITH CURL
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+// curl -X POST -d &#39;{&quot;action&quot;: &quot;cast&quot;, &quot;numbers&quot;: [&quot;0f0.45&quot;, &quot;0f0.30&quot;], &quot;reqType&quot;: &quot;bin&quot;, &quot;dumpMode&quot;: &quot;native&quot;}&#39; http://127.0.0.1:8080/bmnumbers
+</a> 
+ package bmnumbers
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -29,7 +27,7 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
+</a> 	fmt.Fprintf(w, &quot;Welcome to the BM Numbers server!\n&quot;)
+ 	fmt.Fprintf(w, &quot;There is one endpoint available: \n&quot;)
+ 	fmt.Fprintf(w, &quot;[POST] bmnumbers \n&quot;)
+<a href="#h2-1-3" id="h2-1-3" class="d">-	fmt.Fprintf(w, &quot;[POST] body example: {&#39;action&#39;: &#39;override&#39;, &#39;numbers&#39;: [&#39;0f0.45&#39;, &#39;0f0.30&#39;], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;} \n&quot;)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	fmt.Fprintf(w, &quot;[POST] body example: {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [&#39;0f0.45&#39;, &#39;0f0.30&#39;], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;} \n&quot;)
+</a> }
+ 
+ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+<a href="#h2-2" id="h2-2" class="h">@@ -68,8 +66,8 @@ func ExecRequest(w http.ResponseWriter, r *http.Request) {
+</a> 					http.Error(w, fmt.Sprintf(&quot;Error: %v&quot;, err), http.StatusInternalServerError)
+ 					return
+ 				}
+<a href="#h2-2-3" id="h2-2-3" class="d">-			} else if bmNumbersRequest.Action == &quot;override&quot; {
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-				if err := OverrideType(output, newType); err != nil {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+			} else if bmNumbersRequest.Action == &quot;cast&quot; {
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+				if err := CastType(output, newType); err != nil {
+</a> 					http.Error(w, fmt.Sprintf(&quot;Error: %v&quot;, err), http.StatusInternalServerError)
+ 					return
+ 				}
+<a href="#h2-3" id="h2-3" class="h">@@ -116,5 +114,5 @@ func Serve() {
+</a> 
+ 	fmt.Println(&quot;Server started on localhost:8080&quot;)
+ 	log.Fatal(http.ListenAndServe(&quot;:8080&quot;, nil))
+<a href="#h2-3-3" id="h2-3-3" class="d">-	
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-}
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-\ No newline at end of file
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a> b/<a href="../file/pkg/bondmachine/files_aximm_pynq_example.go.html">pkg/bondmachine/files_aximm_pynq_example.go</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -59,7 +59,7 @@ const (
+</a> 		   &quot;def convert_flopoco_float_to_binary(num, e, f):\n&quot;,
+ 		   &quot;            \n&quot;,
+ 		   &quot;    strNum = \&quot;0flp&lt;\&quot;+str(e)+\&quot;.\&quot;+str(f)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+<a href="#h3-0-3" id="h3-0-3" class="d">-		   &quot;    reqBody = {&#39;action&#39;: &#39;override&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		   &quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: &#39;bin&#39;, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a> 		   &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+ 		   &quot;    convertedNumber = json.loads(xReq.text)[\&quot;numbers\&quot;][0]\n&quot;,
+ 		   &quot;    strNumber = convertedNumber[0]+convertedNumber[6:len(convertedNumber)]\n&quot;,
+<a href="#h3-1" id="h3-1" class="h">@@ -81,7 +81,7 @@ const (
+</a> 			 &quot;    \n&quot;,
+ 			 &quot;    strNum = \&quot;0b&lt;\&quot;+str(totLen)+\&quot;&gt;\&quot;+str(num)\n&quot;,
+ 			 &quot;    newType = \&quot;flpe\&quot;+str(e)+\&quot;f\&quot;+str(f)\n&quot;,
+<a href="#h3-1-3" id="h3-1-3" class="d">-			 &quot;    reqBody = {&#39;action&#39;: &#39;override&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: newType, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			 &quot;    reqBody = {&#39;action&#39;: &#39;cast&#39;, &#39;numbers&#39;: [strNum], &#39;reqType&#39;: newType, &#39;dumpMode&#39;: &#39;native&#39;}\n&quot;,
+</a> 			 &quot;    xReq = requests.post(conversion_url, json = reqBody)\n&quot;,
+ 			 &quot;    print(xReq)\n&quot;,
+ 			 &quot;    try:\n&quot;,
+</pre>
+</div>
+</body>
+</html>

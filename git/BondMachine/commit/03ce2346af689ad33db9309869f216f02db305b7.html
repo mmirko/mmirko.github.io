@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>neuralbond first working code - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/03ce2346af689ad33db9309869f216f02db305b7.html">03ce2346af689ad33db9309869f216f02db305b7</a>
+<b>parent</b> <a href="../commit/f45779c6f3bc73eb2a224a39f57db821bf29e46a.html">f45779c6f3bc73eb2a224a39f57db821bf29e46a</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Thu,  1 Sep 2022 17:34:30 +0200
+
+neuralbond first working code
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">cmd/neuralbond/neuralbond.go</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd/neuralbond/test.json</a></td><td> | </td><td class="num">422</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">cmd/neuralbond/testsmall.json</a></td><td> | </td><td class="num">109</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">library/neurons/linear.basm</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">library/neurons/softmax.basm</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">library/neurons/terminal.basm</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">library/neurons/weight.basm</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">neuralbond/neuralbond.go</a></td><td> | </td><td class="num">81</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>8 files changed, 523 insertions(+), 138 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a> b/<a href="../file/cmd/neuralbond/neuralbond.go.html">cmd/neuralbond/neuralbond.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -40,11 +40,14 @@ func main() {
+</a> 		panic(&quot;No net file specified&quot;)
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	// fmt.Println(net.Weights)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	net.Normalize()
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> 	// fmt.Println(net)
+ 
+ 	if *saveBasm != &quot;&quot; {
+<a href="#h0-0-9" id="h0-0-9" class="d">-		if basmFile, err := neuralbond.WriteBasm(); err == nil {
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-			ioutil.WriteFile(*saveBasm, basmFile, 0644)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		if basmFile, err := net.WriteBasm(); err == nil {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			ioutil.WriteFile(*saveBasm, []byte(basmFile), 0644)
+</a> 		} else {
+ 			panic(err)
+ 		}
+<b>diff --git a/<a id="h1" href="../file/cmd/neuralbond/test.json.html">cmd/neuralbond/test.json</a> b/<a href="../file/cmd/neuralbond/test.json.html">cmd/neuralbond/test.json</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,132 +1,294 @@
+</a> {
+<a href="#h1-0-1" id="h1-0-1" class="d">-	&quot;Nodes&quot;: [
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-		{
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-			&quot;Pos&quot;: 0,
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-			&quot;Type&quot;: &quot;ccc&quot;,
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-			&quot;Bias&quot;: 0.0
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-		}
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	],
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	&quot;Weights&quot;: [
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-		{
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-		},
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-		{
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-		},
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-		{
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-			&quot;PosCurrLayer&quot;: 2,
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-		},
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-		{
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-			&quot;PosCurrLayer&quot;: 3,
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-		},
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-		{
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-			&quot;PosCurrLayer&quot;: 4,
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-39" id="h1-0-39" class="d">-		},
+</a><a href="#h1-0-40" id="h1-0-40" class="d">-		{
+</a><a href="#h1-0-41" id="h1-0-41" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-		},
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-		{
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-		},
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-		{
+</a><a href="#h1-0-53" id="h1-0-53" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-54" id="h1-0-54" class="d">-			&quot;PosCurrLayer&quot;: 2,
+</a><a href="#h1-0-55" id="h1-0-55" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-56" id="h1-0-56" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-		},
+</a><a href="#h1-0-58" id="h1-0-58" class="d">-		{
+</a><a href="#h1-0-59" id="h1-0-59" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-60" id="h1-0-60" class="d">-			&quot;PosCurrLayer&quot;: 3,
+</a><a href="#h1-0-61" id="h1-0-61" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-62" id="h1-0-62" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-63" id="h1-0-63" class="d">-		},
+</a><a href="#h1-0-64" id="h1-0-64" class="d">-		{
+</a><a href="#h1-0-65" id="h1-0-65" class="d">-			&quot;Layer&quot;: 1,
+</a><a href="#h1-0-66" id="h1-0-66" class="d">-			&quot;PosCurrLayer&quot;: 4,
+</a><a href="#h1-0-67" id="h1-0-67" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-68" id="h1-0-68" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-69" id="h1-0-69" class="d">-		},
+</a><a href="#h1-0-70" id="h1-0-70" class="d">-		{
+</a><a href="#h1-0-71" id="h1-0-71" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-72" id="h1-0-72" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-73" id="h1-0-73" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-74" id="h1-0-74" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-		},
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-		{
+</a><a href="#h1-0-77" id="h1-0-77" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-78" id="h1-0-78" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-79" id="h1-0-79" class="d">-			&quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-80" id="h1-0-80" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-81" id="h1-0-81" class="d">-		},
+</a><a href="#h1-0-82" id="h1-0-82" class="d">-		{
+</a><a href="#h1-0-83" id="h1-0-83" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-84" id="h1-0-84" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-85" id="h1-0-85" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-86" id="h1-0-86" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-87" id="h1-0-87" class="d">-		},
+</a><a href="#h1-0-88" id="h1-0-88" class="d">-		{
+</a><a href="#h1-0-89" id="h1-0-89" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-90" id="h1-0-90" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-91" id="h1-0-91" class="d">-			&quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-92" id="h1-0-92" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-93" id="h1-0-93" class="d">-		},
+</a><a href="#h1-0-94" id="h1-0-94" class="d">-		{
+</a><a href="#h1-0-95" id="h1-0-95" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-96" id="h1-0-96" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-97" id="h1-0-97" class="d">-			&quot;PosPrevLayer&quot;: 2,
+</a><a href="#h1-0-98" id="h1-0-98" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-99" id="h1-0-99" class="d">-		},
+</a><a href="#h1-0-100" id="h1-0-100" class="d">-		{
+</a><a href="#h1-0-101" id="h1-0-101" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-102" id="h1-0-102" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-103" id="h1-0-103" class="d">-			&quot;PosPrevLayer&quot;: 2,
+</a><a href="#h1-0-104" id="h1-0-104" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-105" id="h1-0-105" class="d">-		},
+</a><a href="#h1-0-106" id="h1-0-106" class="d">-		{
+</a><a href="#h1-0-107" id="h1-0-107" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-108" id="h1-0-108" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-109" id="h1-0-109" class="d">-			&quot;PosPrevLayer&quot;: 3,
+</a><a href="#h1-0-110" id="h1-0-110" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-111" id="h1-0-111" class="d">-		},
+</a><a href="#h1-0-112" id="h1-0-112" class="d">-		{
+</a><a href="#h1-0-113" id="h1-0-113" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-114" id="h1-0-114" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-115" id="h1-0-115" class="d">-			&quot;PosPrevLayer&quot;: 3,
+</a><a href="#h1-0-116" id="h1-0-116" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-117" id="h1-0-117" class="d">-		},
+</a><a href="#h1-0-118" id="h1-0-118" class="d">-		{
+</a><a href="#h1-0-119" id="h1-0-119" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-120" id="h1-0-120" class="d">-			&quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-121" id="h1-0-121" class="d">-			&quot;PosPrevLayer&quot;: 4,
+</a><a href="#h1-0-122" id="h1-0-122" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-123" id="h1-0-123" class="d">-		},
+</a><a href="#h1-0-124" id="h1-0-124" class="d">-		{
+</a><a href="#h1-0-125" id="h1-0-125" class="d">-			&quot;Layer&quot;: 2,
+</a><a href="#h1-0-126" id="h1-0-126" class="d">-			&quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-127" id="h1-0-127" class="d">-			&quot;PosPrevLayer&quot;: 4,
+</a><a href="#h1-0-128" id="h1-0-128" class="d">-			&quot;Value&quot;: 0
+</a><a href="#h1-0-129" id="h1-0-129" class="d">-		}
+</a><a href="#h1-0-130" id="h1-0-130" class="d">-	]
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+    &quot;Nodes&quot;: [
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+        {
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+        },
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+        {
+</a><a href="#h1-0-139" id="h1-0-139" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-140" id="h1-0-140" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h1-0-141" id="h1-0-141" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-142" id="h1-0-142" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-143" id="h1-0-143" class="i">+        },
+</a><a href="#h1-0-144" id="h1-0-144" class="i">+        {
+</a><a href="#h1-0-145" id="h1-0-145" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-146" id="h1-0-146" class="i">+            &quot;Pos&quot;: 2,
+</a><a href="#h1-0-147" id="h1-0-147" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-148" id="h1-0-148" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-149" id="h1-0-149" class="i">+        },
+</a><a href="#h1-0-150" id="h1-0-150" class="i">+        {
+</a><a href="#h1-0-151" id="h1-0-151" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-152" id="h1-0-152" class="i">+            &quot;Pos&quot;: 3,
+</a><a href="#h1-0-153" id="h1-0-153" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-154" id="h1-0-154" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-155" id="h1-0-155" class="i">+        },
+</a><a href="#h1-0-156" id="h1-0-156" class="i">+        {
+</a><a href="#h1-0-157" id="h1-0-157" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-158" id="h1-0-158" class="i">+            &quot;Pos&quot;: 4,
+</a><a href="#h1-0-159" id="h1-0-159" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-160" id="h1-0-160" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-161" id="h1-0-161" class="i">+        },
+</a><a href="#h1-0-162" id="h1-0-162" class="i">+        {
+</a><a href="#h1-0-163" id="h1-0-163" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-164" id="h1-0-164" class="i">+            &quot;Pos&quot;: 5,
+</a><a href="#h1-0-165" id="h1-0-165" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-166" id="h1-0-166" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-167" id="h1-0-167" class="i">+        },
+</a><a href="#h1-0-168" id="h1-0-168" class="i">+        {
+</a><a href="#h1-0-169" id="h1-0-169" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-170" id="h1-0-170" class="i">+            &quot;Pos&quot;: 6,
+</a><a href="#h1-0-171" id="h1-0-171" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-172" id="h1-0-172" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-173" id="h1-0-173" class="i">+        },
+</a><a href="#h1-0-174" id="h1-0-174" class="i">+        {
+</a><a href="#h1-0-175" id="h1-0-175" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-176" id="h1-0-176" class="i">+            &quot;Pos&quot;: 7,
+</a><a href="#h1-0-177" id="h1-0-177" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-178" id="h1-0-178" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-179" id="h1-0-179" class="i">+        },
+</a><a href="#h1-0-180" id="h1-0-180" class="i">+        {
+</a><a href="#h1-0-181" id="h1-0-181" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-182" id="h1-0-182" class="i">+            &quot;Pos&quot;: 8,
+</a><a href="#h1-0-183" id="h1-0-183" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-184" id="h1-0-184" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-185" id="h1-0-185" class="i">+        },
+</a><a href="#h1-0-186" id="h1-0-186" class="i">+        {
+</a><a href="#h1-0-187" id="h1-0-187" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-188" id="h1-0-188" class="i">+            &quot;Pos&quot;: 9,
+</a><a href="#h1-0-189" id="h1-0-189" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-190" id="h1-0-190" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-191" id="h1-0-191" class="i">+        },
+</a><a href="#h1-0-192" id="h1-0-192" class="i">+        {
+</a><a href="#h1-0-193" id="h1-0-193" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-194" id="h1-0-194" class="i">+            &quot;Pos&quot;: 10,
+</a><a href="#h1-0-195" id="h1-0-195" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-196" id="h1-0-196" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-197" id="h1-0-197" class="i">+        },
+</a><a href="#h1-0-198" id="h1-0-198" class="i">+        {
+</a><a href="#h1-0-199" id="h1-0-199" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-200" id="h1-0-200" class="i">+            &quot;Pos&quot;: 11,
+</a><a href="#h1-0-201" id="h1-0-201" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-202" id="h1-0-202" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-203" id="h1-0-203" class="i">+        },
+</a><a href="#h1-0-204" id="h1-0-204" class="i">+        {
+</a><a href="#h1-0-205" id="h1-0-205" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-206" id="h1-0-206" class="i">+            &quot;Pos&quot;: 12,
+</a><a href="#h1-0-207" id="h1-0-207" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-208" id="h1-0-208" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-209" id="h1-0-209" class="i">+        },
+</a><a href="#h1-0-210" id="h1-0-210" class="i">+        {
+</a><a href="#h1-0-211" id="h1-0-211" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-212" id="h1-0-212" class="i">+            &quot;Pos&quot;: 13,
+</a><a href="#h1-0-213" id="h1-0-213" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-214" id="h1-0-214" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-215" id="h1-0-215" class="i">+        },
+</a><a href="#h1-0-216" id="h1-0-216" class="i">+        {
+</a><a href="#h1-0-217" id="h1-0-217" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-218" id="h1-0-218" class="i">+            &quot;Pos&quot;: 14,
+</a><a href="#h1-0-219" id="h1-0-219" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-220" id="h1-0-220" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-221" id="h1-0-221" class="i">+        },
+</a><a href="#h1-0-222" id="h1-0-222" class="i">+        {
+</a><a href="#h1-0-223" id="h1-0-223" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h1-0-224" id="h1-0-224" class="i">+            &quot;Pos&quot;: 15,
+</a><a href="#h1-0-225" id="h1-0-225" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h1-0-226" id="h1-0-226" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-227" id="h1-0-227" class="i">+        },
+</a><a href="#h1-0-228" id="h1-0-228" class="i">+        {
+</a><a href="#h1-0-229" id="h1-0-229" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-230" id="h1-0-230" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h1-0-231" id="h1-0-231" class="i">+            &quot;Type&quot;: &quot;linear&quot;,
+</a><a href="#h1-0-232" id="h1-0-232" class="i">+            &quot;Bias&quot;: -0.03657021000981331
+</a><a href="#h1-0-233" id="h1-0-233" class="i">+        },
+</a><a href="#h1-0-234" id="h1-0-234" class="i">+        {
+</a><a href="#h1-0-235" id="h1-0-235" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-236" id="h1-0-236" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h1-0-237" id="h1-0-237" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h1-0-238" id="h1-0-238" class="i">+            &quot;Bias&quot;: 0.11239443719387054
+</a><a href="#h1-0-239" id="h1-0-239" class="i">+        },
+</a><a href="#h1-0-240" id="h1-0-240" class="i">+        {
+</a><a href="#h1-0-241" id="h1-0-241" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-242" id="h1-0-242" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h1-0-243" id="h1-0-243" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h1-0-244" id="h1-0-244" class="i">+            &quot;Bias&quot;: 0.0055059343576431274
+</a><a href="#h1-0-245" id="h1-0-245" class="i">+        },
+</a><a href="#h1-0-246" id="h1-0-246" class="i">+        {
+</a><a href="#h1-0-247" id="h1-0-247" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-248" id="h1-0-248" class="i">+            &quot;Pos&quot;: 2,
+</a><a href="#h1-0-249" id="h1-0-249" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h1-0-250" id="h1-0-250" class="i">+            &quot;Bias&quot;: -0.037679221481084824
+</a><a href="#h1-0-251" id="h1-0-251" class="i">+        },
+</a><a href="#h1-0-252" id="h1-0-252" class="i">+        {
+</a><a href="#h1-0-253" id="h1-0-253" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-254" id="h1-0-254" class="i">+            &quot;Pos&quot;: 3,
+</a><a href="#h1-0-255" id="h1-0-255" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h1-0-256" id="h1-0-256" class="i">+            &quot;Bias&quot;: -0.05196981504559517
+</a><a href="#h1-0-257" id="h1-0-257" class="i">+        },
+</a><a href="#h1-0-258" id="h1-0-258" class="i">+        {
+</a><a href="#h1-0-259" id="h1-0-259" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-260" id="h1-0-260" class="i">+            &quot;Pos&quot;: 4,
+</a><a href="#h1-0-261" id="h1-0-261" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h1-0-262" id="h1-0-262" class="i">+            &quot;Bias&quot;: -0.040789078921079636
+</a><a href="#h1-0-263" id="h1-0-263" class="i">+        },
+</a><a href="#h1-0-264" id="h1-0-264" class="i">+        {
+</a><a href="#h1-0-265" id="h1-0-265" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h1-0-266" id="h1-0-266" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h1-0-267" id="h1-0-267" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h1-0-268" id="h1-0-268" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-269" id="h1-0-269" class="i">+        },
+</a><a href="#h1-0-270" id="h1-0-270" class="i">+        {
+</a><a href="#h1-0-271" id="h1-0-271" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h1-0-272" id="h1-0-272" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h1-0-273" id="h1-0-273" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h1-0-274" id="h1-0-274" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-275" id="h1-0-275" class="i">+        },
+</a><a href="#h1-0-276" id="h1-0-276" class="i">+        {
+</a><a href="#h1-0-277" id="h1-0-277" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h1-0-278" id="h1-0-278" class="i">+            &quot;Pos&quot;: 2,
+</a><a href="#h1-0-279" id="h1-0-279" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h1-0-280" id="h1-0-280" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-281" id="h1-0-281" class="i">+        },
+</a><a href="#h1-0-282" id="h1-0-282" class="i">+        {
+</a><a href="#h1-0-283" id="h1-0-283" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h1-0-284" id="h1-0-284" class="i">+            &quot;Pos&quot;: 3,
+</a><a href="#h1-0-285" id="h1-0-285" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h1-0-286" id="h1-0-286" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-287" id="h1-0-287" class="i">+        },
+</a><a href="#h1-0-288" id="h1-0-288" class="i">+        {
+</a><a href="#h1-0-289" id="h1-0-289" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h1-0-290" id="h1-0-290" class="i">+            &quot;Pos&quot;: 4,
+</a><a href="#h1-0-291" id="h1-0-291" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h1-0-292" id="h1-0-292" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h1-0-293" id="h1-0-293" class="i">+        }
+</a><a href="#h1-0-294" id="h1-0-294" class="i">+    ],
+</a><a href="#h1-0-295" id="h1-0-295" class="i">+    &quot;Weights&quot;: [
+</a><a href="#h1-0-296" id="h1-0-296" class="i">+        {
+</a><a href="#h1-0-297" id="h1-0-297" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-298" id="h1-0-298" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-299" id="h1-0-299" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-300" id="h1-0-300" class="i">+            &quot;Value&quot;: -0.5536089539527893
+</a><a href="#h1-0-301" id="h1-0-301" class="i">+        },
+</a><a href="#h1-0-302" id="h1-0-302" class="i">+        {
+</a><a href="#h1-0-303" id="h1-0-303" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-304" id="h1-0-304" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-305" id="h1-0-305" class="i">+            &quot;PosPrevLayer&quot;: 1,
+</a><a href="#h1-0-306" id="h1-0-306" class="i">+            &quot;Value&quot;: -0.20098331570625305
+</a><a href="#h1-0-307" id="h1-0-307" class="i">+        },
+</a><a href="#h1-0-308" id="h1-0-308" class="i">+        {
+</a><a href="#h1-0-309" id="h1-0-309" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-310" id="h1-0-310" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-311" id="h1-0-311" class="i">+            &quot;PosPrevLayer&quot;: 2,
+</a><a href="#h1-0-312" id="h1-0-312" class="i">+            &quot;Value&quot;: -0.3703397214412689
+</a><a href="#h1-0-313" id="h1-0-313" class="i">+        },
+</a><a href="#h1-0-314" id="h1-0-314" class="i">+        {
+</a><a href="#h1-0-315" id="h1-0-315" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-316" id="h1-0-316" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-317" id="h1-0-317" class="i">+            &quot;PosPrevLayer&quot;: 3,
+</a><a href="#h1-0-318" id="h1-0-318" class="i">+            &quot;Value&quot;: -0.015672285109758377
+</a><a href="#h1-0-319" id="h1-0-319" class="i">+        },
+</a><a href="#h1-0-320" id="h1-0-320" class="i">+        {
+</a><a href="#h1-0-321" id="h1-0-321" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-322" id="h1-0-322" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-323" id="h1-0-323" class="i">+            &quot;PosPrevLayer&quot;: 4,
+</a><a href="#h1-0-324" id="h1-0-324" class="i">+            &quot;Value&quot;: -0.14419229328632355
+</a><a href="#h1-0-325" id="h1-0-325" class="i">+        },
+</a><a href="#h1-0-326" id="h1-0-326" class="i">+        {
+</a><a href="#h1-0-327" id="h1-0-327" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-328" id="h1-0-328" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-329" id="h1-0-329" class="i">+            &quot;PosPrevLayer&quot;: 5,
+</a><a href="#h1-0-330" id="h1-0-330" class="i">+            &quot;Value&quot;: -0.011709135957062244
+</a><a href="#h1-0-331" id="h1-0-331" class="i">+        },
+</a><a href="#h1-0-332" id="h1-0-332" class="i">+        {
+</a><a href="#h1-0-333" id="h1-0-333" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-334" id="h1-0-334" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-335" id="h1-0-335" class="i">+            &quot;PosPrevLayer&quot;: 6,
+</a><a href="#h1-0-336" id="h1-0-336" class="i">+            &quot;Value&quot;: -0.23327194154262543
+</a><a href="#h1-0-337" id="h1-0-337" class="i">+        },
+</a><a href="#h1-0-338" id="h1-0-338" class="i">+        {
+</a><a href="#h1-0-339" id="h1-0-339" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-340" id="h1-0-340" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-341" id="h1-0-341" class="i">+            &quot;PosPrevLayer&quot;: 7,
+</a><a href="#h1-0-342" id="h1-0-342" class="i">+            &quot;Value&quot;: -0.13533583283424377
+</a><a href="#h1-0-343" id="h1-0-343" class="i">+        },
+</a><a href="#h1-0-344" id="h1-0-344" class="i">+        {
+</a><a href="#h1-0-345" id="h1-0-345" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-346" id="h1-0-346" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-347" id="h1-0-347" class="i">+            &quot;PosPrevLayer&quot;: 8,
+</a><a href="#h1-0-348" id="h1-0-348" class="i">+            &quot;Value&quot;: 0.2557491064071655
+</a><a href="#h1-0-349" id="h1-0-349" class="i">+        },
+</a><a href="#h1-0-350" id="h1-0-350" class="i">+        {
+</a><a href="#h1-0-351" id="h1-0-351" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-352" id="h1-0-352" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-353" id="h1-0-353" class="i">+            &quot;PosPrevLayer&quot;: 9,
+</a><a href="#h1-0-354" id="h1-0-354" class="i">+            &quot;Value&quot;: -0.02515087090432644
+</a><a href="#h1-0-355" id="h1-0-355" class="i">+        },
+</a><a href="#h1-0-356" id="h1-0-356" class="i">+        {
+</a><a href="#h1-0-357" id="h1-0-357" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-358" id="h1-0-358" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-359" id="h1-0-359" class="i">+            &quot;PosPrevLayer&quot;: 10,
+</a><a href="#h1-0-360" id="h1-0-360" class="i">+            &quot;Value&quot;: 0.07094750553369522
+</a><a href="#h1-0-361" id="h1-0-361" class="i">+        },
+</a><a href="#h1-0-362" id="h1-0-362" class="i">+        {
+</a><a href="#h1-0-363" id="h1-0-363" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-364" id="h1-0-364" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-365" id="h1-0-365" class="i">+            &quot;PosPrevLayer&quot;: 11,
+</a><a href="#h1-0-366" id="h1-0-366" class="i">+            &quot;Value&quot;: -0.34000831842422485
+</a><a href="#h1-0-367" id="h1-0-367" class="i">+        },
+</a><a href="#h1-0-368" id="h1-0-368" class="i">+        {
+</a><a href="#h1-0-369" id="h1-0-369" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-370" id="h1-0-370" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-371" id="h1-0-371" class="i">+            &quot;PosPrevLayer&quot;: 12,
+</a><a href="#h1-0-372" id="h1-0-372" class="i">+            &quot;Value&quot;: -0.029418466612696648
+</a><a href="#h1-0-373" id="h1-0-373" class="i">+        },
+</a><a href="#h1-0-374" id="h1-0-374" class="i">+        {
+</a><a href="#h1-0-375" id="h1-0-375" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-376" id="h1-0-376" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-377" id="h1-0-377" class="i">+            &quot;PosPrevLayer&quot;: 13,
+</a><a href="#h1-0-378" id="h1-0-378" class="i">+            &quot;Value&quot;: -0.35702309012413025
+</a><a href="#h1-0-379" id="h1-0-379" class="i">+        },
+</a><a href="#h1-0-380" id="h1-0-380" class="i">+        {
+</a><a href="#h1-0-381" id="h1-0-381" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-382" id="h1-0-382" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-383" id="h1-0-383" class="i">+            &quot;PosPrevLayer&quot;: 14,
+</a><a href="#h1-0-384" id="h1-0-384" class="i">+            &quot;Value&quot;: -0.18612362444400787
+</a><a href="#h1-0-385" id="h1-0-385" class="i">+        },
+</a><a href="#h1-0-386" id="h1-0-386" class="i">+        {
+</a><a href="#h1-0-387" id="h1-0-387" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h1-0-388" id="h1-0-388" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-389" id="h1-0-389" class="i">+            &quot;PosPrevLayer&quot;: 15,
+</a><a href="#h1-0-390" id="h1-0-390" class="i">+            &quot;Value&quot;: -0.3208719491958618
+</a><a href="#h1-0-391" id="h1-0-391" class="i">+        },
+</a><a href="#h1-0-392" id="h1-0-392" class="i">+        {
+</a><a href="#h1-0-393" id="h1-0-393" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-394" id="h1-0-394" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h1-0-395" id="h1-0-395" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-396" id="h1-0-396" class="i">+            &quot;Value&quot;: -0.21693646907806396
+</a><a href="#h1-0-397" id="h1-0-397" class="i">+        },
+</a><a href="#h1-0-398" id="h1-0-398" class="i">+        {
+</a><a href="#h1-0-399" id="h1-0-399" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-400" id="h1-0-400" class="i">+            &quot;PosCurrLayer&quot;: 1,
+</a><a href="#h1-0-401" id="h1-0-401" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-402" id="h1-0-402" class="i">+            &quot;Value&quot;: -0.47250035405158997
+</a><a href="#h1-0-403" id="h1-0-403" class="i">+        },
+</a><a href="#h1-0-404" id="h1-0-404" class="i">+        {
+</a><a href="#h1-0-405" id="h1-0-405" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-406" id="h1-0-406" class="i">+            &quot;PosCurrLayer&quot;: 2,
+</a><a href="#h1-0-407" id="h1-0-407" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-408" id="h1-0-408" class="i">+            &quot;Value&quot;: -0.8832986950874329
+</a><a href="#h1-0-409" id="h1-0-409" class="i">+        },
+</a><a href="#h1-0-410" id="h1-0-410" class="i">+        {
+</a><a href="#h1-0-411" id="h1-0-411" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-412" id="h1-0-412" class="i">+            &quot;PosCurrLayer&quot;: 3,
+</a><a href="#h1-0-413" id="h1-0-413" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-414" id="h1-0-414" class="i">+            &quot;Value&quot;: 1.0319246053695679
+</a><a href="#h1-0-415" id="h1-0-415" class="i">+        },
+</a><a href="#h1-0-416" id="h1-0-416" class="i">+        {
+</a><a href="#h1-0-417" id="h1-0-417" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h1-0-418" id="h1-0-418" class="i">+            &quot;PosCurrLayer&quot;: 4,
+</a><a href="#h1-0-419" id="h1-0-419" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h1-0-420" id="h1-0-420" class="i">+            &quot;Value&quot;: 0.9657998085021973
+</a><a href="#h1-0-421" id="h1-0-421" class="i">+        }
+</a><a href="#h1-0-422" id="h1-0-422" class="i">+    ]
+</a> }
+ \ No newline at end of file
+<b>diff --git a/<a id="h2" href="../file/cmd/neuralbond/testsmall.json.html">cmd/neuralbond/testsmall.json</a> b/<a href="../file/cmd/neuralbond/testsmall.json.html">cmd/neuralbond/testsmall.json</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,108 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+{
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+    &quot;Nodes&quot;: [
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+        {
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+        },
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+        {
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+        },
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+        {
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+            &quot;Pos&quot;: 2,
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+        },
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+        {
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+            &quot;Layer&quot;: 0,
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+            &quot;Pos&quot;: 3,
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+            &quot;Type&quot;: &quot;input&quot;,
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+        },
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+        {
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+            &quot;Type&quot;: &quot;linear&quot;,
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+            &quot;Bias&quot;: 0.0010602055117487907
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+        },
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+        {
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+            &quot;Bias&quot;: 0.0010604208800941706
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+        },
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+        {
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+            &quot;Type&quot;: &quot;softmax&quot;,
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+            &quot;Bias&quot;: -0.0010604208800941706
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+        },
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+        {
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+            &quot;Pos&quot;: 0,
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+        },
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+        {
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+            &quot;Pos&quot;: 1,
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+            &quot;Type&quot;: &quot;output&quot;,
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+            &quot;Bias&quot;: 0
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+        }
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+    ],
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+    &quot;Weights&quot;: [
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+        {
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+            &quot;Value&quot;: -0.8297362327575684
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+        },
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+        {
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+            &quot;PosPrevLayer&quot;: 1,
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+            &quot;Value&quot;: -0.8517279624938965
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+        },
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+        {
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+            &quot;PosPrevLayer&quot;: 2,
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+            &quot;Value&quot;: -0.5390800833702087
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+        },
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+        {
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+            &quot;Layer&quot;: 1,
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+            &quot;PosPrevLayer&quot;: 3,
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+            &quot;Value&quot;: 0.4787808358669281
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+        },
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+        {
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+            &quot;Value&quot;: 0.11026980727910995
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+        },
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+        {
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+            &quot;Layer&quot;: 2,
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+            &quot;PosCurrLayer&quot;: 1,
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+            &quot;Value&quot;: -1.115295171737671
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+        },
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+        {
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+            &quot;PosCurrLayer&quot;: 0,
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+            &quot;PosPrevLayer&quot;: 0,
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+            &quot;Value&quot;: 0
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+        },
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+        {
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+            &quot;Layer&quot;: 3,
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+            &quot;PosCurrLayer&quot;: 1,
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+            &quot;PosPrevLayer&quot;: 1,
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+            &quot;Value&quot;: 0
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+        }
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+    ]
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+}
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+\ No newline at end of file
+</a><b>diff --git a/<a id="h3" href="../file/library/neurons/linear.basm.html">library/neurons/linear.basm</a> b/<a href="../file/library/neurons/linear.basm.html">library/neurons/linear.basm</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,15 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+%section linear .romtext iomode:sync
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+        entry _start    ; Entry point
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+_start:
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+	clr r0
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+;        i2r	r0, i0
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+;        i2r	r0, i1
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+;        i2r	r0, i2
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+;        i2r	r0, i3
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+{{range $y := intRange &quot;0&quot; .Params.inputs}}{{printf &quot;i2r r0,i%d\n&quot; $y}}{{end}}
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	r2o	r0, o0
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	r2o	r0, o1
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+        j _start
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+%endsection
+</a><b>diff --git a/<a id="h4" href="../file/library/neurons/softmax.basm.html">library/neurons/softmax.basm</a> b/<a href="../file/library/neurons/softmax.basm.html">library/neurons/softmax.basm</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+%section softmax .romtext iomode:sync
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+        entry _start    ; Entry point
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+_start:
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+	clr r0
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+        i2r	r0, i0
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	r2o	r0, o0
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+        j _start
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+%endsection
+</a><b>diff --git a/<a id="h5" href="../file/library/neurons/terminal.basm.html">library/neurons/terminal.basm</a> b/<a href="../file/library/neurons/terminal.basm.html">library/neurons/terminal.basm</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+%section terminal .romtext iomode:sync
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+        entry _start    ; Entry point
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+_start:
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+	clr r0
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+        i2r	r0, i0
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+	r2o	r0, o0
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+        j _start
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+%endsection
+</a><b>diff --git a/<a id="h6" href="../file/library/neurons/weight.basm.html">library/neurons/weight.basm</a> b/<a href="../file/library/neurons/weight.basm.html">library/neurons/weight.basm</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+%section weight .romtext iomode:sync
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+        entry _start    ; Entry point
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+_start:
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+	clr r0
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+        i2r	r0, i0
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	r2o	r0, o0
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+        j _start
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+%endsection
+</a><b>diff --git a/<a id="h7" href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a> b/<a href="../file/neuralbond/neuralbond.go.html">neuralbond/neuralbond.go</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,6 +1,9 @@
+</a> package neuralbond
+ 
+<a href="#h7-0-2" id="h7-0-2" class="d">-import &quot;fmt&quot;
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+import (
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	&quot;fmt&quot;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+	&quot;sort&quot;
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+)
+</a> 
+ type TrainedNet struct {
+ 	Nodes   []Node
+<a href="#h7-1" id="h7-1" class="h">@@ -11,6 +14,8 @@ type Weight struct {
+</a> 	Layer        int
+ 	PosCurrLayer int
+ 	PosPrevLayer int
+<a href="#h7-1-3" id="h7-1-3" class="i">+	RelPosDown   int
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+	RelPosUp     int
+</a> 	Value        float32
+ }
+ 
+<a href="#h7-2" id="h7-2" class="h">@@ -21,18 +26,82 @@ type Node struct {
+</a> 	Bias  float32
+ }
+ 
+<a href="#h7-2-3" id="h7-2-3" class="i">+func (n *TrainedNet) Normalize() {
+</a><a href="#h7-2-4" id="h7-2-4" class="i">+	for w, weight := range n.Weights {
+</a><a href="#h7-2-5" id="h7-2-5" class="i">+		downL, downP := weight.Layer-1, weight.PosPrevLayer
+</a><a href="#h7-2-6" id="h7-2-6" class="i">+		upL, upP := weight.Layer, weight.PosCurrLayer
+</a><a href="#h7-2-7" id="h7-2-7" class="i">+
+</a><a href="#h7-2-8" id="h7-2-8" class="i">+		sameDown := make([]int, 0)
+</a><a href="#h7-2-9" id="h7-2-9" class="i">+		sameUp := make([]int, 0)
+</a><a href="#h7-2-10" id="h7-2-10" class="i">+
+</a><a href="#h7-2-11" id="h7-2-11" class="i">+		for _, chWeight := range n.Weights {
+</a><a href="#h7-2-12" id="h7-2-12" class="i">+			if chWeight.Layer-1 == downL &amp;&amp; chWeight.PosPrevLayer == downP {
+</a><a href="#h7-2-13" id="h7-2-13" class="i">+				sameDown = append(sameDown, chWeight.PosCurrLayer)
+</a><a href="#h7-2-14" id="h7-2-14" class="i">+			}
+</a><a href="#h7-2-15" id="h7-2-15" class="i">+			if chWeight.Layer == upL &amp;&amp; chWeight.PosCurrLayer == upP {
+</a><a href="#h7-2-16" id="h7-2-16" class="i">+				sameUp = append(sameUp, chWeight.PosPrevLayer)
+</a><a href="#h7-2-17" id="h7-2-17" class="i">+			}
+</a><a href="#h7-2-18" id="h7-2-18" class="i">+		}
+</a><a href="#h7-2-19" id="h7-2-19" class="i">+
+</a><a href="#h7-2-20" id="h7-2-20" class="i">+		// Sort the sameDown and sameUp arrays
+</a><a href="#h7-2-21" id="h7-2-21" class="i">+		sort.Ints(sameDown)
+</a><a href="#h7-2-22" id="h7-2-22" class="i">+		sort.Ints(sameUp)
+</a><a href="#h7-2-23" id="h7-2-23" class="i">+
+</a><a href="#h7-2-24" id="h7-2-24" class="i">+		// fmt.Println(w, sameDown, sameUp)
+</a><a href="#h7-2-25" id="h7-2-25" class="i">+
+</a><a href="#h7-2-26" id="h7-2-26" class="i">+		for i, v := range sameDown {
+</a><a href="#h7-2-27" id="h7-2-27" class="i">+			if weight.PosCurrLayer == v {
+</a><a href="#h7-2-28" id="h7-2-28" class="i">+				n.Weights[w].RelPosDown = i
+</a><a href="#h7-2-29" id="h7-2-29" class="i">+				break
+</a><a href="#h7-2-30" id="h7-2-30" class="i">+			}
+</a><a href="#h7-2-31" id="h7-2-31" class="i">+		}
+</a><a href="#h7-2-32" id="h7-2-32" class="i">+
+</a><a href="#h7-2-33" id="h7-2-33" class="i">+		for i, v := range sameUp {
+</a><a href="#h7-2-34" id="h7-2-34" class="i">+			if weight.PosPrevLayer == v {
+</a><a href="#h7-2-35" id="h7-2-35" class="i">+				n.Weights[w].RelPosUp = i
+</a><a href="#h7-2-36" id="h7-2-36" class="i">+				break
+</a><a href="#h7-2-37" id="h7-2-37" class="i">+			}
+</a><a href="#h7-2-38" id="h7-2-38" class="i">+		}
+</a><a href="#h7-2-39" id="h7-2-39" class="i">+
+</a><a href="#h7-2-40" id="h7-2-40" class="i">+	}
+</a><a href="#h7-2-41" id="h7-2-41" class="i">+}
+</a><a href="#h7-2-42" id="h7-2-42" class="i">+
+</a> func (n *TrainedNet) WriteBasm() (string, error) {
+<a href="#h7-2-44" id="h7-2-44" class="d">-	result := &quot;&quot;
+</a><a href="#h7-2-45" id="h7-2-45" class="i">+	result := &quot;%meta bmdef     global registersize:32\n&quot;
+</a> 	for _, node := range n.Nodes {
+ 		if node.Type == &quot;input&quot; {
+<a href="#h7-2-48" id="h7-2-48" class="d">-			result += fmt.Sprintf(&quot;%meta cpdef input_%d romcode:input\n&quot;, node.Pos)
+</a><a href="#h7-2-49" id="h7-2-49" class="d">-		} else if node.Type == &quot;hidden&quot; {
+</a><a href="#h7-2-50" id="h7-2-50" class="d">-			// fmt.Println(&quot;hidden&quot;)
+</a><a href="#h7-2-51" id="h7-2-51" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_0_%d romcode:terminal\n&quot;, node.Pos)
+</a><a href="#h7-2-52" id="h7-2-52" class="i">+			result += fmt.Sprintf(&quot;%%meta iodef input_%d type:io\n&quot;, node.Pos)
+</a><a href="#h7-2-53" id="h7-2-53" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:node_0_%d, type:input, index:0\n&quot;, node.Pos, node.Pos)
+</a><a href="#h7-2-54" id="h7-2-54" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt input_%d cp:bm, type:input, index:%d\n&quot;, node.Pos, node.Pos)
+</a><a href="#h7-2-55" id="h7-2-55" class="i">+		} else if node.Type == &quot;linear&quot; {
+</a><a href="#h7-2-56" id="h7-2-56" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:linear, inputs:4\n&quot;, node.Layer, node.Pos)
+</a><a href="#h7-2-57" id="h7-2-57" class="i">+		} else if node.Type == &quot;softmax&quot; {
+</a><a href="#h7-2-58" id="h7-2-58" class="i">+			// result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax, bias:%f\n&quot;, node.Layer, node.Pos, node.Bias)
+</a><a href="#h7-2-59" id="h7-2-59" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:softmax\n&quot;, node.Layer, node.Pos)
+</a> 		} else if node.Type == &quot;output&quot; {
+<a href="#h7-2-61" id="h7-2-61" class="d">-			// fmt.Println(&quot;output&quot;)
+</a><a href="#h7-2-62" id="h7-2-62" class="i">+			result += fmt.Sprintf(&quot;%%meta cpdef node_%d_%d romcode:terminal\n&quot;, node.Layer, node.Pos)
+</a><a href="#h7-2-63" id="h7-2-63" class="i">+			result += fmt.Sprintf(&quot;%%meta iodef output_%d type:io\n&quot;, node.Pos)
+</a><a href="#h7-2-64" id="h7-2-64" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:node_%d_%d, type:output, index:0\n&quot;, node.Pos, node.Layer, node.Pos)
+</a><a href="#h7-2-65" id="h7-2-65" class="i">+			result += fmt.Sprintf(&quot;%%meta ioatt output_%d cp:bm, type:output, index:%d\n&quot;, node.Pos, node.Pos)
+</a> 		} else {
+ 			return &quot;&quot;, fmt.Errorf(&quot;Unknown node type: %s&quot;, node.Type)
+ 		}
+ 	}
+<a href="#h7-2-70" id="h7-2-70" class="i">+
+</a><a href="#h7-2-71" id="h7-2-71" class="i">+	for _, weight := range n.Weights {
+</a><a href="#h7-2-72" id="h7-2-72" class="i">+		weightCP := fmt.Sprintf(&quot;weightcp_%d_%d__%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h7-2-73" id="h7-2-73" class="i">+		downNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer-1, weight.PosPrevLayer)
+</a><a href="#h7-2-74" id="h7-2-74" class="i">+		upNode := fmt.Sprintf(&quot;node_%d_%d&quot;, weight.Layer, weight.PosCurrLayer)
+</a><a href="#h7-2-75" id="h7-2-75" class="i">+		// result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight, weight:%f\n&quot;, weightCP, weight.Value)
+</a><a href="#h7-2-76" id="h7-2-76" class="i">+		result += fmt.Sprintf(&quot;%%meta cpdef %s romcode:weight\n&quot;, weightCP)
+</a><a href="#h7-2-77" id="h7-2-77" class="i">+		result += fmt.Sprintf(&quot;%%meta iodef up%s type:io\n&quot;, weightCP)
+</a><a href="#h7-2-78" id="h7-2-78" class="i">+		result += fmt.Sprintf(&quot;%%meta iodef down%s type:io\n&quot;, weightCP)
+</a><a href="#h7-2-79" id="h7-2-79" class="i">+		result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:input, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h7-2-80" id="h7-2-80" class="i">+		result += fmt.Sprintf(&quot;%%meta ioatt down%s cp:%s, type:output, index:%d\n&quot;, weightCP, downNode, weight.RelPosDown)
+</a><a href="#h7-2-81" id="h7-2-81" class="i">+		result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:input, index:%d\n&quot;, weightCP, upNode, weight.RelPosUp)
+</a><a href="#h7-2-82" id="h7-2-82" class="i">+		result += fmt.Sprintf(&quot;%%meta ioatt up%s cp:%s, type:output, index:0\n&quot;, weightCP, weightCP)
+</a><a href="#h7-2-83" id="h7-2-83" class="i">+	}
+</a><a href="#h7-2-84" id="h7-2-84" class="i">+
+</a> 	return result, nil
+ }
+</pre>
+</div>
+</body>
+</html>

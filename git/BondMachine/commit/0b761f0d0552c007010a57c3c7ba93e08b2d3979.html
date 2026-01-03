@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Choices - BondMachine - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed" href="../atom.xml" />
+<link rel="alternate" type="application/atom+xml" title="BondMachine Atom Feed (tags)" href="../tags.xml" />
+<link rel="stylesheet" type="text/css" href="../style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="../logo.png" alt="" width="32" height="32" /></a></td><td><h1>BondMachine</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.md.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0b761f0d0552c007010a57c3c7ba93e08b2d3979.html">0b761f0d0552c007010a57c3c7ba93e08b2d3979</a>
+<b>parent</b> <a href="../commit/dbcda84fe26b3b0b6c5d27ce1eb86d8f56e40e5c.html">dbcda84fe26b3b0b6c5d27ce1eb86d8f56e40e5c</a>
+<b>Author:</b> Mirko Mariotti &lt;<a href="mailto:mirko@mirkomariotti.it">mirko@mirkomariotti.it</a>&gt;
+<b>Date:</b>   Tue,  5 Sep 2023 17:16:50 +0200
+
+Choices
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkg/basm/creatorbm.go</a></td><td> | </td><td class="num">172</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 167 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a> b/<a href="../file/pkg/basm/creatorbm.go.html">pkg/basm/creatorbm.go</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -64,13 +64,19 @@ func (bi *BasmInstance) assembler2NewBondMachine() error {
+</a> 
+ 	bi.rg.Requirement(bmreqs.ReqRequest{Node: &quot;/&quot;, T: bmreqs.ObjectSet, Name: &quot;bm&quot;, Value: &quot;cps&quot;, Op: bmreqs.OpAdd})
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	// Precompute the shared constraints in order to get the specs of the processors
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	sharedConstraints, err := bi.sharedPrecompute()
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	if err != nil {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		return err
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a> 	for i, cp := range bi.cps {
+ 		if bi.debug {
+ 			fmt.Println(&quot;\t\t&quot; + green(&quot;CP: &quot;) + yellow(cp.GetValue()))
+ 		}
+ 
+ 		// Check for the ROM and RAM alternatives and select the right one by rewriting the meta romcode and ramcode
+<a href="#h0-0-15" id="h0-0-15" class="d">-		if err := bi.CodeChoice(i); err != nil {
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		if err := bi.CodeChoice(rSize, i, sharedConstraints[i]); err != nil {
+</a> 			return err
+ 		}
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -759,7 +765,11 @@ func (bi *BasmInstance) GetBondMachine() *bondmachine.Bondmachine {
+</a> 	return bi.result
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-func (bi *BasmInstance) CodeChoice(i int) error {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+type choiceParams struct {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	wordSize int
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+func (bi *BasmInstance) CodeChoice(rSize uint8, i int, sh string) error {
+</a> 	if i &gt;= len(bi.cps) || i &lt; 0 {
+ 		return errors.New(&quot;index out of range&quot;)
+ 	}
+<a href="#h0-2" id="h0-2" class="h">@@ -767,13 +777,165 @@ func (bi *BasmInstance) CodeChoice(i int) error {
+</a> 	cp := bi.cps[i]
+ 
+ 	if cp.GetMeta(&quot;romalternatives&quot;) != &quot;&quot; || cp.GetMeta(&quot;ramalternatives&quot;) != &quot;&quot; {
+<a href="#h0-2-3" id="h0-2-3" class="i">+		// Data cannot be alternative
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		romData := cp.GetMeta(&quot;romdata&quot;)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		ramData := cp.GetMeta(&quot;ramdata&quot;)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		execMode := cp.GetMeta(&quot;execmode&quot;)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		if execMode == &quot;&quot; {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			execMode = bi.global.GetMeta(&quot;defaultexecmode&quot;)
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		if execMode == &quot;&quot; {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+			execMode = &quot;ha&quot;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		}
+</a> 		romAlts := strings.Split(cp.GetMeta(&quot;romalternatives&quot;), &quot;:&quot;)
+ 		ramAlts := strings.Split(cp.GetMeta(&quot;ramalternatives&quot;), &quot;:&quot;)
+<a href="#h0-2-15" id="h0-2-15" class="d">-		_ = romAlts
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-		_ = ramAlts
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		// TODO: implement the code choice
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		if len(romAlts) == 0 {
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+			romAlts = []string{&quot;&quot;}
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+		}
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+		if len(ramAlts) == 0 {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+			ramAlts = []string{&quot;&quot;}
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		}
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		params := make([]choiceParams, len(romAlts)*len(ramAlts))
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+		for ii, romAlt := range romAlts {
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+			for jj, ramAlt := range ramAlts {
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+				tempCP, err := bi.CreateConnectingProcessor(rSize, cp, i, romAlt, romData, ramAlt, ramData, execMode)
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+				if err != nil {
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+					return err
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+				}
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+				tempCP.Shared_constraints = sh
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+				myArch := tempCP.Arch
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+				prog := &quot;&quot;
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+				romAltContrib := 0
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+				params[ii*len(ramAlts)+jj].wordSize = myArch.Max_word()
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+				if romAlt != &quot;&quot; {
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+					for _, line := range bi.sections[romAlt].sectionBody.Lines {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+						prog += line.Operation.GetValue()
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+						for _, arg := range line.Elements {
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+							prog += &quot; &quot; + arg.GetValue()
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+						}
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+						prog += &quot;\n&quot;
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+					}
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+					if prog, err := myArch.Assembler([]byte(prog)); err == nil {
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+						tempCP.Program = prog
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+					} else {
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+						return err
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+					}
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+					romAltContrib = len(bi.sections[romAlt].sectionBody.Lines)
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+				}
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+				if romData != &quot;&quot; {
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+					wordSize := myArch.Max_word()
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+					// fmt.Println(&quot;Word size: &quot;, wordSize)
+</a><a href="#h0-2-66" id="h0-2-66" class="i">+					wordPad := &quot;&quot;
+</a><a href="#h0-2-67" id="h0-2-67" class="i">+					for i := 0; i &lt; int(wordSize); i++ {
+</a><a href="#h0-2-68" id="h0-2-68" class="i">+						wordPad += &quot;0&quot;
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+					}
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+					if wordSize &lt; 8 {
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+						return errors.New(&quot;word size is too small&quot;)
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+					}
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+
+</a><a href="#h0-2-74" id="h0-2-74" class="i">+					data := make([]string, 0)
+</a><a href="#h0-2-75" id="h0-2-75" class="i">+
+</a><a href="#h0-2-76" id="h0-2-76" class="i">+					for _, line := range bi.sections[romData].sectionBody.Lines {
+</a><a href="#h0-2-77" id="h0-2-77" class="i">+						for _, arg := range line.Elements {
+</a><a href="#h0-2-78" id="h0-2-78" class="i">+							hexVal := arg.GetValue()
+</a><a href="#h0-2-79" id="h0-2-79" class="i">+							if n, err := bmnumbers.ImportString(hexVal); err == nil {
+</a><a href="#h0-2-80" id="h0-2-80" class="i">+								nS, _ := n.ExportBinary(false)
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+								nS = &quot;00000000&quot; + nS
+</a><a href="#h0-2-82" id="h0-2-82" class="i">+								nS = nS[len(nS)-8:]
+</a><a href="#h0-2-83" id="h0-2-83" class="i">+								nS = nS + wordPad
+</a><a href="#h0-2-84" id="h0-2-84" class="i">+								nS = nS[:wordSize]
+</a><a href="#h0-2-85" id="h0-2-85" class="i">+								data = append(data, nS)
+</a><a href="#h0-2-86" id="h0-2-86" class="i">+							} else {
+</a><a href="#h0-2-87" id="h0-2-87" class="i">+								return err
+</a><a href="#h0-2-88" id="h0-2-88" class="i">+							}
+</a><a href="#h0-2-89" id="h0-2-89" class="i">+						}
+</a><a href="#h0-2-90" id="h0-2-90" class="i">+					}
+</a><a href="#h0-2-91" id="h0-2-91" class="i">+
+</a><a href="#h0-2-92" id="h0-2-92" class="i">+					myArch.O = uint8(Needed_bits(romAltContrib + len(data)))
+</a><a href="#h0-2-93" id="h0-2-93" class="i">+					tempCP.Data.Vars = data
+</a><a href="#h0-2-94" id="h0-2-94" class="i">+
+</a><a href="#h0-2-95" id="h0-2-95" class="i">+				}
+</a><a href="#h0-2-96" id="h0-2-96" class="i">+			}
+</a><a href="#h0-2-97" id="h0-2-97" class="i">+		}
+</a><a href="#h0-2-98" id="h0-2-98" class="i">+
+</a><a href="#h0-2-99" id="h0-2-99" class="i">+		fmt.Println(&quot;params: &quot;, params)
+</a><a href="#h0-2-100" id="h0-2-100" class="i">+		// TODO Finish the code
+</a> 
+ 	}
+ 
+ 	return nil
+ }
+<a href="#h0-2-106" id="h0-2-106" class="i">+
+</a><a href="#h0-2-107" id="h0-2-107" class="i">+func (bi *BasmInstance) sharedPrecompute() ([]string, error) {
+</a><a href="#h0-2-108" id="h0-2-108" class="i">+
+</a><a href="#h0-2-109" id="h0-2-109" class="i">+	result := make([]string, len(bi.cps))
+</a><a href="#h0-2-110" id="h0-2-110" class="i">+
+</a><a href="#h0-2-111" id="h0-2-111" class="i">+	// Insert the Shared Objects into the BM and compose and hash of name,constraint
+</a><a href="#h0-2-112" id="h0-2-112" class="i">+	constrains := make(map[string]string)
+</a><a href="#h0-2-113" id="h0-2-113" class="i">+	soIndexes := make(map[string]string)
+</a><a href="#h0-2-114" id="h0-2-114" class="i">+	for i, so := range bi.sos {
+</a><a href="#h0-2-115" id="h0-2-115" class="i">+		if bi.debug {
+</a><a href="#h0-2-116" id="h0-2-116" class="i">+			fmt.Print(&quot;\t\t&quot; + green(&quot;SO: &quot;) + yellow(so.GetValue()))
+</a><a href="#h0-2-117" id="h0-2-117" class="i">+		}
+</a><a href="#h0-2-118" id="h0-2-118" class="i">+		constraint := so.GetMeta(&quot;constraint&quot;)
+</a><a href="#h0-2-119" id="h0-2-119" class="i">+		if bi.debug {
+</a><a href="#h0-2-120" id="h0-2-120" class="i">+			fmt.Println(&quot; - &quot; + green(&quot;constraint: &quot;) + yellow(constraint))
+</a><a href="#h0-2-121" id="h0-2-121" class="i">+		}
+</a><a href="#h0-2-122" id="h0-2-122" class="i">+		constrains[so.GetValue()] = constraint
+</a><a href="#h0-2-123" id="h0-2-123" class="i">+		soIndexes[so.GetValue()] = strconv.Itoa(i)
+</a><a href="#h0-2-124" id="h0-2-124" class="i">+	}
+</a><a href="#h0-2-125" id="h0-2-125" class="i">+
+</a><a href="#h0-2-126" id="h0-2-126" class="i">+	// Will keep track of the processed attach
+</a><a href="#h0-2-127" id="h0-2-127" class="i">+	soattDone := make([]bool, len(bi.soAttach))
+</a><a href="#h0-2-128" id="h0-2-128" class="i">+
+</a><a href="#h0-2-129" id="h0-2-129" class="i">+	// Process every CP
+</a><a href="#h0-2-130" id="h0-2-130" class="i">+	for i, cp := range bi.cps {
+</a><a href="#h0-2-131" id="h0-2-131" class="i">+		cpName := cp.GetValue()
+</a><a href="#h0-2-132" id="h0-2-132" class="i">+		expectedIndex := 0
+</a><a href="#h0-2-133" id="h0-2-133" class="i">+		expectedIndexS := &quot;0&quot;
+</a><a href="#h0-2-134" id="h0-2-134" class="i">+		cpConstraints := make([]string, 0)
+</a><a href="#h0-2-135" id="h0-2-135" class="i">+		for {
+</a><a href="#h0-2-136" id="h0-2-136" class="i">+			indexFound := false
+</a><a href="#h0-2-137" id="h0-2-137" class="i">+			// Process every SO attach searching for the couple CP index
+</a><a href="#h0-2-138" id="h0-2-138" class="i">+			for j, soatt := range bi.soAttach {
+</a><a href="#h0-2-139" id="h0-2-139" class="i">+				if soatt.GetMeta(&quot;cp&quot;) == cpName &amp;&amp; soatt.GetMeta(&quot;index&quot;) == expectedIndexS {
+</a><a href="#h0-2-140" id="h0-2-140" class="i">+					endpoints := make([]string, 2)
+</a><a href="#h0-2-141" id="h0-2-141" class="i">+					endpoints[0] = strconv.Itoa(i)
+</a><a href="#h0-2-142" id="h0-2-142" class="i">+					endpoints[1] = soIndexes[soatt.GetValue()]
+</a><a href="#h0-2-143" id="h0-2-143" class="i">+					indexFound = true
+</a><a href="#h0-2-144" id="h0-2-144" class="i">+					soattDone[j] = true
+</a><a href="#h0-2-145" id="h0-2-145" class="i">+					cpConstraints = append(cpConstraints, constrains[soatt.GetValue()])
+</a><a href="#h0-2-146" id="h0-2-146" class="i">+					break
+</a><a href="#h0-2-147" id="h0-2-147" class="i">+				}
+</a><a href="#h0-2-148" id="h0-2-148" class="i">+			}
+</a><a href="#h0-2-149" id="h0-2-149" class="i">+			if indexFound {
+</a><a href="#h0-2-150" id="h0-2-150" class="i">+				expectedIndex += 1
+</a><a href="#h0-2-151" id="h0-2-151" class="i">+				expectedIndexS = strconv.Itoa(expectedIndex)
+</a><a href="#h0-2-152" id="h0-2-152" class="i">+			} else {
+</a><a href="#h0-2-153" id="h0-2-153" class="i">+				break
+</a><a href="#h0-2-154" id="h0-2-154" class="i">+			}
+</a><a href="#h0-2-155" id="h0-2-155" class="i">+		}
+</a><a href="#h0-2-156" id="h0-2-156" class="i">+		// compose the Shared constraint of every processor
+</a><a href="#h0-2-157" id="h0-2-157" class="i">+		result[i] = strings.Join(cpConstraints, &quot;,&quot;)
+</a><a href="#h0-2-158" id="h0-2-158" class="i">+	}
+</a><a href="#h0-2-159" id="h0-2-159" class="i">+
+</a><a href="#h0-2-160" id="h0-2-160" class="i">+	for _, val := range soattDone {
+</a><a href="#h0-2-161" id="h0-2-161" class="i">+		if !val {
+</a><a href="#h0-2-162" id="h0-2-162" class="i">+			return nil, errors.New(&quot;processor SO index inconsistent&quot;)
+</a><a href="#h0-2-163" id="h0-2-163" class="i">+		}
+</a><a href="#h0-2-164" id="h0-2-164" class="i">+	}
+</a><a href="#h0-2-165" id="h0-2-165" class="i">+
+</a><a href="#h0-2-166" id="h0-2-166" class="i">+	return result, nil
+</a><a href="#h0-2-167" id="h0-2-167" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>
